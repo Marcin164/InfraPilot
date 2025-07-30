@@ -12,7 +12,7 @@ type Props = {};
 
 const UserInfo = (props: Props) => {
   return (
-    <div className="w-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4">
+    <div className="w-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
       <div className="flex items-center">
         <img src="#" className="w-[85px] h-[85px]" />
         <div className="px-4">
