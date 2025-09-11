@@ -10,7 +10,6 @@ type Props = {};
 const index = (props: Props) => {
   const location = useLocation();
   const breadCrumbs: any = splitPath(location.pathname, "/");
-  console.log(breadCrumbs.length);
 
   return (
     <div className="h-[100px] flex items-center justify-between bg-[#FFFFFF] px-4">

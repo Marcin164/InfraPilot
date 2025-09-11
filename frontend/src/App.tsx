@@ -7,6 +7,9 @@ import Flows from "./Pages/Main/Flows";
 import Storage from "./Pages/Main/Storage";
 import Settings from "./Pages/Main/Settings";
 import UserDetails from "./Pages/Main/Users/Details";
+import DeviceDetails from "./Pages/Main/Devices/Details";
+import SystemInfo from "./Pages/Main/Devices/Details/SystemInfo";
+import Hardware from "./Pages/Main/Devices/Details/Hardware";
 
 function App() {
   return (
@@ -17,6 +20,10 @@ function App() {
           <Route path="/users" element={<Users />} />
           <Route path="/users/:id" element={<UserDetails />} />
           <Route path="/devices" element={<Devices />} />
+          <Route path="/devices/:id" element={<DeviceDetails />}>
+            <Route path="systeminfo" element={<SystemInfo />} />
+            <Route path="hardware" element={<Hardware />} />
+          </Route>
           <Route path="/flows" element={<Flows />} />
           <Route path="/storage" element={<Storage />} />
           <Route path="/settings" element={<Settings />} />

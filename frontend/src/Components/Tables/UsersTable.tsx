@@ -1,45 +1,15 @@
-import React from "react";
-import DataTable from "react-data-table-component";
 import { useNavigate } from "react-router";
+import MainTable from "./MainTable";
+import { parseToUsersTable } from "../../Helpers/tables";
+import { useQuery } from "@tanstack/react-query";
+import { getUsers } from "../../Services/users";
 
 type Props = {};
 
 const UsersTable = (props: Props) => {
   let navigate = useNavigate();
-
-  const customStyles = {
-    table: {
-      style: {
-        width: "100%",
-        background: "transparent",
-      },
-    },
-    headRow: {
-      style: {
-        backgroundColor: "#FFFFFF",
-        fontWeight: "bold",
-        borderRadius: "10px",
-        fontSize: "18px",
-      },
-    },
-    rows: {
-      style: {
-        minHeight: "48px",
-        borderBottomColor: "#eee",
-        transition: "all 0.2s ease-in-out",
-        margin: "5px 0 5px 0",
-        borderRadius: "10px",
-        fontSize: "18px",
-        "&:hover": {
-          backgroundColor: "#d2ecff", // NIEBIESKI hover
-        },
-      },
-      highlightOnHoverStyle: {
-        backgroundColor: "#d2ecff",
-        outline: "none",
-      },
-    },
-  };
+  const userQuery = useQuery({ queryKey: ["users"], queryFn: getUsers });
+  console.log(parseToUsersTable(userQuery?.data));
 
   const columns = [
     {
@@ -76,29 +46,13 @@ const UsersTable = (props: Props) => {
     },
   ];
 
-  const data = [
-    {
-      id: "1",
-      name: "Marcin Nowakowski",
-      username: "nowakowskim",
-      currentDevice: "Macbook M3 Pro",
-      lastLogon: "24/04/2025, 18:25",
-      department: "Helpdesk",
-      office: "Labs-WRO",
-    },
-  ];
+  if (!userQuery?.data && userQuery?.data?.length <= 0) return null;
 
   return (
-    <DataTable
-      className=""
-      pagination
+    <MainTable
       columns={columns}
-      data={data}
-      customStyles={customStyles}
-      onRowClicked={(row) => navigate(`/users/${row.id}`)}
-      highlightOnHover
-      pointerOnHover
-      responsive
+      data={parseToUsersTable(userQuery?.data)}
+      onRowClicked={(row: any) => navigate(`/users/${row.id}`)}
     />
   );
 };

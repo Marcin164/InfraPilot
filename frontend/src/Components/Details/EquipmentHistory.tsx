@@ -5,7 +5,7 @@ type Props = {};
 
 const EquipmentHistory = (props: Props) => {
   return (
-    <div className="bg-[#FFFFFF] shadow-xl rounded-[10px] p-4">
+    <div className="bg-[#FFFFFF] shadow-xl rounded-[10px] row-span-3 p-4">
       <div className="text-[30px] font-semibold text-[#3C3C3C]">
         Equipment History
       </div>

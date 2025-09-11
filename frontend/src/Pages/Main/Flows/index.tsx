@@ -1,9 +1,20 @@
 import React from "react";
+import Filter from "../../../Components/Filter";
+import Search from "../../../Components/Inputs/Search";
+import FlowsTable from "../../../Components/Tables/FlowsTable";
 
 type Props = {};
 
 const index = (props: Props) => {
-  return <div>index</div>;
+  return (
+    <div className="w-full px-4">
+      <div className="pt-4 pb-8 flex">
+        <Filter />
+        <Search />
+      </div>
+      <FlowsTable />
+    </div>
+  );
 };
 
 export default index;
