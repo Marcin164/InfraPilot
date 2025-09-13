@@ -9,7 +9,6 @@ type Props = {};
 const UsersTable = (props: Props) => {
   let navigate = useNavigate();
   const userQuery = useQuery({ queryKey: ["users"], queryFn: getUsers });
-  console.log(parseToUsersTable(userQuery?.data));
 
   const columns = [
     {

@@ -14,6 +14,8 @@ const Details = (props: Props) => {
     queryFn: () => getDevice("", params.id),
   });
 
+  console.log(deviceQuery.data);
+
   return (
     <div className="w-full h-[calc(100vh-100px)] p-4">
       <DeviceNavbar />

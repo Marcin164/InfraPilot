@@ -6,7 +6,7 @@ type Props = { disks: any };
 
 const Disks = ({ disks }: Props) => {
   return (
-    <div className="w-fit bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
+    <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
       <div className="text-[20px] font-semibold text-[#2B9AE9]">Disks</div>
       {disks.map((disk: any) => (
         <div className="inline-block mr-4">

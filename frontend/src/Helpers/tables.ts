@@ -39,3 +39,31 @@ export const parseToUsersTable = (data: any) => {
 
   return usersTableDataArray;
 };
+
+export const parseToSoftwareTable = (data: any) => {
+  if (!data) return [];
+
+  const usersTableDataArray = data.map((d: any) => {
+    let installationDate = "N/A";
+    if (d?.install_date) {
+      const year = d?.install_date.substring(0, 4);
+      const month = d?.install_date.substring(4, 6);
+      const day = d?.install_date.substring(6, 8);
+
+      installationDate = `${day}.${month}.${year}`;
+    }
+
+    const usersTableData = {
+      id: d?.idusers,
+      name: d?.name,
+      version: d?.version,
+      publisher: d?.publisher,
+      size: d?.size,
+      installationDate: installationDate,
+    };
+
+    return usersTableData;
+  });
+
+  return usersTableDataArray;
+};

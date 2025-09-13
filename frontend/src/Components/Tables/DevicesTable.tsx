@@ -67,7 +67,7 @@ const DevicesTable = (props: Props) => {
     <MainTable
       columns={columns}
       data={parseToDeviceTable(deviceQuery?.data)}
-      onRowClicked={(row: any) => navigate(`/devices/${row.id}`)}
+      onRowClicked={(row: any) => navigate(`/devices/${row.id}/systeminfo`)}
     />
   );
 };

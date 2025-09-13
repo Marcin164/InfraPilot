@@ -21,6 +21,7 @@ const Partitions = ({
     const denominator = 1024 ** 3;
     return bytes / denominator;
   };
+
   return (
     <div>
       <div>{`${volume_name} ${device_id} (${file_system})`}</div>

@@ -1,5 +1,6 @@
 import React from "react";
 import { useOutletContext } from "react-router";
+import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
 import CPU from "../../../../Components/Details/CPU";
 import RAM from "../../../../Components/Details/RAM";
 import MOBO from "../../../../Components/Details/MOBO";
@@ -15,16 +16,24 @@ const SystemInfo = (props: Props) => {
 
   const hardwareInfo = device.data.scanInfo.hardware_info;
 
-  console.log(device.data.scanInfo.hardware_info);
-
   return (
-    <div className="w-full h-full grid content-start columns-3 cursor-default">
-      <CPU cpus={hardwareInfo.cpu} />
+    <div className="w-full cursor-default overflow-x-hidden">
+      <ResponsiveMasonry columnsCountBreakPoints={{ 350: 1, 750: 2, 900: 3 }}>
+        <Masonry>
+          <Disks disks={hardwareInfo.disks} />
+          <CPU cpus={hardwareInfo.cpu} />
+          <RAM rams={hardwareInfo.ram_modules} />
+          <MOBO baseboard={hardwareInfo.baseboard} />
+          <GPU gpus={hardwareInfo.gpus} />
+          <BIOS bios={hardwareInfo.bios} />
+        </Masonry>
+      </ResponsiveMasonry>
+      {/* <CPU cpus={hardwareInfo.cpu} />
       <RAM rams={hardwareInfo.ram_modules} />
       <MOBO baseboard={hardwareInfo.baseboard} />
       <BIOS bios={hardwareInfo.bios} />
       <Disks disks={hardwareInfo.disks} />
-      <GPU gpus={hardwareInfo.gpus} />
+      <GPU gpus={hardwareInfo.gpus} /> */}
     </div>
   );
 };

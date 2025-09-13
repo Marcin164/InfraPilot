@@ -4,9 +4,10 @@ type Props = {
   columns: any;
   data: any;
   onRowClicked: any;
+  className?: string;
 };
 
-const MainTable = ({ columns, data, onRowClicked }: Props) => {
+const MainTable = ({ columns, data, onRowClicked, className = "" }: Props) => {
   const customStyles = {
     table: {
       style: {
@@ -48,7 +49,7 @@ const MainTable = ({ columns, data, onRowClicked }: Props) => {
   };
   return (
     <DataTable
-      className=""
+      className={className}
       pagination
       columns={columns}
       data={data}
@@ -57,6 +58,7 @@ const MainTable = ({ columns, data, onRowClicked }: Props) => {
       highlightOnHover
       pointerOnHover
       responsive
+      fixedHeader
     />
   );
 };

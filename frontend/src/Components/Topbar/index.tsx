@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { splitPath } from "../../Helpers/string";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
@@ -9,6 +9,7 @@ type Props = {};
 
 const index = (props: Props) => {
   const location = useLocation();
+  const params = useParams();
   const breadCrumbs: any = splitPath(location.pathname, "/");
 
   return (

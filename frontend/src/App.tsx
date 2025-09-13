@@ -10,6 +10,7 @@ import UserDetails from "./Pages/Main/Users/Details";
 import DeviceDetails from "./Pages/Main/Devices/Details";
 import SystemInfo from "./Pages/Main/Devices/Details/SystemInfo";
 import Hardware from "./Pages/Main/Devices/Details/Hardware";
+import Software from "./Pages/Main/Devices/Details/Software";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/devices/:id" element={<DeviceDetails />}>
             <Route path="systeminfo" element={<SystemInfo />} />
             <Route path="hardware" element={<Hardware />} />
+            <Route path="software" element={<Software />} />
           </Route>
           <Route path="/flows" element={<Flows />} />
           <Route path="/storage" element={<Storage />} />
