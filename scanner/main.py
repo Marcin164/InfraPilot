@@ -23,6 +23,8 @@ def get_system_info():
         boot_time_timestamp = os.path.getctime('C:\\')
         boot_time = datetime.datetime.fromtimestamp(boot_time_timestamp).isoformat()
 
+        uname = platform.uname()
+
         return {
             "system_name": platform.system(),
             "system_version": platform.version(),
@@ -30,12 +32,20 @@ def get_system_info():
             "system_build": platform.win32_ver()[1],
             "architecture": platform.machine(),
             "hostname": socket.gethostname(),
+            "node_name": uname.node,
+            "processor": uname.processor,
+            "platform": uname.system,
+            "platform_version": uname.version,
             "install_date": install_date,
-            "boot_time": boot_time
+            "boot_time": boot_time,
+            "cpu_count_logical": psutil.cpu_count(logical=True),
+            "cpu_count_physical": psutil.cpu_count(logical=False),
+            "memory_total": psutil.virtual_memory().total,
+            "swap_total": psutil.swap_memory().total,
+            "python_version": platform.python_version()
         }
     except Exception as e:
         return {"error": str(e)}
-
 
 def get_hardware_info():
     try:
@@ -229,7 +239,10 @@ def get_users_info():
     try:
         current_user = getpass.getuser()
 
-        users_output = subprocess.check_output("net user", shell=True, text=True, encoding='mbcs')
+        # Pobieranie listy wszystkich użytkowników
+        users_output = subprocess.check_output(
+            "net user", shell=True, text=True, encoding='mbcs'
+        )
         user_lines = users_output.splitlines()
         users = []
         capture = False
@@ -240,26 +253,50 @@ def get_users_info():
             if capture:
                 users.extend(line.strip().split())
 
-        group_name = "Administrators"
+        # Szukanie nazwy grupy administratorów (zależnie od języka systemu)
+        group_name = None
         try:
-            localized_output = subprocess.check_output('net localgroup', shell=True, text=True, encoding='mbcs')
+            localized_output = subprocess.check_output(
+                'net localgroup', shell=True, text=True, encoding='mbcs'
+            )
             for line in localized_output.splitlines():
-                if "Admin" in line or "admin" in line:
-                    group_name = line.strip()
+                line = line.strip()
+                if line.lower().startswith("admin"):
+                    group_name = line
+                    break
+                if "admin" in line.lower():
+                    group_name = line
                     break
         except Exception:
             pass
 
-        admin_output = subprocess.check_output(f'net localgroup "{group_name}"', shell=True, text=True, encoding='mbcs')
-        admin_lines = admin_output.splitlines()
+        if not group_name:
+            # fallback na typowe nazwy
+            for candidate in ["Administrators", "Administratorzy"]:
+                try:
+                    subprocess.check_output(
+                        f'net localgroup "{candidate}"',
+                        shell=True, text=True, encoding='mbcs'
+                    )
+                    group_name = candidate
+                    break
+                except Exception:
+                    continue
+
+        # Pobranie użytkowników należących do grupy administratorów
         admin_users = []
-        capture = False
-        for line in admin_lines:
-            if "----------" in line:
-                capture = True
-                continue
-            if capture and line.strip():
-                admin_users.append(line.strip())
+        if group_name:
+            admin_output = subprocess.check_output(
+                f'net localgroup "{group_name}"',
+                shell=True, text=True, encoding='mbcs'
+            )
+            capture = False
+            for line in admin_output.splitlines():
+                if "----------" in line:
+                    capture = True
+                    continue
+                if capture and line.strip():
+                    admin_users.append(line.strip())
 
         return {
             "current_user": current_user,
@@ -317,28 +354,149 @@ def get_installed_software():
 
 def get_security_info():
     try:
-        firewall_status = subprocess.check_output("netsh advfirewall show allprofiles", shell=True, text=True)
-        firewall_enabled = "State ON" in firewall_status or "Enabled" in firewall_status
+        c = wmi.WMI(namespace='root\\SecurityCenter2')
 
-        defender_status = subprocess.check_output("sc query WinDefend", shell=True, text=True)
-        defender_running = "RUNNING" in defender_status
+        # Antywirusy
+        antiviruses = [{
+            "name": getattr(av, "displayName", None),
+            "path_to_exe": getattr(av, "pathToSignedProductExe", None),
+            "state": getattr(av, "productState", None)
+        } for av in c.AntiVirusProduct()]
+
+        # Firewall jako obiekt
+        firewall_status = {}
+        try:
+            fw_output = subprocess.check_output(
+                "netsh advfirewall show allprofiles",
+                shell=True, text=True, encoding='mbcs'
+            )
+            current_profile = None
+            for line in fw_output.splitlines():
+                if "Profile Settings" in line:
+                    current_profile = line.split()[0]
+                    firewall_status[current_profile] = {}
+                elif ":" in line and current_profile:
+                    key, value = line.split(":", 1)
+                    firewall_status[current_profile][key.strip()] = value.strip()
+        except Exception:
+            firewall_status = {"status": "Unknown"}
+
+        # Aktualizacje
+        updates = []
+        try:
+            for qfe in wmi.WMI().Win32_QuickFixEngineering():
+                updates.append({
+                    "hotfix_id": getattr(qfe, "HotFixID", None),
+                    "description": getattr(qfe, "Description", None),
+                    "installed_on": getattr(qfe, "InstalledOn", None)
+                })
+        except Exception:
+            pass
+
+        # BitLocker
+        bitlocker_status = {}
+        try:
+            output = subprocess.check_output("manage-bde -status", shell=True, text=True, encoding='mbcs')
+            current_volume = None
+            for line in output.splitlines():
+                if "Volume" in line:
+                    current_volume = line.split()[0]
+                    bitlocker_status[current_volume] = {}
+                elif ":" in line and current_volume:
+                    key, value = line.split(":", 1)
+                    bitlocker_status[current_volume][key.strip()] = value.strip()
+        except Exception:
+            bitlocker_status = {"status": "Unknown"}
+
+        # Mapowanie password policy -> EN
+        mapping = {
+            "Minimalny okres ważności hasła (dni)": "Minimum password age (days)",
+            "Maksymalny okres ważności hasła (dni)": "Maximum password age (days)",
+            "Minimalna długość hasła": "Minimum password length",
+            "Długość zapamiętanej historii haseł": "Password history length",
+            "Po jakim czasie od wygaśnięcia czasu wymusza wylogowanie?": "Force logoff after expiration",
+            "Próg blokady": "Lockout threshold",
+            "Czas trwania blokady (minuty)": "Lockout duration (minutes)",
+            "Okno obserwowania blokady (minuty)": "Lockout observation window (minutes)",
+            "Rola komputera": "Computer role"
+        }
+
+        password_policy = {}
+        try:
+            output = subprocess.check_output("net accounts", shell=True, text=True, encoding='mbcs')
+            for line in output.splitlines():
+                if ":" in line:
+                    key, value = line.split(":", 1)
+                    key_clean = key.strip()
+                    eng_key = mapping.get(key_clean, key_clean)
+                    password_policy[eng_key] = value.strip()
+        except Exception:
+            password_policy = {"status": "Unknown"}
+
+        # UAC status
+        uac_status = {}
+        try:
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+                                 r"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System")
+            enable_lua = winreg.QueryValueEx(key, "EnableLUA")[0]
+            consent_prompt = winreg.QueryValueEx(key, "ConsentPromptBehaviorAdmin")[0]
+            secure_desktop = winreg.QueryValueEx(key, "PromptOnSecureDesktop")[0]
+            uac_status = {
+                "enabled": enable_lua == 1,
+                "consent_prompt_behavior_admin": consent_prompt,
+                "secure_desktop_prompt": secure_desktop
+            }
+        except Exception:
+            uac_status = {"status": "Unknown"}
+
+        # RDP status
+        rdp_status = {}
+        try:
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+                                 r"SYSTEM\\CurrentControlSet\\Control\\Terminal Server")
+            deny_ts = winreg.QueryValueEx(key, "fDenyTSConnections")[0]
+            rdp_status["enabled"] = False if deny_ts == 1 else True
+            try:
+                nla_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+                                         r"SYSTEM\\CurrentControlSet\\Control\\Terminal Server\\WinStations\\RDP-Tcp")
+                nla_value = winreg.QueryValueEx(nla_key, "UserAuthentication")[0]
+                rdp_status["network_level_auth"] = (nla_value == 1)
+            except Exception:
+                rdp_status["network_level_auth"] = "Unknown"
+        except Exception:
+            rdp_status = {"status": "Unknown"}
+
+        # Programy startowe
+        startup_apps = []
+        try:
+            for s in wmi.WMI().Win32_StartupCommand():
+                startup_apps.append({
+                    "name": getattr(s, "Name", None),
+                    "command": getattr(s, "Command", None),
+                    "location": getattr(s, "Location", None)
+                })
+        except Exception:
+            pass
 
         return {
-            "firewall_enabled": firewall_enabled,
-            "windows_defender_running": defender_running
+            "antivirus": antiviruses,
+            "firewall": firewall_status,
+            "updates": updates,
+            "bitlocker": bitlocker_status,
+            "password_policy": password_policy,
+            "uac_status": uac_status,
+            "rdp_status": rdp_status,
+            "startup_apps": startup_apps
         }
     except Exception as e:
         return {"error": str(e)}
-
 
 def get_peripherals_info():
     try:
         c = wmi.WMI()
 
-        # USB devices (ogólne)
         usb_devices = [str(device.Dependent.Name) for device in c.Win32_USBControllerDevice() if hasattr(device.Dependent, 'Name')]
 
-        # Klawiatury
         keyboards = [{
             "name": getattr(kb, "Name", None),
             "manufacturer": getattr(kb, "Manufacturer", None),
@@ -349,7 +507,6 @@ def get_peripherals_info():
             "status": getattr(kb, "Status", None)
         } for kb in c.Win32_Keyboard()]
 
-        # Myszy / touchpady
         mice = [{
             "name": getattr(m, "Name", None),
             "manufacturer": getattr(m, "Manufacturer", None),
@@ -361,7 +518,6 @@ def get_peripherals_info():
             "status": getattr(m, "Status", None)
         } for m in c.Win32_PointingDevice()]
 
-        # Drukarki
         printers = [{
             "name": getattr(p, "Name", None),
             "driver": getattr(p, "DriverName", None),
@@ -374,7 +530,6 @@ def get_peripherals_info():
             "status": getattr(p, "Status", None)
         } for p in c.Win32_Printer()]
 
-        # Audio
         sound_devices = [{
             "name": getattr(s, "Name", None),
             "manufacturer": getattr(s, "Manufacturer", None),
@@ -384,7 +539,6 @@ def get_peripherals_info():
             "status": getattr(s, "Status", None)
         } for s in c.Win32_SoundDevice()]
 
-        # Monitory
         monitors = [{
             "name": getattr(m, "Name", None),
             "device_id": getattr(m, "DeviceID", None),
@@ -394,7 +548,6 @@ def get_peripherals_info():
             "status": getattr(m, "Status", None)
         } for m in c.Win32_DesktopMonitor()]
 
-        # Zewnętrzne dyski / pendrive’y
         external_drives = [{
             "model": getattr(d, "Model", None),
             "device_id": getattr(d, "DeviceID", None),
@@ -449,7 +602,10 @@ def main():
     }
 
     print("[DEBUG] Full collected data:")
-    print(json.dumps(collected_data, indent=2, ensure_ascii=False))
+    with open("scan_result.json", "w", encoding="utf-8") as f:
+        json.dump(collected_data, f, indent=2, ensure_ascii=False)
+
+    print("[INFO] Full collected data saved to scan_result.json")
 
     # Wyślij na serwer NestJS
     send_data_to_server(collected_data)

@@ -11,6 +11,8 @@ import DeviceDetails from "./Pages/Main/Devices/Details";
 import SystemInfo from "./Pages/Main/Devices/Details/SystemInfo";
 import Hardware from "./Pages/Main/Devices/Details/Hardware";
 import Software from "./Pages/Main/Devices/Details/Software";
+import Network from "./Pages/Main/Devices/Details/Network";
+import Security from "./Pages/Main/Devices/Details/Security";
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
             <Route path="systeminfo" element={<SystemInfo />} />
             <Route path="hardware" element={<Hardware />} />
             <Route path="software" element={<Software />} />
+            <Route path="network" element={<Network />} />
+            <Route path="security" element={<Security />} />
           </Route>
           <Route path="/flows" element={<Flows />} />
           <Route path="/storage" element={<Storage />} />

@@ -40,8 +40,8 @@ const DeviceNavbar = (props: Props) => {
         alignment="vertical"
       />
       <NavbarLink
-        to="safety"
-        label="Safety"
+        to="security"
+        label="Security"
         icon={faShield}
         alignment="vertical"
       />
