@@ -6,9 +6,9 @@ type Props = {};
 
 const Software = (props: Props) => {
   const device: any = useOutletContext();
-  if (!device?.data?.scanInfo) return null;
+  if (!device?.data?.software) return null;
 
-  const softwareInfo = device.data.scanInfo.software_info;
+  const softwareInfo = device.data.software;
   return (
     <div className="w-full ">
       <SoftwareTable data={softwareInfo} />

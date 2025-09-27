@@ -10,6 +10,7 @@ import getpass
 import winreg
 import json
 import requests
+import win32evtlog
 
 def get_system_info():
     try:
@@ -207,14 +208,23 @@ def get_network_info():
         connections = psutil.net_connections(kind='inet')
         info["connections"] = []
         for c in connections:
+            process_name = None
+            try:
+                if c.pid:
+                    process = psutil.Process(c.pid)
+                    process_name = process.name()
+            except Exception:
+                pass
+
             info["connections"].append({
                 "fd": c.fd,
-                "family": str(c.family),
-                "type": str(c.type),
+                "family": socket.AddressFamily(c.family).name if c.family else str(c.family),
+                "type": socket.SocketKind(c.type).name if c.type else str(c.type),
                 "laddr": f"{c.laddr.ip}:{c.laddr.port}" if c.laddr else None,
                 "raddr": f"{c.raddr.ip}:{c.raddr.port}" if c.raddr else None,
                 "status": c.status,
-                "pid": c.pid
+                "pid": c.pid,
+                "process_name": process_name
             })
 
         # Nazwa domeny / hosta / FQDN
@@ -491,6 +501,48 @@ def get_security_info():
     except Exception as e:
         return {"error": str(e)}
 
+def get_event_logs(max_records=50):
+    """
+    Pobiera ostatnie wpisy z Event Viewera dla System, Application i Security.
+    Zwraca słownik z listami logów.
+    """
+    def read_logs(log_type, max_records):
+        logs = []
+        try:
+            server = 'localhost'
+            hand = win32evtlog.OpenEventLog(server, log_type)
+
+            flags = win32evtlog.EVENTLOG_BACKWARDS_READ | win32evtlog.EVENTLOG_SEQUENTIAL_READ
+            total = 0
+
+            while total < max_records:
+                events = win32evtlog.ReadEventLog(hand, flags, 0)
+                if not events:
+                    break
+                for ev_obj in events:
+                    record = {
+                        "time_generated": ev_obj.TimeGenerated.Format(),
+                        "source": str(ev_obj.SourceName),
+                        "event_id": ev_obj.EventID & 0xFFFF,
+                        "event_type": ev_obj.EventType,
+                        "event_category": ev_obj.EventCategory,
+                        "computer": str(ev_obj.ComputerName),
+                        "message": str(ev_obj.StringInserts) if ev_obj.StringInserts else None
+                    }
+                    logs.append(record)
+                    total += 1
+                    if total >= max_records:
+                        break
+        except Exception as e:
+            logs.append({"error": str(e)})
+        return logs
+
+    return {
+        "system": read_logs("System", max_records),
+        "application": read_logs("Application", max_records),
+        "security": read_logs("Security", max_records)
+    }
+
 def get_peripherals_info():
     try:
         c = wmi.WMI()
@@ -589,6 +641,7 @@ def main():
     software_info = get_installed_software()
     security_info = get_security_info()
     peripherals_info = get_peripherals_info()
+    event_logs = get_event_logs(20)
 
     collected_data = {
         "idDevice": 2, 
@@ -598,7 +651,8 @@ def main():
         "users_info": users_info,
         "software_info": software_info,
         "security_info": security_info,
-        "peripherals_info": peripherals_info
+        "peripherals_info": peripherals_info,
+        "event_logs": event_logs
     }
 
     print("[DEBUG] Full collected data:")

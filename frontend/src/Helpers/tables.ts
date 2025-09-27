@@ -3,7 +3,7 @@ export const parseToDeviceTable = (data: any) => {
 
   const deviceTableDataArray = data.map((d: any) => {
     const deviceTableData = {
-      id: d?.iddevices,
+      id: d?.id,
       device: d?.model,
       assignee: d?.owner,
       state: d?.state,

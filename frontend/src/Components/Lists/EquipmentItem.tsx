@@ -7,18 +7,18 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link } from "react-router";
 
 type Props = {
-  iddevices: string;
-  scanInfo: string;
+  id: number;
+  system: any;
   serialNumber: string;
-  type: string;
+  subgroup: string;
   model: string;
 };
 
 const EquipmentItem = ({
-  iddevices,
-  scanInfo,
+  id,
+  system,
   serialNumber,
-  type,
+  subgroup,
   model,
 }: Props) => {
   const getDeviceIcon = (type: string) => {
@@ -33,14 +33,12 @@ const EquipmentItem = ({
   };
 
   return (
-    <Link to={`/devices/${iddevices}`} className="py-1">
+    <Link to={`/devices/${id}`} className="py-1">
       <FontAwesomeIcon
-        icon={getDeviceIcon(type)}
+        icon={getDeviceIcon(subgroup)}
         className="pr-2 text-[#535353]"
       />
-      <span className="uppercase text-[#2B9AE9]">
-        {JSON.parse(scanInfo).system_info.hostname}
-      </span>
+      <span className="uppercase text-[#2B9AE9]">{system.hostname}</span>
       <span className="text-[#535353]">{`- ${model}, ${serialNumber}`}</span>
     </Link>
   );

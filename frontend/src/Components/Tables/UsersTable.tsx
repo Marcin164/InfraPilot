@@ -1,14 +1,15 @@
 import { useNavigate } from "react-router";
 import MainTable from "./MainTable";
-import { parseToUsersTable } from "../../Helpers/tables";
 import { useQuery } from "@tanstack/react-query";
-import { getUsers } from "../../Services/users";
+import { getUsersTable } from "../../Services/users";
+import moment from "moment";
 
 type Props = {};
 
 const UsersTable = (props: Props) => {
   let navigate = useNavigate();
-  const userQuery = useQuery({ queryKey: ["users"], queryFn: getUsers });
+  const userQuery = useQuery({ queryKey: ["users"], queryFn: getUsersTable });
+  console.log(userQuery.data);
 
   const columns = [
     {
@@ -17,31 +18,33 @@ const UsersTable = (props: Props) => {
     },
     {
       name: "Name",
-      cell: (row: any) => <div className="font-bold">{row.name}</div>,
+      cell: (row: any) => (
+        <div className="font-bold">{row.users_displayName}</div>
+      ),
     },
     {
       name: "Username",
-      selector: (row: any) => row.username,
+      selector: (row: any) => row.users_username,
     },
     {
       name: "Current device",
-      selector: (row: any) => row.currentDevice,
+      selector: (row: any) => row?.devices_system?.hostname || "N/A",
     },
     {
       name: "Last logon",
       cell: (row: any) => (
-        <div className="w-[180px] py-2 rounded-[10px] text-center bg-[#30A712] text-[#FFFFFF]">
-          {row.lastLogon}
+        <div className="w-[170px] py-2 px-1 rounded-[10px] text-center bg-[#30A712] text-[#FFFFFF]">
+          {moment(row.users_lastLogon).format("DD.MM.YYYY, hh:mm:ss")}
         </div>
       ),
     },
     {
       name: "Department",
-      selector: (row: any) => row.department,
+      selector: (row: any) => row.users_department,
     },
     {
       name: "Office",
-      selector: (row: any) => row.office,
+      selector: (row: any) => row.users_office,
     },
   ];
 
@@ -50,8 +53,8 @@ const UsersTable = (props: Props) => {
   return (
     <MainTable
       columns={columns}
-      data={parseToUsersTable(userQuery?.data)}
-      onRowClicked={(row: any) => navigate(`/users/${row.id}`)}
+      data={userQuery?.data}
+      onRowClicked={(row: any) => navigate(`/users/${row.users_id}`)}
     />
   );
 };

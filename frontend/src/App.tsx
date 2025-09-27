@@ -4,7 +4,6 @@ import Dashboards from "./Pages/Main/Dashboards";
 import Users from "./Pages/Main/Users";
 import Devices from "./Pages/Main/Devices";
 import Flows from "./Pages/Main/Flows";
-import Storage from "./Pages/Main/Storage";
 import Settings from "./Pages/Main/Settings";
 import UserDetails from "./Pages/Main/Users/Details";
 import DeviceDetails from "./Pages/Main/Devices/Details";
@@ -13,6 +12,9 @@ import Hardware from "./Pages/Main/Devices/Details/Hardware";
 import Software from "./Pages/Main/Devices/Details/Software";
 import Network from "./Pages/Main/Devices/Details/Network";
 import Security from "./Pages/Main/Devices/Details/Security";
+import Events from "./Pages/Main/Devices/Details/Events";
+import History from "./Pages/Main/Devices/Details/History";
+import Applications from "./Pages/Main/Applications";
 
 function App() {
   return (
@@ -29,9 +31,11 @@ function App() {
             <Route path="software" element={<Software />} />
             <Route path="network" element={<Network />} />
             <Route path="security" element={<Security />} />
+            <Route path="events" element={<Events />} />
+            <Route path="history" element={<History />} />
           </Route>
+          <Route path="/applications" element={<Applications />} />
           <Route path="/flows" element={<Flows />} />
-          <Route path="/storage" element={<Storage />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>

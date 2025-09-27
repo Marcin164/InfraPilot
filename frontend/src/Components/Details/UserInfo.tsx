@@ -1,6 +1,7 @@
 import {
   faCheckCircle,
   faEnvelope,
+  faFile,
   faHome,
   faPhone,
   faXmarkCircle,
@@ -19,6 +20,7 @@ type Props = {
   city: string;
   username: string;
   distinguishedName: string;
+  memberOf: any;
 };
 
 const UserInfo = ({
@@ -32,9 +34,10 @@ const UserInfo = ({
   city,
   username,
   distinguishedName,
+  memberOf = [],
 }: Props) => {
   return (
-    <div className="w-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
+    <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
       <div className="flex items-center">
         <img src="#" className="w-[85px] h-[85px]" />
         <div className="px-4">
@@ -75,6 +78,31 @@ const UserInfo = ({
           <span className="">
             {distinguishedName && distinguishedName.replace(/,/g, ", ")}
           </span>
+        </div>
+      </div>
+      <div className="text-[30px] font-semibold text-[#3C3C3C] pt-2">
+        Groups
+      </div>
+      <div className="flex flex-wrap">
+        {memberOf ? (
+          memberOf.map((group: any) => (
+            <div className="bg-[#2B9AE9] rounded-[10px] w-fit px-2 py-1 text-[#FFFFFF] my-1 mr-2">
+              {group}
+            </div>
+          ))
+        ) : (
+          <div>No groups</div>
+        )}
+      </div>
+      <div className="text-[30px] font-semibold text-[#3C3C3C] pt-2">Forms</div>
+      <div className="flex flex-wrap">
+        <div className="w-[100px]">
+          <div className="bg-[#2B9AE9] text-[#FFFFFF] w-[100px] h-[100px] rounded-full flex justify-center items-center text-[50px]">
+            <FontAwesomeIcon icon={faFile} />
+          </div>
+          <div className="text-[14px] font-bold break-all py-4 text-center">
+            Nowakowski_Marcin_ERF.docx
+          </div>
         </div>
       </div>
     </div>

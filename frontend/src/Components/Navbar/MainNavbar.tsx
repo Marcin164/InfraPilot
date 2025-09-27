@@ -4,7 +4,7 @@ import { navbarItems } from "../../Constants/navigation";
 
 type Props = {};
 
-const Navbar = (props: Props) => {
+const MainNavbar = (props: Props) => {
   return (
     <div className="w-[300px] bg-[#FFFFFF] px-2">
       {navbarItems.map((navbarItem) => (
@@ -18,4 +18,4 @@ const Navbar = (props: Props) => {
   );
 };
 
-export default Navbar;
+export default MainNavbar;

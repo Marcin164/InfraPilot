@@ -1,10 +1,17 @@
 import {
+  faCalendar,
   faChartPie,
+  faCode,
   faComputer,
+  faComputerMouse,
   faGear,
+  faHardDrive,
+  faHistory,
+  faInfo,
+  faNetworkWired,
   faRobot,
+  faShield,
   faUsers,
-  faWarehouse,
 } from "@fortawesome/free-solid-svg-icons";
 
 export const navbarItems = [
@@ -24,18 +31,71 @@ export const navbarItems = [
     icon: faComputer,
   },
   {
+    to: "/applications",
+    label: "Applications",
+    icon: faCode,
+  },
+  {
     to: "/flows",
     label: "Flows",
     icon: faRobot,
   },
   {
-    to: "/storage",
-    label: "Storage",
-    icon: faWarehouse,
+    to: "/history",
+    label: "History",
+    icon: faHistory,
   },
   {
     to: "/settings",
     label: "Settings",
     icon: faGear,
+  },
+];
+
+export const deviceNavbarItems = [
+  {
+    to: "systeminfo",
+    label: "System Info",
+    icon: faInfo,
+  },
+  {
+    to: "hardware",
+    label: "Hardware",
+    icon: faHardDrive,
+  },
+  {
+    to: "software",
+    label: "Software",
+    icon: faCode,
+  },
+  {
+    to: "network",
+    label: "Network",
+    icon: faNetworkWired,
+  },
+  {
+    to: "security",
+    label: "Security",
+    icon: faShield,
+  },
+  {
+    to: "events",
+    label: "Events",
+    icon: faCalendar,
+  },
+  {
+    to: "users",
+    label: "Users",
+    icon: faUsers,
+  },
+  {
+    to: "peripherals",
+    label: "Peripherals",
+    icon: faComputerMouse,
+  },
+  {
+    to: "history",
+    label: "History",
+    icon: faHistory,
   },
 ];

@@ -9,14 +9,13 @@ type Props = {};
 
 const index = (props: Props) => {
   const location = useLocation();
-  const params = useParams();
   const breadCrumbs: any = splitPath(location.pathname, "/");
 
   return (
     <div className="h-[100px] flex items-center justify-between bg-[#FFFFFF] px-4">
       <div className="capitalize">
         {breadCrumbs.map((breadCrumb: string, index: number) => (
-          <span className="text-[30px] text-[#3C3C3C]">
+          <span className="text-[22px] text-[#3C3C3C]">
             {breadCrumb}
             {index !== breadCrumbs.length - 1 && (
               <FontAwesomeIcon icon={faChevronRight} className="px-2" />

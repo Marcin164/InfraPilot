@@ -15,17 +15,17 @@ const DevicesTable = (props: Props) => {
   console.log(deviceQuery.data);
   const columns = [
     {
-      cell: (row: any) => <div className="">{row.image}</div>,
+      cell: (row: any) => <div className="">{row.id}</div>,
       width: "60px",
     },
     {
       name: "Device",
-      selector: (row: any) => row.device,
+      cell: (row: any) => <span>{`${row.manufacturer} ${row.model}`}</span>,
       width: "200px",
     },
     {
       name: "Assignee",
-      selector: (row: any) => row.assignee,
+      selector: (row: any) => row.ownerId,
       width: "160px",
     },
     {
@@ -39,7 +39,7 @@ const DevicesTable = (props: Props) => {
     },
     {
       name: "Asset name",
-      selector: (row: any) => row.assetName,
+      selector: (row: any) => row.system.hostname,
       width: "140px",
     },
     {
@@ -66,7 +66,7 @@ const DevicesTable = (props: Props) => {
   return (
     <MainTable
       columns={columns}
-      data={parseToDeviceTable(deviceQuery?.data)}
+      data={deviceQuery?.data}
       onRowClicked={(row: any) => navigate(`/devices/${row.id}/systeminfo`)}
     />
   );

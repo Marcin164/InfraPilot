@@ -5,7 +5,7 @@ type Props = { baseboard: any };
 const MOBO = ({ baseboard }: Props) => {
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <div className="text-[20px] font-semibold text-[#2B9AE9]">
+      <div className="text-[30px] font-semibold text-[#3C3C3C]">
         Motherboard
       </div>
       {Object.entries(baseboard).map(([key, value]: any) => (

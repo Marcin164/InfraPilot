@@ -16,6 +16,22 @@ export const getUsers = async (token: any) => {
   }
 };
 
+export const getUsersTable = async (token: any) => {
+  try {
+    const result = await axios({
+      method: "get",
+      url: "http://localhost:3000/users/table",
+      //   headers: {
+      //     authorization: `Bearer ${token}`,
+      //   },
+    });
+
+    return result.data;
+  } catch (error) {
+    return error;
+  }
+};
+
 export const getUser = async (token: any, id: string) => {
   try {
     const result = await axios({

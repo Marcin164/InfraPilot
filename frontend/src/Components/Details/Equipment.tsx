@@ -1,19 +1,18 @@
-import { faLaptop, faPen } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPen } from "@fortawesome/free-solid-svg-icons";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import EquipmentItem from "../Lists/EquipmentItem";
 import PeripheralItem from "../Lists/PeripheralItem";
 
 type Props = {
   devices: any;
-  userId: string;
+  userId: number;
 };
 
 const Equipment = ({ devices, userId }: Props) => {
   if (!devices) return null;
 
   const mainDevices = devices.filter(
-    (device: any) => device.owner === userId && device.type === "Macbook"
+    (device: any) => device.ownerId === userId && device.group === "Computer"
   );
 
   const loggedDevice: any = null;
@@ -41,7 +40,6 @@ const Equipment = ({ devices, userId }: Props) => {
           <div>No devices</div>
         )}
         <div className="py-2 font-bold">Peripherals</div>
-
         {peripherals.map((peripheral: any) => (
           <PeripheralItem {...peripheral} />
         ))}

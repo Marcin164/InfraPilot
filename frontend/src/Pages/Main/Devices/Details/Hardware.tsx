@@ -12,9 +12,9 @@ type Props = {};
 
 const SystemInfo = (props: Props) => {
   const device: any = useOutletContext();
-  if (!device?.data?.scanInfo) return null;
+  if (!device?.data?.hardware) return null;
 
-  const hardwareInfo = device.data.scanInfo.hardware_info;
+  const hardwareInfo = device?.data?.hardware;
 
   return (
     <div className="w-full cursor-default overflow-x-hidden">
@@ -28,12 +28,6 @@ const SystemInfo = (props: Props) => {
           <BIOS bios={hardwareInfo.bios} />
         </Masonry>
       </ResponsiveMasonry>
-      {/* <CPU cpus={hardwareInfo.cpu} />
-      <RAM rams={hardwareInfo.ram_modules} />
-      <MOBO baseboard={hardwareInfo.baseboard} />
-      <BIOS bios={hardwareInfo.bios} />
-      <Disks disks={hardwareInfo.disks} />
-      <GPU gpus={hardwareInfo.gpus} /> */}
     </div>
   );
 };

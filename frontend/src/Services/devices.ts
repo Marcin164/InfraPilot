@@ -33,6 +33,7 @@ export const getDevicesByOwner = async (token: any, idUser: string) => {
 };
 
 export const getDevice = async (token: any, idUser: any) => {
+  console.log(idUser);
   try {
     const result = await axios({
       method: "get",

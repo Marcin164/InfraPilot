@@ -3,7 +3,7 @@ import DataTable from "react-data-table-component";
 type Props = {
   columns: any;
   data: any;
-  onRowClicked: any;
+  onRowClicked?: any;
   className?: string;
 };
 

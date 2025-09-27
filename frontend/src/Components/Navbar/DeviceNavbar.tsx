@@ -1,63 +1,17 @@
 import NavbarLink from "./NavbarLink";
-import {
-  faCalendar,
-  faComputerMouse,
-  faFile,
-  faHardDrive,
-  faInfoCircle,
-  faNetworkWired,
-  faShield,
-  faUser,
-} from "@fortawesome/free-solid-svg-icons";
+import { deviceNavbarItems } from "../../Constants/navigation";
 
-type Props = {};
-
-const DeviceNavbar = (props: Props) => {
+const DeviceNavbar = () => {
   return (
     <div className="w-full flex bg-[#FFFFFF] shadow-xl rounded-[10px] p-2">
-      <NavbarLink
-        to="systeminfo"
-        label="System Info"
-        icon={faInfoCircle}
-        alignment="vertical"
-      />
-      <NavbarLink
-        to="hardware"
-        label="Hardware"
-        icon={faHardDrive}
-        alignment="vertical"
-      />
-      <NavbarLink
-        to="software"
-        label="Software"
-        icon={faFile}
-        alignment="vertical"
-      />
-      <NavbarLink
-        to="network"
-        label="Network"
-        icon={faNetworkWired}
-        alignment="vertical"
-      />
-      <NavbarLink
-        to="security"
-        label="Security"
-        icon={faShield}
-        alignment="vertical"
-      />
-      <NavbarLink
-        to="events"
-        label="Events"
-        icon={faCalendar}
-        alignment="vertical"
-      />
-      <NavbarLink to="users" label="Users" icon={faUser} alignment="vertical" />
-      <NavbarLink
-        to="peripherals"
-        label="Peripherals"
-        icon={faComputerMouse}
-        alignment="vertical"
-      />
+      {deviceNavbarItems.map((navbarItem) => (
+        <NavbarLink
+          to={navbarItem.to}
+          label={navbarItem.label}
+          icon={navbarItem.icon}
+          alignment="vertical"
+        />
+      ))}
     </div>
   );
 };
