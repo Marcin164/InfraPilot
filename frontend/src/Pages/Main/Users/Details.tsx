@@ -20,8 +20,6 @@ const Details = () => {
 
   if (!userQuery?.data) return null;
 
-  console.log(userQuery.data);
-
   return (
     <div className="h-[calc(100vh-100px)] grid grid-cols-3 gap-x-4 p-4">
       <UserInfo {...userQuery.data} />

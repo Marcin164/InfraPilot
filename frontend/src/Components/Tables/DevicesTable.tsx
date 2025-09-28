@@ -1,18 +1,13 @@
-import React from "react";
 import MainTable from "./MainTable";
 import { useNavigate } from "react-router";
 import moment from "moment";
 import { getDevices } from "../../Services/devices";
 import { useQuery } from "@tanstack/react-query";
-import { parseToDeviceTable } from "../../Helpers/tables";
 
-type Props = {};
-
-const DevicesTable = (props: Props) => {
+const DevicesTable = () => {
   let navigate = useNavigate();
   const deviceQuery = useQuery({ queryKey: ["devices"], queryFn: getDevices });
 
-  console.log(deviceQuery.data);
   const columns = [
     {
       cell: (row: any) => <div className="">{row.id}</div>,

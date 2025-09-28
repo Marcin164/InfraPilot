@@ -15,6 +15,7 @@ import Security from "./Pages/Main/Devices/Details/Security";
 import Events from "./Pages/Main/Devices/Details/Events";
 import History from "./Pages/Main/Devices/Details/History";
 import Applications from "./Pages/Main/Applications";
+import ApplicationsDetails from "./Pages/Main/Applications/Details";
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
             <Route path="history" element={<History />} />
           </Route>
           <Route path="/applications" element={<Applications />} />
+          <Route path="/applications/:id" element={<ApplicationsDetails />} />
           <Route path="/flows" element={<Flows />} />
           <Route path="/settings" element={<Settings />} />
         </Route>

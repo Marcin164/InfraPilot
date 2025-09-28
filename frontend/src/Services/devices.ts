@@ -33,11 +33,26 @@ export const getDevicesByOwner = async (token: any, idUser: string) => {
 };
 
 export const getDevice = async (token: any, idUser: any) => {
-  console.log(idUser);
   try {
     const result = await axios({
       method: "get",
       url: `http://localhost:3000/devices/${idUser}`,
+      //   headers: {
+      //     authorization: `Bearer ${token}`,
+      //   },
+    });
+
+    return result.data;
+  } catch (error) {
+    return error;
+  }
+};
+
+export const getDevicesWithApplication = async (token: any, id: any) => {
+  try {
+    const result = await axios({
+      method: "get",
+      url: `http://localhost:3000/devices/application/${id}`,
       //   headers: {
       //     authorization: `Bearer ${token}`,
       //   },
