@@ -54,8 +54,8 @@ export const navbarItems = [
 
 export const deviceNavbarItems = [
   {
-    to: "systeminfo",
-    label: "System Info",
+    to: "system",
+    label: "System",
     icon: faInfo,
   },
   {

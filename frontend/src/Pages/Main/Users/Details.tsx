@@ -5,9 +5,12 @@ import UserInfo from "../../../Components/Details/UserInfo";
 import { getUser } from "../../../Services/users";
 import { useParams } from "react-router";
 import { getDevicesByOwner } from "../../../Services/devices";
+import { useEffect } from "react";
+import { useParser } from "../../../Hooks/useParser";
 
 const Details = () => {
   const params: any = useParams();
+  const { setParser } = useParser();
   const userQuery = useQuery({
     queryKey: ["user"],
     queryFn: () => getUser("", params.id),
@@ -17,6 +20,10 @@ const Details = () => {
     queryKey: ["userDevice"],
     queryFn: () => getDevicesByOwner("", params.id),
   });
+
+  useEffect(() => {
+    setParser({ id: userQuery?.data?.id, name: userQuery?.data?.displayName });
+  }, [userQuery?.data?.id, setParser]);
 
   if (!userQuery?.data) return null;
 

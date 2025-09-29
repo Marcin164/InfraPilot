@@ -1,18 +1,29 @@
-import React from "react";
+import { useEffect } from "react";
 import DeviceNavbar from "../../../Components/Navbar/DeviceNavbar";
 import { Outlet, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getDevice } from "../../../Services/devices";
+import { useParser } from "../../../Hooks/useParser";
 
 type Props = {};
 
 const Details = (props: Props) => {
   const params = useParams();
+  const { setParser } = useParser();
 
   const deviceQuery = useQuery({
     queryKey: ["device"],
     queryFn: () => getDevice("", params.id),
   });
+
+  useEffect(() => {
+    setParser({
+      id: deviceQuery?.data?.id,
+      name: deviceQuery?.data?.system.hostname,
+    });
+
+    return () => {};
+  }, [deviceQuery?.data?.id, setParser]);
 
   return (
     <div className="w-full h-[calc(100vh-100px)] p-4">

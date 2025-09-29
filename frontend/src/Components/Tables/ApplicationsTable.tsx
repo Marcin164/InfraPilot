@@ -45,7 +45,11 @@ const ApplicationsTable = () => {
     <MainTable
       columns={columns}
       data={applicationsQuery?.data}
-      onRowClicked={(row: any) => navigate(`/applications/${row.id}`)}
+      onRowClicked={(row: any) =>
+        navigate(`/applications/${row.id}`, {
+          state: { changeValue: row.name, changeIndex: row.id },
+        })
+      }
     />
   );
 };

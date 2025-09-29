@@ -53,7 +53,14 @@ const UsersTable = (props: Props) => {
     <MainTable
       columns={columns}
       data={userQuery?.data}
-      onRowClicked={(row: any) => navigate(`/users/${row.users_id}`)}
+      onRowClicked={(row: any) =>
+        navigate(`/users/${row.users_id}`, {
+          state: {
+            changeValue: row.users_displayName,
+            changeIndex: row.users_id,
+          },
+        })
+      }
     />
   );
 };

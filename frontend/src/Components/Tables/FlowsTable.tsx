@@ -36,6 +36,7 @@ const FlowsTable = (props: Props) => {
 
   const data = [
     {
+      id: 1,
       name: "Flow 1",
       creator: "nowakowskim",
       state: true,
@@ -47,7 +48,7 @@ const FlowsTable = (props: Props) => {
     <MainTable
       columns={columns}
       data={data}
-      onRowClicked={(row: any) => navigate(`/flow/${row.id}`)}
+      onRowClicked={(row: any) => navigate(`/flows/${row.id}`)}
     />
   );
 };

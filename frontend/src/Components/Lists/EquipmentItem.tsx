@@ -33,7 +33,7 @@ const EquipmentItem = ({
   };
 
   return (
-    <Link to={`/devices/${id}`} className="py-1">
+    <Link to={`/devices/${id}/system`} className="py-1">
       <FontAwesomeIcon
         icon={getDeviceIcon(subgroup)}
         className="pr-2 text-[#535353]"

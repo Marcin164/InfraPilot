@@ -16,32 +16,37 @@ import Events from "./Pages/Main/Devices/Details/Events";
 import History from "./Pages/Main/Devices/Details/History";
 import Applications from "./Pages/Main/Applications";
 import ApplicationsDetails from "./Pages/Main/Applications/Details";
+import FlowsDetails from "./Pages/Main/Flows/Details";
+import { ParseProvider } from "./Hooks/useParser";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Main />}>
-          <Route path="/dashboards" element={<Dashboards />} />
-          <Route path="/users" element={<Users />} />
-          <Route path="/users/:id" element={<UserDetails />} />
-          <Route path="/devices" element={<Devices />} />
-          <Route path="/devices/:id" element={<DeviceDetails />}>
-            <Route path="systeminfo" element={<SystemInfo />} />
-            <Route path="hardware" element={<Hardware />} />
-            <Route path="software" element={<Software />} />
-            <Route path="network" element={<Network />} />
-            <Route path="security" element={<Security />} />
-            <Route path="events" element={<Events />} />
-            <Route path="history" element={<History />} />
+    <ParseProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Main />}>
+            <Route path="/dashboards" element={<Dashboards />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/users/:id" element={<UserDetails />} />
+            <Route path="/devices" element={<Devices />} />
+            <Route path="/devices/:id" element={<DeviceDetails />}>
+              <Route path="system" element={<SystemInfo />} />
+              <Route path="hardware" element={<Hardware />} />
+              <Route path="software" element={<Software />} />
+              <Route path="network" element={<Network />} />
+              <Route path="security" element={<Security />} />
+              <Route path="events" element={<Events />} />
+              <Route path="history" element={<History />} />
+            </Route>
+            <Route path="/applications" element={<Applications />} />
+            <Route path="/applications/:id" element={<ApplicationsDetails />} />
+            <Route path="/flows" element={<Flows />} />
+            <Route path="/flows/:id" element={<FlowsDetails />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
-          <Route path="/applications" element={<Applications />} />
-          <Route path="/applications/:id" element={<ApplicationsDetails />} />
-          <Route path="/flows" element={<Flows />} />
-          <Route path="/settings" element={<Settings />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </ParseProvider>
   );
 }
 

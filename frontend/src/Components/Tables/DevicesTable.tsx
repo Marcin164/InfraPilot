@@ -62,7 +62,7 @@ const DevicesTable = () => {
     <MainTable
       columns={columns}
       data={deviceQuery?.data}
-      onRowClicked={(row: any) => navigate(`/devices/${row.id}/systeminfo`)}
+      onRowClicked={(row: any) => navigate(`/devices/${row.id}/system`)}
     />
   );
 };
