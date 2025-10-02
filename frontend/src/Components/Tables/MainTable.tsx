@@ -26,7 +26,7 @@ const MainTable = ({ columns, data, onRowClicked, className = "" }: Props) => {
     rows: {
       style: {
         minHeight: "48px",
-        borderBottomColor: "#eee",
+        borderBottomColor: "#eeeeee",
         transition: "all 0.2s ease-in-out",
         margin: "5px 0 5px 0",
         borderRadius: "10px",
