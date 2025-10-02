@@ -32,7 +32,7 @@ const Filter = ({ filterData, setFilters, filterOptions }: Props) => {
   return (
     <div ref={modalRef} className="relative">
       <button
-        className="w-[50px] h-[50px] bg-[#FFFFFF] outline-none shadow-xl rounded-[10px] text-[20px] text-[#3C3C3C] cursor-pointer hover:bg-[#D7EEFF]/50 hover:text-[#2B9AE9]"
+        className="w-[34px] h-[34px] bg-[#FFFFFF] outline-none shadow-xl rounded-[10px] text-[16px] text-[#3C3C3C] cursor-pointer hover:bg-[#D7EEFF]/50 hover:text-[#2B9AE9]"
         onClick={toggleFilterModal}
       >
         <FontAwesomeIcon icon={faFilter} />

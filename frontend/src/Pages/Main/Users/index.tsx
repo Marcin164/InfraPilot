@@ -1,6 +1,7 @@
 import UsersTable from "../../../Components/Tables/UsersTable";
 import Search from "../../../Components/Inputs/Search";
 import Filter from "../../../Components/Filter";
+import TableSettings from "../../../Components/TableSettings";
 import { useQuery } from "@tanstack/react-query";
 import { getFilter, getUsersTable } from "../../../Services/users";
 import { useState } from "react";
@@ -57,14 +58,15 @@ const index = () => {
   };
 
   return (
-    <div className="w-full px-4">
-      <div className="pt-4 pb-8 flex">
+    <div className="w-full h-[calc(100vh-100px)] px-4">
+      <div className="pt-4 pb-4 flex">
         <Filter
           filterData={filterQuery?.data}
           setFilters={toggleFilterOptions}
           filterOptions={filterOptions}
         />
         <Search onChange={getSearchValue} />
+        <TableSettings />
       </div>
       <UsersTable
         data={userQuery?.data}

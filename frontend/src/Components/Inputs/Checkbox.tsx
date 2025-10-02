@@ -55,7 +55,7 @@ const Checkbox = ({
           </svg>
         </span>
 
-        {label && <span>{label}</span>}
+        {label && <span className="font-light">{label}</span>}
       </label>
     </div>
   );

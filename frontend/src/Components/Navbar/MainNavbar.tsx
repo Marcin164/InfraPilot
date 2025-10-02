@@ -6,7 +6,7 @@ type Props = {};
 
 const MainNavbar = (props: Props) => {
   return (
-    <div className="w-[300px] bg-[#FFFFFF] px-2">
+    <div className="w-[240px] h-screen bg-[#FFFFFF] px-2">
       {navbarItems.map((navbarItem) => (
         <NavbarLink
           to={navbarItem.to}

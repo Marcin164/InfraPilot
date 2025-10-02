@@ -3,11 +3,12 @@ import React from "react";
 type Props = {
   label: string;
   type?: "text" | "number";
+  className?: string;
 };
 
-const Input = ({ type = "text", label }: Props) => {
+const Input = ({ type = "text", label, className = "" }: Props) => {
   return (
-    <div>
+    <div className={className}>
       <label className="font-bold text-[#3C3C3C]">{label}</label>
       <input
         type={type}

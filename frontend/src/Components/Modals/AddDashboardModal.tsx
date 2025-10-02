@@ -4,15 +4,15 @@ import Input from "../Inputs/Input";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 
 type Props = {
-  openModal: any;
+  isModalOpen: any;
   onCloseModal: any;
 };
 
-const AddDashboardModal = ({ openModal, onCloseModal }: Props) => {
+const AddDashboardModal = ({ isModalOpen, onCloseModal }: Props) => {
   return (
     <Modal
       classNames={{ modal: "w-[500px]" }}
-      open={openModal}
+      open={isModalOpen}
       onClose={onCloseModal}
       center
     >

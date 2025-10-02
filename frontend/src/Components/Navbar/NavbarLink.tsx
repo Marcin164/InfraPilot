@@ -14,8 +14,8 @@ const NavbarLink = ({ to, label, icon, alignment = "horizontal" }: Props) => {
     <NavLink
       className={({ isActive }) =>
         isActive
-          ? "text-[#2B9AE9] bg-[#D7EEFF]/50 text-[20px] p-2 block rounded-[10px]"
-          : "text-[#535353] text-[20px] p-2 block"
+          ? "text-[#2B9AE9] bg-[#D7EEFF]/50 text-[16px] px-2 py-[1px] block rounded-[10px]"
+          : "text-[#535353] text-[16px] px-2 py-[1px] block"
       }
       to={to}
     >

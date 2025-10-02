@@ -1,15 +1,15 @@
 import { Modal } from "react-responsive-modal";
 
 type Props = {
-  openModal: any;
+  isModalOpen: any;
   onCloseModal: any;
 };
 
-const EditDashboardModal = ({ openModal, onCloseModal }: Props) => {
+const EditDashboardModal = ({ isModalOpen, onCloseModal }: Props) => {
   return (
     <Modal
       classNames={{ modal: "w-[500px]" }}
-      open={openModal}
+      open={isModalOpen}
       onClose={onCloseModal}
       center
     >

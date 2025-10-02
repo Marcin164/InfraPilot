@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router";
 import MainTable from "./MainTable";
 import moment from "moment";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUser } from "@fortawesome/free-solid-svg-icons";
 
 type Props = { data: any; filterOptions: any; searchValue: string };
 
@@ -38,7 +40,11 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
 
   const columns = [
     {
-      cell: (row: any) => <div className="">{row.image}</div>,
+      cell: (row: any) => (
+        <div className="">
+          <FontAwesomeIcon icon={faUser} />
+        </div>
+      ),
       width: "60px",
     },
     {

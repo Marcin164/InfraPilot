@@ -41,11 +41,11 @@ const DashboardTopbar = () => {
         />
       </div>
       <AddDashboardModal
-        openModal={isOpenAddDashboardModal}
+        isModalOpen={isOpenAddDashboardModal}
         onCloseModal={onOpenAddDashboardModal}
       />
       <EditDashboardModal
-        openModal={isOpenEditDashboardModal}
+        isModalOpen={isOpenEditDashboardModal}
         onCloseModal={onOpenEditDashboardModal}
       />
     </div>
