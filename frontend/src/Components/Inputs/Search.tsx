@@ -1,19 +1,17 @@
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-type Props = {};
+type Props = { onChange: any };
 
-const Search = (props: Props) => {
+const Search = ({ onChange }: Props) => {
   return (
-    <div className="w-fit shadow-xl rounded-[10px] flex mx-2">
+    <div className="w-[400px] bg-[#FFFFFF] shadow-xl rounded-[10px] flex mx-2">
       <input
         type="text"
         placeholder="Search..."
-        className="w-[310px] h-[50px] pl-4 bg-[#FFFFFF] outline-none rounded-l-[10px] text-[20px] text-[#3C3C3C]"
+        className="h-[50px] pl-4 outline-none rounded-l-[10px] text-[20px] text-[#3C3C3C]"
+        onChange={onChange}
       />
-      <button className="bg-[#FFFFFF] h-[50px] w-[50px] flex items-center justify-center rounded-r-[10px] cursor-pointer">
-        <FontAwesomeIcon icon={faSearch} />
-      </button>
     </div>
   );
 };

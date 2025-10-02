@@ -17,11 +17,17 @@ const index = () => {
     postalCode: [],
     manager: [],
   });
+  const [searchValue, setSearchValue] = useState("");
 
   const userQuery = useQuery({ queryKey: ["users"], queryFn: getUsersTable });
   const filterQuery = useQuery({ queryKey: ["filter"], queryFn: getFilter });
 
   if (!userQuery?.data && userQuery?.data?.length <= 0) return null;
+
+  const getSearchValue = (e: any) => {
+    const value = e.target.value;
+    setSearchValue(value);
+  };
 
   const toggleFilterOptions = (e: any) => {
     const targetValue: any = e.target.value;
@@ -58,9 +64,13 @@ const index = () => {
           setFilters={toggleFilterOptions}
           filterOptions={filterOptions}
         />
-        <Search />
+        <Search onChange={getSearchValue} />
       </div>
-      <UsersTable data={userQuery?.data} filterOptions={filterOptions} />
+      <UsersTable
+        data={userQuery?.data}
+        filterOptions={filterOptions}
+        searchValue={searchValue}
+      />
     </div>
   );
 };

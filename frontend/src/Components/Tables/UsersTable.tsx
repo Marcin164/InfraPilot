@@ -2,20 +2,33 @@ import { useNavigate } from "react-router";
 import MainTable from "./MainTable";
 import moment from "moment";
 
-type Props = { data: any; filterOptions: any };
+type Props = { data: any; filterOptions: any; searchValue: string };
 
-const UsersTable = ({ data, filterOptions }: Props) => {
+const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
   let navigate = useNavigate();
 
-  const getFilteredData = () => {
+  const getSearchedData = () => {
+    if (!searchValue) return data;
+
+    return data.filter((d: any) =>
+      Object.values(d).some((value: any) => {
+        if (typeof value === "string") {
+          return value.toLowerCase().includes(searchValue.toLowerCase());
+        }
+        return false;
+      })
+    );
+  };
+
+  const getFilteredData = (_data: any) => {
     const arrayLength = Object.values(filterOptions).reduce(
       (acc, arr: any) => acc + arr.length,
       0
     );
 
-    if (arrayLength === 0) return data;
+    if (arrayLength === 0) return _data;
 
-    return data.filter((d: any) =>
+    return _data.filter((d: any) =>
       Object.entries(filterOptions).every(([key, optionsArray]: any) => {
         if (!optionsArray.length) return true;
         return optionsArray.includes(d[key]);
@@ -61,7 +74,7 @@ const UsersTable = ({ data, filterOptions }: Props) => {
   return (
     <MainTable
       columns={columns}
-      data={getFilteredData()}
+      data={getFilteredData(getSearchedData())}
       onRowClicked={(row: any) => navigate(`/users/${row.id}`)}
     />
   );
