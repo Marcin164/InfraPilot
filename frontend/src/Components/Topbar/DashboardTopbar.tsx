@@ -22,11 +22,17 @@ const DashboardTopbar = () => {
     setIsOpenEditDashboardModal((prev) => !prev);
 
   return (
-    <div className="h-[100px] flex justify-between items-center">
+    <div className="py-2 flex justify-between items-center">
       <div className="w-[360px] text-[28px]">
-        <FontAwesomeIcon icon={faAngleLeft} className="px-4" />
-        <span>Main Dashboard</span>
-        <FontAwesomeIcon icon={faAngleRight} className="px-4" />
+        <button className="w-[34px] h-[34px] bg-[#FFFFFF] outline-none shadow-xl rounded-[10px] text-[16px] text-[#3C3C3C] cursor-pointer hover:bg-[#D7EEFF]/50 hover:text-[#2B9AE9]">
+          <FontAwesomeIcon icon={faAngleLeft} />
+        </button>
+        <span className="h-[34px] px-2 shadow-xl bg-[#FFFFFF] text-[20px] text-[#3C3C3C] mx-2">
+          Main dashboard
+        </span>
+        <button className="w-[34px] h-[34px] bg-[#FFFFFF] outline-none shadow-xl rounded-[10px] text-[16px] text-[#3C3C3C] cursor-pointer hover:bg-[#D7EEFF]/50 hover:text-[#2B9AE9]">
+          <FontAwesomeIcon icon={faAngleRight} />
+        </button>
       </div>
       <div className="flex">
         <ButtonPrimary

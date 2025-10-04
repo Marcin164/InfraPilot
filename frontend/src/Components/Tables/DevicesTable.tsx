@@ -3,10 +3,16 @@ import { useNavigate } from "react-router";
 import moment from "moment";
 import { getDevices } from "../../Services/devices";
 import { useQuery } from "@tanstack/react-query";
+import { useAuthInfo } from "@propelauth/react";
 
 const DevicesTable = () => {
   let navigate = useNavigate();
-  const deviceQuery = useQuery({ queryKey: ["devices"], queryFn: getDevices });
+  const authInfo = useAuthInfo();
+
+  const deviceQuery = useQuery({
+    queryKey: ["devices"],
+    queryFn: () => getDevices(authInfo.accessToken),
+  });
 
   const columns = [
     {

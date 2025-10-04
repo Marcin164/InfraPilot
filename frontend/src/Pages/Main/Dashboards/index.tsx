@@ -14,8 +14,9 @@ const Index = () => {
     { i: "2", x: 0, y: 5, w: 6, h: 6, minW: 6, maxW: 6, minH: 4, maxH: 10 },
     { i: "3", x: 3, y: 0, w: 2, h: 2, minW: 2, maxW: 6, minH: 2, maxH: 8 },
   ];
+
   return (
-    <div className="w-[calc(100vw-300px)] min-h-[calc(100vh-100px)] px-4">
+    <div className="w-[calc(100vw-240px)] px-4">
       <DashboardTopbar />
       <ReactGridLayout
         className="layout"

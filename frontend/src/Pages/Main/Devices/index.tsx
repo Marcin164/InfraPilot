@@ -15,8 +15,8 @@ const index = (props: Props) => {
   }, []);
 
   return (
-    <div className="w-full px-4">
-      <div className="pt-4 pb-8 flex">
+    <div className="w-full h-[calc(100vh-58px)] px-4">
+      <div className="pt-4 pb-4 flex">
         <Filter />
         <Search />
       </div>

@@ -5,9 +5,9 @@ export const getDevices = async (token: any) => {
     const result = await axios({
       method: "get",
       url: "http://localhost:3000/devices/",
-      //   headers: {
-      //     authorization: `Bearer ${token}`,
-      //   },
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
     });
 
     return result.data;
@@ -21,9 +21,9 @@ export const getDevicesByOwner = async (token: any, idUser: string) => {
     const result = await axios({
       method: "get",
       url: `http://localhost:3000/devices/user/${idUser}`,
-      //   headers: {
-      //     authorization: `Bearer ${token}`,
-      //   },
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
     });
 
     return result.data;
@@ -37,9 +37,9 @@ export const getDevice = async (token: any, idUser: any) => {
     const result = await axios({
       method: "get",
       url: `http://localhost:3000/devices/${idUser}`,
-      //   headers: {
-      //     authorization: `Bearer ${token}`,
-      //   },
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
     });
 
     return result.data;
@@ -53,9 +53,9 @@ export const getDevicesWithApplication = async (token: any, id: any) => {
     const result = await axios({
       method: "get",
       url: `http://localhost:3000/devices/application/${id}`,
-      //   headers: {
-      //     authorization: `Bearer ${token}`,
-      //   },
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
     });
 
     return result.data;

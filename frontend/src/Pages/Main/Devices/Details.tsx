@@ -4,6 +4,7 @@ import { Outlet, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getDevice } from "../../../Services/devices";
 import { useParser } from "../../../Hooks/useParser";
+import { useAuthInfo } from "@propelauth/react";
 
 type Props = {};
 
@@ -11,9 +12,11 @@ const Details = (props: Props) => {
   const params = useParams();
   const { setParser } = useParser();
 
+  const authInfo = useAuthInfo();
+
   const deviceQuery = useQuery({
     queryKey: ["device"],
-    queryFn: () => getDevice("", params.id),
+    queryFn: () => getDevice(authInfo.accessToken, params.id),
   });
 
   useEffect(() => {
@@ -26,7 +29,7 @@ const Details = (props: Props) => {
   }, [deviceQuery?.data?.id, setParser]);
 
   return (
-    <div className="w-full h-[calc(100vh-100px)] p-4">
+    <div className="w-full p-4">
       <DeviceNavbar />
       <div className="py-4 w-full">
         <Outlet context={deviceQuery} />

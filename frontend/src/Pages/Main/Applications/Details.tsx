@@ -5,28 +5,29 @@ import { getApplication } from "../../../Services/applications";
 import Parameter from "../../../Components/Lists/Parameter";
 import InstalledOnTable from "../../../Components/Tables/InstalledOnTable";
 import { getDevicesWithApplication } from "../../../Services/devices";
+import { useAuthInfo } from "@propelauth/react";
 
 type Props = {};
 
 const Details = (props: Props) => {
   const params: any = useParams();
+  const authInfo = useAuthInfo();
   const applicationQuery = useQuery({
     queryKey: ["application"],
-    queryFn: () => getApplication("", params.id),
+    queryFn: () => getApplication(authInfo.accessToken, params.id),
   });
 
   const devicesWithApplicationQuery = useQuery({
     queryKey: ["devicesWithApplication"],
-    queryFn: () => getDevicesWithApplication("", params.id),
+    queryFn: () => getDevicesWithApplication(authInfo.accessToken, params.id),
   });
 
   if (!applicationQuery?.data) return null;
 
-  console.log(devicesWithApplicationQuery?.data);
   const app = applicationQuery?.data;
 
   return (
-    <div className="h-[calc(100vh-100px)] grid grid-cols-2 gap-x-4 p-4">
+    <div className="h-full grid grid-cols-2 gap-x-4 p-4">
       <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
         <div className="text-[30px] font-semibold text-[#3C3C3C]">
           {app.name}

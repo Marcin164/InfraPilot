@@ -5,6 +5,7 @@ import TableSettings from "../../../Components/TableSettings";
 import { useQuery } from "@tanstack/react-query";
 import { getFilter, getUsersTable } from "../../../Services/users";
 import { useState } from "react";
+import { useAuthInfo } from "@propelauth/react";
 
 const index = () => {
   const [filterOptions, setFilterOptions] = useState({
@@ -20,8 +21,16 @@ const index = () => {
   });
   const [searchValue, setSearchValue] = useState("");
 
-  const userQuery = useQuery({ queryKey: ["users"], queryFn: getUsersTable });
-  const filterQuery = useQuery({ queryKey: ["filter"], queryFn: getFilter });
+  const authInfo = useAuthInfo();
+
+  const userQuery = useQuery({
+    queryKey: ["users"],
+    queryFn: () => getUsersTable(authInfo.accessToken),
+  });
+  const filterQuery = useQuery({
+    queryKey: ["filter"],
+    queryFn: () => getFilter(authInfo.accessToken),
+  });
 
   if (!userQuery?.data && userQuery?.data?.length <= 0) return null;
 
@@ -58,7 +67,7 @@ const index = () => {
   };
 
   return (
-    <div className="w-full h-[calc(100vh-100px)] px-4">
+    <div className="w-full h-[calc(100vh-58px)] px-4">
       <div className="pt-4 pb-4 flex">
         <Filter
           filterData={filterQuery?.data}

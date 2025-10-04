@@ -21,9 +21,9 @@ export const getApplication = async (token: any, id: any) => {
     const result = await axios({
       method: "get",
       url: `http://localhost:3000/applications/${id}`,
-      //   headers: {
-      //     authorization: `Bearer ${token}`,
-      //   },
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
     });
 
     return result.data;

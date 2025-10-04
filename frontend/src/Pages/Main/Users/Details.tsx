@@ -7,18 +7,22 @@ import { useParams } from "react-router";
 import { getDevicesByOwner } from "../../../Services/devices";
 import { useEffect } from "react";
 import { useParser } from "../../../Hooks/useParser";
+import { useAuthInfo } from "@propelauth/react";
 
 const Details = () => {
   const params: any = useParams();
   const { setParser } = useParser();
+
+  const authInfo = useAuthInfo();
+
   const userQuery = useQuery({
     queryKey: ["user"],
-    queryFn: () => getUser("", params.id),
+    queryFn: () => getUser(authInfo.accessToken, params.id),
   });
 
   const userDevices = useQuery({
     queryKey: ["userDevice"],
-    queryFn: () => getDevicesByOwner("", params.id),
+    queryFn: () => getDevicesByOwner(authInfo.accessToken, params.id),
   });
 
   useEffect(() => {
@@ -28,7 +32,7 @@ const Details = () => {
   if (!userQuery?.data) return null;
 
   return (
-    <div className="h-[calc(100vh-100px)] grid grid-cols-3 gap-x-4 p-4">
+    <div className="grid grid-cols-3 gap-x-4 p-4">
       <UserInfo {...userQuery.data} />
       <Equipment
         devices={userDevices.data}

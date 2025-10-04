@@ -5,9 +5,9 @@ export const getUsers = async (token: any) => {
     const result = await axios({
       method: "get",
       url: "http://localhost:3000/users/",
-      //   headers: {
-      //     authorization: `Bearer ${token}`,
-      //   },
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
     });
 
     return result.data;
@@ -21,9 +21,9 @@ export const getUsersTable = async (token: any) => {
     const result = await axios({
       method: "get",
       url: "http://localhost:3000/users/table",
-      //   headers: {
-      //     authorization: `Bearer ${token}`,
-      //   },
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
     });
 
     return result.data;
@@ -37,9 +37,9 @@ export const getUser = async (token: any, id: string) => {
     const result = await axios({
       method: "get",
       url: `http://localhost:3000/users/${id}`,
-      //   headers: {
-      //     authorization: `Bearer ${token}`,
-      //   },
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
     });
 
     return result.data;
@@ -53,9 +53,9 @@ export const getFilter = async (token: any) => {
     const result = await axios({
       method: "get",
       url: `http://localhost:3000/users/filters`,
-      //   headers: {
-      //     authorization: `Bearer ${token}`,
-      //   },
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
     });
 
     return result.data;

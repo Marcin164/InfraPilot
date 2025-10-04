@@ -1,10 +1,11 @@
 import React from "react";
-import { useLocation, useParams, useResolvedPath } from "react-router";
+import { useLocation } from "react-router";
 import { capitalize, splitPath } from "../../Helpers/string";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import Search from "../Inputs/Search";
 import { useParser } from "../../Hooks/useParser";
+import AccountButton from "./AccountButton";
 
 type Props = {};
 
@@ -14,7 +15,7 @@ const index = (props: Props) => {
   const { parser } = useParser();
 
   return (
-    <div className="h-[100px] flex items-center justify-between bg-[#FFFFFF] px-4">
+    <div className="flex items-center justify-between bg-[#FFFFFF] px-4 py-3">
       <div className="capitalize">
         {breadCrumbs.map((breadCrumb: string, index: number) => (
           <span
@@ -30,8 +31,9 @@ const index = (props: Props) => {
           </span>
         ))}
       </div>
-      <div>
-        <Search />
+      <div className="flex">
+        <Search onChange={() => {}} className="border border-[#EFEFEF]" />
+        <AccountButton />
       </div>
     </div>
   );

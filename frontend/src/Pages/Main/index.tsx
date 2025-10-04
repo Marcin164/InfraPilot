@@ -11,7 +11,9 @@ const index = (props: Props) => {
       <MainNavbar />
       <div className="w-full bg-[#F6F6F6]">
         <Topbar />
-        <Outlet />
+        <div className="h-[calc(100vh-58px)]">
+          <Outlet />
+        </div>
       </div>
     </div>
   );
