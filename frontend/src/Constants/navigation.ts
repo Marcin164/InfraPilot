@@ -4,6 +4,7 @@ import {
   faCode,
   faComputer,
   faComputerMouse,
+  faFileAlt,
   faGear,
   faHardDrive,
   faHistory,
@@ -39,6 +40,11 @@ export const navbarItems = [
     to: "/flows",
     label: "Flows",
     icon: faRobot,
+  },
+  {
+    to: "/forms",
+    label: "Forms",
+    icon: faFileAlt,
   },
   {
     to: "/history",

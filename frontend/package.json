@@ -28,6 +28,7 @@
     "react-responsive-modal": "^7.0.0",
     "react-router": "^7.5.3",
     "react-router-dom": "^7.5.3",
+    "react-select": "^5.10.2",
     "react-spinners": "^0.17.0",
     "react-vertical-timeline-component": "^3.5.3",
     "reactflow": "^11.11.4",

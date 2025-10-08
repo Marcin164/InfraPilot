@@ -3,12 +3,15 @@ import MainTable from "./MainTable";
 import { useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getApplicationsTable } from "../../Services/applications";
+import { useAuthInfo } from "@propelauth/react";
 
 const ApplicationsTable = () => {
   let navigate = useNavigate();
+  const authInfo = useAuthInfo();
+
   const applicationsQuery = useQuery({
     queryKey: ["applications"],
-    queryFn: getApplicationsTable,
+    queryFn: () => getApplicationsTable(authInfo.accessToken),
   });
 
   const columns = [

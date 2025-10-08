@@ -1,10 +1,10 @@
 import axios from "axios";
 
-export const getApplicationsTable = async (token: any) => {
+export const getDashboards = async (token: any) => {
   try {
     const result = await axios({
       method: "get",
-      url: "http://localhost:3000/applications/table",
+      url: "http://localhost:3000/dashboards",
       headers: {
         authorization: `Bearer ${token}`,
       },
@@ -16,14 +16,15 @@ export const getApplicationsTable = async (token: any) => {
   }
 };
 
-export const getApplication = async (token: any, id: any) => {
+export const createDashboard = async (token: any, body: any) => {
   try {
     const result = await axios({
-      method: "get",
-      url: `http://localhost:3000/applications/${id}`,
+      method: "post",
+      url: "http://localhost:3000/dashboards",
       headers: {
         authorization: `Bearer ${token}`,
       },
+      data: body,
     });
 
     return result.data;
