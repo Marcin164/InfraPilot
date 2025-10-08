@@ -63,3 +63,19 @@ export const getDevicesWithApplication = async (token: any, id: any) => {
     return error;
   }
 };
+
+export const getFilter = async (token: any) => {
+  try {
+    const result = await axios({
+      method: "get",
+      url: `http://localhost:3000/devices/filters`,
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    });
+
+    return result.data;
+  } catch (error) {
+    return error;
+  }
+};

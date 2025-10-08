@@ -1,18 +1,16 @@
 import MainTable from "./MainTable";
 import { useNavigate } from "react-router";
 import moment from "moment";
-import { getDevices } from "../../Services/devices";
-import { useQuery } from "@tanstack/react-query";
-import { useAuthInfo } from "@propelauth/react";
+import { getFilteredData, getSearchedData } from "../../Helpers/tables";
 
-const DevicesTable = () => {
+type Props = {
+  data: any;
+  filterOptions: any;
+  searchValue: any;
+};
+
+const DevicesTable = ({ data, filterOptions, searchValue }: Props) => {
   let navigate = useNavigate();
-  const authInfo = useAuthInfo();
-
-  const deviceQuery = useQuery({
-    queryKey: ["devices"],
-    queryFn: () => getDevices(authInfo.accessToken),
-  });
 
   const columns = [
     {
@@ -62,12 +60,10 @@ const DevicesTable = () => {
     },
   ];
 
-  if (!deviceQuery?.data && deviceQuery?.data?.length <= 0) return null;
-
   return (
     <MainTable
       columns={columns}
-      data={deviceQuery?.data}
+      data={getFilteredData(getSearchedData(data, searchValue), filterOptions)}
       onRowClicked={(row: any) => navigate(`/devices/${row.id}/system`)}
     />
   );

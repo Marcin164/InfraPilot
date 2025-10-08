@@ -1,45 +1,3 @@
-export const parseToDeviceTable = (data: any) => {
-  if (!data) return [];
-
-  const deviceTableDataArray = data.map((d: any) => {
-    const deviceTableData = {
-      id: d?.id,
-      device: d?.model,
-      assignee: d?.owner,
-      state: d?.state,
-      assetName: d?.scanInfo
-        ? JSON.parse(d.scanInfo).system_info?.hostname
-        : "",
-      serialNumber: d?.serialNumber,
-      varranty: new Date(),
-    };
-
-    return deviceTableData;
-  });
-
-  return deviceTableDataArray;
-};
-
-export const parseToUsersTable = (data: any) => {
-  if (!data) return [];
-
-  const usersTableDataArray = data.map((d: any) => {
-    const usersTableData = {
-      id: d?.idusers,
-      name: d?.name + " " + d?.surname,
-      username: d?.username,
-      currentDevice: "Macbook M3 Pro",
-      lastLogon: "24/04/2025, 18:25",
-      department: d?.department,
-      office: d?.office,
-    };
-
-    return usersTableData;
-  });
-
-  return usersTableDataArray;
-};
-
 export const parseToSoftwareTable = (data: any) => {
   if (!data) return [];
 
@@ -66,4 +24,33 @@ export const parseToSoftwareTable = (data: any) => {
   });
 
   return usersTableDataArray;
+};
+
+export const getSearchedData = (data: any, searchValue: any) => {
+  if (!searchValue) return data;
+
+  return data.filter((d: any) =>
+    Object.values(d).some((value: any) => {
+      if (typeof value === "string") {
+        return value.toLowerCase().includes(searchValue.toLowerCase());
+      }
+      return false;
+    })
+  );
+};
+
+export const getFilteredData = (data: any, filterOptions: any) => {
+  const arrayLength = Object.values(filterOptions).reduce(
+    (acc, arr: any) => acc + arr.length,
+    0
+  );
+
+  if (arrayLength === 0) return data;
+
+  return data.filter((d: any) =>
+    Object.entries(filterOptions).every(([key, optionsArray]: any) => {
+      if (!optionsArray.length) return true;
+      return optionsArray.includes(d[key]);
+    })
+  );
 };

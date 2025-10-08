@@ -1,18 +1,11 @@
-import React from "react";
 import MainTable from "./MainTable";
 import { useNavigate } from "react-router";
-import { useQuery } from "@tanstack/react-query";
-import { getApplicationsTable } from "../../Services/applications";
-import { useAuthInfo } from "@propelauth/react";
+import { getSearchedData, getFilteredData } from "../../Helpers/tables";
 
-const ApplicationsTable = () => {
+type Props = { data: any; filterOptions: any; searchValue: any };
+
+const ApplicationsTable = ({ data, filterOptions, searchValue }: Props) => {
   let navigate = useNavigate();
-  const authInfo = useAuthInfo();
-
-  const applicationsQuery = useQuery({
-    queryKey: ["applications"],
-    queryFn: () => getApplicationsTable(authInfo.accessToken),
-  });
 
   const columns = [
     {
@@ -41,13 +34,10 @@ const ApplicationsTable = () => {
     },
   ];
 
-  if (!applicationsQuery?.data && applicationsQuery?.data?.length <= 0)
-    return null;
-
   return (
     <MainTable
       columns={columns}
-      data={applicationsQuery?.data}
+      data={getFilteredData(getSearchedData(data, searchValue), filterOptions)}
       onRowClicked={(row: any) =>
         navigate(`/applications/${row.id}`, {
           state: { changeValue: row.name, changeIndex: row.id },

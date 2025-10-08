@@ -3,40 +3,12 @@ import MainTable from "./MainTable";
 import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
+import { getFilteredData, getSearchedData } from "../../Helpers/tables";
 
 type Props = { data: any; filterOptions: any; searchValue: string };
 
 const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
   let navigate = useNavigate();
-
-  const getSearchedData = () => {
-    if (!searchValue) return data;
-
-    return data.filter((d: any) =>
-      Object.values(d).some((value: any) => {
-        if (typeof value === "string") {
-          return value.toLowerCase().includes(searchValue.toLowerCase());
-        }
-        return false;
-      })
-    );
-  };
-
-  const getFilteredData = (_data: any) => {
-    const arrayLength = Object.values(filterOptions).reduce(
-      (acc, arr: any) => acc + arr.length,
-      0
-    );
-
-    if (arrayLength === 0) return _data;
-
-    return _data.filter((d: any) =>
-      Object.entries(filterOptions).every(([key, optionsArray]: any) => {
-        if (!optionsArray.length) return true;
-        return optionsArray.includes(d[key]);
-      })
-    );
-  };
 
   const columns = [
     {
@@ -80,7 +52,7 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
   return (
     <MainTable
       columns={columns}
-      data={getFilteredData(getSearchedData())}
+      data={getFilteredData(getSearchedData(data, searchValue), filterOptions)}
       onRowClicked={(row: any) => navigate(`/users/${row.id}`)}
     />
   );

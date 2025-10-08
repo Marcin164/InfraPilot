@@ -1,8 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import DevicesTable from "../../../Components/Tables/DevicesTable";
 import Filter from "../../../Components/Filter";
 import Search from "../../../Components/Inputs/Search";
 import { useNavigate, useParams } from "react-router";
+import { useAuthInfo } from "@propelauth/react";
+import { useQuery } from "@tanstack/react-query";
+import { getDevices, getFilter } from "../../../Services/devices";
 
 type Props = {};
 
@@ -10,17 +13,83 @@ const index = (props: Props) => {
   const navigate = useNavigate();
   const params = useParams();
 
+  const [filterOptions, setFilterOptions] = useState({
+    group: [],
+    model: [],
+    subgroup: [],
+    state: [],
+    location: [],
+    manufacturer: [],
+  });
+  const [searchValue, setSearchValue] = useState("");
+
+  const authInfo = useAuthInfo();
+
+  const devicesQuery = useQuery({
+    queryKey: ["devices"],
+    queryFn: () => getDevices(authInfo.accessToken),
+  });
+
+  const filterQuery = useQuery({
+    queryKey: ["filter"],
+    queryFn: () => getFilter(authInfo.accessToken),
+  });
+
+  console.log(filterQuery.data);
+
   useEffect(() => {
     params.id && navigate(`/devices/${params.id}/systeminfo`);
   }, []);
 
+  if (!devicesQuery?.data && devicesQuery?.data?.length <= 0) return null;
+
+  const getSearchValue = (e: any) => {
+    const value = e.target.value;
+    setSearchValue(value);
+  };
+
+  const toggleFilterOptions = (e: any) => {
+    const targetValue: any = e.target.value;
+    const targetName: any = e.target.name;
+
+    const _filterOptions: any = { ...filterOptions };
+
+    Object.entries(_filterOptions).map(([key, array]: any) => {
+      const filterOption = array.find(
+        (option: any) => option === e.target.value
+      );
+
+      if (key === targetName) {
+        if (filterOption) {
+          const index = array.indexOf(targetValue);
+
+          if (index !== -1) {
+            array.splice(index, 1);
+          }
+        } else {
+          array.push(targetValue);
+        }
+      }
+    });
+
+    setFilterOptions(_filterOptions);
+  };
+
   return (
     <div className="w-full h-[calc(100vh-58px)] px-4">
       <div className="pt-4 pb-4 flex">
-        <Filter />
-        <Search />
+        <Filter
+          filterData={filterQuery?.data}
+          setFilters={toggleFilterOptions}
+          filterOptions={filterOptions}
+        />
+        <Search onChange={getSearchValue} />
       </div>
-      <DevicesTable />
+      <DevicesTable
+        data={devicesQuery?.data}
+        filterOptions={filterOptions}
+        searchValue={searchValue}
+      />
     </div>
   );
 };
