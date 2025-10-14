@@ -18,6 +18,8 @@ import Applications from "./Pages/Main/Applications";
 import ApplicationsDetails from "./Pages/Main/Applications/Details";
 import FlowsDetails from "./Pages/Main/Flows/Details";
 import { ParseProvider } from "./Hooks/useParser";
+import UsersInfo from "./Pages/Main/Devices/Details/UsersInfo";
+import Peripherals from "./Pages/Main/Devices/Details/Peripherals";
 
 function App() {
   return (
@@ -36,6 +38,8 @@ function App() {
               <Route path="network" element={<Network />} />
               <Route path="security" element={<Security />} />
               <Route path="events" element={<Events />} />
+              <Route path="users" element={<UsersInfo />} />
+              <Route path="peripherals" element={<Peripherals />} />
               <Route path="history" element={<History />} />
             </Route>
             <Route path="/applications" element={<Applications />} />

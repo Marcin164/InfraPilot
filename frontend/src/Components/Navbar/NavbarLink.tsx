@@ -19,8 +19,13 @@ const NavbarLink = ({ to, label, icon, alignment = "horizontal" }: Props) => {
       }
       to={to}
     >
-      <div className={`${alignment == "horizontal" ? "my-2" : "mx-2"}`}>
-        {icon && <FontAwesomeIcon icon={icon} className="w-[20px]" />}
+      <div className={`${alignment == "horizontal" ? "my-2" : "mx-1"}`}>
+        {icon && (
+          <FontAwesomeIcon
+            icon={icon}
+            className={`${alignment == "horizontal" && "w-[20px]"}`}
+          />
+        )}
         <span className="pl-4">{label}</span>
       </div>
     </NavLink>
