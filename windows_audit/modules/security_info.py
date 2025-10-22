@@ -1,4 +1,5 @@
 from utils.powershell_helper import run_ps
+import json
 
 def get_certificates():
     # Certyfikaty w magazynie lokalnym i użytkownika
@@ -22,6 +23,11 @@ def get_secpol():
     out = run_ps("secedit /export /cfg C:\\Windows\\Temp\\secpol.cfg && Get-Content C:\\Windows\\Temp\\secpol.cfg -Raw")
     return out
 
+def get_antivirus():
+    cmd = "Get-CimInstance -Namespace root\\SecurityCenter2 -ClassName AntiVirusProduct| Select displayName,productState,pathToSignedProductExe,instanceGuid | ConvertTo-Json"
+    out = run_ps(cmd)
+    return json.loads(out)
+
 
 def get_security_info():
     data = {}
@@ -32,10 +38,7 @@ def get_security_info():
         data['secpol'] = get_secpol()
 
         # Zainstalowane antywirusy (Windows Security Center)
-        data['antivirus'] = run_ps(
-            'Get-CimInstance -Namespace root\\SecurityCenter2 -ClassName AntiVirusProduct '
-            '| Select displayName,productState,pathToSignedProductExe,instanceGuid | ConvertTo-Json'
-        )
+        data['antivirus'] = get_antivirus()
 
         # Status RDP (czy włączone połączenia zdalne)
         data['rdp_status'] = run_ps(

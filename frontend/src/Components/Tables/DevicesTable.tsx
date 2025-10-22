@@ -38,7 +38,7 @@ const DevicesTable = ({ data, filterOptions, searchValue }: Props) => {
     },
     {
       name: "Asset name",
-      selector: (row: any) => row.system.hostname,
+      selector: (row: any) => row.assetName,
       width: "140px",
     },
     {

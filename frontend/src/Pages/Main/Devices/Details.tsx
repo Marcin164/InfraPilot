@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDevice } from "../../../Services/devices";
 import { useParser } from "../../../Hooks/useParser";
 import { useAuthInfo } from "@propelauth/react";
+import DataLoader from "../../../Components/Loaders/DataLoader";
 
 type Props = {};
 
@@ -27,6 +28,9 @@ const Details = (props: Props) => {
 
     return () => {};
   }, [deviceQuery?.data?.id, setParser]);
+
+  console.log(deviceQuery?.data);
+  if (deviceQuery.isLoading) return <DataLoader />;
 
   return (
     <div className="w-full p-4">

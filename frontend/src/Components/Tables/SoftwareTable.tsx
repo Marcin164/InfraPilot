@@ -1,6 +1,5 @@
 import React from "react";
 import MainTable from "./MainTable";
-import { parseToSoftwareTable } from "../../Helpers/tables";
 
 type Props = { data: any };
 
@@ -12,42 +11,32 @@ const SoftwareTable = ({ data }: Props) => {
     },
     {
       name: "Name",
-      cell: (row: any) => <div className="font-bold">{row.name}</div>,
+      cell: (row: any) => <div className="font-bold">{row.DisplayName}</div>,
       width: "400px",
     },
     {
       name: "Version",
-      selector: (row: any) => row.version,
+      selector: (row: any) => row.DisplayVersion,
     },
     {
       name: "Publisher",
-      selector: (row: any) => row.publisher,
+      selector: (row: any) => row.Publisher,
     },
     {
       name: "Size",
-      selector: (row: any) => row.size,
+      selector: (row: any) => row.EstimatedSize,
       width: "100px",
     },
     {
       name: "Installation date",
-      selector: (row: any) => row.installationDate,
+      cell: (row: any) => row.InstallDate,
     },
   ];
-
-  //   const data = [
-  //     {
-  //       name: "Android Studio",
-  //       version: "2024.2",
-  //       publisher: "Google Inc.",
-  //       size: "7.6 GB",
-  //       installationDate: "30.01.2025",
-  //     },
-  //   ];
 
   return (
     <MainTable
       columns={columns}
-      data={parseToSoftwareTable(data)}
+      data={data}
       onRowClicked={(row: any) => {}}
       className="h-[calc(100vh-270px)]"
     />
