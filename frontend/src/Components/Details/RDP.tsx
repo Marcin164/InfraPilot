@@ -7,9 +7,10 @@ const RDP = ({ rdp }: Props) => {
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
       <div className="text-[20px] font-semibold text-[#2B9AE9]">RDP</div>
-      {Object.entries(rdp).map(([key, value]: any) => (
-        <Parameter name={key} value={value} />
-      ))}
+      <Parameter
+        name="Status"
+        value={rdp.RDP_Enabled ? "Enabled" : "Disabled"}
+      />
     </div>
   );
 };

@@ -7,9 +7,11 @@ const Antivirus = ({ avs }: Props) => {
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
       <div className="text-[20px] font-semibold text-[#2B9AE9]">AV's</div>
       {avs.map((av: any) => (
-        <div className="py-2">
-          <div className="text-[#3C3C3C] text-[16px] font-bold">{`${av.name} (${av.state})`}</div>
-          <div className="text-[#3C3C3C] font-light">{av.path_to_exe}</div>
+        <div className="pt-2">
+          <div className="text-[#3C3C3C] text-[16px] font-bold">{`${av.displayName} (${av.productState})`}</div>
+          <div className="text-[#3C3C3C] font-light">
+            {av.pathToSignedProductExe}
+          </div>
         </div>
       ))}
     </div>

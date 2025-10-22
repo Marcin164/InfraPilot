@@ -7,16 +7,13 @@ def get_certificates():
     certs_user = run_ps("certutil -user -store My")
     return {'local_store': certs_local, 'user_store': certs_user}
 
-
 def get_tpm_info():
     # Informacje o module TPM
-    return run_ps("Get-WmiObject -Namespace root\\cimv2\\security\\microsofttpm -Class Win32_Tpm | ConvertTo-Json")
-
+    return run_ps("Get-WmiObject -Namespace root\CIMV2\Security\MicrosoftTpm -Class Win32_Tpm | ConvertTo-Json")
 
 def get_bitlocker_info():
     # Status szyfrowania dysków
-    return run_ps("manage-bde -status")
-
+    return run_ps("Get-BitLockerVolume | ConvertTo-Json -Depth 3")
 
 def get_secpol():
     # Eksport zasad bezpieczeństwa lokalnych (secpol.msc)
@@ -27,7 +24,6 @@ def get_antivirus():
     cmd = "Get-CimInstance -Namespace root\\SecurityCenter2 -ClassName AntiVirusProduct| Select displayName,productState,pathToSignedProductExe,instanceGuid | ConvertTo-Json"
     out = run_ps(cmd)
     return json.loads(out)
-
 
 def get_security_info():
     data = {}
@@ -41,10 +37,8 @@ def get_security_info():
         data['antivirus'] = get_antivirus()
 
         # Status RDP (czy włączone połączenia zdalne)
-        data['rdp_status'] = run_ps(
-            "Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server' "
-            "-Name fDenyTSConnections | ConvertTo-Json"
-        )
+        data['rdp_status'] = run_ps("[pscustomobject]@{ RDP_Enabled = ((Get-ItemPropertyValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections) -eq 0) } | ConvertTo-Json"
+)
 
         # Windows Hello (biometria, jeśli dostępna)
         data['windows_hello'] = run_ps("Get-WindowsBiometric -ErrorAction SilentlyContinue | ConvertTo-Json")
