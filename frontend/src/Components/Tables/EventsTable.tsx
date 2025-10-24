@@ -47,39 +47,40 @@ const EventsTable = ({ data }: Props) => {
   const columns = [
     {
       name: "Id",
-      selector: (row: any) => row.event_id,
+      selector: (row: any) => row.EventID,
       width: "100px",
     },
     {
       name: "Category",
-      selector: (row: any) => row.event_category,
+      selector: (row: any) => row.Category,
       width: "100px",
     },
     {
       name: "Type",
       cell: (row: any) => (
         <div
-          style={{ background: parseEventType(row?.event_type).background }}
+          style={{ background: parseEventType(row?.EventType).background }}
           className="w-[100px] px-1 py-2 rounded-[10px] text-center text-[#FFFFFF]"
         >
-          {parseEventType(row?.event_type).text}
+          {parseEventType(row?.EventType).text}
         </div>
       ),
       width: "150px",
     },
     {
       name: "Source",
-      selector: (row: any) => row.source,
+      selector: (row: any) => row.SourceName,
       width: "200px",
     },
     {
       name: "Message",
-      selector: (row: any) => row.message,
-      width: "500px",
+      selector: (row: any) =>
+        row?.Strings && row?.Strings?.length > 0 ? row.Strings[0] : "N/A",
+      width: "400px",
     },
     {
       name: "Occurred",
-      selector: (row: any) => row.time_generated,
+      selector: (row: any) => row.TimeGenerated,
     },
   ];
   return <MainTable columns={columns} data={data} />;

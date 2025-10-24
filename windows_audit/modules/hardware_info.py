@@ -1,5 +1,4 @@
 import wmi
-import os
 from utils.powershell_helper import run_ps
 from utils.wmi_helper import get_wmi_connection
 

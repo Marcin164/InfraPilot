@@ -1,5 +1,6 @@
 from utils.powershell_helper import run_ps
 import json
+import wmi
 
 def get_certificates():
     # Certyfikaty w magazynie lokalnym i użytkownika
@@ -25,6 +26,16 @@ def get_antivirus():
     out = run_ps(cmd)
     return json.loads(out)
 
+def get_updates():
+    updates = []
+    for qfe in wmi.WMI().Win32_QuickFixEngineering():
+        updates.append({
+            "hotfix_id": getattr(qfe, "HotFixID", None),
+            "description": getattr(qfe, "Description", None),
+            "installed_on": getattr(qfe, "InstalledOn", None)
+        })
+    return updates
+
 def get_security_info():
     data = {}
     try:
@@ -32,21 +43,13 @@ def get_security_info():
         data['tpm'] = get_tpm_info()
         data['bitlocker'] = get_bitlocker_info()
         data['secpol'] = get_secpol()
-
-        # Zainstalowane antywirusy (Windows Security Center)
         data['antivirus'] = get_antivirus()
-
-        # Status RDP (czy włączone połączenia zdalne)
-        data['rdp_status'] = run_ps("[pscustomobject]@{ RDP_Enabled = ((Get-ItemPropertyValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections) -eq 0) } | ConvertTo-Json"
-)
-
-        # Windows Hello (biometria, jeśli dostępna)
+        data['rdp_status'] = run_ps("[pscustomobject]@{ RDP_Enabled = ((Get-ItemPropertyValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections) -eq 0) } | ConvertTo-Json")
         data['windows_hello'] = run_ps("Get-WindowsBiometric -ErrorAction SilentlyContinue | ConvertTo-Json")
-
-        # Ustawienia profilu zapory
         data['firewall_profile'] = run_ps(
             'Get-NetFirewallProfile | Select Name,Enabled,DefaultInboundAction,DefaultOutboundAction | ConvertTo-Json'
         )
+        data['updates'] = get_updates()
 
     except Exception as e:
         data['error'] = str(e)

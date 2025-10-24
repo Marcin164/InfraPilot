@@ -1,6 +1,4 @@
 import psutil
-import subprocess
-import json
 from utils.powershell_helper import run_ps
 
 

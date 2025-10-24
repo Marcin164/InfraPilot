@@ -10,7 +10,7 @@ const Events = (props: Props) => {
 
   if (!device.data.eventLogs) return null;
   const eventLogs = device.data.eventLogs;
-  const [eventType, setEventType] = useState(eventLogs.system);
+  const [eventType, setEventType] = useState(eventLogs.System);
 
   const toggleEventType = (type: string) => {
     setEventType(() => eventLogs[type]);
@@ -21,15 +21,15 @@ const Events = (props: Props) => {
       <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
         <ButtonPrimary
           text="System"
-          onClick={() => toggleEventType("system")}
+          onClick={() => toggleEventType("System")}
         />
         <ButtonPrimary
           text="Application"
-          onClick={() => toggleEventType("application")}
+          onClick={() => toggleEventType("Application")}
         />
         <ButtonPrimary
           text="Security"
-          onClick={() => toggleEventType("security")}
+          onClick={() => toggleEventType("Security")}
         />
       </div>
       <EventsTable data={eventType} />

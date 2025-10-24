@@ -12,7 +12,7 @@ const Badge = ({ icon, className = "", text }: Props) => {
   return (
     <div
       className={twMerge(
-        "w-fit mr-2 px-2 rounded-[5px] text-[16px] mt-2 text-center text-[#FFFFFF]",
+        "w-fit mr-2 px-2 py-1 rounded-[5px] text-[16px] text-center text-[#FFFFFF]",
         className
       )}
     >
