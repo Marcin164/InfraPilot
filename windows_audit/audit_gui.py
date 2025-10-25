@@ -20,6 +20,7 @@ from modules.software_info import get_software_info
 from modules.network_info import get_network_info
 from modules.security_info import get_security_info
 from modules.events_info import get_events_info
+from modules.peripherals_info import get_peripherals_info
 
 CACHE_FILE = "audit_cache.json"
 ENDPOINT = "http://localhost:3000/devices/agent/data"
@@ -62,11 +63,12 @@ class Worker(QObject):
         cache_hashes = cache.get("hashes", {})
 
         steps = [
-            ("System", get_system_info),
-            ("Hardware", get_hardware_info),
-            ("Software", get_software_info),
-            ("Network", get_network_info),
-            ("Security", get_security_info)
+            # ("System", get_system_info),
+            # ("Hardware", get_hardware_info),
+            # ("Software", get_software_info),
+            # ("Network", get_network_info),
+            # ("Security", get_security_info)
+            ("Peripherals", get_peripherals_info)
         ]
 
         if self.mode == "full":
@@ -101,7 +103,7 @@ class Worker(QObject):
         # wysyłanie danych do API
         try:
             print('wyslano')
-            requests.post(ENDPOINT, json=audit_data, timeout=5)
+            # requests.post(ENDPOINT, json=audit_data, timeout=5)
         except Exception as e:
             audit_data["_upload_error"] = str(e)
 

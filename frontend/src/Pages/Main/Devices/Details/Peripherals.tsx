@@ -1,15 +1,36 @@
-import React from "react";
-import CardHeader from "../../../../Components/Headers/CardHeader";
+import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
+import Mice from "../../../../Components/Details/Mice";
+import { useOutletContext } from "react-router";
+import Keyboards from "../../../../Components/Details/Keyboards";
+import Monitors from "../../../../Components/Details/Monitors";
+import SoundDevices from "../../../../Components/Details/SoundDevices";
+import Printers from "../../../../Components/Details/Printers";
+import USBDevices from "../../../../Components/Details/USBDevices";
+import ExternalDrives from "../../../../Components/Details/ExternalDrives";
 
 type Props = {};
 
 const Peripherals = (props: Props) => {
+  const device: any = useOutletContext();
+
+  if (!device?.data?.peripherals) return null;
+
+  const peripheralsInfo = device?.data?.peripherals;
+
   return (
-    <>
-      <div className="bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-        <CardHeader text="Screen" />
-      </div>
-    </>
+    <div className="w-full cursor-default overflow-x-hidden">
+      <ResponsiveMasonry columnsCountBreakPoints={{ 350: 1, 750: 2, 900: 3 }}>
+        <Masonry>
+          <Mice mice={peripheralsInfo.mice} />
+          <Keyboards keyboards={peripheralsInfo.keyboards} />
+          <Monitors screens={peripheralsInfo.monitors} />
+          <SoundDevices soundDevices={peripheralsInfo.sound_devices} />
+          <Printers printers={peripheralsInfo.printers} />
+          <USBDevices usbDevices={peripheralsInfo.usb_devices} />
+          <ExternalDrives drives={peripheralsInfo.external_drives} />
+        </Masonry>
+      </ResponsiveMasonry>
+    </div>
   );
 };
 

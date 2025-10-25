@@ -7,7 +7,7 @@ type Props = {
 
 const Parameter = ({ name, value }: Props) => {
   return (
-    <div>
+    <div className="overflow-hidden text-ellipsis">
       <span className="capitalize text-[#3C3C3C] font-light">
         {name.replace(/_/g, " ")}:{" "}
       </span>

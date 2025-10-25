@@ -1,6 +1,5 @@
 import subprocess
 
-
 def run_ps(cmd, as_list=False):
     """Uruchamia polecenie PowerShell i zwraca stdout (tekst)."""
     ps = [
