@@ -14,7 +14,7 @@
     "@fortawesome/free-brands-svg-icons": "^7.1.0",
     "@fortawesome/free-regular-svg-icons": "^7.1.0",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
-    "@fortawesome/react-fontawesome": "^0.2.2",
+    "@fortawesome/react-fontawesome": "^0.2.6",
     "@propelauth/react": "^2.0.31",
     "@tailwindcss/vite": "^4.1.4",
     "@tanstack/react-query": "^5.85.5",

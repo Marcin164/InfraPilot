@@ -84,3 +84,7 @@ body {
   border: none !important ;
   background-color: transparent !important ;
 }
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

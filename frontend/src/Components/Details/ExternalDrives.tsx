@@ -1,16 +1,14 @@
 import { faHardDrive } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
+import CardHeader from "../Headers/CardHeader";
 
 type Props = { drives: any };
 
 const ExternalDrives = ({ drives }: Props) => {
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <div className="text-[20px] font-semibold text-[#3C3C3C]">
-        <FontAwesomeIcon className="mr-2" icon={faHardDrive} />
-        <span>External Drives</span>
-      </div>
+      <CardHeader icon={faHardDrive} text="External Drives" />
       {drives.map((drive: any) => (
         <div>
           <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">

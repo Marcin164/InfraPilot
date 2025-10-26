@@ -63,12 +63,12 @@ class Worker(QObject):
         cache_hashes = cache.get("hashes", {})
 
         steps = [
-            # ("System", get_system_info),
+            ("System", get_system_info),
             # ("Hardware", get_hardware_info),
             # ("Software", get_software_info),
             # ("Network", get_network_info),
             # ("Security", get_security_info)
-            ("Peripherals", get_peripherals_info)
+            # ("Peripherals", get_peripherals_info)
         ]
 
         if self.mode == "full":

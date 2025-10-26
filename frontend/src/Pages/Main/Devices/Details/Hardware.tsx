@@ -10,16 +10,16 @@ import BIOS from "../../../../Components/Details/BIOS";
 
 type Props = {};
 
-const SystemInfo = (props: Props) => {
+const Hardware = (props: Props) => {
   const device: any = useOutletContext();
   if (!device?.data?.hardware) return null;
 
   const hardwareInfo = device?.data?.hardware;
 
   return (
-    <div className="w-full cursor-default overflow-x-hidden">
+    <div className="w-full cursor-default ">
       <ResponsiveMasonry columnsCountBreakPoints={{ 350: 1, 750: 2, 900: 3 }}>
-        <Masonry>
+        <Masonry className="scrollbar-hide w-full h-[82vh] overflow-y-scroll pb-4">
           <Disks disks={hardwareInfo.disks} />
           <CPU cpus={hardwareInfo.cpu} />
           <RAM rams={hardwareInfo.ram_modules} />
@@ -32,4 +32,4 @@ const SystemInfo = (props: Props) => {
   );
 };
 
-export default SystemInfo;
+export default Hardware;

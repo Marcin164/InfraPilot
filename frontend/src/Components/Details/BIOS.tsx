@@ -1,21 +1,24 @@
 import React from "react";
+import CardHeader from "../Headers/CardHeader";
+import Parameter from "../Lists/Parameter";
 
 type Props = { bios: any };
 
 const BIOS = ({ bios }: Props) => {
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <div className="text-[30px] font-semibold text-[#3C3C3C]">BIOS</div>
-      {Object.entries(bios).map(([key, value]: any) => (
-        <div>
-          <span className="capitalize text-[#3C3C3C] font-light">
-            {key.replace(/_/g, " ")}:{" "}
-          </span>
-          <span className="text-[#3C3C3C] font-semibold">
-            {typeof value === "boolean" ? (value ? "Yes" : "No") : value}
-          </span>
-        </div>
-      ))}
+      <CardHeader text="BIOS" />
+      <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">
+        {bios.manufacturer}
+      </div>
+      <div className="text-[14px] font-light text-[#3C3C3C] mb-2">
+        {bios.serial_number}
+      </div>
+      <Parameter
+        name="SMBIOS"
+        value={`${bios.smbios_major}.${bios.smbios_minor}`}
+      />
+      <Parameter name="Version" value={bios.version} />
     </div>
   );
 };

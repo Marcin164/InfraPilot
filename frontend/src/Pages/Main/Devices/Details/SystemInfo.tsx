@@ -1,6 +1,8 @@
 import React from "react";
 import { useOutletContext } from "react-router";
-import Parameter from "../../../../Components/Lists/Parameter";
+import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
+import System from "../../../../Components/Details/OS";
+import AD from "../../../../Components/Details/AD";
 
 type Props = {};
 
@@ -11,13 +13,13 @@ const SystemInfo = ({}: Props) => {
   const systemInfo = device.data.system;
 
   return (
-    <div className="w-[600px] bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <div className="text-[30px] font-semibold text-[#3C3C3C]">
-        System Info
-      </div>
-      {Object.entries(systemInfo).map(([key, value]: any) => (
-        <Parameter name={key} value={value} />
-      ))}
+    <div className="w-full cursor-default ">
+      <ResponsiveMasonry columnsCountBreakPoints={{ 350: 1, 750: 2, 900: 3 }}>
+        <Masonry className="scrollbar-hide w-full h-[82vh] overflow-y-scroll pb-4">
+          <System systemInfo={systemInfo} />
+          <AD />
+        </Masonry>
+      </ResponsiveMasonry>
     </div>
   );
 };

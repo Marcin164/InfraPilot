@@ -24,15 +24,15 @@ const Partitions = ({
 
   return (
     <div>
-      <div>{`${volume_name} ${device_id} (${file_system})`}</div>
+      <div className="text-[#3C3C3C] font-semibold">{`${device_id} ${volume_name} (${file_system})`}</div>
       <div>
-        <div className="w-[300px] h-[14px] bg-[#D9D9D9]">
+        <div className="w-[300px] h-[20px] bg-[#D9D9D9] rounded-[5px] overflow-hidden">
           <div
+            className="h-[20px] bg-[#2B9AE9]"
             style={{ width: (used_space / total_size) * 100 }}
-            className="h-[14px] bg-[#BC0E0E]"
           />
         </div>
-        <div>
+        <div className="text-[#3C3C3C] font-semibold">
           {`used: ${Math.round(
             bytesToGigaBytes(used_space)
           )} GB, free: ${Math.round(bytesToGigaBytes(free_space))} GB`}
