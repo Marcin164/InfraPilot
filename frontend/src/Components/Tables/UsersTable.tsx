@@ -9,6 +9,7 @@ type Props = { data: any; filterOptions: any; searchValue: string };
 
 const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
   let navigate = useNavigate();
+  console.log(data);
 
   const columns = [
     {
@@ -21,7 +22,9 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
     },
     {
       name: "Name",
-      cell: (row: any) => <div className="font-bold">{row.displayname}</div>,
+      cell: (row: any) => (
+        <div className="font-bold">{`${row.name} ${row.surname}`}</div>
+      ),
     },
     {
       name: "Username",
@@ -41,11 +44,11 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
     },
     {
       name: "Department",
-      selector: (row: any) => row.department,
+      selector: (row: any) => row.department || "N/A",
     },
     {
       name: "Office",
-      selector: (row: any) => row.office,
+      selector: (row: any) => row.office || "N/A",
     },
   ];
 

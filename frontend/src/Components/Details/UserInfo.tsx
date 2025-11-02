@@ -1,16 +1,24 @@
 import {
   faCheckCircle,
+  faCity,
+  faCrown,
   faEnvelope,
   faFile,
   faHome,
   faPhone,
+  faTowerBroadcast,
+  faTowerCell,
+  faUserDoctor,
   faXmarkCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { twMerge } from "tailwind-merge";
+import Badge from "../Badges/Badge";
+import Parameter from "../Lists/Parameter";
 
 type Props = {
-  displayName: string;
+  name: string;
+  surname: string;
   enabled: boolean;
   department: string;
   email: string;
@@ -21,10 +29,13 @@ type Props = {
   username: string;
   distinguishedName: string;
   memberOf: any;
+  company: string;
+  manager: string;
 };
 
 const UserInfo = ({
-  displayName,
+  name,
+  surname,
   enabled,
   department,
   email,
@@ -34,6 +45,8 @@ const UserInfo = ({
   city,
   username,
   distinguishedName,
+  company,
+  manager,
   memberOf = [],
 }: Props) => {
   return (
@@ -42,7 +55,7 @@ const UserInfo = ({
         <img src="#" className="w-[85px] h-[85px]" />
         <div className="px-4">
           <div className="font-extrabold text-[#3C3C3C] text-[20px]">
-            {displayName}
+            {`${name} ${surname}`}
           </div>
           <div className="text-[#B3B3B3] text-[14px] pb-2">{username}</div>
           <div
@@ -56,35 +69,37 @@ const UserInfo = ({
           </div>
         </div>
       </div>
-      <div className="py-4">
-        <div className="bg-[#2B9AE9] rounded-[10px] w-fit px-4 py-2 font-bold text-[#FFFFFF]">
-          {department}
-        </div>
+      <div className="flex py-3">
+        {department && (
+          <Badge
+            className="bg-[#2B9AE9]"
+            text={department}
+            icon={faUserDoctor}
+          />
+        )}
       </div>
       <div>
-        <div className="text-[#3C3C3C] text-[18px] font-bold pb-2">
-          <FontAwesomeIcon icon={faEnvelope} />
-          <span className="pl-3">{email}</span>
-        </div>
-        <div className="text-[#3C3C3C] text-[18px] font-bold pb-2">
-          <FontAwesomeIcon icon={faPhone} />
-          <span className="pl-3">{phone}</span>
-        </div>
-        <div className="text-[#3C3C3C] text-[18px] font-bold pb-2">
-          <FontAwesomeIcon icon={faHome} />
-          <span className="pl-3">{`${streetAddress}, ${postalCode} ${city}`}</span>
-        </div>
-        <div className="text-[#3C3C3C] text-[14px] pb-2 ">
-          <span className="">
-            {distinguishedName && distinguishedName.replace(/,/g, ", ")}
-          </span>
+        {manager && (
+          <Parameter name="manager" value={manager?.match(/^CN=([^,]+)/)[1]} />
+        )}
+        {email && <Parameter name="email" value={email} />}
+        {phone && <Parameter name="phone" value={phone} />}
+        {streetAddress && postalCode && city && (
+          <Parameter
+            name="address"
+            value={`${streetAddress}, ${postalCode} ${city}`}
+          />
+        )}
+        {company && <Parameter name="company" value={company} />}
+        <div className="text-[#3C3C3C] text-[14px] py-2 font-bold">
+          {distinguishedName && distinguishedName.replace(/,/g, ", ")}
         </div>
       </div>
       <div className="text-[30px] font-semibold text-[#3C3C3C] pt-2">
         Groups
       </div>
       <div className="flex flex-wrap">
-        {memberOf ? (
+        {memberOf && typeof memberOf !== "string" ? (
           memberOf.map((group: any) => (
             <div className="bg-[#2B9AE9] rounded-[10px] w-fit px-2 py-1 text-[#FFFFFF] my-1 mr-2">
               {group}

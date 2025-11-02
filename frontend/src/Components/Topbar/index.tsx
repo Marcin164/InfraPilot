@@ -14,6 +14,8 @@ const index = (props: Props) => {
   const breadCrumbs: any = splitPath(location.pathname, "/");
   const { parser } = useParser();
 
+  console.log(parser?.id);
+  console.log(breadCrumbs);
   return (
     <div className="flex items-center justify-between bg-[#FFFFFF] px-4 py-3">
       <div className="capitalize">
@@ -22,8 +24,8 @@ const index = (props: Props) => {
             style={{ textTransform: "capitalize" }}
             className="text-[22px] text-[#3C3C3C]"
           >
-            {breadCrumb == parser?.id
-              ? capitalize(parser.name)
+            {breadCrumb === String(parser?.id)
+              ? capitalize(`${parser?.name} ${parser.surname}`)
               : capitalize(breadCrumb)}
             {index !== breadCrumbs.length - 1 && (
               <FontAwesomeIcon icon={faChevronRight} className="px-2" />

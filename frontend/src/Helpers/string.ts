@@ -5,6 +5,7 @@ export const splitPath = (path: string, splitSign: string): string[] => {
 };
 
 export const capitalize = (text: string) => {
+  if (!text) return "";
   return text
     .split("")
     .map((char, index) => (index === 0 ? char.toUpperCase() : char))
