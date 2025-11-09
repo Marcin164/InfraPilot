@@ -20,6 +20,7 @@ import FlowsDetails from "./Pages/Main/Flows/Details";
 import { ParseProvider } from "./Hooks/useParser";
 import UsersInfo from "./Pages/Main/Devices/Details/UsersInfo";
 import Peripherals from "./Pages/Main/Devices/Details/Peripherals";
+import EditEquipment from "./Pages/Main/Users/EditEquipment";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
             <Route path="/dashboards" element={<Dashboards />} />
             <Route path="/users" element={<Users />} />
             <Route path="/users/:id" element={<UserDetails />} />
+            <Route path="/users/:id/edit" element={<EditEquipment />} />
             <Route path="/devices" element={<Devices />} />
             <Route path="/devices/:id" element={<DeviceDetails />}>
               <Route path="system" element={<SystemInfo />} />

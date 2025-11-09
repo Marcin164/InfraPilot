@@ -4,21 +4,17 @@ import Antivirus from "../../../../Components/Details/Antivirus";
 import { useOutletContext } from "react-router";
 import Bitlocker from "../../../../Components/Details/Bitlocker";
 import Firewall from "../../../../Components/Details/Firewall";
-import PasswordPolicy from "../../../../Components/Details/PasswordPolicy";
 import RDP from "../../../../Components/Details/RDP";
-import StartupApps from "../../../../Components/Details/StartupApps";
-import UAC from "../../../../Components/Details/UAC";
-import Updates from "../../../../Components/Details/Updates";
 import TPM from "../../../../Components/Details/TPM";
+import NoData from "../../../../Components/Details/NoData";
 
 type Props = {};
 
 const Security = (props: Props) => {
   const device: any = useOutletContext();
-  if (!device?.data?.security) return null;
+  if (!device?.data?.security) return <NoData />;
 
   const securityInfo = device.data.security;
-  console.log(securityInfo);
 
   return (
     <div className="w-full cursor-default overflow-x-hidden">

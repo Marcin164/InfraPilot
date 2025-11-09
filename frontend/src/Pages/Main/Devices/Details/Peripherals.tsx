@@ -7,13 +7,14 @@ import SoundDevices from "../../../../Components/Details/SoundDevices";
 import Printers from "../../../../Components/Details/Printers";
 import USBDevices from "../../../../Components/Details/USBDevices";
 import ExternalDrives from "../../../../Components/Details/ExternalDrives";
+import NoData from "../../../../Components/Details/NoData";
 
 type Props = {};
 
 const Peripherals = (props: Props) => {
   const device: any = useOutletContext();
 
-  if (!device?.data?.peripherals) return null;
+  if (!device?.data?.peripherals) return <NoData />;
 
   const peripheralsInfo = device?.data?.peripherals;
 

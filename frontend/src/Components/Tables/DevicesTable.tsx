@@ -2,6 +2,8 @@ import MainTable from "./MainTable";
 import { useNavigate } from "react-router";
 import moment from "moment";
 import { getFilteredData, getSearchedData } from "../../Helpers/tables";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faComputer } from "@fortawesome/free-solid-svg-icons";
 
 type Props = {
   data: any;
@@ -14,17 +16,23 @@ const DevicesTable = ({ data, filterOptions, searchValue }: Props) => {
 
   const columns = [
     {
-      cell: (row: any) => <div className="">{row.id}</div>,
+      cell: (row: any) => (
+        <div>
+          <FontAwesomeIcon icon={faComputer} />
+        </div>
+      ),
       width: "60px",
     },
     {
       name: "Device",
-      cell: (row: any) => <span>{`${row.manufacturer} ${row.model}`}</span>,
+      cell: (row: any) => (
+        <span className="font-bold">{`${row.manufacturer} ${row.model}`}</span>
+      ),
       width: "200px",
     },
     {
       name: "Assignee",
-      selector: (row: any) => row.ownerId,
+      selector: (row: any) => row.ownerId || "N/A",
       width: "160px",
     },
     {
@@ -38,7 +46,7 @@ const DevicesTable = ({ data, filterOptions, searchValue }: Props) => {
     },
     {
       name: "Asset name",
-      selector: (row: any) => row.assetName,
+      selector: (row: any) => row.assetName || "N/A",
       width: "140px",
     },
     {

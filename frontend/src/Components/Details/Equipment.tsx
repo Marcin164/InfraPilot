@@ -1,7 +1,7 @@
 import { faPen } from "@fortawesome/free-solid-svg-icons";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import EquipmentItem from "../Lists/EquipmentItem";
-import PeripheralItem from "../Lists/PeripheralItem";
+import { useNavigate } from "react-router";
 
 type Props = {
   devices: any;
@@ -9,6 +9,8 @@ type Props = {
 };
 
 const Equipment = ({ devices, userId }: Props) => {
+  let navigate = useNavigate();
+
   if (!devices) return null;
 
   const mainDevices = devices.filter(
@@ -18,9 +20,7 @@ const Equipment = ({ devices, userId }: Props) => {
   const loggedDevice: any = null;
 
   const peripherals = devices.filter(
-    (device: any) =>
-      device.owner === userId &&
-      (device.type === "Mouse" || device.type === "Screen")
+    (device: any) => device.ownerId === userId && device.group === "Peripherals"
   );
 
   return (
@@ -41,11 +41,15 @@ const Equipment = ({ devices, userId }: Props) => {
         )}
         <div className="py-2 font-bold">Peripherals</div>
         {peripherals.map((peripheral: any) => (
-          <PeripheralItem {...peripheral} />
+          <EquipmentItem {...peripheral} />
         ))}
       </div>
       <div>
-        <ButtonPrimary icon={faPen} text="Edit equipment" onClick={() => {}} />
+        <ButtonPrimary
+          icon={faPen}
+          text="Edit equipment"
+          onClick={() => navigate(`/users/${userId}/edit`)}
+        />
       </div>
     </div>
   );

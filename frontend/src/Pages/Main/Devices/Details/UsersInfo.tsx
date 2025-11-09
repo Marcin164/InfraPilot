@@ -1,16 +1,17 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import { useOutletContext } from "react-router";
 import LocalUsersTable from "../../../../Components/Tables/LocalUsersTable";
 import LocalGroupsTable from "../../../../Components/Tables/LocalGroupsTable";
 import UsersProfilesTable from "../../../../Components/Tables/UsersProfilesTable";
+import NoData from "../../../../Components/Details/NoData";
 
 type Props = {};
 
 const UsersInfo = (props: Props) => {
   const device: any = useOutletContext();
 
-  if (!device.data.users) return null;
+  if (!device.data.users) return <NoData />;
 
   const usersInfo = device.data.users;
 
@@ -19,6 +20,7 @@ const UsersInfo = (props: Props) => {
   const toggleUsersGroupType = (type: number) => {
     setUsersGroupType(() => type);
   };
+
   return (
     <>
       <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">

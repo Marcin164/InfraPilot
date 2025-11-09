@@ -2,13 +2,15 @@ import React, { useState } from "react";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import EventsTable from "../../../../Components/Tables/EventsTable";
 import { useOutletContext } from "react-router";
+import NoData from "../../../../Components/Details/NoData";
 
 type Props = {};
 
 const Events = (props: Props) => {
   const device: any = useOutletContext();
 
-  if (!device.data.eventLogs) return null;
+  if (!device.data.eventLogs) return <NoData />;
+
   const eventLogs = device.data.eventLogs;
   const [eventType, setEventType] = useState(eventLogs.System);
 

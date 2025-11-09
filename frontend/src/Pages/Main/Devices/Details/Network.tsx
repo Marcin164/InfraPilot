@@ -3,7 +3,6 @@ import Connections from "../../../../Components/Details/Connections";
 import { useOutletContext } from "react-router";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
-import Parameter from "../../../../Components/Lists/Parameter";
 import FirewallRulesTable from "../../../../Components/Tables/FirewallRulesTable";
 import IPv4 from "../../../../Components/Details/IPv4";
 import IPv6 from "../../../../Components/Details/IPv6";
@@ -15,13 +14,15 @@ import {
   faPlug,
   faPlugCircleXmark,
 } from "@fortawesome/free-solid-svg-icons";
+import NoData from "../../../../Components/Details/NoData";
 
 type Props = {};
 
 const Network = (props: Props) => {
   const device: any = useOutletContext();
   const [networkInfoType, setNetworkInfoType] = useState(1);
-  if (!device?.data?.network) return null;
+
+  if (!device?.data?.network) return <NoData />;
 
   const networkInfo = device.data.network;
 

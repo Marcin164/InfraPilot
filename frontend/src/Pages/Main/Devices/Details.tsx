@@ -23,13 +23,12 @@ const Details = (props: Props) => {
   useEffect(() => {
     setParser({
       id: deviceQuery?.data?.id,
-      name: deviceQuery?.data?.system.hostname,
+      name: deviceQuery?.data?.assetName,
     });
 
     return () => {};
   }, [deviceQuery?.data?.id, setParser]);
 
-  console.log(deviceQuery?.data);
   if (deviceQuery.isLoading) return <DataLoader />;
 
   return (

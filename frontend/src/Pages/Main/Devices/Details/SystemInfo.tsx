@@ -3,12 +3,16 @@ import { useOutletContext } from "react-router";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
 import System from "../../../../Components/Details/OS";
 import AD from "../../../../Components/Details/AD";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFile } from "@fortawesome/free-solid-svg-icons";
+import NoData from "../../../../Components/Details/NoData";
 
 type Props = {};
 
 const SystemInfo = ({}: Props) => {
   const device: any = useOutletContext();
-  if (!device?.data?.system) return null;
+
+  if (!device?.data?.system) return <NoData />;
 
   const systemInfo = device.data.system;
 

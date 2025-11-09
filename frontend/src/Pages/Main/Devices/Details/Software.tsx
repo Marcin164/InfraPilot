@@ -4,13 +4,15 @@ import { useOutletContext } from "react-router";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import AppxTable from "../../../../Components/Tables/AppxTable";
 import FeaturesTable from "../../../../Components/Tables/FeaturesTable";
+import NoData from "../../../../Components/Details/NoData";
 
 type Props = {};
 
 const Software = (props: Props) => {
   const device: any = useOutletContext();
   const [softwareInfoType, setSoftwareInfoType] = useState(1);
-  if (!device?.data?.software) return null;
+
+  if (!device?.data?.software) return <NoData />;
 
   const softwareInfo = device.data.software;
 

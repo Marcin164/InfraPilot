@@ -4,8 +4,12 @@ import Filter from "../../../Components/Filter";
 import Search from "../../../Components/Inputs/Search";
 import { useNavigate, useParams } from "react-router";
 import { useAuthInfo } from "@propelauth/react";
-import { useQuery } from "@tanstack/react-query";
-import { getDevices, getFilter } from "../../../Services/devices";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { addDevice, getDevices, getFilter } from "../../../Services/devices";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import ButtonSecondary from "../../../Components/Buttons/ButtonSecondary";
+import AddDeviceModal from "../../../Components/Modals/AddDeviceModal";
 
 type Props = {};
 
@@ -22,7 +26,7 @@ const index = (props: Props) => {
     manufacturer: [],
   });
   const [searchValue, setSearchValue] = useState("");
-
+  const [addEQModal, setAddEQModal] = useState(false);
   const authInfo = useAuthInfo();
 
   const devicesQuery = useQuery({
@@ -34,8 +38,6 @@ const index = (props: Props) => {
     queryKey: ["filter"],
     queryFn: () => getFilter(authInfo.accessToken),
   });
-
-  console.log(filterQuery.data);
 
   useEffect(() => {
     params.id && navigate(`/devices/${params.id}/systeminfo`);
@@ -75,6 +77,10 @@ const index = (props: Props) => {
     setFilterOptions(_filterOptions);
   };
 
+  const toggleModal = () => {
+    setAddEQModal((prev: any) => !prev);
+  };
+
   return (
     <div className="w-full h-[calc(100vh-58px)] px-4">
       <div className="pt-4 pb-4 flex">
@@ -84,6 +90,12 @@ const index = (props: Props) => {
           filterOptions={filterOptions}
         />
         <Search onChange={getSearchValue} />
+        <ButtonSecondary
+          icon={faPlus}
+          text="Add device"
+          onClick={toggleModal}
+        />
+        <AddDeviceModal isModalOpen={addEQModal} onCloseModal={toggleModal} />
       </div>
       <DevicesTable
         data={devicesQuery?.data}

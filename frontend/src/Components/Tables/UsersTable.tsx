@@ -9,7 +9,6 @@ type Props = { data: any; filterOptions: any; searchValue: string };
 
 const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
   let navigate = useNavigate();
-  console.log(data);
 
   const columns = [
     {

@@ -26,12 +26,15 @@ const Details = () => {
   });
 
   useEffect(() => {
-    setParser({ id: userQuery?.data?.id, name: userQuery?.data?.displayName });
+    setParser({
+      id: userQuery?.data?.id,
+      name:
+        userQuery?.data &&
+        `${userQuery?.data?.name} ${userQuery?.data?.surname}`,
+    });
   }, [userQuery?.data?.id, setParser]);
 
   if (!userQuery?.data) return null;
-
-  console.log(userQuery.data);
 
   return (
     <div className="grid grid-cols-3 gap-x-4 p-4">

@@ -7,12 +7,13 @@ import MOBO from "../../../../Components/Details/MOBO";
 import Disks from "../../../../Components/Details/Disks";
 import GPU from "../../../../Components/Details/GPU";
 import BIOS from "../../../../Components/Details/BIOS";
+import NoData from "../../../../Components/Details/NoData";
 
 type Props = {};
 
 const Hardware = (props: Props) => {
   const device: any = useOutletContext();
-  if (!device?.data?.hardware) return null;
+  if (!device?.data?.hardware) return <NoData />;
 
   const hardwareInfo = device?.data?.hardware;
 
