@@ -15,6 +15,7 @@ const Details = () => {
 
   const authInfo = useAuthInfo();
 
+  console.log(params);
   const userQuery = useQuery({
     queryKey: ["user"],
     queryFn: () => getUser(authInfo.accessToken, params.id),
@@ -39,10 +40,7 @@ const Details = () => {
   return (
     <div className="grid grid-cols-3 gap-x-4 p-4">
       <UserInfo {...userQuery.data} />
-      <Equipment
-        devices={userDevices.data}
-        userId={Number.parseInt(params.id)}
-      />
+      <Equipment devices={userDevices.data} userId={params.id} />
       <EquipmentHistory />
     </div>
   );

@@ -5,33 +5,27 @@ import ButtonPrimary from "../Buttons/ButtonPrimary";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 
 type Props = {
+  assetName: string;
   serialNumber: any;
   model: any;
   manufacturer: any;
   location: any;
-  ticket: any;
-  justification: any;
-  approvers: any;
 };
 
 const EditEquipmentForm = ({
+  assetName,
   serialNumber,
   model,
   manufacturer,
   location,
-  ticket,
-  justification,
-  approvers,
 }: Props) => {
   const form = useForm({
     defaultValues: {
+      assetName: assetName || "",
       serialNumber: serialNumber || "",
       model: model || "",
       manufacturer: manufacturer || "",
       location: location || "",
-      ticket: ticket || "",
-      justification: justification || "",
-      approvers: approvers || "",
     },
   });
   return (
@@ -41,7 +35,13 @@ const EditEquipmentForm = ({
       }}
     >
       <div className="flex">
-        <div className="w-[50%] mr-2">
+        <div className="w-full mr-2">
+          <form.Field
+            name="assetName"
+            children={(field) => (
+              <Input {...field} value={field.state.value} label="Name" />
+            )}
+          />
           <form.Field
             name="model"
             children={(field) => (
@@ -72,30 +72,6 @@ const EditEquipmentForm = ({
             name="location"
             children={(field) => (
               <Input {...field} value={field.state.value} label="Location" />
-            )}
-          />
-        </div>
-        <div className="w-[50%] ml-2">
-          <form.Field
-            name="ticket"
-            children={(field) => (
-              <Input {...field} value={field.state.value} label="Ticket" />
-            )}
-          />
-          <form.Field
-            name="justification"
-            children={(field) => (
-              <Input
-                {...field}
-                value={field.state.value}
-                label="Justification"
-              />
-            )}
-          />
-          <form.Field
-            name="approvers"
-            children={(field) => (
-              <Input {...field} value={field.state.value} label="Approvers" />
             )}
           />
         </div>

@@ -1,4 +1,5 @@
 import {
+  faAddressBook,
   faCalendar,
   faChartPie,
   faCode,
@@ -62,7 +63,7 @@ export const deviceNavbarItems = [
   {
     to: "system",
     label: "System",
-    icon: faInfo,
+    icon: faAddressBook,
   },
   {
     to: "hardware",

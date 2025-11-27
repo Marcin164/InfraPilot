@@ -7,7 +7,6 @@ import EquipmentItem from "../../../Components/Lists/EquipmentItem";
 import EditEquipmentForm from "../../../Components/Forms/EditEquipmentForm";
 import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
-import SelectSecondary from "../../../Components/Inputs/SelectSecondary";
 import AssignDeviceForm from "../../../Components/Forms/AssignDeviceForm";
 
 type Props = {};
@@ -25,7 +24,7 @@ const EditEquipment = (props: Props) => {
   if (!userDevices.data) return null;
 
   const mainDevices = userDevices.data.filter(
-    (device: any) => device.ownerId == params.id && device.group === "Computer"
+    (device: any) => device.ownerId == params.id && device.group === "Computers"
   );
 
   const peripherals = userDevices.data.filter(
@@ -74,11 +73,14 @@ const EditEquipment = (props: Props) => {
             icon={faPen}
             text="Assign device"
             className="mt-2"
-            onClick={() => setAddDeviceMode(true)}
+            onClick={() => {
+              setSelectedAsset(null);
+              setAddDeviceMode(true);
+            }}
           />
         </div>
       </div>
-      {addDeviceMode && (
+      {!selectedAsset && addDeviceMode && (
         <div className="w-[60%] bg-[#FFFFFF] shadow-xl rounded-[10px] row-span-3 p-4 ml-2">
           <div className="text-[30px] font-semibold text-[#3C3C3C]">
             Assign device
@@ -88,7 +90,7 @@ const EditEquipment = (props: Props) => {
           </div>
         </div>
       )}
-      {selectedAsset && (
+      {!addDeviceMode && selectedAsset && (
         <div className="w-[60%] bg-[#FFFFFF] shadow-xl rounded-[10px] row-span-3 p-4 ml-2">
           <div className="text-[30px] font-semibold text-[#3C3C3C]">
             Equipment details

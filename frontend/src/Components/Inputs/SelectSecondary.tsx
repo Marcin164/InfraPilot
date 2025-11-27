@@ -1,9 +1,21 @@
 import { useEffect, useState } from "react";
 import ReactSelect from "react-select";
 
-type Props = { label: string; options: Array<any>; onSelect: any; value?: any };
+type Props = {
+  label: string;
+  options: Array<any>;
+  onSelect: any;
+  value?: any;
+  isMulti?: boolean;
+};
 
-const SelectSecondary = ({ label, options, onSelect, value }: Props) => {
+const SelectSecondary = ({
+  label,
+  options,
+  onSelect,
+  value,
+  isMulti = false,
+}: Props) => {
   const [selectedOption, setSelectedOption] = useState(value);
   const [reload, setReload] = useState(false);
 
@@ -53,6 +65,7 @@ const SelectSecondary = ({ label, options, onSelect, value }: Props) => {
         onChange={handleChange}
         options={options}
         styles={styles}
+        isMulti={isMulti}
       />
     </div>
   );

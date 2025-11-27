@@ -11,22 +11,22 @@ import Badge from "../Badges/Badge";
 
 type Props = {
   id: number;
-  system: any;
   serialNumber: string;
   subgroup: string;
   location: string;
   model: string;
+  assetName: string;
   editMode: boolean;
   onEditClick?: any;
 };
 
 const EquipmentItem = ({
   id,
-  system,
   serialNumber,
   subgroup,
   location,
   model,
+  assetName,
   editMode = false,
   onEditClick,
 }: Props) => {
@@ -49,13 +49,15 @@ const EquipmentItem = ({
             icon={getDeviceIcon(subgroup)}
             className="pr-2 text-[#535353]"
           />
-          <span className="uppercase text-[#2B9AE9]">{`${system.hostname} - `}</span>
+          <span className="uppercase text-[#2B9AE9]">
+            {assetName && `${assetName} - `}
+          </span>
           <span className="text-[#535353]">{`${model}, ${serialNumber}`}</span>
           <Badge text={location} className="ml-2 bg-[#2B9AE9]" />
         </div>
       </Link>
       {editMode && (
-        <div>
+        <div className="flex items-center">
           <FontAwesomeIcon
             className="text-[#3C3C3C] text-[20px] cursor-pointer mr-3"
             icon={faPen}

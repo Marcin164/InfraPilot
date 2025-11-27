@@ -14,7 +14,7 @@ const Equipment = ({ devices, userId }: Props) => {
   if (!devices) return null;
 
   const mainDevices = devices.filter(
-    (device: any) => device.ownerId === userId && device.group === "Computer"
+    (device: any) => device.ownerId === userId && device.group === "Computers"
   );
 
   const loggedDevice: any = null;
@@ -40,9 +40,13 @@ const Equipment = ({ devices, userId }: Props) => {
           <div>No devices</div>
         )}
         <div className="py-2 font-bold">Peripherals</div>
-        {peripherals.map((peripheral: any) => (
-          <EquipmentItem {...peripheral} />
-        ))}
+        {peripherals.length > 0 ? (
+          peripherals.map((peripheral: any) => (
+            <EquipmentItem {...peripheral} />
+          ))
+        ) : (
+          <div>No devices</div>
+        )}
       </div>
       <div>
         <ButtonPrimary

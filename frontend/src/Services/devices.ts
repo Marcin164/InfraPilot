@@ -17,6 +17,23 @@ export const addDevice = async (token: any, data: any) => {
   }
 };
 
+export const assignDevice = async (token: any, data: any) => {
+  try {
+    const result = await axios({
+      method: "post",
+      url: "http://localhost:3000/devices/assign",
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+      data,
+    });
+
+    return result.data;
+  } catch (error) {
+    return error;
+  }
+};
+
 export const getDevicesOptions = async (token: any) => {
   try {
     const result = await axios({

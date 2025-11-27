@@ -19,6 +19,7 @@ import Parameter from "../Lists/Parameter";
 type Props = {
   name: string;
   surname: string;
+  title: string;
   enabled: boolean;
   department: string;
   email: string;
@@ -36,6 +37,7 @@ type Props = {
 const UserInfo = ({
   name,
   surname,
+  title,
   enabled,
   department,
   email,
@@ -57,7 +59,9 @@ const UserInfo = ({
           <div className="font-extrabold text-[#3C3C3C] text-[20px]">
             {`${name} ${surname}`}
           </div>
-          <div className="text-[#B3B3B3] text-[14px] pb-2">{username}</div>
+          <div className="text-[#3C3C3C] font-light text-[15px] pb-2">
+            {title}
+          </div>
           <div
             className={twMerge(
               "text-[18px]",
@@ -91,9 +95,6 @@ const UserInfo = ({
           />
         )}
         {company && <Parameter name="company" value={company} />}
-        <div className="text-[#3C3C3C] text-[14px] py-2 font-bold">
-          {distinguishedName && distinguishedName.replace(/,/g, ", ")}
-        </div>
       </div>
       <div className="text-[30px] font-semibold text-[#3C3C3C] pt-2">
         Groups
