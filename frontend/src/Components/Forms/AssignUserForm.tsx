@@ -8,6 +8,7 @@ import Input from "../Inputs/Input";
 import { assignDevice } from "../../Services/devices";
 import { useParams } from "react-router";
 import { getUsers } from "../../Services/users";
+import { createHistory } from "../../Services/histories";
 
 type Props = {};
 
@@ -15,11 +16,21 @@ const AssignUserForm = (props: Props) => {
   const authInfo = useAuthInfo();
   const params = useParams();
   const mutation = useMutation({
-    mutationFn: (values: any) =>
+    mutationFn: (values: any) => (
       assignDevice(authInfo.accessToken, {
         deviceId: params.id,
         ownerId: values.user,
       }),
+      createHistory(authInfo.accessToken, {
+        approvers: values.approvers,
+        date: values.date,
+        justification: values.justification,
+        details: values.details,
+        ticket: values.ticket,
+        device: params.id,
+        userId: values.user,
+      })
+    ),
   });
 
   const usersQuery = useQuery({
@@ -32,11 +43,11 @@ const AssignUserForm = (props: Props) => {
       user: "",
       ticket: "",
       justification: "",
+      details: "",
       approvers: "",
       date: "",
     },
     onSubmit: async ({ value }: any) => {
-      console.log(value);
       mutation.mutate(value);
     },
   });
@@ -80,13 +91,17 @@ const AssignUserForm = (props: Props) => {
         children={(field) => <Input {...field} label="Justification" />}
       />
       <form.Field
+        name="details"
+        children={(field) => <Input {...field} label="Details" />}
+      />
+      <form.Field
         name="approvers"
         children={(field) => (
           <SelectSecondary
             label="Approvers"
             options={convertToOptions()}
             onSelect={(e: any) => field.handleChange(e.value)}
-            value={""}
+            value={null}
             isMulti
           />
         )}
