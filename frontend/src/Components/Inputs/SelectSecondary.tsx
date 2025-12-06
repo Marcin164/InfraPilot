@@ -6,7 +6,9 @@ type Props = {
   options: Array<any>;
   onSelect: any;
   value?: any;
+  defaultValue?: any;
   isMulti?: boolean;
+  errors?: any;
 };
 
 const SelectSecondary = ({
@@ -14,7 +16,9 @@ const SelectSecondary = ({
   options,
   onSelect,
   value,
+  defaultValue,
   isMulti = false,
+  errors,
 }: Props) => {
   const [selectedOption, setSelectedOption] = useState(value);
   const [reload, setReload] = useState(false);
@@ -62,11 +66,13 @@ const SelectSecondary = ({
       <label className="font-bold text-[#3C3C3C] mb-1">{label}</label>
       <ReactSelect
         value={selectedOption}
+        defaultValue={defaultValue}
         onChange={handleChange}
         options={options}
         styles={styles}
         isMulti={isMulti}
       />
+      {errors && <em role="alert">{errors}</em>}
     </div>
   );
 };

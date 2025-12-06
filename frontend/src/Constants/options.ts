@@ -65,3 +65,22 @@ export const othersTypeOptions = [
   { value: "Cable", label: "Cable" },
   { value: "Other", label: "Other" },
 ];
+
+export const historyTypeOptions = [
+  {
+    label: "Repair",
+    value: 1,
+  },
+  {
+    label: "Rebuild",
+    value: 2,
+  },
+  {
+    label: "Component replacement",
+    value: 3,
+  },
+  {
+    label: "Other",
+    value: 4,
+  },
+];

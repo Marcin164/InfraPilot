@@ -1,27 +1,27 @@
 import React from "react";
 import Modal from "react-responsive-modal";
 import CardHeader from "../Headers/CardHeader";
-import AssignUserForm from "../Forms/AssignUserForm";
+import ApplyChangeForm from "../Forms/ApplyChangeForm";
 
 type Props = {
   isModalOpen: any;
   handleOnClose: any;
 };
 
-const AssignDeviceModal = ({ isModalOpen, handleOnClose }: Props) => {
+const ApplyChangesModal = ({ isModalOpen, handleOnClose }: Props) => {
   return (
     <Modal
       classNames={{
-        modal: "w-[500px] rounded-[10px]",
+        modal: "w-[800px] rounded-[10px] max-h-[80vh] overflow-y-auto",
       }}
       open={isModalOpen}
       onClose={handleOnClose}
       center
     >
-      <CardHeader text="Assign User" />
-      <AssignUserForm close={handleOnClose} />
+      <CardHeader text="Apply change" />
+      <ApplyChangeForm />
     </Modal>
   );
 };
 
-export default AssignDeviceModal;
+export default ApplyChangesModal;

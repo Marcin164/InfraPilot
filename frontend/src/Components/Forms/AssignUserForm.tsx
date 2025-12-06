@@ -1,36 +1,40 @@
 import { useAuthInfo } from "@propelauth/react";
-import React from "react";
 import SelectSecondary from "../Inputs/SelectSecondary";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Input from "../Inputs/Input";
-import { assignDevice } from "../../Services/devices";
 import { useParams } from "react-router";
 import { getUsers } from "../../Services/users";
-import { createHistory } from "../../Services/histories";
+import { createHistoryEntry } from "../../Services/histories";
+import { toast } from "react-toastify";
 
-type Props = {};
+type Props = { close: any };
 
-const AssignUserForm = (props: Props) => {
+const AssignUserForm = ({ close }: Props) => {
   const authInfo = useAuthInfo();
   const params = useParams();
+  const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: (values: any) => (
-      assignDevice(authInfo.accessToken, {
-        deviceId: params.id,
-        ownerId: values.user,
-      }),
-      createHistory(authInfo.accessToken, {
+    mutationFn: (values: any) =>
+      createHistoryEntry(authInfo.accessToken, {
         approvers: values.approvers,
         date: values.date,
         justification: values.justification,
         details: values.details,
-        ticket: values.ticket,
-        device: params.id,
-        userId: values.user,
-      })
-    ),
+        deviceId: params.id,
+        type: "owner change",
+      }),
+
+    onSuccess: () => {
+      toast.success("Owner has been changed successfully");
+      queryClient.invalidateQueries({ queryKey: ["history"] });
+      close();
+    },
+
+    onError: () => {
+      toast.error("Cannot change owner");
+    },
   });
 
   const usersQuery = useQuery({
@@ -73,18 +77,33 @@ const AssignUserForm = (props: Props) => {
     >
       <form.Field
         name="user"
+        validators={{
+          onChange: ({ value }) =>
+            !value || value === "" ? "Field required" : null,
+        }}
         children={(field) => (
           <SelectSecondary
             label="User"
             options={convertToOptions()}
             onSelect={(e: any) => field.handleChange(e.value)}
             value={""}
+            errors={
+              !field.state.meta.isValid && field.state.meta.errors.join(", ")
+            }
           />
         )}
       />
       <form.Field
         name="ticket"
-        children={(field) => <Input {...field} label="Ticket" />}
+        children={(field) => (
+          <Input
+            {...field}
+            label="Ticket"
+            errors={
+              !field.state.meta.isValid && field.state.meta.errors.join(", ")
+            }
+          />
+        )}
       />
       <form.Field
         name="justification"
@@ -108,9 +127,19 @@ const AssignUserForm = (props: Props) => {
       />
       <form.Field
         name="date"
-        children={(field) => <Input {...field} type="date" label="Date" />}
+        validators={{
+          onChange: ({ value }) =>
+            !value || value === "" ? "Field required" : null,
+        }}
+        children={(field) => (
+          <Input
+            {...field}
+            defaultValue={new Date().toISOString().split("T")[0]}
+            type="date"
+            label="Date"
+          />
+        )}
       />
-
       <ButtonPrimary type="submit" text="Assign" className="mt-4" />
     </form>
   );

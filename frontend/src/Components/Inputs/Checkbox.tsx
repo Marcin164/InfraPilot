@@ -2,33 +2,40 @@ import React from "react";
 
 type Props = {
   label: any;
-  id: any;
-  onChange: any;
-  name: any;
-  checked: any;
+  value?: any;
+  id?: any;
+  onChange?: any;
+  handleChange?: any;
+  name?: any;
+  checked?: any;
+  className?: string;
 };
 
 const Checkbox = ({
   label,
+  value,
   id = "customCheckbox",
   onChange,
+  handleChange,
   name,
   checked,
+  className = "",
 }: Props) => {
   return (
-    <div>
+    <div className={className}>
       <label
         htmlFor={id}
-        className="inline-flex items-center gap-3 cursor-pointer select-none"
+        className="inline-flex items-center gap-3 cursor-pointer select-none "
       >
         <input
           type="checkbox"
           id={id}
           className="sr-only peer"
-          value={label}
-          onChange={onChange}
+          onChange={
+            handleChange ? (e) => handleChange(e.target.checked) : onChange
+          }
           name={name}
-          checked={checked}
+          checked={value || checked}
         />
 
         <span
@@ -55,7 +62,7 @@ const Checkbox = ({
           </svg>
         </span>
 
-        {label && <span className="font-light">{label}</span>}
+        {label && <span className="font-bold text-[#3C3C3C]">{label}</span>}
       </label>
     </div>
   );

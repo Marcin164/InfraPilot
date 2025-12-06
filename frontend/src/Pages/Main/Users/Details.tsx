@@ -15,7 +15,6 @@ const Details = () => {
 
   const authInfo = useAuthInfo();
 
-  console.log(params);
   const userQuery = useQuery({
     queryKey: ["user"],
     queryFn: () => getUser(authInfo.accessToken, params.id),

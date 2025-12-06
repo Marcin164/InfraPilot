@@ -25,7 +25,6 @@ const AssignDeviceForm = (props: Props) => {
       device: "",
     },
     onSubmit: async ({ value }: any) => {
-      console.log(value);
       mutation.mutate(value);
     },
   });

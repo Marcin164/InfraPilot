@@ -7,9 +7,11 @@ type Props = {
   className?: string;
   onChange?: any;
   handleChange?: any;
+  defaultValue?: any;
   value?: any;
   name?: any;
   disabled?: boolean;
+  errors?: any;
 };
 
 const Input = ({
@@ -18,9 +20,11 @@ const Input = ({
   className = "",
   onChange,
   handleChange,
+  defaultValue,
   value,
   name,
   disabled = false,
+  errors,
 }: Props) => {
   return (
     <div className={twMerge("pt-2", className)}>
@@ -30,12 +34,18 @@ const Input = ({
       <input
         id={name}
         name={name}
+        defaultValue={defaultValue || null}
         value={value || null}
         type={type}
         className="w-full border border-[#535353] text-[16px] font-bold block rounded-[10px] px-3 py-2 mt-1"
         onChange={handleChange ? (e) => handleChange(e.target.value) : onChange}
         disabled={disabled}
       />
+      {errors && (
+        <em role="alert" className="text-[14px] text-[#BC0E0E] font-bold">
+          {errors}
+        </em>
+      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const createHistory = async (token: any, data: any) => {
+export const createHistoryEntry = async (token: any, data: any) => {
   try {
     const result = await axios({
       method: "post",
