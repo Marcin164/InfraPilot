@@ -6,6 +6,7 @@ import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { useMutation } from "@tanstack/react-query";
 import { addDevice } from "../../Services/devices";
 import { useAuthInfo } from "@propelauth/react";
+
 import {
   componentsTypeOptions,
   computersTypeOptions,
@@ -14,54 +15,58 @@ import {
   othersTypeOptions,
   peripheralsTypeOptions,
 } from "../../Constants/options";
+
 import SelectSecondary from "../Inputs/SelectSecondary";
 
-type Props = { onFormComplete?: any };
+type Option = { label: string; value: string };
 
-const AddEquipmentForm = ({ onFormComplete }: Props) => {
-  const [subgroupType, setSubgroupType] = useState(computersTypeOptions);
-  const authInfo = useAuthInfo();
+const GROUP_MAPPINGS: { group: string; subgroupOptions: Option[] }[] = [
+  { group: "Computers", subgroupOptions: computersTypeOptions },
+  { group: "Peripherals", subgroupOptions: peripheralsTypeOptions },
+  { group: "Network", subgroupOptions: networkTypeOptions },
+  { group: "Components", subgroupOptions: componentsTypeOptions },
+  { group: "Others", subgroupOptions: othersTypeOptions },
+];
+
+const AddEquipmentForm: React.FC = () => {
+  const { accessToken } = useAuthInfo();
+
+  const [subgroupType, setSubgroupType] =
+    useState<Option[]>(computersTypeOptions);
+
   const mutation = useMutation({
-    mutationFn: (device) => addDevice(authInfo.accessToken, device),
+    mutationFn: async (device: Record<string, any>) => {
+      if (!accessToken) throw new Error("User is not authenticated.");
+      return addDevice(accessToken, device);
+    },
   });
+
   const form = useForm({
     defaultValues: {
-      group: "",
-      subgroup: "",
+      group: groupTypeOptions[0]?.value ?? "",
+      subgroup: computersTypeOptions[0]?.value ?? "",
       assetName: "",
       serialNumber: "",
       model: "",
       manufacturer: "",
       location: "",
     },
-    onSubmit: async ({ value }: any) => {
+
+    onSubmit: async ({ value }) => {
+      if (!value.assetName.trim()) return;
+      if (!value.group || !value.subgroup) return;
+
       mutation.mutate(value);
-      onFormComplete();
     },
   });
 
-  const parseGroupAndSubgroup: any = [
-    {
-      group: "Computers",
-      subgroupOptions: computersTypeOptions,
-    },
-    {
-      group: "Peripherals",
-      subgroupOptions: peripheralsTypeOptions,
-    },
-    {
-      group: "Network",
-      subgroupOptions: networkTypeOptions,
-    },
-    {
-      group: "Components",
-      subgroupOptions: componentsTypeOptions,
-    },
-    {
-      group: "Others",
-      subgroupOptions: othersTypeOptions,
-    },
-  ];
+  const handleGroupSelect = (option: Option, onChange: (v: string) => void) => {
+    const mapping = GROUP_MAPPINGS.find((m) => m.group === option.value);
+    const subgroups = mapping?.subgroupOptions ?? [];
+
+    setSubgroupType(subgroups);
+    onChange(option.value);
+  };
 
   return (
     <form
@@ -77,15 +82,10 @@ const AddEquipmentForm = ({ onFormComplete }: Props) => {
           <SelectSecondary
             label="Group"
             options={groupTypeOptions}
-            onSelect={(e: any) => {
-              setSubgroupType(
-                parseGroupAndSubgroup.find(
-                  ({ group }: any) => group === e.value
-                )?.subgroupOptions
-              );
-              field.handleChange(e.value);
-            }}
-            value={groupTypeOptions[0]}
+            value={groupTypeOptions.find((o) => o.value === field.state.value)}
+            onSelect={(opt: Option) =>
+              handleGroupSelect(opt, field.handleChange)
+            }
           />
         )}
       />
@@ -95,8 +95,8 @@ const AddEquipmentForm = ({ onFormComplete }: Props) => {
           <SelectSecondary
             label="Subgroup"
             options={subgroupType}
-            onSelect={(e: any) => field.handleChange(e.value)}
-            value={subgroupType[0]}
+            value={subgroupType.find((o) => o.value === field.state.value)}
+            onSelect={(opt: Option) => field.handleChange(opt.value)}
           />
         )}
       />
@@ -106,30 +106,35 @@ const AddEquipmentForm = ({ onFormComplete }: Props) => {
           <Input {...field} value={field.state.value} label="Asset Name" />
         )}
       />
+
       <form.Field
         name="model"
         children={(field) => (
           <Input {...field} value={field.state.value} label="Model" />
         )}
       />
+
       <form.Field
         name="manufacturer"
         children={(field) => (
           <Input {...field} value={field.state.value} label="Manufacturer" />
         )}
       />
+
       <form.Field
         name="serialNumber"
         children={(field) => (
           <Input {...field} value={field.state.value} label="Serial Number" />
         )}
       />
+
       <form.Field
         name="location"
         children={(field) => (
           <Input {...field} value={field.state.value} label="Location" />
         )}
       />
+
       <div className="pt-4">
         <ButtonPrimary icon={faPlus} type="submit" text="Save" />
       </div>

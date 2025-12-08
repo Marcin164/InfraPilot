@@ -7,37 +7,54 @@ import { createDashboard } from "../../Services/dashboards";
 import { useAuthInfo } from "@propelauth/react";
 import { useState } from "react";
 
-type Props = {
-  isModalOpen: any;
-  onCloseModal: any;
-  selectDashboard?: any;
+type AddDashboardModalProps = {
+  isModalOpen: boolean;
+  onCloseModal: () => void;
+  selectDashboard?: (dashboard: {
+    id: string;
+    name: string;
+    ownerId: string;
+  }) => void;
 };
 
-const AddDashboardModal = ({
+const AddDashboardModal: React.FC<AddDashboardModalProps> = ({
   isModalOpen,
   onCloseModal,
   selectDashboard,
-}: Props) => {
+}) => {
   const queryClient = useQueryClient();
+  const { accessToken, user } = useAuthInfo();
   const [dashboardName, setDashboardName] = useState("");
-  const authInfo = useAuthInfo();
+
   const mutation = useMutation({
-    mutationFn: (body: any) => createDashboard(authInfo.accessToken, body),
+    mutationFn: (body: { name: string; ownerId: string }) => {
+      if (!accessToken) throw new Error("User is not authenticated");
+      return createDashboard(accessToken, body);
+    },
     onSuccess: (newDashboard) => {
       queryClient.invalidateQueries({ queryKey: ["dashboards"] });
       if (selectDashboard) selectDashboard(newDashboard);
-      onCloseModal();
+      handleOnClose();
     },
   });
 
-  const handleInputChange = (e: any) => {
-    const value = e.target.value;
-    setDashboardName(value);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDashboardName(e.target.value);
   };
 
   const handleOnClose = () => {
     setDashboardName("");
     onCloseModal();
+  };
+
+  const handleCreateDashboard = () => {
+    if (!dashboardName.trim()) return;
+    if (!user?.userId) return;
+
+    mutation.mutate({
+      name: dashboardName.trim(),
+      ownerId: user.userId,
+    });
   };
 
   return (
@@ -47,20 +64,10 @@ const AddDashboardModal = ({
       onClose={handleOnClose}
       center
     >
-      <div className="text-[#3C3C3C] font-bold text-[32px]">Add Dashboard</div>
-      <Input label="Name" onChange={handleInputChange} />
-      <div className="float-right">
-        <ButtonPrimary
-          text="Create"
-          onClick={() => {
-            if (dashboardName.length > 0) {
-              mutation.mutate({
-                name: dashboardName,
-                ownerId: authInfo.user?.userId,
-              });
-            }
-          }}
-        />
+      <div className="text-gray-800 font-bold text-2xl mb-4">Add Dashboard</div>
+      <Input label="Name" value={dashboardName} onChange={handleInputChange} />
+      <div className="flex justify-end mt-4">
+        <ButtonPrimary text="Create" onClick={handleCreateDashboard} />
       </div>
     </Modal>
   );

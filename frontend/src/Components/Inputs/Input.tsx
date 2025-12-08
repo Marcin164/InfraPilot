@@ -37,7 +37,7 @@ const Input = ({
         defaultValue={defaultValue || null}
         value={value || null}
         type={type}
-        className="w-full border border-[#535353] text-[16px] font-bold block rounded-[10px] px-3 py-2 mt-1"
+        className="w-full border border-[#535353] text-[16px] font-bold block rounded-[10px] px-3 py-2 mt-[6px]"
         onChange={handleChange ? (e) => handleChange(e.target.value) : onChange}
         disabled={disabled}
       />

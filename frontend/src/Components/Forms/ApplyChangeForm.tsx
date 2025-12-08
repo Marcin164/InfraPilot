@@ -46,18 +46,21 @@ const ApplyChangeForm = (props: Props) => {
         );
       }
 
-      const historyResponse = devices.map((device) =>
-        createHistoryEntry(authInfo.accessToken, {
-          deviceId: params.id,
-          ...history,
-          removedComponents: history.removedComponents.map((component: any) => {
+      console.log(devices);
+
+      const historyResponse = createHistoryEntry(authInfo.accessToken, {
+        deviceId: params.id,
+        ...history,
+        removedComponents: history.removedComponents.map(
+          (component: any, index: any) => {
+            console.log(history.removedComponents);
             return {
               ...component,
-              deviceId: device.id,
+              deviceId: devices[index],
             };
-          }),
-        })
-      );
+          }
+        ),
+      });
 
       return {
         devices,
@@ -104,8 +107,15 @@ const ApplyChangeForm = (props: Props) => {
       justification: "",
       type: 1,
     },
-    onSubmit: async ({ value }: any) => {
-      mutation.mutate(value);
+    onSubmit: async ({ value }) => {
+      const sanitized = Object.fromEntries(
+        Object.entries(value).map(([key, val]) => [
+          key,
+          val === "" ? null : val,
+        ])
+      );
+
+      mutation.mutate(sanitized);
     },
   });
 
@@ -209,12 +219,13 @@ const ApplyChangeForm = (props: Props) => {
               <div>
                 {field.state.value.map((_, i) => {
                   return (
-                    <div key={i} className="flex justify-between items-center">
+                    <div key={i} className="flex justify-between">
                       <form.Field name={`removedComponents[${i}].subgroup`}>
                         {(subField) => {
                           return (
                             <SelectSecondary
                               label="Component"
+                              className="w-[170px]"
                               onSelect={(e: any) => {
                                 subField.handleChange(e.value);
                               }}
@@ -239,9 +250,10 @@ const ApplyChangeForm = (props: Props) => {
                               onChange={(e: any) =>
                                 subField.handleChange(e.target.value)
                               }
+                              className="w-[120px]"
                               errors={
-                                !field.state.meta.isValid &&
-                                field.state.meta.errors.join(", ")
+                                !subField.state.meta.isValid &&
+                                subField.state.meta.errors.join(", ")
                               }
                             />
                           );
@@ -259,12 +271,13 @@ const ApplyChangeForm = (props: Props) => {
                             <Input
                               label="Manufacturer"
                               value={subField.state.value}
+                              className="w-[140px]"
                               onChange={(e: any) =>
                                 subField.handleChange(e.target.value)
                               }
                               errors={
-                                !field.state.meta.isValid &&
-                                field.state.meta.errors.join(", ")
+                                !subField.state.meta.isValid &&
+                                subField.state.meta.errors.join(", ")
                               }
                             />
                           );
@@ -286,8 +299,8 @@ const ApplyChangeForm = (props: Props) => {
                                 subField.handleChange(e.target.value)
                               }
                               errors={
-                                !field.state.meta.isValid &&
-                                field.state.meta.errors.join(", ")
+                                !subField.state.meta.isValid &&
+                                subField.state.meta.errors.join(", ")
                               }
                             />
                           );
@@ -295,7 +308,7 @@ const ApplyChangeForm = (props: Props) => {
                       </form.Field>
                       <FontAwesomeIcon
                         icon={faTrashAlt}
-                        className="text-[#BC0E0E] cursor-pointer"
+                        className="text-[#BC0E0E] cursor-pointer my-auto"
                         onClick={() => field.removeValue(i)}
                       />
                     </div>
@@ -329,7 +342,9 @@ const ApplyChangeForm = (props: Props) => {
               options={convertDevicesToOptions()}
               isMulti={true}
               onSelect={(e: any) => {
-                field.handleChange(e.value);
+                field.handleChange(
+                  e.length > 0 && e.map((component: any) => component.value)
+                );
               }}
             />
           )}

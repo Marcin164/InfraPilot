@@ -2,18 +2,16 @@ import React from "react";
 
 type Props = {
   name: string;
-  value: any;
+  value?: string | number | null;
 };
 
-const Parameter = ({ name, value }: Props) => {
+const Parameter: React.FC<Props> = ({ name, value }) => {
   return (
-    <div className="overflow-hidden text-ellipsis">
-      <span className="capitalize text-[#3C3C3C] font-light">
+    <div className="overflow-hidden whitespace-nowrap text-ellipsis">
+      <span className="capitalize text-gray-800 font-light">
         {name.replace(/_/g, " ")}:{" "}
       </span>
-      <span className="text-[#3C3C3C] font-semibold">
-        {!value || value === "" ? "N/A" : value}
-      </span>
+      <span className="text-gray-800 font-semibold">{value ?? "N/A"}</span>
     </div>
   );
 };

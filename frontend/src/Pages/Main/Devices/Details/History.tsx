@@ -21,22 +21,25 @@ const History = (props: Props) => {
     queryFn: () => getDeviceOwners(authInfo.accessToken, params.id),
   });
 
+  console.log(historyQuery.data);
+
   if (!historyQuery?.data) return null;
 
   const getChangesHistory = () => {
+    if (!historyQuery?.data) return [];
     return historyQuery.data.filter((history: any) => history.type !== 0);
   };
 
   const convertToTimeline = () => {
-    const historyOwners = historyQuery?.data?.filter(
-      (history: any) => history.type == 0
-    );
-    return historyOwners.map((history: any) => {
-      return {
-        ...history,
-        owner: history?.user?.distinguishedName,
-      };
-    });
+    if (!historyQuery?.data) return null;
+    return historyQuery.data
+      .filter((history: any) => history.type == 0)
+      .map((history: any) => {
+        return {
+          ...history,
+          owner: history?.user?.distinguishedName,
+        };
+      });
   };
 
   const toggleAssignUserModal = () => {
@@ -51,7 +54,7 @@ const History = (props: Props) => {
     <div className="flex justify-between">
       <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4 mr-1">
         <div className="text-[30px] font-semibold text-[#3C3C3C]">Owners</div>
-        {historyQuery.data.length > 0 ? (
+        {convertToTimeline() && convertToTimeline().length > 0 ? (
           <TimelineLine items={convertToTimeline()} />
         ) : (
           <div>This device has no owners yet</div>
@@ -70,7 +73,11 @@ const History = (props: Props) => {
       </div>
       <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4 ml-1">
         <div className="text-[30px] font-semibold text-[#3C3C3C]">Changes</div>
-        <TimelineLine items={getChangesHistory()} />
+        {getChangesHistory() && getChangesHistory().length > 0 ? (
+          <TimelineLine items={getChangesHistory()} />
+        ) : (
+          <div>This device has no changes yet</div>
+        )}
         <div className="pt-4">
           <ButtonPrimary
             icon={faMicrochip}

@@ -1,4 +1,4 @@
-import { faMouse } from "@fortawesome/free-solid-svg-icons";
+import { faMinus, faMouse, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 
@@ -21,7 +21,6 @@ const TimelineItem = ({
   approvers,
   owner,
 }: Props) => {
-  console.log(components);
   return (
     <div className="ml-[20px] pb-4">
       <div>
@@ -33,6 +32,14 @@ const TimelineItem = ({
         components.map((component: any) => (
           <div className="py-1 flex justify-between">
             <span>
+              <FontAwesomeIcon
+                icon={component.type === "remove" ? faMinus : faPlus}
+                className={
+                  component.type === "remove"
+                    ? "text-[#BC0E0E] pr-2 text-[20px]"
+                    : "text-[#30A712] pr-2 text-[20px]"
+                }
+              />
               <FontAwesomeIcon icon={faMouse} className="pr-2 text-[#535353]" />
               <span className="text-[#535353]">{`${component.manufacturer} ${component.model}, ${component.serialNumber}`}</span>
             </span>
