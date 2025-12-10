@@ -4,7 +4,7 @@ import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import { faArrowsRotate, faMicrochip } from "@fortawesome/free-solid-svg-icons";
 import AssignDeviceModal from "../../../../Components/Modals/AssignDeviceModal";
 import { useQuery } from "@tanstack/react-query";
-import { getDeviceOwners } from "../../../../Services/histories";
+import { getDeviceHistory } from "../../../../Services/histories";
 import { useAuthInfo } from "@propelauth/react";
 import { useParams } from "react-router";
 import ApplyChangesModal from "../../../../Components/Modals/ApplyChangesModal";
@@ -18,12 +18,12 @@ const History = (props: Props) => {
   const [isApplyChangesModalOpen, setIsApplyChangesModalOpen] = useState(false);
   const historyQuery = useQuery({
     queryKey: ["history"],
-    queryFn: () => getDeviceOwners(authInfo.accessToken, params.id),
+    queryFn: () => getDeviceHistory(authInfo.accessToken, params.id),
   });
 
-  console.log(historyQuery.data);
-
   if (!historyQuery?.data) return null;
+
+  console.log(historyQuery.data);
 
   const getChangesHistory = () => {
     if (!historyQuery?.data) return [];
@@ -37,7 +37,8 @@ const History = (props: Props) => {
       .map((history: any) => {
         return {
           ...history,
-          owner: history?.user?.distinguishedName,
+          device: null,
+          owner: history?.user?.distinguishedName || "",
         };
       });
   };

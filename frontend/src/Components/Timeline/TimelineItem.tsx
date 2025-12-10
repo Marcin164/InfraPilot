@@ -1,6 +1,5 @@
 import { faMinus, faMouse, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React from "react";
 
 type Props = {
   date: any;
@@ -10,6 +9,7 @@ type Props = {
   justification: any;
   approvers: any;
   owner: any;
+  device: any;
 };
 
 const TimelineItem = ({
@@ -20,12 +20,16 @@ const TimelineItem = ({
   justification,
   approvers,
   owner,
+  device,
 }: Props) => {
+  console.log();
   return (
     <div className="ml-[20px] pb-4">
       <div>
         <span className="text-[#535353] font-bold">{date}</span>
-        <span className="text-[#2B9AE9] font-bold ml-2">{`Ticket ${ticket}`}</span>
+        <span className="text-[#2B9AE9] font-bold ml-2">
+          {ticket && `Ticket ${ticket}`}
+        </span>
       </div>
       {components &&
         components.length > 0 &&
@@ -49,7 +53,10 @@ const TimelineItem = ({
           </div>
         ))}
       {owner && (
-        <span className="text-[#3C3C3C] font-light italic">{owner}</span>
+        <span className="text-[18px] text-[#2B9AE9] font-light">{owner}</span>
+      )}
+      {device && (
+        <span className="text-[18px] text-[#2B9AE9] font-light">{device}</span>
       )}
       {details && (
         <div className="py-1">

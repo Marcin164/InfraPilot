@@ -8,6 +8,7 @@ import { useParams } from "react-router";
 import { getUsers } from "../../Services/users";
 import { createHistoryEntry } from "../../Services/histories";
 import { toast } from "react-toastify";
+import { assignDevice } from "../../Services/devices";
 
 type Props = { close: any };
 
@@ -16,15 +17,17 @@ const AssignUserForm = ({ close }: Props) => {
   const params = useParams();
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: (values: any) =>
+    mutationFn: (values: any) => (
       createHistoryEntry(authInfo.accessToken, {
-        approvers: values.approvers,
-        date: values.date,
-        justification: values.justification,
-        details: values.details,
+        ...values,
         deviceId: params.id,
-        type: "owner change",
+        type: 0,
       }),
+      assignDevice(authInfo.accessToken, {
+        deviceId: params.id,
+        ownerId: values.userId,
+      })
+    ),
 
     onSuccess: () => {
       toast.success("Owner has been changed successfully");
@@ -44,7 +47,7 @@ const AssignUserForm = ({ close }: Props) => {
 
   const form = useForm({
     defaultValues: {
-      user: "",
+      userId: "",
       ticket: "",
       justification: "",
       details: "",
@@ -76,20 +79,13 @@ const AssignUserForm = ({ close }: Props) => {
       }}
     >
       <form.Field
-        name="user"
-        validators={{
-          onChange: ({ value }) =>
-            !value || value === "" ? "Field required" : null,
-        }}
+        name="userId"
         children={(field) => (
           <SelectSecondary
             label="User"
             options={convertToOptions()}
             onSelect={(e: any) => field.handleChange(e.value)}
             value={""}
-            errors={
-              !field.state.meta.isValid && field.state.meta.errors.join(", ")
-            }
           />
         )}
       />
@@ -127,14 +123,14 @@ const AssignUserForm = ({ close }: Props) => {
       />
       <form.Field
         name="date"
-        validators={{
-          onChange: ({ value }) =>
-            !value || value === "" ? "Field required" : null,
-        }}
+        // validators={{
+        //   onChange: ({ value }) =>
+        //     !value || value === "" ? "Field required" : null,
+        // }}
         children={(field) => (
           <Input
             {...field}
-            defaultValue={new Date().toISOString().split("T")[0]}
+            // defaultValue={new Date().toISOString().split("T")[0]}
             type="date"
             label="Date"
           />

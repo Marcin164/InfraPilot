@@ -46,8 +46,6 @@ const ApplyChangeForm = (props: Props) => {
         );
       }
 
-      console.log(devices);
-
       const historyResponse = createHistoryEntry(authInfo.accessToken, {
         deviceId: params.id,
         ...history,

@@ -18,6 +18,7 @@ export const addDevice = async (token: any, data: any) => {
 };
 
 export const assignDevice = async (token: any, data: any) => {
+  console.log(data);
   try {
     const result = await axios({
       method: "post",
