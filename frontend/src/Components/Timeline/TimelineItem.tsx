@@ -32,7 +32,7 @@ const TimelineItem = ({
         </span>
       </div>
       {components &&
-        components.length > 0 &&
+        components?.length > 0 &&
         components.map((component: any) => (
           <div className="py-1 flex justify-between">
             <span>
@@ -55,7 +55,7 @@ const TimelineItem = ({
       {owner && (
         <span className="text-[18px] text-[#2B9AE9] font-light">{owner}</span>
       )}
-      {device && (
+      {device && typeof device === "string" && (
         <span className="text-[18px] text-[#2B9AE9] font-light">{device}</span>
       )}
       {details && (

@@ -5,6 +5,7 @@ import TimelineItem from "./TimelineItem";
 type Props = { items: any };
 
 const TimelineLine = ({ items }: Props) => {
+  console.log(items);
   return (
     <div className="border-l-[1px] border-[#2B9AE9] relative h-fit pb-2">
       {items.map((item: any) => {

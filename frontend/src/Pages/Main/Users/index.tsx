@@ -40,6 +40,7 @@ const index = () => {
   };
 
   const toggleFilterOptions = (e: any) => {
+    console.log(e.target.value);
     const targetValue: any = e.target.value;
     const targetName: any = e.target.name;
 
@@ -62,6 +63,8 @@ const index = () => {
         }
       }
     });
+
+    console.log(_filterOptions);
 
     setFilterOptions(_filterOptions);
   };

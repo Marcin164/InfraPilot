@@ -24,12 +24,12 @@ const EditEquipment = (props: Props) => {
   if (!userDevices.data) return null;
 
   const mainDevices = userDevices.data.filter(
-    (device: any) => device.ownerId == params.id && device.group === "Computers"
+    (device: any) => device.userId == params.id && device.group === "Computers"
   );
 
   const peripherals = userDevices.data.filter(
     (device: any) =>
-      device.ownerId == params.id && device.group === "Peripherals"
+      device.userId == params.id && device.group === "Peripherals"
   );
 
   const getAssetDetails = (assetId: any) => {

@@ -13,6 +13,7 @@ const MainTable = ({ columns, data, onRowClicked, className = "" }: Props) => {
       style: {
         width: "100%",
         background: "transparent",
+        height: "80vh",
       },
     },
     headRow: {

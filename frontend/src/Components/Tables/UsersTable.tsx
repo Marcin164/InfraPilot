@@ -31,7 +31,7 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
     },
     {
       name: "Current device",
-      selector: (row: any) => row.assetName || "N/A",
+      selector: (row: any) => row.assetname || "N/A",
     },
     {
       name: "Last logon",

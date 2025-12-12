@@ -2,7 +2,6 @@ import React from "react";
 
 type Props = {
   label: any;
-  value?: any;
   id?: any;
   onChange?: any;
   handleChange?: any;
@@ -13,12 +12,11 @@ type Props = {
 
 const Checkbox = ({
   label,
-  value,
   id = "customCheckbox",
   onChange,
   handleChange,
   name,
-  checked,
+  checked = null,
   className = "",
 }: Props) => {
   return (
@@ -31,11 +29,9 @@ const Checkbox = ({
           type="checkbox"
           id={id}
           className="sr-only peer"
-          onChange={
-            handleChange ? (e) => handleChange(e.target.checked) : onChange
-          }
+          onChange={onChange}
           name={name}
-          checked={value || checked}
+          checked={checked || null}
         />
 
         <span

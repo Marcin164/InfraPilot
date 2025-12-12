@@ -1,5 +1,5 @@
 import MainTable from "./MainTable";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import moment from "moment";
 import { getFilteredData, getSearchedData } from "../../Helpers/tables";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -12,6 +12,7 @@ type Props = {
 };
 
 const DevicesTable = ({ data, filterOptions, searchValue }: Props) => {
+  console.log(data);
   let navigate = useNavigate();
 
   const columns = [
@@ -32,7 +33,17 @@ const DevicesTable = ({ data, filterOptions, searchValue }: Props) => {
     },
     {
       name: "Assignee",
-      selector: (row: any) => row.ownerId || "N/A",
+      selector: (row: any) =>
+        row?.user ? (
+          <Link
+            to={`/users/${row.user.id}`}
+            className="text-[#2B9AE9] underline"
+          >
+            {row?.user?.distinguishedName}
+          </Link>
+        ) : (
+          "N/A"
+        ),
       width: "160px",
     },
     {

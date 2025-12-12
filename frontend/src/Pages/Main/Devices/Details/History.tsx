@@ -30,7 +30,7 @@ const History = (props: Props) => {
     return historyQuery.data.filter((history: any) => history.type !== 0);
   };
 
-  const convertToTimeline = () => {
+  const getOwnersHistory = () => {
     if (!historyQuery?.data) return null;
     return historyQuery.data
       .filter((history: any) => history.type == 0)
@@ -55,8 +55,8 @@ const History = (props: Props) => {
     <div className="flex justify-between">
       <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4 mr-1">
         <div className="text-[30px] font-semibold text-[#3C3C3C]">Owners</div>
-        {convertToTimeline() && convertToTimeline().length > 0 ? (
-          <TimelineLine items={convertToTimeline()} />
+        {getOwnersHistory() && getOwnersHistory().length > 0 ? (
+          <TimelineLine items={getOwnersHistory()} />
         ) : (
           <div>This device has no owners yet</div>
         )}

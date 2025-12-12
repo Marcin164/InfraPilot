@@ -14,13 +14,13 @@ const Equipment = ({ devices, userId }: Props) => {
   if (!devices) return null;
 
   const mainDevices = devices.filter(
-    (device: any) => device.ownerId === userId && device.group === "Computers"
+    (device: any) => device.userId === userId && device.group === "Computers"
   );
 
   const loggedDevice: any = null;
 
   const peripherals = devices.filter(
-    (device: any) => device.ownerId === userId && device.group === "Peripherals"
+    (device: any) => device.userId === userId && device.group === "Peripherals"
   );
 
   return (

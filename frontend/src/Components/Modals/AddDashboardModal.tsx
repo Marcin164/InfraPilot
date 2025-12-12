@@ -13,7 +13,7 @@ type AddDashboardModalProps = {
   selectDashboard?: (dashboard: {
     id: string;
     name: string;
-    ownerId: string;
+    userId: string;
   }) => void;
 };
 
@@ -27,7 +27,7 @@ const AddDashboardModal: React.FC<AddDashboardModalProps> = ({
   const [dashboardName, setDashboardName] = useState("");
 
   const mutation = useMutation({
-    mutationFn: (body: { name: string; ownerId: string }) => {
+    mutationFn: (body: { name: string; userId: string }) => {
       if (!accessToken) throw new Error("User is not authenticated");
       return createDashboard(accessToken, body);
     },
@@ -53,7 +53,7 @@ const AddDashboardModal: React.FC<AddDashboardModalProps> = ({
 
     mutation.mutate({
       name: dashboardName.trim(),
-      ownerId: user.userId,
+      userId: user.userId,
     });
   };
 

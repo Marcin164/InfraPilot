@@ -25,7 +25,7 @@ const AssignDeviceForm = (props: Props) => {
       }),
       assignDevice(authInfo.accessToken, {
         deviceId: device?.deviceId,
-        ownerId: params.id,
+        userId: params.id,
       })
     ),
 

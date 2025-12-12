@@ -25,7 +25,7 @@ const AssignUserForm = ({ close }: Props) => {
       }),
       assignDevice(authInfo.accessToken, {
         deviceId: params.id,
-        ownerId: values.userId,
+        userId: values.userId,
       })
     ),
 
@@ -55,6 +55,7 @@ const AssignUserForm = ({ close }: Props) => {
       date: "",
     },
     onSubmit: async ({ value }: any) => {
+      console.log(value);
       mutation.mutate(value);
     },
   });

@@ -19,7 +19,7 @@ const Filter = ({ filterData, setFilters, filterOptions }: Props) => {
         modalRef.current &&
         !modalRef.current.contains(event.target as Node)
       ) {
-        setIsOpenFilterModal(false); // zamknij tylko jeśli kliknięto poza
+        setIsOpenFilterModal(false);
       }
     };
 
