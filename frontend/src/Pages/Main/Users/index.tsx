@@ -6,6 +6,9 @@ import { useQuery } from "@tanstack/react-query";
 import { getFilter, getUsersTable } from "../../../Services/users";
 import { useState } from "react";
 import { useAuthInfo } from "@propelauth/react";
+import AddUserModal from "../../../Components/Modals/AddUserModal";
+import ButtonSecondary from "../../../Components/Buttons/ButtonSecondary";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
 
 const index = () => {
   const [filterOptions, setFilterOptions] = useState({
@@ -20,6 +23,7 @@ const index = () => {
     manager: [],
   });
   const [searchValue, setSearchValue] = useState("");
+  const [addUserModal, setAddUserModal] = useState(false);
 
   const authInfo = useAuthInfo();
 
@@ -40,7 +44,6 @@ const index = () => {
   };
 
   const toggleFilterOptions = (e: any) => {
-    console.log(e.target.value);
     const targetValue: any = e.target.value;
     const targetName: any = e.target.name;
 
@@ -64,9 +67,11 @@ const index = () => {
       }
     });
 
-    console.log(_filterOptions);
-
     setFilterOptions(_filterOptions);
+  };
+
+  const toggleModal = () => {
+    setAddUserModal((prev: any) => !prev);
   };
 
   return (
@@ -79,6 +84,13 @@ const index = () => {
         />
         <Search onChange={getSearchValue} />
         <TableSettings />
+        <ButtonSecondary
+          icon={faPlus}
+          text="Add user"
+          onClick={toggleModal}
+          className="ml-2"
+        />
+        <AddUserModal isModalOpen={addUserModal} onCloseModal={toggleModal} />
       </div>
       <UsersTable
         data={userQuery?.data}

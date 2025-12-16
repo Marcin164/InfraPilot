@@ -6,6 +6,7 @@ type Props = {
   onChange?: any;
   handleChange?: any;
   name?: any;
+  value?: any;
   checked?: any;
   className?: string;
 };
@@ -16,6 +17,7 @@ const Checkbox = ({
   onChange,
   handleChange,
   name,
+  value = null,
   checked = null,
   className = "",
 }: Props) => {
@@ -29,8 +31,11 @@ const Checkbox = ({
           type="checkbox"
           id={id}
           className="sr-only peer"
-          onChange={onChange}
+          onChange={
+            handleChange ? (e) => handleChange(e.target.checked) : onChange
+          }
           name={name}
+          value={value}
           checked={checked || null}
         />
 

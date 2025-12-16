@@ -16,6 +16,40 @@ export const getUsers = async (token: any) => {
   }
 };
 
+export const addUser = async (token: any, data: any) => {
+  try {
+    const result = await axios({
+      method: "post",
+      url: "http://localhost:3000/users/",
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+      data,
+    });
+
+    return result.data;
+  } catch (error) {
+    return error;
+  }
+};
+
+export const addManyUsers = async (token: any, data: any) => {
+  try {
+    const result = await axios({
+      method: "post",
+      url: "http://localhost:3000/users/many",
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+      data,
+    });
+
+    return result.data;
+  } catch (error) {
+    return error;
+  }
+};
+
 export const getUsersTable = async (token: any) => {
   try {
     const result = await axios({

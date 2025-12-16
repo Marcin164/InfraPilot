@@ -12,7 +12,6 @@ type Props = {
 };
 
 const DevicesTable = ({ data, filterOptions, searchValue }: Props) => {
-  console.log(data);
   let navigate = useNavigate();
 
   const columns = [

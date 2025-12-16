@@ -4,9 +4,8 @@ import Filter from "../../../Components/Filter";
 import Search from "../../../Components/Inputs/Search";
 import { useNavigate, useParams } from "react-router";
 import { useAuthInfo } from "@propelauth/react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { addDevice, getDevices, getFilter } from "../../../Services/devices";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useQuery } from "@tanstack/react-query";
+import { getDevices, getFilter } from "../../../Services/devices";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import ButtonSecondary from "../../../Components/Buttons/ButtonSecondary";
 import AddDeviceModal from "../../../Components/Modals/AddDeviceModal";
@@ -53,7 +52,6 @@ const index = (props: Props) => {
   const toggleFilterOptions = (e: any) => {
     const targetValue: any = e.target.value;
     const targetName: any = e.target.name;
-
     const _filterOptions: any = { ...filterOptions };
 
     Object.entries(_filterOptions).map(([key, array]: any) => {

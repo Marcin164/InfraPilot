@@ -1,0 +1,45 @@
+import React, { useState } from "react";
+import Modal from "react-responsive-modal";
+import CardHeader from "../Headers/CardHeader";
+import ButtonSecondary from "../Buttons/ButtonSecondary";
+import AddUserForm from "../Forms/AddUserForm";
+import FileUpload from "../Inputs/FileUpload";
+
+type Props = { isModalOpen: any; onCloseModal: any };
+
+const AddUserModal = ({ isModalOpen, onCloseModal }: Props) => {
+  const [addUserMode, setAddUserMode] = useState(0);
+
+  const toggleAddUserMode = (mode: number) => {
+    setAddUserMode(mode);
+  };
+  return (
+    <Modal
+      classNames={{
+        modal: "w-[800px] rounded-[10px] h-[80vh] max-h-[80vh] overflow-y-auto",
+      }}
+      open={isModalOpen}
+      onClose={onCloseModal}
+      center
+    >
+      <CardHeader text="Add user" />
+      <div className="pt-2 pb-4">
+        <ButtonSecondary
+          text="Manual"
+          className="mr-2"
+          onClick={() => toggleAddUserMode(0)}
+        />
+        <ButtonSecondary
+          text="Upload from file"
+          onClick={() => toggleAddUserMode(1)}
+        />
+      </div>
+      <div className="w-full">
+        {addUserMode === 0 && <AddUserForm close={onCloseModal} />}
+        {addUserMode === 1 && <FileUpload close={onCloseModal} />}
+      </div>
+    </Modal>
+  );
+};
+
+export default AddUserModal;

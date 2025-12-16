@@ -13,6 +13,7 @@ const AddDeviceModal = ({ isModalOpen, onCloseModal }: Props) => {
   const handleOnClose = () => {
     onCloseModal(false);
   };
+
   return (
     <Modal
       classNames={{ modal: "w-[500px] rounded-[10px]" }}
@@ -21,7 +22,7 @@ const AddDeviceModal = ({ isModalOpen, onCloseModal }: Props) => {
       center
     >
       <CardHeader text="Add device" />
-      <AddEquipmentForm onFormComplete={handleOnClose} />
+      <AddEquipmentForm />
     </Modal>
   );
 };

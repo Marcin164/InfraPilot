@@ -21,6 +21,7 @@ const FilterModal = ({ data, setFilters, filterOptions }: Props) => {
                 <Checkbox
                   name={key}
                   label={option}
+                  value={option}
                   id={`${indexX}${indexY}`}
                   onChange={setFilters}
                   checked={getActiveFilters(key, option)}

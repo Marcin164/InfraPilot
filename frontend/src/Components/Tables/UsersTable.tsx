@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import MainTable from "./MainTable";
 import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -21,8 +21,8 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
     },
     {
       name: "Name",
-      cell: (row: any) => (
-        <div className="font-bold">{`${row.name} ${row.surname}`}</div>
+      selector: (row: any) => (
+        <span className="font-bold">{`${row.name} ${row.surname}`}</span>
       ),
     },
     {
@@ -31,7 +31,17 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
     },
     {
       name: "Current device",
-      selector: (row: any) => row.assetname || "N/A",
+      selector: (row: any) =>
+        row.assetname ? (
+          <Link
+            to={`/devices/${row.deviceid}/system`}
+            className="text-[#2B9AE9] underline"
+          >
+            {row.assetname}
+          </Link>
+        ) : (
+          "N/A"
+        ),
     },
     {
       name: "Last logon",
