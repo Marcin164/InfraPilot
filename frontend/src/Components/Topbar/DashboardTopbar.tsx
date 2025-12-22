@@ -1,9 +1,9 @@
 import { faPencil, faPlus } from "@fortawesome/free-solid-svg-icons";
-import ButtonPrimary from "../Buttons/ButtonPrimary";
 import { useState } from "react";
 import AddDashboardModal from "../Modals/AddDashboardModal";
 import EditDashboardModal from "../Modals/EditDashboardModal";
 import Select from "../Inputs/Select";
+import ButtonSecondary from "../Buttons/ButtonSecondary";
 
 type Props = {
   selectOptions: Array<any>;
@@ -40,12 +40,12 @@ const DashboardTopbar = ({
         />
       </div>
       <div className="flex">
-        <ButtonPrimary
+        <ButtonSecondary
           icon={faPencil}
-          text="Edit Dashboard"
           onClick={onOpenEditDashboardModal}
+          className="mr-2"
         />
-        <ButtonPrimary
+        <ButtonSecondary
           icon={faPlus}
           text="Add Dashboard"
           onClick={onOpenAddDashboardModal}
@@ -56,10 +56,7 @@ const DashboardTopbar = ({
         onCloseModal={onOpenAddDashboardModal}
         selectDashboard={selectDashboard}
       />
-      <EditDashboardModal
-        isModalOpen={isOpenEditDashboardModal}
-        onCloseModal={onOpenEditDashboardModal}
-      />
+      <EditDashboardModal isModalOpen={isOpenEditDashboardModal} />
     </div>
   );
 };

@@ -36,7 +36,11 @@ const EquipmentHistory = (props: Props) => {
         Equipment History
       </div>
       <div>
-        <TimelineLine items={convertToTimeline()} />
+        {convertToTimeline()?.length > 0 ? (
+          <TimelineLine items={convertToTimeline()} />
+        ) : (
+          <div>No history entries</div>
+        )}
       </div>
     </div>
   );

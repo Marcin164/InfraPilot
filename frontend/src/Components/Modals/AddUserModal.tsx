@@ -4,10 +4,12 @@ import CardHeader from "../Headers/CardHeader";
 import ButtonSecondary from "../Buttons/ButtonSecondary";
 import AddUserForm from "../Forms/AddUserForm";
 import FileUpload from "../Inputs/FileUpload";
+import { useTranslation } from "react-i18next";
 
 type Props = { isModalOpen: any; onCloseModal: any };
 
 const AddUserModal = ({ isModalOpen, onCloseModal }: Props) => {
+  const { t } = useTranslation();
   const [addUserMode, setAddUserMode] = useState(0);
 
   const toggleAddUserMode = (mode: number) => {
@@ -22,15 +24,15 @@ const AddUserModal = ({ isModalOpen, onCloseModal }: Props) => {
       onClose={onCloseModal}
       center
     >
-      <CardHeader text="Add user" />
+      <CardHeader text={t("btn.add.user")} />
       <div className="pt-2 pb-4">
         <ButtonSecondary
-          text="Manual"
+          text={t("btn.add.user.manual")}
           className="mr-2"
           onClick={() => toggleAddUserMode(0)}
         />
         <ButtonSecondary
-          text="Upload from file"
+          text={t("btn.add.user.file")}
           onClick={() => toggleAddUserMode(1)}
         />
       </div>

@@ -9,6 +9,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { RedirectToLogin, RequiredAuthProvider } from "@propelauth/react";
 import SignInLoader from "./Components/Loaders/SignInLoader.tsx";
 import { ToastContainer } from "react-toastify";
+import "./i18n";
 
 const queryClient = new QueryClient();
 

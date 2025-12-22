@@ -18,7 +18,6 @@ const Index = (props: Props) => {
       >
         <FontAwesomeIcon icon={faGear} />
       </button>
-
       {isModalOpen && (
         <TableSettingsModal
           className="w-[700px]"

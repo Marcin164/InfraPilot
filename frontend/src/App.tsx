@@ -46,8 +46,7 @@ function App() {
             </Route>
             <Route path="/applications" element={<Applications />} />
             <Route path="/applications/:id" element={<ApplicationsDetails />} />
-            <Route path="/flows" element={<Flows />} />
-            <Route path="/flows/:id" element={<FlowsDetails />} />
+            <Route path="/helpdesk" element={<></>} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>

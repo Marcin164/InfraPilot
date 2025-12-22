@@ -7,10 +7,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addUserDefaultValues } from "../../Constants/defaultValues";
 import { addUser } from "../../Services/users";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 type Props = { close: any };
 
 const AddUserForm = ({ close }: Props) => {
+  const { t } = useTranslation();
   const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
 
@@ -45,73 +47,105 @@ const AddUserForm = ({ close }: Props) => {
       <form.Field
         name="name"
         children={(field) => (
-          <Input {...field} value={field.state.value} label="Name" />
+          <Input {...field} value={field.state.value} label={t("user.name")} />
         )}
       />
       <form.Field
         name="surname"
         children={(field) => (
-          <Input {...field} value={field.state.value} label="Surname" />
+          <Input
+            {...field}
+            value={field.state.value}
+            label={t("user.surname")}
+          />
         )}
       />
       <form.Field
         name="username"
         children={(field) => (
-          <Input {...field} value={field.state.value} label="Username" />
+          <Input
+            {...field}
+            value={field.state.value}
+            label={t("user.username")}
+          />
         )}
       />
       <form.Field
         name="email"
         children={(field) => (
-          <Input {...field} value={field.state.value} label="Email" />
+          <Input {...field} value={field.state.value} label={t("user.email")} />
         )}
       />
       <form.Field
         name="title"
         children={(field) => (
-          <Input {...field} value={field.state.value} label="Title" />
+          <Input {...field} value={field.state.value} label={t("user.title")} />
         )}
       />
       <form.Field
         name="department"
         children={(field) => (
-          <Input {...field} value={field.state.value} label="Department" />
+          <Input
+            {...field}
+            value={field.state.value}
+            label={t("user.department")}
+          />
         )}
       />
       <form.Field
         name="company"
         children={(field) => (
-          <Input {...field} value={field.state.value} label="Company" />
+          <Input
+            {...field}
+            value={field.state.value}
+            label={t("user.company")}
+          />
         )}
       />
       <form.Field
         name="office"
         children={(field) => (
-          <Input {...field} value={field.state.value} label="Office" />
+          <Input
+            {...field}
+            value={field.state.value}
+            label={t("user.office")}
+          />
         )}
       />
       <form.Field
         name="streetAddress"
         children={(field) => (
-          <Input {...field} value={field.state.value} label="Street" />
+          <Input
+            {...field}
+            value={field.state.value}
+            label={t("user.street")}
+          />
         )}
       />
       <form.Field
         name="city"
         children={(field) => (
-          <Input {...field} value={field.state.value} label="City" />
+          <Input {...field} value={field.state.value} label={t("user.city")} />
         )}
       />
       <form.Field
         name="postalCode"
         children={(field) => (
-          <Input {...field} value={field.state.value} label="Postal Code" />
+          <Input
+            {...field}
+            value={field.state.value}
+            label={t("user.postalcode")}
+          />
         )}
       />
       <form.Field
         name="country"
         children={(field) => (
-          <Input {...field} value={field.state.value} label="Country" />
+          <Input
+            {...field}
+            value={field.state.value}
+            label={t("user.country")}
+          />
         )}
       />
       <ButtonPrimary type="submit" text="Add user" className="mt-4" />

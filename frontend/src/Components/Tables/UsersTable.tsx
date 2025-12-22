@@ -4,11 +4,13 @@ import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
 import { getFilteredData, getSearchedData } from "../../Helpers/tables";
+import { useTranslation } from "react-i18next";
 
 type Props = { data: any; filterOptions: any; searchValue: string };
 
 const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
   let navigate = useNavigate();
+  const { t } = useTranslation();
 
   const columns = [
     {
@@ -20,17 +22,17 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
       width: "60px",
     },
     {
-      name: "Name",
+      name: t("user.name"),
       selector: (row: any) => (
         <span className="font-bold">{`${row.name} ${row.surname}`}</span>
       ),
     },
     {
-      name: "Username",
+      name: t("user.username"),
       selector: (row: any) => row.username,
     },
     {
-      name: "Current device",
+      name: t("user.currentdevice"),
       selector: (row: any) =>
         row.assetname ? (
           <Link
@@ -44,7 +46,7 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
         ),
     },
     {
-      name: "Last logon",
+      name: t("user.lastlogon"),
       cell: (row: any) => (
         <div className="w-[170px] py-2 px-1 rounded-[10px] text-center bg-[#30A712] text-[#FFFFFF]">
           {moment(row.lastlogon).format("DD.MM.YYYY, hh:mm:ss")}
@@ -52,11 +54,11 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
       ),
     },
     {
-      name: "Department",
+      name: t("user.department"),
       selector: (row: any) => row.department || "N/A",
     },
     {
-      name: "Office",
+      name: t("user.office"),
       selector: (row: any) => row.office || "N/A",
     },
   ];

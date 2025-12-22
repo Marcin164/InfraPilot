@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { twMerge } from "tailwind-merge";
 
-type Props = { icon?: any; text: string; onClick?: any; className?: string };
+type Props = { icon?: any; text?: string; onClick?: any; className?: string };
 
 const ButtonSecondary = ({ icon, text, onClick, className }: Props) => {
   return (
@@ -12,8 +12,8 @@ const ButtonSecondary = ({ icon, text, onClick, className }: Props) => {
         className
       )}
     >
-      {icon && <FontAwesomeIcon icon={icon} className="pr-2 " />}
-      <span>{text}</span>
+      {icon && <FontAwesomeIcon icon={icon} className={text && "pr-2"} />}
+      {text && <span>{text}</span>}
     </button>
   );
 };

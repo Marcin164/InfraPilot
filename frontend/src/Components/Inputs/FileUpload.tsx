@@ -12,6 +12,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthInfo } from "@propelauth/react";
 import { addManyUsers } from "../../Services/users";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
+import ButtonPrimary from "../Buttons/ButtonPrimary";
 
 type Props = { close: any };
 
@@ -41,6 +43,7 @@ const ALL_COLUMNS = [...REQUIRED_COLUMNS, ...OPTIONAL_COLUMNS];
 const PREVIEW_LIMIT = 5;
 
 const FileUpload = ({ close }: Props) => {
+  const { t } = useTranslation();
   const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -56,7 +59,7 @@ const FileUpload = ({ close }: Props) => {
     },
 
     onSuccess: () => {
-      toast.success("User has been added uccessfully");
+      toast.success(t("toast.success.user"));
       queryClient.invalidateQueries({ queryKey: ["users"] });
       close();
     },
@@ -69,7 +72,7 @@ const FileUpload = ({ close }: Props) => {
 
   const handleParsedData = (rows: any[]) => {
     if (!rows.length) {
-      setError("Plik nie zawiera danych");
+      setError(t("file.no.data"));
       setProgress(null);
       return;
     }
@@ -78,7 +81,7 @@ const FileUpload = ({ close }: Props) => {
     const missing = validateColumns(headers);
 
     if (missing) {
-      setError(`Brak wymaganych kolumn: ${missing.join(", ")}`);
+      setError(`${t("file.no.columns")}: ${missing.join(", ")}`);
       setProgress(null);
       return;
     }
@@ -136,7 +139,7 @@ const FileUpload = ({ close }: Props) => {
       },
       complete: () => handleParsedData(rows),
       error: () => {
-        setError("Błąd parsowania pliku");
+        setError(t("file.parser.error"));
         setProgress(null);
       },
     });
@@ -146,7 +149,7 @@ const FileUpload = ({ close }: Props) => {
     setProgress(0);
 
     if (file.type === "application/vnd.oasis.opendocument.text") {
-      setError("ODT nie jest wspierany do parsowania w przeglądarce");
+      setError(t("file.odt.error"));
       setProgress(null);
       return;
     }
@@ -161,7 +164,7 @@ const FileUpload = ({ close }: Props) => {
 
   const handleFile = (file: File) => {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError("Nieobsługiwany typ pliku");
+      setError(t("file.type.error"));
       return;
     }
 
@@ -195,12 +198,12 @@ const FileUpload = ({ close }: Props) => {
         {isDragging && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-2xl bg-blue-500/90 text-white">
             <FontAwesomeIcon icon={faCloudArrowUp} className="mb-2 text-4xl" />
-            <p className="text-sm font-medium">Upuść plik aby załadować</p>
+            <p className="text-sm font-medium">{t("file.dragging")}</p>
           </div>
         )}
 
         <FontAwesomeIcon icon={faUpload} className="mx-auto mb-4 text-3xl" />
-        <p className="text-sm">Kliknij lub przeciągnij plik CSV / TSV / XLSX</p>
+        <p className="text-sm">{t("file.placeholder")}</p>
         <input
           ref={inputRef}
           type="file"
@@ -212,7 +215,7 @@ const FileUpload = ({ close }: Props) => {
 
       {progress !== null && (
         <div className="rounded-xl border bg-white px-4 py-3">
-          <div className="mb-1 text-xs text-zinc-500">Przetwarzanie pliku</div>
+          <div className="mb-1 text-xs text-zinc-500">{t("file.pending")}</div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200">
             <div
               className="h-full bg-blue-600 transition-all"
@@ -224,14 +227,12 @@ const FileUpload = ({ close }: Props) => {
           </div>
         </div>
       )}
-
       {error && (
         <div className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2 text-sm text-red-600">
           <FontAwesomeIcon icon={faCircleExclamation} />
           {error}
         </div>
       )}
-
       {data.length > 0 && (
         <div className="rounded-xl border bg-white p-4">
           <div className="mb-2 flex items-center gap-2 text-sm font-medium">
@@ -266,15 +267,12 @@ const FileUpload = ({ close }: Props) => {
               </tbody>
             </table>
           </div>
-
-          <button
+          <ButtonPrimary
             onClick={() => {
               mutation.mutate(data);
             }}
-            className="mt-4 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            Wyślij dane
-          </button>
+            text={t("file.send")}
+          />
         </div>
       )}
     </div>

@@ -9,8 +9,10 @@ import { useAuthInfo } from "@propelauth/react";
 import AddUserModal from "../../../Components/Modals/AddUserModal";
 import ButtonSecondary from "../../../Components/Buttons/ButtonSecondary";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { useTranslation } from "react-i18next";
 
 const index = () => {
+  const { t } = useTranslation();
   const [filterOptions, setFilterOptions] = useState({
     department: [],
     company: [],
@@ -86,7 +88,7 @@ const index = () => {
         <TableSettings />
         <ButtonSecondary
           icon={faPlus}
-          text="Add user"
+          text={t("btn.add.user")}
           onClick={toggleModal}
           className="ml-2"
         />

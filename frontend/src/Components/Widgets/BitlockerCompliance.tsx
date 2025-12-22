@@ -9,21 +9,21 @@ const Compliance = ({}: Props) => {
   ];
 
   return (
-    <div className="bg-white w-full h-full shadow-xl rounded-[10px]">
-      <div className="text-[32px] font-semibold text-[#3C3C3C] text-center">
+    <div className="bg-white w-full h-full shadow-xl rounded-[10px] px-4 ">
+      <div className="text-[32px] font-semibold text-[#3C3C3C] py-2">
         Bitlocker compliance
       </div>
-      <div className="relative h-[80%] flex items-center justify-center">
+      <div className="relative flex items-center justify-center">
         <div className="absolute text-[40px] text-[#3C3C3C] font-bold">50%</div>
-        <PieChart width={220} height={220}>
+        <PieChart width={200} height={200}>
           <Pie
             data={data}
             dataKey="value"
             nameKey="name"
             cx="50%"
             cy="50%"
-            innerRadius={70}
-            outerRadius={110}
+            innerRadius={60}
+            outerRadius={90}
           >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
