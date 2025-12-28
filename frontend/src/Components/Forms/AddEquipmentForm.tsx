@@ -1,78 +1,59 @@
 import React, { useState } from "react";
 import { useForm } from "@tanstack/react-form";
-import Input from "../Inputs/Input";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { useMutation } from "@tanstack/react-query";
 import { addDevice } from "../../Services/devices";
 import { useAuthInfo } from "@propelauth/react";
-
 import {
-  componentsTypeOptions,
   computersTypeOptions,
+  groupMappings,
   groupTypeOptions,
-  networkTypeOptions,
-  othersTypeOptions,
-  peripheralsTypeOptions,
 } from "../../Constants/options";
-
+import { addDeviceDefaultValues } from "../../Constants/defaultValues";
+import { requiredValidator } from "../../Helpers/validators";
+import Input from "../Inputs/Input";
 import SelectSecondary from "../Inputs/SelectSecondary";
 
 type Option = { label: string; value: string };
 
-const GROUP_MAPPINGS: { group: string; subgroupOptions: Option[] }[] = [
-  { group: "Computers", subgroupOptions: computersTypeOptions },
-  { group: "Peripherals", subgroupOptions: peripheralsTypeOptions },
-  { group: "Network", subgroupOptions: networkTypeOptions },
-  { group: "Components", subgroupOptions: componentsTypeOptions },
-  { group: "Others", subgroupOptions: othersTypeOptions },
-];
+type FormValues = typeof addDeviceDefaultValues;
 
 const AddEquipmentForm: React.FC = () => {
   const { accessToken } = useAuthInfo();
 
-  const [subgroupType, setSubgroupType] =
+  const [subgroupOptions, setSubgroupOptions] =
     useState<Option[]>(computersTypeOptions);
 
   const mutation = useMutation({
-    mutationFn: async (device: Record<string, any>) => {
-      if (!accessToken) throw new Error("User is not authenticated.");
-      return addDevice(accessToken, device);
+    mutationFn: async (values: FormValues) => {
+      if (!accessToken) {
+        throw new Error("User is not authenticated");
+      }
+      return addDevice(accessToken, values);
     },
   });
 
   const form = useForm({
-    defaultValues: {
-      group: groupTypeOptions[0]?.value ?? "",
-      subgroup: computersTypeOptions[0]?.value ?? "",
-      assetName: "",
-      serialNumber: "",
-      model: "",
-      manufacturer: "",
-      location: "",
-    },
-
-    onSubmit: async ({ value }) => {
-      if (!value.assetName.trim()) return;
-      if (!value.group || !value.subgroup) return;
-
+    defaultValues: addDeviceDefaultValues,
+    onSubmit: ({ value }) => {
       mutation.mutate(value);
     },
   });
 
-  const handleGroupSelect = (option: Option, onChange: (v: string) => void) => {
-    const mapping = GROUP_MAPPINGS.find((m) => m.group === option.value);
-    const subgroups = mapping?.subgroupOptions ?? [];
+  const handleGroupSelect = (option: Option, field: any) => {
+    const mapping = groupMappings.find((m) => m.group === option.value);
+    const newSubgroups = mapping?.subgroupOptions ?? [];
 
-    setSubgroupType(subgroups);
-    onChange(option.value);
+    setSubgroupOptions(newSubgroups);
+    field.handleChange(option.value);
+    form.setFieldValue("subgroup", newSubgroups[0]?.value ?? "");
   };
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        e.stopPropagation();
         form.handleSubmit();
       }}
     >
@@ -83,9 +64,7 @@ const AddEquipmentForm: React.FC = () => {
             label="Group"
             options={groupTypeOptions}
             value={groupTypeOptions.find((o) => o.value === field.state.value)}
-            onSelect={(opt: Option) =>
-              handleGroupSelect(opt, field.handleChange)
-            }
+            onSelect={(opt: Option) => handleGroupSelect(opt, field)}
           />
         )}
       />
@@ -94,37 +73,75 @@ const AddEquipmentForm: React.FC = () => {
         children={(field) => (
           <SelectSecondary
             label="Subgroup"
-            options={subgroupType}
-            value={subgroupType.find((o) => o.value === field.state.value)}
+            options={subgroupOptions}
+            value={subgroupOptions.find((o) => o.value === field.state.value)}
             onSelect={(opt: Option) => field.handleChange(opt.value)}
           />
         )}
       />
-      <form.Field
-        name="assetName"
-        children={(field) => (
-          <Input {...field} value={field.state.value} label="Asset Name" />
-        )}
-      />
-
+      <form.Subscribe selector={(state) => state.values.group}>
+        {(group) =>
+          group === "Computers" && (
+            <form.Field
+              name="assetName"
+              validators={{
+                onChange: ({ value }) => requiredValidator(value),
+              }}
+            >
+              {(field) => (
+                <Input
+                  {...field}
+                  value={field.state.value}
+                  label="Asset Name"
+                  errors={field.state.meta.errors?.join(", ")}
+                />
+              )}
+            </form.Field>
+          )
+        }
+      </form.Subscribe>
       <form.Field
         name="model"
+        validators={{
+          onChange: ({ value }) => requiredValidator(value),
+        }}
         children={(field) => (
-          <Input {...field} value={field.state.value} label="Model" />
+          <Input
+            {...field}
+            value={field.state.value}
+            label="Model"
+            errors={field.state.meta.errors?.join(", ")}
+          />
         )}
       />
 
       <form.Field
         name="manufacturer"
+        validators={{
+          onChange: ({ value }) => requiredValidator(value),
+        }}
         children={(field) => (
-          <Input {...field} value={field.state.value} label="Manufacturer" />
+          <Input
+            {...field}
+            value={field.state.value}
+            label="Manufacturer"
+            errors={field.state.meta.errors?.join(", ")}
+          />
         )}
       />
 
       <form.Field
         name="serialNumber"
+        validators={{
+          onChange: ({ value }) => requiredValidator(value),
+        }}
         children={(field) => (
-          <Input {...field} value={field.state.value} label="Serial Number" />
+          <Input
+            {...field}
+            value={field.state.value}
+            label="Serial Number"
+            errors={field.state.meta.errors?.join(", ")}
+          />
         )}
       />
 
@@ -134,9 +151,13 @@ const AddEquipmentForm: React.FC = () => {
           <Input {...field} value={field.state.value} label="Location" />
         )}
       />
-
       <div className="pt-4">
-        <ButtonPrimary icon={faPlus} type="submit" text="Save" />
+        <ButtonPrimary
+          icon={faPlus}
+          type="submit"
+          text="Save"
+          disabled={!form.state.canSubmit || mutation.isPending}
+        />
       </div>
     </form>
   );

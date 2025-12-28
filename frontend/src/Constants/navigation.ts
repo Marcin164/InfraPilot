@@ -32,11 +32,6 @@ export const navbarItems = [
     icon: faComputer,
   },
   {
-    to: "/applications",
-    label: "nav.applications",
-    icon: faCode,
-  },
-  {
     to: "/helpdesk",
     label: "nav.helpdesk",
     icon: faRobot,

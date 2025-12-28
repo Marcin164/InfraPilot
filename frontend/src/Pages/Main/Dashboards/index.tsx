@@ -85,7 +85,6 @@ const Index = () => {
     const widget = DASHBOARD_WIDGETS.find((w) => w.id === widgetId);
     if (!widget) return;
 
-    console.log(widget);
     const preview = {
       i: "__dropping__",
       x: item.x,

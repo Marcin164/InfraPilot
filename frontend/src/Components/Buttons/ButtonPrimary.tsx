@@ -1,32 +1,39 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { twMerge } from "tailwind-merge";
 
-type Props = {
-  icon?: any;
-  text?: string;
-  onClick?: any;
+type ButtonPrimaryProps = {
+  icon?: IconProp;
+  text: string;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
   type?: "button" | "submit";
   className?: string;
+  disabled?: boolean;
 };
 
-const ButtonPrimary = ({
+const ButtonPrimary: React.FC<ButtonPrimaryProps> = ({
   icon,
   text,
   onClick,
   type = "button",
-  className = "",
-}: Props) => {
+  className,
+  disabled = false,
+}) => {
   return (
     <button
       type={type}
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      aria-disabled={disabled}
       className={twMerge(
-        "w-fit bg-[#2B9AE9] box-shadow text-[#FFFFFF] px-4 py-1 rounded-[10px] text-[20px] cursor-pointer hover:bg-[#3CABFA]",
+        "inline-flex items-center gap-2 rounded-[10px] px-4 py-1 text-[20px] font-medium transition-colors",
+        "bg-[#2B9AE9] text-white hover:bg-[#3CABFA]",
+        "disabled:bg-[#A7CDEE] disabled:text-white/70 disabled:cursor-not-allowed disabled:hover:bg-[#A7CDEE]",
         className
       )}
     >
-      {icon && <FontAwesomeIcon icon={icon} className="pr-2 " />}
+      {icon && <FontAwesomeIcon icon={icon} />}
       <span>{text}</span>
     </button>
   );

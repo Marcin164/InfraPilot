@@ -14,7 +14,6 @@ const index = (props: Props) => {
   const location = useLocation();
   const breadCrumbs: any = splitPath(location.pathname, "/");
   const { parser } = useParser();
-  console.log(breadCrumbs);
 
   return (
     <div className="flex items-center justify-between bg-[#FFFFFF] px-4 py-3">

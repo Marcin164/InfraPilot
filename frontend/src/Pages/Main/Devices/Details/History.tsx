@@ -1,96 +1,97 @@
-import React, { useState } from "react";
-import TimelineLine from "../../../../Components/Timeline/TimelineLine";
-import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "react-router";
+import { useAuthInfo } from "@propelauth/react";
 import { faArrowsRotate, faMicrochip } from "@fortawesome/free-solid-svg-icons";
 import AssignDeviceModal from "../../../../Components/Modals/AssignDeviceModal";
-import { useQuery } from "@tanstack/react-query";
-import { getDeviceHistory } from "../../../../Services/histories";
-import { useAuthInfo } from "@propelauth/react";
-import { useParams } from "react-router";
 import ApplyChangesModal from "../../../../Components/Modals/ApplyChangesModal";
+import { getDeviceHistory } from "../../../../Services/histories";
+import HistorySection from "../../../../Components/Details/HistorySection";
 
-type Props = {};
+export enum HistoryType {
+  OWNER = 0,
+  CHANGE = 1,
+}
 
-const History = (props: Props) => {
-  const authInfo = useAuthInfo();
-  const params = useParams();
+export interface HistoryItem {
+  id: string;
+  type: HistoryType;
+  user?: {
+    distinguishedName: string;
+  };
+  device?: string | null;
+  owner?: string;
+}
+
+const History = () => {
+  const { accessToken } = useAuthInfo();
+  const { id: deviceId } = useParams<{ id: string }>();
+
   const [isAssignUserModalOpen, setIsAssignUserModalOpen] = useState(false);
   const [isApplyChangesModalOpen, setIsApplyChangesModalOpen] = useState(false);
-  const historyQuery = useQuery({
-    queryKey: ["history"],
-    queryFn: () => getDeviceHistory(authInfo.accessToken, params.id),
+
+  const historyQuery = useQuery<HistoryItem[]>({
+    queryKey: ["device-history", deviceId],
+    queryFn: () => getDeviceHistory(accessToken, deviceId),
+    enabled: Boolean(accessToken && deviceId),
   });
 
-  if (!historyQuery?.data) return null;
+  const ownersHistory = useMemo(() => {
+    if (!historyQuery.data) return [];
 
-  console.log(historyQuery.data);
-
-  const getChangesHistory = () => {
-    if (!historyQuery?.data) return [];
-    return historyQuery.data.filter((history: any) => history.type !== 0);
-  };
-
-  const getOwnersHistory = () => {
-    if (!historyQuery?.data) return null;
     return historyQuery.data
-      .filter((history: any) => history.type == 0)
-      .map((history: any) => {
-        return {
-          ...history,
-          device: null,
-          owner: history?.user?.distinguishedName || "",
-        };
-      });
-  };
+      .filter((history) => history.type === HistoryType.OWNER)
+      .map((history) => ({
+        ...history,
+        device: null,
+        owner: history.user?.distinguishedName ?? "",
+      }));
+  }, [historyQuery.data]);
 
-  const toggleAssignUserModal = () => {
-    setIsAssignUserModalOpen((prev) => !prev);
-  };
+  const changesHistory = useMemo(() => {
+    if (!historyQuery.data) return [];
+    return historyQuery.data.filter(
+      (history) => history.type !== HistoryType.OWNER
+    );
+  }, [historyQuery.data]);
 
-  const toggleApplyChangesModal = () => {
-    setIsApplyChangesModalOpen((prev) => !prev);
-  };
+  if (historyQuery.isLoading) {
+    return <div>Loading history…</div>;
+  }
+
+  if (historyQuery.isError) {
+    return <div>Failed to load history</div>;
+  }
 
   return (
-    <div className="flex justify-between">
-      <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4 mr-1">
-        <div className="text-[30px] font-semibold text-[#3C3C3C]">Owners</div>
-        {getOwnersHistory() && getOwnersHistory().length > 0 ? (
-          <TimelineLine items={getOwnersHistory()} />
-        ) : (
-          <div>This device has no owners yet</div>
-        )}
-        <div className="pt-4">
-          <ButtonPrimary
-            icon={faArrowsRotate}
-            text="Assign device"
-            onClick={toggleAssignUserModal}
-          />
-          <AssignDeviceModal
-            isModalOpen={isAssignUserModalOpen}
-            handleOnClose={toggleAssignUserModal}
-          />
-        </div>
-      </div>
-      <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4 ml-1">
-        <div className="text-[30px] font-semibold text-[#3C3C3C]">Changes</div>
-        {getChangesHistory() && getChangesHistory().length > 0 ? (
-          <TimelineLine items={getChangesHistory()} />
-        ) : (
-          <div>This device has no changes yet</div>
-        )}
-        <div className="pt-4">
-          <ButtonPrimary
-            icon={faMicrochip}
-            text="Apply Changes"
-            onClick={toggleApplyChangesModal}
-          />
-          <ApplyChangesModal
-            isModalOpen={isApplyChangesModalOpen}
-            handleOnClose={toggleApplyChangesModal}
-          />
-        </div>
-      </div>
+    <div className="flex justify-between gap-2">
+      <HistorySection
+        title="Owners"
+        emptyText="This device has no owners yet"
+        items={ownersHistory}
+        buttonIcon={faArrowsRotate}
+        buttonText="Assign device"
+        onButtonClick={() => setIsAssignUserModalOpen(true)}
+      >
+        <AssignDeviceModal
+          isModalOpen={isAssignUserModalOpen}
+          handleOnClose={() => setIsAssignUserModalOpen(false)}
+        />
+      </HistorySection>
+
+      <HistorySection
+        title="Changes"
+        emptyText="This device has no changes yet"
+        items={changesHistory}
+        buttonIcon={faMicrochip}
+        buttonText="Apply Changes"
+        onButtonClick={() => setIsApplyChangesModalOpen(true)}
+      >
+        <ApplyChangesModal
+          isModalOpen={isApplyChangesModalOpen}
+          handleOnClose={() => setIsApplyChangesModalOpen(false)}
+        />
+      </HistorySection>
     </div>
   );
 };

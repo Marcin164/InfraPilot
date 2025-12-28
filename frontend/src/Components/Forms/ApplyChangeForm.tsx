@@ -1,43 +1,61 @@
+import React, { useMemo } from "react";
 import { useAuthInfo } from "@propelauth/react";
 import { useForm } from "@tanstack/react-form";
-import {
-  QueryClient,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import React, { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext, useParams } from "react-router";
-import SelectSecondary from "../Inputs/SelectSecondary";
-import ButtonPrimary from "../Buttons/ButtonPrimary";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import { toast } from "react-toastify";
+
 import Input from "../Inputs/Input";
+import SelectSecondary from "../Inputs/SelectSecondary";
 import Checkbox from "../Inputs/Checkbox";
+import ButtonPrimary from "../Buttons/ButtonPrimary";
+
 import { createHistoryEntry } from "../../Services/histories";
+import { addDevice, getDevices } from "../../Services/devices";
 import {
   componentsTypeOptions,
   historyTypeOptions,
 } from "../../Constants/options";
-import { addDevice, getDevices } from "../../Services/devices";
-import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { toast } from "react-toastify";
+import { requiredValidator } from "../../Helpers/validators";
+import { applyChangeDefaultValues } from "../../Constants/defaultValues";
+import ButtonSecondary from "../Buttons/ButtonSecondary";
 
-type Props = {};
+type Option = { label: string; value: string };
 
-const ApplyChangeForm = (props: Props) => {
-  const params = useParams();
-  const authInfo = useAuthInfo();
+type FormValues = typeof applyChangeDefaultValues;
+
+const ApplyChangeForm: React.FC = () => {
+  const { id } = useParams();
+  const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
-  const deviceContext: any = useOutletContext();
-  const [historyType, setHistoryType] = useState(1);
-  const mutation = useMutation({
-    mutationFn: async (history: any) => {
-      let devices = [];
+  const deviceContext = useOutletContext<{ data: { location: string } }>();
 
-      if (history.removedComponents.length > 0) {
-        devices = await Promise.all(
-          history.removedComponents.map((component: any) =>
-            addDevice(authInfo.accessToken, {
+  const devicesQuery = useQuery({
+    queryKey: ["devices"],
+    queryFn: () => getDevices(accessToken),
+  });
+
+  const addedComponentsOptions = useMemo(() => {
+    if (!devicesQuery.data) return [];
+
+    return devicesQuery.data
+      .filter((d: any) => d.group === "Components")
+      .map((d: any) => ({
+        label: `${d.manufacturer} ${d.model} (${d.serialNumber})`,
+        value: d.id,
+      }));
+  }, [devicesQuery.data]);
+
+  const mutation = useMutation({
+    mutationFn: async (values: FormValues) => {
+      let createdDevices: string[] = [];
+
+      if (values.removedComponents.length > 0) {
+        createdDevices = await Promise.all(
+          values.removedComponents.map((component: any) =>
+            addDevice(accessToken, {
               ...component,
               location: deviceContext.data.location,
               group: "Components",
@@ -46,351 +64,219 @@ const ApplyChangeForm = (props: Props) => {
         );
       }
 
-      const historyResponse = createHistoryEntry(authInfo.accessToken, {
-        deviceId: params.id,
-        ...history,
-        removedComponents: history.removedComponents.map(
-          (component: any, index: any) => {
-            console.log(history.removedComponents);
-            return {
-              ...component,
-              deviceId: devices[index],
-            };
-          }
+      return createHistoryEntry(accessToken, {
+        deviceId: id,
+        ...values,
+        removedComponents: values.removedComponents.map(
+          (component: any, index) => ({
+            ...component,
+            deviceId: createdDevices[index],
+          })
         ),
       });
-
-      return {
-        devices,
-        historyResponse,
-      };
     },
 
     onSuccess: () => {
-      toast.success("Change has been applied uccessfully");
+      toast.success("Change has been applied successfully");
       queryClient.invalidateQueries({ queryKey: ["history"] });
-      close();
     },
 
     onError: () => {
-      toast.error("Cannot change owner");
+      toast.error("Cannot apply change");
     },
-  });
-
-  const deviceQuery = useQuery({
-    queryKey: ["devices"],
-    queryFn: () => getDevices(authInfo.accessToken),
   });
 
   const form = useForm({
-    defaultValues: {
-      device: "",
-      ticket: "",
-      fixes: "",
-      damages: "",
-      isUserFault: false,
-      removedComponents: [
-        {
-          subgroup: "RAM",
-          serialNumber: "",
-          manufacturer: "",
-          model: "",
-          type: "remove",
-        },
-      ],
-      addedComponents: "",
-      agent: "",
-      date: "",
-      details: "",
-      justification: "",
-      type: 1,
-    },
-    onSubmit: async ({ value }) => {
+    defaultValues: applyChangeDefaultValues,
+
+    onSubmit: ({ value }) => {
       const sanitized = Object.fromEntries(
-        Object.entries(value).map(([key, val]) => [
-          key,
-          val === "" ? null : val,
-        ])
+        Object.entries(value).map(([k, v]) => [k, v === "" ? null : v])
       );
 
-      mutation.mutate(sanitized);
+      mutation.mutate(sanitized as FormValues);
     },
   });
 
-  const convertDevicesToOptions = () => {
-    const components = deviceQuery.data.filter(
-      (device: any) => device.group === "Components"
-    );
-    return components.map((device: any) => {
-      return {
-        label: `${device.manufacturer} ${device.model} (${device.serialNumber})`,
-        value: device.id,
-      };
-    });
-  };
-
-  const changeHistoryType = (type: number) => {
-    setHistoryType(type);
-  };
-
-  const agentsOptions = [
-    {
-      label: "Marcin Nowakowski",
-      value: "1",
-    },
-    {
-      label: "Agent 2",
-      value: "2",
-    },
-  ];
+  const removedComponentFields = [
+    "serialNumber",
+    "manufacturer",
+    "model",
+  ] as const;
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        e.stopPropagation();
         form.handleSubmit();
       }}
     >
-      <form.Field
-        name="type"
-        children={(field) => (
+      <form.Field name="type">
+        {(field) => (
           <SelectSecondary
             label="Type"
             options={historyTypeOptions}
-            onSelect={(e: any) => {
-              changeHistoryType(e.value);
-              field.handleChange(e.value);
-            }}
             defaultValue={historyTypeOptions[0]}
+            onSelect={(opt: any) => field.handleChange(opt.value)}
           />
         )}
-      />
-      {historyType === 1 && (
-        <form.Field
-          name="isUserFault"
-          children={(field) => (
-            <Checkbox {...field} label="User fault" className="mt-4" />
-          )}
-        />
-      )}
-      {historyType === 1 && (
-        <form.Field
-          validators={{
-            onChange: ({ value }) =>
-              !value || value === "" ? "Field required" : null,
-          }}
-          name="damages"
-          children={(field) => (
-            <Input
-              {...field}
-              label="Damages"
-              errors={
-                !field.state.meta.isValid && field.state.meta.errors.join(", ")
-              }
-            />
-          )}
-        />
-      )}
-      {historyType === 1 && (
-        <form.Field
-          validators={{
-            onChange: ({ value }) =>
-              !value || value === "" ? "Field required" : null,
-          }}
-          name="fixes"
-          children={(field) => (
-            <Input
-              {...field}
-              label="Fixes"
-              errors={
-                !field.state.meta.isValid && field.state.meta.errors.join(", ")
-              }
-            />
-          )}
-        />
-      )}
-      {historyType === 3 && (
-        <form.Field name="removedComponents" mode="array">
-          {(field) => {
-            return (
-              <div>
-                {field.state.value.map((_, i) => {
-                  return (
-                    <div key={i} className="flex justify-between">
-                      <form.Field name={`removedComponents[${i}].subgroup`}>
-                        {(subField) => {
-                          return (
-                            <SelectSecondary
-                              label="Component"
-                              className="w-[170px]"
-                              onSelect={(e: any) => {
-                                subField.handleChange(e.value);
+      </form.Field>
+      <form.Subscribe selector={(s) => s.values.type}>
+        {(type) => (
+          <>
+            {type === 1 && (
+              <>
+                <form.Field name="isUserFault">
+                  {(field) => (
+                    <Checkbox {...field} label="User fault" className="pt-4" />
+                  )}
+                </form.Field>
+                <form.Field
+                  name="damages"
+                  validators={{
+                    onChange: ({ value }) => requiredValidator(value),
+                  }}
+                >
+                  {(field) => (
+                    <Input
+                      {...field}
+                      label="Damages"
+                      errors={field.state.meta.errors?.join(", ")}
+                    />
+                  )}
+                </form.Field>
+                <form.Field
+                  name="fixes"
+                  validators={{
+                    onChange: ({ value }) => requiredValidator(value),
+                  }}
+                >
+                  {(field) => (
+                    <Input
+                      {...field}
+                      label="Fixes"
+                      errors={field.state.meta.errors?.join(", ")}
+                    />
+                  )}
+                </form.Field>
+              </>
+            )}
+            {type === 3 && (
+              <>
+                <form.Field name="removedComponents" mode="array">
+                  {(field) => (
+                    <>
+                      {field.state.value.map((_, i) => (
+                        <div key={i} className="flex gap-2">
+                          <form.Field name={`removedComponents[${i}].subgroup`}>
+                            {(f) => (
+                              <SelectSecondary
+                                label="Component"
+                                options={componentsTypeOptions}
+                                onSelect={(e: Option) =>
+                                  f.handleChange(e.value)
+                                }
+                              />
+                            )}
+                          </form.Field>
+                          {removedComponentFields.map((key) => (
+                            <form.Field
+                              key={key}
+                              name={`removedComponents[${i}].${key}`}
+                              validators={{
+                                onChange: ({ value }) =>
+                                  requiredValidator(value),
                               }}
-                              options={componentsTypeOptions}
-                              defaultValue={componentsTypeOptions[0]}
-                            />
-                          );
-                        }}
-                      </form.Field>
-                      <form.Field
-                        name={`removedComponents[${i}].serialNumber`}
-                        validators={{
-                          onChange: ({ value }) =>
-                            !value || value === "" ? "Field required" : null,
-                        }}
-                      >
-                        {(subField) => {
-                          return (
-                            <Input
-                              label="Serial number"
-                              value={subField.state.value}
-                              onChange={(e: any) =>
-                                subField.handleChange(e.target.value)
-                              }
-                              className="w-[120px]"
-                              errors={
-                                !subField.state.meta.isValid &&
-                                subField.state.meta.errors.join(", ")
-                              }
-                            />
-                          );
-                        }}
-                      </form.Field>
-                      <form.Field
-                        name={`removedComponents[${i}].manufacturer`}
-                        validators={{
-                          onChange: ({ value }) =>
-                            !value || value === "" ? "Field required" : null,
-                        }}
-                      >
-                        {(subField) => {
-                          return (
-                            <Input
-                              label="Manufacturer"
-                              value={subField.state.value}
-                              className="w-[140px]"
-                              onChange={(e: any) =>
-                                subField.handleChange(e.target.value)
-                              }
-                              errors={
-                                !subField.state.meta.isValid &&
-                                subField.state.meta.errors.join(", ")
-                              }
-                            />
-                          );
-                        }}
-                      </form.Field>
-                      <form.Field
-                        name={`removedComponents[${i}].model`}
-                        validators={{
-                          onChange: ({ value }) =>
-                            !value || value === "" ? "Field required" : null,
-                        }}
-                      >
-                        {(subField) => {
-                          return (
-                            <Input
-                              label="Model"
-                              value={subField.state.value}
-                              onChange={(e: any) =>
-                                subField.handleChange(e.target.value)
-                              }
-                              errors={
-                                !subField.state.meta.isValid &&
-                                subField.state.meta.errors.join(", ")
-                              }
-                            />
-                          );
-                        }}
-                      </form.Field>
-                      <FontAwesomeIcon
-                        icon={faTrashAlt}
-                        className="text-[#BC0E0E] cursor-pointer my-auto"
-                        onClick={() => field.removeValue(i)}
+                            >
+                              {(f) => (
+                                <Input
+                                  label={key}
+                                  value={f.state.value}
+                                  onChange={(e: any) =>
+                                    f.handleChange(e.target.value)
+                                  }
+                                  errors={f.state.meta.errors?.join(", ")}
+                                />
+                              )}
+                            </form.Field>
+                          ))}
+                          <FontAwesomeIcon
+                            icon={faTrashAlt}
+                            className="text-red-600 cursor-pointer mt-7"
+                            onClick={() => field.removeValue(i)}
+                          />
+                        </div>
+                      ))}
+
+                      <ButtonSecondary
+                        type="button"
+                        icon={faPlus}
+                        text="Add removed component"
+                        className="mt-4"
+                        onClick={() =>
+                          field.pushValue({
+                            subgroup: "RAM",
+                            serialNumber: "",
+                            manufacturer: "",
+                            model: "",
+                            type: "remove",
+                          })
+                        }
                       />
-                    </div>
-                  );
-                })}
-                <ButtonPrimary
-                  onClick={() =>
-                    field.pushValue({
-                      subgroup: "RAM",
-                      serialNumber: "",
-                      manufacturer: "",
-                      model: "",
-                      type: "remove",
-                    })
-                  }
-                  className="mt-4"
-                  type="button"
-                  text="Add removed component"
-                />
-              </div>
-            );
-          }}
-        </form.Field>
-      )}
-      {historyType === 3 && (
-        <form.Field
-          name="addedComponents"
-          children={(field) => (
-            <SelectSecondary
-              label="Added components"
-              options={convertDevicesToOptions()}
-              isMulti={true}
-              onSelect={(e: any) => {
-                field.handleChange(
-                  e.length > 0 && e.map((component: any) => component.value)
-                );
-              }}
-            />
-          )}
-        />
-      )}
-      <form.Field
-        name="ticket"
-        children={(field) => <Input {...field} label="Ticket" />}
-      />
-      <form.Field
-        name="justification"
-        children={(field) => <Input {...field} label="Justification" />}
-      />
-      <form.Field
-        name="details"
-        children={(field) => <Input {...field} label="Details" />}
-      />
-      <form.Field
-        name="agent"
-        children={(field) => (
+                    </>
+                  )}
+                </form.Field>
+
+                {/* ADDED COMPONENTS */}
+                <form.Field name="addedComponents">
+                  {(field) => (
+                    <SelectSecondary
+                      label="Added components"
+                      options={addedComponentsOptions}
+                      isMulti
+                      onSelect={(e: Option[]) =>
+                        field.handleChange(e.map((c: any) => c.value))
+                      }
+                    />
+                  )}
+                </form.Field>
+              </>
+            )}
+          </>
+        )}
+      </form.Subscribe>
+      <form.Field name="ticket">
+        {(field) => <Input {...field} label="Ticket" />}
+      </form.Field>
+      <form.Field name="justification">
+        {(field) => <Input {...field} label="Justification" />}
+      </form.Field>
+      <form.Field name="details">
+        {(field) => <Input {...field} label="Details" />}
+      </form.Field>
+      <form.Field name="agent">
+        {(field) => (
           <SelectSecondary
             label="Agent"
-            options={agentsOptions}
-            onSelect={(e: any) => {
-              field.handleChange(e.value);
-            }}
+            options={[
+              { label: "Marcin Nowakowski", value: "1" },
+              { label: "Agent 2", value: "2" },
+            ]}
+            onSelect={(e: Option) => field.handleChange(e.value)}
           />
         )}
+      </form.Field>
+
+      <form.Field name="date">
+        {(field) => <Input {...field} type="date" label="Date" />}
+      </form.Field>
+
+      <ButtonPrimary
+        type="submit"
+        text="Apply"
+        className="mt-4"
+        disabled={!form.state.canSubmit || mutation.isPending}
       />
-      <form.Field
-        name="date"
-        // validators={{
-        //   onChange: ({ value }) =>
-        //     !value || value === "" ? "Field required" : null,
-        // }}
-        children={(field) => (
-          <Input
-            {...field}
-            type="date"
-            // defaultValue={new Date().toISOString().split("T")[0]}
-            label="Date"
-            errors={
-              !field.state.meta.isValid && field.state.meta.errors.join(", ")
-            }
-          />
-        )}
-      />
-      <ButtonPrimary type="submit" text="Apply" className="mt-4" />
     </form>
   );
 };

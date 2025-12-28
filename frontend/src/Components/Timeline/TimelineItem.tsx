@@ -1,5 +1,6 @@
 import { faMinus, faMouse, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Link } from "react-router";
 
 type Props = {
   date: any;
@@ -22,7 +23,6 @@ const TimelineItem = ({
   owner,
   device,
 }: Props) => {
-  console.log();
   return (
     <div className="ml-[20px] pb-4">
       <div>
@@ -76,9 +76,16 @@ const TimelineItem = ({
         <div className="py-1">
           <div className="text-[#535353] font-bold">Approvers</div>
           <span className="text-[#3C3C3C] font-light italic">
-            {approvers.map((approver: string, index: number) => (
+            {approvers.map((approver: any, index: number) => (
               <>
-                {approver} {index !== approvers.length - 1 && <>&bull;</>}
+                {approver?.user && (
+                  <Link to={`/users/${approver.user.id}`}>
+                    {approver.user.distinguishedName}
+                  </Link>
+                )}
+                {index !== approvers.length - 1 && (
+                  <span className="px-2">&bull;</span>
+                )}
               </>
             ))}
           </span>

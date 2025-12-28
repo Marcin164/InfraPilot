@@ -44,8 +44,8 @@ function App() {
               <Route path="peripherals" element={<Peripherals />} />
               <Route path="history" element={<History />} />
             </Route>
-            <Route path="/applications" element={<Applications />} />
-            <Route path="/applications/:id" element={<ApplicationsDetails />} />
+            {/* <Route path="/applications" element={<Applications />} />
+            <Route path="/applications/:id" element={<ApplicationsDetails />} /> */}
             <Route path="/helpdesk" element={<></>} />
             <Route path="/settings" element={<Settings />} />
           </Route>

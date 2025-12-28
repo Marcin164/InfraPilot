@@ -1,29 +1,45 @@
-import { useForm } from "@tanstack/react-form";
 import React from "react";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthInfo } from "@propelauth/react";
+import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
+
 import Input from "../Inputs/Input";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
-import { useAuthInfo } from "@propelauth/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addUserDefaultValues } from "../../Constants/defaultValues";
+
 import { addUser } from "../../Services/users";
-import { toast } from "react-toastify";
-import { useTranslation } from "react-i18next";
+import { addUserDefaultValues } from "../../Constants/defaultValues";
+import { requiredValidator } from "../../Helpers/validators";
 
-type Props = { close: any };
+type AddUserFormProps = {
+  close: () => void;
+};
 
-const AddUserForm = ({ close }: Props) => {
+type FormValues = typeof addUserDefaultValues;
+
+type FieldConfig<TForm> = {
+  name: keyof TForm;
+  label: string;
+  required?: boolean;
+  Component: React.FC<any>;
+};
+
+const AddUserForm: React.FC<AddUserFormProps> = ({ close }) => {
   const { t } = useTranslation();
   const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (user: Record<string, any>) => {
-      if (!accessToken) throw new Error("User is not authenticated.");
-      addUser(accessToken, user);
+    mutationFn: async (values: FormValues) => {
+      if (!accessToken) {
+        throw new Error("User is not authenticated");
+      }
+      return addUser(accessToken, values);
     },
 
     onSuccess: () => {
-      toast.success("User has been added uccessfully");
+      toast.success(t("user.addSuccess"));
       queryClient.invalidateQueries({ queryKey: ["users"] });
       close();
     },
@@ -33,14 +49,14 @@ const AddUserForm = ({ close }: Props) => {
     defaultValues: addUserDefaultValues,
 
     onSubmit: async ({ value }) => {
-      mutation.mutate(value);
+      await mutation.mutateAsync(value);
     },
   });
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        e.stopPropagation();
         form.handleSubmit();
       }}
     >
@@ -148,7 +164,12 @@ const AddUserForm = ({ close }: Props) => {
           />
         )}
       />
-      <ButtonPrimary type="submit" text="Add user" className="mt-4" />
+      <ButtonPrimary
+        type="submit"
+        text={t("user.add")}
+        className="mt-4"
+        disabled={!form.state.canSubmit || mutation.isPending}
+      />
     </form>
   );
 };

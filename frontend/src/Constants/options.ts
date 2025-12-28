@@ -84,3 +84,11 @@ export const historyTypeOptions = [
     value: 4,
   },
 ];
+
+export const groupMappings: { group: string; subgroupOptions: any }[] = [
+  { group: "Computers", subgroupOptions: computersTypeOptions },
+  { group: "Peripherals", subgroupOptions: peripheralsTypeOptions },
+  { group: "Network", subgroupOptions: networkTypeOptions },
+  { group: "Components", subgroupOptions: componentsTypeOptions },
+  { group: "Other", subgroupOptions: othersTypeOptions },
+];

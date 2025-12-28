@@ -1,7 +1,7 @@
 import React from "react";
 import Modal from "react-responsive-modal";
 import CardHeader from "../Headers/CardHeader";
-import AssignUserForm from "../Forms/AssignUserForm";
+import AssignDeviceForm from "../Forms/AssignDeviceForm";
 
 type Props = {
   isModalOpen: any;
@@ -19,7 +19,7 @@ const AssignDeviceModal = ({ isModalOpen, handleOnClose }: Props) => {
       center
     >
       <CardHeader text="Assign User" />
-      <AssignUserForm close={handleOnClose} />
+      <AssignDeviceForm close={handleOnClose} />
     </Modal>
   );
 };

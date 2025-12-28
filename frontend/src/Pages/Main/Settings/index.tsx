@@ -15,8 +15,6 @@ const index = (props: Props) => {
     queryFn: () => getSettings(accessToken),
   });
 
-  console.log(settingsQuery.data);
-  console.log(user);
   return (
     <>
       <Personal />
