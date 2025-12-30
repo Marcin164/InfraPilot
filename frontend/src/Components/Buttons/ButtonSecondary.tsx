@@ -6,7 +6,7 @@ type Props = {
   text?: string;
   onClick?: any;
   className?: string;
-  type: any;
+  type?: any;
 };
 
 const ButtonSecondary = ({ icon, text, onClick, className, type }: Props) => {

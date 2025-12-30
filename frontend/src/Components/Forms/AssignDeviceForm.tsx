@@ -16,6 +16,7 @@ import { t } from "i18next";
 import { assignDeviceFormFields } from "../../Constants/forms";
 import SelectSecondary from "../Inputs/SelectSecondary";
 import { requiredValidator } from "../../Helpers/validators";
+import { faPlus, faUserMinus } from "@fortawesome/free-solid-svg-icons";
 
 /* ---------------------------------- */
 /* Types & helpers */
@@ -56,13 +57,11 @@ const AssignDeviceForm: React.FC<Props> = ({ close }: Props) => {
   const usersQuery = useQuery({
     queryKey: ["users"],
     queryFn: () => getUsers(accessToken),
-    enabled: isDeviceContext,
   });
 
   const devicesQuery = useQuery({
     queryKey: ["devicesOptions"],
     queryFn: () => getDevicesOptions(accessToken),
-    enabled: isUserContext,
   });
 
   const userOptions: Option[] = useMemo(() => {
@@ -206,13 +205,21 @@ const AssignDeviceForm: React.FC<Props> = ({ close }: Props) => {
         name="date"
         children={(field) => <Input {...field} type="date" label="Date" />}
       />
-
-      <ButtonPrimary
-        type="submit"
-        text="Assign"
-        className="mt-4"
-        disabled={!form.state.canSubmit || mutation.isPending}
-      />
+      <div>
+        <ButtonPrimary
+          type="submit"
+          text="Assign"
+          className="mt-4"
+          icon={faPlus}
+          disabled={!form.state.canSubmit || mutation.isPending}
+        />
+        <ButtonPrimary
+          text="Make unassigned"
+          className="mt-4 ml-2 bg-[#F3606E]"
+          icon={faUserMinus}
+          disabled={!form.state.canSubmit || mutation.isPending}
+        />
+      </div>
     </form>
   );
 };

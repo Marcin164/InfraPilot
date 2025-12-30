@@ -17,6 +17,7 @@ import History from "./Pages/Main/Devices/Details/History";
 import Applications from "./Pages/Main/Applications";
 import ApplicationsDetails from "./Pages/Main/Applications/Details";
 import FlowsDetails from "./Pages/Main/Flows/Details";
+import Helpdesk from "./Pages/Main/Helpdesk";
 import { ParseProvider } from "./Hooks/useParser";
 import UsersInfo from "./Pages/Main/Devices/Details/UsersInfo";
 import Peripherals from "./Pages/Main/Devices/Details/Peripherals";
@@ -46,7 +47,7 @@ function App() {
             </Route>
             {/* <Route path="/applications" element={<Applications />} />
             <Route path="/applications/:id" element={<ApplicationsDetails />} /> */}
-            <Route path="/helpdesk" element={<></>} />
+            <Route path="/helpdesk" element={<Helpdesk />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>

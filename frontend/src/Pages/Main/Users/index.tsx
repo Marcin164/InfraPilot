@@ -11,96 +11,99 @@ import ButtonSecondary from "../../../Components/Buttons/ButtonSecondary";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
 
-const index = () => {
+export type FilterKey =
+  | "department"
+  | "company"
+  | "office"
+  | "city"
+  | "country"
+  | "title"
+  | "streetAddress"
+  | "postalCode"
+  | "manager";
+
+export type FilterOptions = Record<FilterKey, string[]>;
+
+const INITIAL_FILTERS: FilterOptions = {
+  department: [],
+  company: [],
+  office: [],
+  city: [],
+  country: [],
+  title: [],
+  streetAddress: [],
+  postalCode: [],
+  manager: [],
+};
+
+const UsersPage = () => {
   const { t } = useTranslation();
-  const [filterOptions, setFilterOptions] = useState({
-    department: [],
-    company: [],
-    office: [],
-    city: [],
-    country: [],
-    title: [],
-    streetAddress: [],
-    postalCode: [],
-    manager: [],
-  });
+  const { accessToken } = useAuthInfo();
+
+  const [filters, setFilters] = useState<FilterOptions>(INITIAL_FILTERS);
   const [searchValue, setSearchValue] = useState("");
-  const [addUserModal, setAddUserModal] = useState(false);
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
-  const authInfo = useAuthInfo();
-
-  const userQuery = useQuery({
+  const usersQuery = useQuery({
     queryKey: ["users"],
-    queryFn: () => getUsersTable(authInfo.accessToken),
-  });
-  const filterQuery = useQuery({
-    queryKey: ["filter"],
-    queryFn: () => getFilter(authInfo.accessToken),
+    queryFn: () => getUsersTable(accessToken),
+    enabled: Boolean(accessToken),
   });
 
-  if (!userQuery?.data && userQuery?.data?.length <= 0) return null;
+  const filtersQuery = useQuery({
+    queryKey: ["users-filters"],
+    queryFn: () => getFilter(accessToken),
+    enabled: Boolean(accessToken),
+  });
 
-  const getSearchValue = (e: any) => {
-    const value = e.target.value;
-    setSearchValue(value);
-  };
+  const toggleFilterOption = (key: FilterKey, value: string) => {
+    setFilters((prev) => {
+      const values = prev[key];
+      const exists = values.includes(value);
 
-  const toggleFilterOptions = (e: any) => {
-    const targetValue: any = e.target.value;
-    const targetName: any = e.target.name;
-
-    const _filterOptions: any = { ...filterOptions };
-
-    Object.entries(_filterOptions).map(([key, array]: any) => {
-      const filterOption = array.find(
-        (option: any) => option === e.target.value
-      );
-
-      if (key === targetName) {
-        if (filterOption) {
-          const index = array.indexOf(targetValue);
-
-          if (index !== -1) {
-            array.splice(index, 1);
-          }
-        } else {
-          array.push(targetValue);
-        }
-      }
+      return {
+        ...prev,
+        [key]: exists ? values.filter((v) => v !== value) : [...values, value],
+      };
     });
-
-    setFilterOptions(_filterOptions);
   };
 
-  const toggleModal = () => {
-    setAddUserModal((prev: any) => !prev);
-  };
+  if (usersQuery.isLoading) {
+    return <div>Loading users…</div>;
+  }
+
+  if (usersQuery.isError) {
+    return <div>Failed to load users</div>;
+  }
 
   return (
-    <div className="w-full h-[calc(100vh-58px)] px-4">
-      <div className="pt-4 pb-4 flex">
+    <div className="h-[calc(100vh-58px)] w-full px-4">
+      <div className="flex gap-2 py-4">
         <Filter
-          filterData={filterQuery?.data}
-          setFilters={toggleFilterOptions}
-          filterOptions={filterOptions}
+          filterData={filtersQuery.data}
+          filterOptions={filters}
+          setFilters={toggleFilterOption}
         />
-        <Search onChange={getSearchValue} />
+        <Search onChange={setSearchValue} />
         <TableSettings />
         <ButtonSecondary
           icon={faPlus}
           text={t("btn.add.user")}
-          onClick={toggleModal}
+          onClick={() => setIsAddUserModalOpen(true)}
           className="ml-2"
         />
-        <AddUserModal isModalOpen={addUserModal} onCloseModal={toggleModal} />
+        <AddUserModal
+          isModalOpen={isAddUserModalOpen}
+          onCloseModal={() => setIsAddUserModalOpen(false)}
+        />
       </div>
       <UsersTable
-        data={userQuery?.data}
-        filterOptions={filterOptions}
+        data={usersQuery.data ?? []}
+        filterOptions={filters}
         searchValue={searchValue}
       />
     </div>
   );
 };
 
-export default index;
+export default UsersPage;

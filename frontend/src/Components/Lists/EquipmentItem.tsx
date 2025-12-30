@@ -16,8 +16,6 @@ type Props = {
   location: string;
   model: string;
   assetName: string;
-  editMode: boolean;
-  onEditClick?: any;
 };
 
 const EquipmentItem = ({
@@ -27,8 +25,6 @@ const EquipmentItem = ({
   location,
   model,
   assetName,
-  editMode = false,
-  onEditClick,
 }: Props) => {
   const getDeviceIcon = (type: string) => {
     switch (type) {
@@ -56,19 +52,6 @@ const EquipmentItem = ({
           <Badge text={location} className="ml-2 bg-[#2B9AE9]" />
         </div>
       </Link>
-      {editMode && (
-        <div className="flex items-center">
-          <FontAwesomeIcon
-            className="text-[#3C3C3C] text-[20px] cursor-pointer mr-3"
-            icon={faPen}
-            onClick={() => onEditClick(id)}
-          />
-          <FontAwesomeIcon
-            className="text-[#F3606E] text-[20px] cursor-pointer"
-            icon={faTrashAlt}
-          />
-        </div>
-      )}
     </div>
   );
 };
