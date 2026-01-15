@@ -1,13 +1,16 @@
 import DataTable from "react-data-table-component";
 
-type Props = {
-  columns: any;
-  data: any;
-  onRowClicked?: any;
-  className?: string;
-};
-
-const MainTable = ({ columns, data, onRowClicked, className = "" }: Props) => {
+const MainTable = ({
+  columns,
+  data,
+  onRowClicked,
+  className = "",
+  paginationServer = false,
+  paginationTotalRows,
+  onChangePage,
+  onChangeRowsPerPage,
+  progressPending,
+}: any) => {
   const customStyles = {
     table: {
       style: {
@@ -29,22 +32,18 @@ const MainTable = ({ columns, data, onRowClicked, className = "" }: Props) => {
         minHeight: "48px",
         borderBottomColor: "#eeeeee",
         transition: "all 0.2s ease-in-out",
-        margin: "5px 0 5px 0",
+        margin: "5px 0",
         borderRadius: "10px",
         fontSize: "14px",
         "&:hover": {
-          backgroundColor: "#d2ecff", // NIEBIESKI hover
+          backgroundColor: "#d2ecff",
         },
       },
-      highlightOnHoverStyle: {
-        backgroundColor: "#d2ecff",
-        outline: "none",
-      },
-      pagination: {
-        style: {
-          background: "#FFFFFF00",
-          borderTop: "0px",
-        },
+    },
+    pagination: {
+      style: {
+        background: "#FFFFFF00",
+        borderTop: "0px",
       },
     },
   };
@@ -52,7 +51,6 @@ const MainTable = ({ columns, data, onRowClicked, className = "" }: Props) => {
   return (
     <DataTable
       className={className}
-      pagination
       columns={columns}
       data={data}
       customStyles={customStyles}
@@ -61,6 +59,12 @@ const MainTable = ({ columns, data, onRowClicked, className = "" }: Props) => {
       pointerOnHover
       responsive
       fixedHeader
+      pagination
+      paginationServer={paginationServer}
+      paginationTotalRows={paginationTotalRows}
+      onChangePage={onChangePage}
+      onChangeRowsPerPage={onChangeRowsPerPage}
+      progressPending={progressPending}
     />
   );
 };

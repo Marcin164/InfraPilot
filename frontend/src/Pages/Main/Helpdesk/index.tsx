@@ -5,69 +5,81 @@ import { useTranslation } from "react-i18next";
 import { useAuthInfo } from "@propelauth/react";
 import { useQuery } from "@tanstack/react-query";
 import TableSettings from "../../../Components/TableSettings";
+import { getTickets } from "../../../Services/tickets";
+import { buildQuery } from "../../../Helpers/queries";
+import { useDebounce } from "../../../Hooks/useDebounce";
+import TicketsTable from "../../../Components/Tables/TicketsTable";
 
-type Props = {};
+type TicketFilters = {
+  type?: string[];
+  priority?: string[];
+  impact?: string[];
+  urgency?: string[];
+};
 
-const index = (props: Props) => {
-  const authInfo = useAuthInfo();
+const Index = () => {
   const { t } = useTranslation();
-  const [filterOptions, setFilterOptions] = useState({});
+  const [page, setPage] = useState(1);
+  const { accessToken } = useAuthInfo();
+  const [limit, setLimit] = useState(30);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const [filterOptions] = useState({
+    type: ["Incident", "Service"],
+    priority: ["Low", "Medium", "High", "Critical"],
+    impact: ["Single user", "Multiple users", "Whole company"],
+    urgency: ["Low", "Medium", "High"],
+  });
+
+  const [filters, setFilters] = useState<TicketFilters>({});
+
   const [searchValue, setSearchValue] = useState("");
+  const debouncedSearch = useDebounce(searchValue, 500);
+
+  const queryString = buildQuery({
+    ...filters,
+    search: debouncedSearch,
+    page,
+    limit,
+  });
 
   const helpdeskQuery = useQuery({
-    queryKey: ["helpdesk"],
-    // queryFn: () => getUsersTable(authInfo.accessToken),
+    queryKey: ["helpdesk", filters, debouncedSearch, page, limit],
+    queryFn: () => getTickets(accessToken, queryString),
+    placeholderData: (prev) => prev,
   });
 
-  const filterQuery = useQuery({
-    queryKey: ["filter"],
-    // queryFn: () => getFilter(authInfo.accessToken),
-  });
-
-  const getSearchValue = (e: any) => {
-    const value = e.target.value;
-    setSearchValue(value);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchValue(e.target.value);
   };
 
-  const toggleFilterOptions = (e: any) => {
-    const targetValue: any = e.target.value;
-    const targetName: any = e.target.name;
-
-    const _filterOptions: any = { ...filterOptions };
-
-    Object.entries(_filterOptions).map(([key, array]: any) => {
-      const filterOption = array.find(
-        (option: any) => option === e.target.value
-      );
-
-      if (key === targetName) {
-        if (filterOption) {
-          const index = array.indexOf(targetValue);
-
-          if (index !== -1) {
-            array.splice(index, 1);
-          }
-        } else {
-          array.push(targetValue);
-        }
-      }
-    });
-
-    setFilterOptions(_filterOptions);
-  };
   return (
     <div className="w-full h-[calc(100vh-58px)] px-4">
-      <div className="pt-4 pb-4 flex">
+      <div className="pt-4 pb-4 flex gap-2">
         <Filter
-          filterData={filterQuery?.data}
-          setFilters={toggleFilterOptions}
+          filters={filters}
+          setFilters={setFilters}
           filterOptions={filterOptions}
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
         />
-        <Search onChange={getSearchValue} />
+        <Search onChange={handleSearchChange} />
         <TableSettings />
       </div>
+      <TicketsTable
+        data={helpdeskQuery.data?.data ?? []}
+        total={helpdeskQuery.data?.total ?? 0}
+        page={page}
+        limit={limit}
+        onPageChange={setPage}
+        onRowsPerPageChange={(newLimit: any) => {
+          setLimit(newLimit);
+          setPage(1);
+        }}
+        isLoading={helpdeskQuery.isFetching}
+      />
     </div>
   );
 };
 
-export default index;
+export default Index;

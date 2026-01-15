@@ -58,3 +58,19 @@ export const assignDeviceDefaultValues = {
   approvers: [] as string[],
   date: today,
 };
+
+export const updateTicketDefaultValues = (
+  state: any,
+  priority: any,
+  impact: any,
+  urgency: any
+) => {
+  return {
+    state: state,
+    assignee: "",
+    assignmentGroup: "",
+    priority: priority,
+    impact: impact,
+    urgency: urgency,
+  };
+};

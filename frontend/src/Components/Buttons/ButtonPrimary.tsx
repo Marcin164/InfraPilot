@@ -27,7 +27,7 @@ const ButtonPrimary: React.FC<ButtonPrimaryProps> = ({
       disabled={disabled}
       aria-disabled={disabled}
       className={twMerge(
-        "inline-flex items-center gap-2 rounded-[10px] px-4 py-1 text-[20px] font-medium transition-colors",
+        "inline-flex items-center gap-2 rounded-[10px] px-4 py-1 text-[20px] font-medium transition-colors cursor-pointer",
         "bg-[#2B9AE9] text-white hover:bg-[#3CABFA]",
         "disabled:bg-[#A7CDEE] disabled:text-white/70 disabled:cursor-not-allowed disabled:hover:bg-[#A7CDEE]",
         className

@@ -2,8 +2,9 @@ import React from "react";
 import { twMerge } from "tailwind-merge";
 
 type Props = {
-  label: string;
+  label?: string;
   type?: "text" | "number" | "date";
+  inputClassName?: string;
   className?: string;
   onChange?: any;
   handleChange?: any;
@@ -17,6 +18,7 @@ type Props = {
 const Input = ({
   type = "text",
   label,
+  inputClassName = "",
   className = "",
   onChange,
   handleChange,
@@ -37,7 +39,10 @@ const Input = ({
         defaultValue={defaultValue || null}
         value={value || null}
         type={type}
-        className="w-full border border-[#535353] text-[16px] font-bold block rounded-[10px] px-3 py-2 mt-[6px]"
+        className={twMerge(
+          "w-full border border-[#535353] bg-[#FFFFFF] text-[16px] font-bold block rounded-[10px] px-3 py-2 mt-[6px]",
+          inputClassName
+        )}
         onChange={handleChange ? (e) => handleChange(e.target.value) : onChange}
         disabled={disabled}
       />

@@ -92,3 +92,41 @@ export const groupMappings: { group: string; subgroupOptions: any }[] = [
   { group: "Components", subgroupOptions: componentsTypeOptions },
   { group: "Other", subgroupOptions: othersTypeOptions },
 ];
+
+export const ticketStateOptions = [
+  { label: "New", value: "New" },
+  { label: "Assigned", value: "Assigned" },
+  { label: "In progress", value: "In progress" },
+  { label: "Awaiting for user", value: "Awaiting for user" },
+  { label: "Awaiting for vendor", value: "Awaiting for vendor" },
+  { label: "Resolved", value: "Resolved" },
+  { label: "Closed", value: "Closed" },
+  { label: "Cancelled", value: "Cancelled" },
+];
+
+export const ticketPriorityOptions = [
+  { label: "Low", value: "Low" },
+  { label: "Medium", value: "Medium" },
+  { label: "High", value: "High" },
+  { label: "Critical", value: "Critical" },
+];
+
+export const ticketImpactOptions = [
+  { label: "Single user", value: "Single user" },
+  { label: "Multiple users", value: "Multiple users" },
+  { label: "Whole company", value: "Whole company" },
+];
+
+export const ticketUrgencyOptions = [
+  { label: "Low", value: "Low" },
+  { label: "Medium", value: "Medium" },
+  { label: "High", value: "High" },
+];
+
+export const closureCodesOptions = [
+  { label: "Solved permanently", value: "Solved Permanently" },
+  { label: "Solved temporarily", value: "Solved temporarily" },
+  { label: "Not actioned", value: "Not actioned" },
+  { label: "No reply", value: "No reply" },
+  { label: "Workaround", value: "Workaround" },
+];

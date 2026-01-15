@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addDevice } from "../../Services/devices";
 import { useAuthInfo } from "@propelauth/react";
 import {
@@ -14,12 +14,14 @@ import { addDeviceDefaultValues } from "../../Constants/defaultValues";
 import { requiredValidator } from "../../Helpers/validators";
 import Input from "../Inputs/Input";
 import SelectSecondary from "../Inputs/SelectSecondary";
+import { toast } from "react-toastify";
 
 type Option = { label: string; value: string };
 
 type FormValues = typeof addDeviceDefaultValues;
 
 const AddEquipmentForm: React.FC = () => {
+  const queryClient = useQueryClient();
   const { accessToken } = useAuthInfo();
 
   const [subgroupOptions, setSubgroupOptions] =
@@ -31,6 +33,12 @@ const AddEquipmentForm: React.FC = () => {
         throw new Error("User is not authenticated");
       }
       return addDevice(accessToken, values);
+    },
+
+    onSuccess: () => {
+      toast.success("device added successfully");
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      close();
     },
   });
 

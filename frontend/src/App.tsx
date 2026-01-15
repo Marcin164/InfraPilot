@@ -3,7 +3,6 @@ import Main from "./Pages/Main";
 import Dashboards from "./Pages/Main/Dashboards";
 import Users from "./Pages/Main/Users";
 import Devices from "./Pages/Main/Devices";
-import Flows from "./Pages/Main/Flows";
 import Settings from "./Pages/Main/Settings";
 import UserDetails from "./Pages/Main/Users/Details";
 import DeviceDetails from "./Pages/Main/Devices/Details";
@@ -14,14 +13,12 @@ import Network from "./Pages/Main/Devices/Details/Network";
 import Security from "./Pages/Main/Devices/Details/Security";
 import Events from "./Pages/Main/Devices/Details/Events";
 import History from "./Pages/Main/Devices/Details/History";
-import Applications from "./Pages/Main/Applications";
-import ApplicationsDetails from "./Pages/Main/Applications/Details";
-import FlowsDetails from "./Pages/Main/Flows/Details";
 import Helpdesk from "./Pages/Main/Helpdesk";
 import { ParseProvider } from "./Hooks/useParser";
 import UsersInfo from "./Pages/Main/Devices/Details/UsersInfo";
 import Peripherals from "./Pages/Main/Devices/Details/Peripherals";
 import EditEquipment from "./Pages/Main/Users/EditEquipment";
+import HelpdeskDetails from "./Pages/Main/Helpdesk/Details";
 
 function App() {
   return (
@@ -45,9 +42,8 @@ function App() {
               <Route path="peripherals" element={<Peripherals />} />
               <Route path="history" element={<History />} />
             </Route>
-            {/* <Route path="/applications" element={<Applications />} />
-            <Route path="/applications/:id" element={<ApplicationsDetails />} /> */}
             <Route path="/helpdesk" element={<Helpdesk />} />
+            <Route path="/helpdesk/:id" element={<HelpdeskDetails />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>
