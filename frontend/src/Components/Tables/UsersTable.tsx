@@ -5,10 +5,21 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
 import { getFilteredData, getSearchedData } from "../../Helpers/tables";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import { getUserSettings } from "../../Services/settings";
+import { access } from "fs";
+import { useAuthInfo } from "@propelauth/react";
 
 type Props = { data: any; filterOptions: any; searchValue: string };
 
 const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
+  const { accessToken } = useAuthInfo();
+  const userSettings = useQuery({
+    queryKey: ["userSettings"],
+    queryFn: () => {
+      return getUserSettings(accessToken);
+    },
+  });
   let navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -22,16 +33,19 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
       width: "60px",
     },
     {
+      id: "name",
       name: t("user.name"),
       selector: (row: any) => (
         <span className="font-bold">{`${row.name} ${row.surname}`}</span>
       ),
     },
     {
+      id: "username",
       name: t("user.username"),
       selector: (row: any) => row.username,
     },
     {
+      id: "currentdevice",
       name: t("user.currentdevice"),
       selector: (row: any) =>
         row.assetname ? (
@@ -46,6 +60,7 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
         ),
     },
     {
+      id: "lastlogon",
       name: t("user.lastlogon"),
       cell: (row: any) => (
         <div className="w-[170px] py-2 px-1 rounded-[10px] text-center bg-[#30A712] text-[#FFFFFF]">
@@ -54,12 +69,24 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
       ),
     },
     {
+      id: "department",
       name: t("user.department"),
       selector: (row: any) => row.department || "N/A",
     },
     {
+      id: "office",
       name: t("user.office"),
       selector: (row: any) => row.office || "N/A",
+    },
+    {
+      id: "streetaddress",
+      name: t("user.street"),
+      selector: (row: any) => row.street || "N/A",
+    },
+    {
+      id: "country",
+      name: t("user.country"),
+      selector: (row: any) => row.country || "N/A",
     },
   ];
 

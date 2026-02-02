@@ -80,7 +80,7 @@ const UsersPage = () => {
     <div className="h-[calc(100vh-58px)] w-full px-4">
       <div className="flex gap-2 py-4">
         <Filter
-          filterData={filtersQuery.data}
+          filters={filtersQuery.data}
           filterOptions={filters}
           setFilters={toggleFilterOption}
         />

@@ -12,9 +12,7 @@ import MessagesPanel from "../../../Components/Messages/MessagesPanel";
 import ClosureNotesForm from "../../../Components/Forms/ClosureNotesForm";
 import MessageInput from "../../../Components/Messages/MessageInput";
 import { useTicketSocket } from "../../../Hooks/useTicketSocket";
-import SelectSecondary from "../../../Components/Inputs/SelectSecondary";
-import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
-import ButtonSecondary from "../../../Components/Buttons/ButtonSecondary";
+import Approvals from "../../../Components/Tickets/Approvals";
 
 const Details = () => {
   const params = useParams();
@@ -26,6 +24,7 @@ const Details = () => {
   });
 
   const ticket = ticketQuery.data;
+  console.log("ticket", ticket);
 
   const [comments, setComments] = useState<any[]>([]);
 
@@ -44,6 +43,23 @@ const Details = () => {
       });
     },
   });
+
+  const convertApprovalsToComments = (approvals: any[]) => {
+    const approvalComments = approvals.map((approval) => ({
+      id: approval.id,
+      type: "decision",
+      createdAt: approval.createdAt,
+      decidedAt: approval.decidedAt,
+      author: approval.approver.distinguishedName,
+      decision: approval.decision,
+    }));
+    return approvalComments;
+  };
+
+  const allComments = [
+    ...comments,
+    ...convertApprovalsToComments(ticket?.approvals || []),
+  ];
 
   if (!ticket) return null;
 
@@ -90,7 +106,7 @@ const Details = () => {
           <div className="font-bold">{ticket.description}</div>
         </div>
 
-        <MessagesPanel comments={comments} />
+        <MessagesPanel comments={allComments} />
 
         <MessageInput
           ticketId={ticket.id}
@@ -100,16 +116,17 @@ const Details = () => {
         />
       </div>
 
-      <div className="w-[500px] bg-white shadow-xl rounded-[10px] p-4 my-4 mr-4">
+      <div className="w-[500px] bg-white shadow-xl rounded-[10px] p-4 my-4 mr-4 overflow-y-auto max-h-[calc(100vh-100px)]">
         <CardHeader text="Closure notes" />
-        <ClosureNotesForm />
+        <ClosureNotesForm
+          closureCode={ticket.closureCode}
+          closureNotes={ticket.closureNotes}
+        />
         <CardHeader text="SLA" />
-        <CardHeader text="Approvals" />
-        <SelectSecondary label="Approver" onSelect={() => {}} options={[]} />
-        <ButtonPrimary text="Send approval" className="mt-4" />
-        <div className="mt-4">
-          <div className="font-semibold">Marcin Nowakowski - Requested</div>
-        </div>
+        <Approvals
+          requesterId={ticket.requester.id}
+          approvals={ticket.approvals}
+        />
       </div>
     </div>
   );

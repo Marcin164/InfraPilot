@@ -1,7 +1,5 @@
 import { Modal } from "react-responsive-modal";
 import CheckboxButton from "../Inputs/CheckboxButton";
-import Input from "../Inputs/Input";
-import ColorPicker from "../Inputs/ColorPicker";
 
 type Props = { isModalOpen: any; onCloseModal: any; className: string };
 

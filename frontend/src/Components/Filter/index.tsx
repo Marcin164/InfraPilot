@@ -5,9 +5,7 @@ import FilterModal from "./FilterModal";
 
 type Props = {
   filters: Record<string, string[] | undefined>;
-  setFilters: React.Dispatch<
-    React.SetStateAction<Record<string, string[] | undefined>>
-  >;
+  setFilters: any;
   filterOptions: Record<string, string[]>;
   isOpen: any;
   setIsOpen: any;

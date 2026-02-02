@@ -3,14 +3,38 @@ import SelectSecondary from "../Inputs/SelectSecondary";
 import { useForm } from "@tanstack/react-form";
 import Input from "../Inputs/Input";
 import { closureCodesOptions } from "../../Constants/options";
+import { toast } from "react-toastify";
+import { updateTicket } from "../../Services/tickets";
+import { useAuthInfo } from "@propelauth/react";
+import { useMutation } from "@tanstack/react-query";
+import { useParams } from "react-router";
+import ButtonPrimary from "../Buttons/ButtonPrimary";
 
-type Props = {};
+type Props = {
+  closureCode: any;
+  closureNotes: any;
+};
 
-const ClosureNotesForm = (props: Props) => {
+const ClosureNotesForm = ({ closureCode, closureNotes }: Props) => {
+  const { accessToken } = useAuthInfo();
+  const params = useParams();
+  const mutation = useMutation({
+    mutationFn: async (values: any) => {
+      if (!accessToken) {
+        throw new Error("User is not authenticated");
+      }
+      return updateTicket(accessToken, params.id, values);
+    },
+
+    onSuccess: () => {
+      toast.success("Ticket updated!");
+    },
+  });
+
   const form = useForm({
     defaultValues: {},
     onSubmit: ({ value }) => {
-      // mutation.mutate(value);
+      mutation.mutate(value);
     },
   });
 
@@ -18,24 +42,30 @@ const ClosureNotesForm = (props: Props) => {
     field.handleChange(opt.value);
   };
   return (
-    <form>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        form.handleSubmit();
+      }}
+    >
       <form.Field
-        name="code"
+        name="closureCode"
         children={(field) => (
           <SelectSecondary
             label="Code"
             options={closureCodesOptions}
-            value=""
+            value={closureCodesOptions.find((opt) => opt.value === closureCode)}
             onSelect={(opt: any) => handleSelect(opt, field)}
           />
         )}
       />
       <form.Field
-        name="notes"
+        name="closureNotes"
         children={(field) => (
-          <Input {...field} label="Notes" value={field.state.value} />
+          <Input {...field} label="Notes" defaultValue={closureNotes} />
         )}
       />
+      <ButtonPrimary type="submit" text="Add notes" className="mt-4 mb-2" />
     </form>
   );
 };

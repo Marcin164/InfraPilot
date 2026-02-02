@@ -1,13 +1,23 @@
+import ApprovalDecision from "./ApprovalDecision";
 import Comment from "./Comment";
 
 type Props = { comments: any[] };
 
 const MessagesPanel = ({ comments }: Props) => {
+  const renderComments = (comment: any) => {
+    switch (comment?.type) {
+      case "decision":
+        return <ApprovalDecision {...comment} />;
+      default:
+        return <Comment key={comment.id} {...comment} />;
+    }
+  };
+
   return (
     <div className="py-2 overscroll-contain overflow-y-scroll max-h-[80%]">
-      {comments.map((comment: any) => (
-        <Comment key={comment.id} {...comment} />
-      ))}
+      {comments
+        .sort((a, b) => a.createdAt - b.createdAt)
+        .map((comment: any) => renderComments(comment))}
     </div>
   );
 };

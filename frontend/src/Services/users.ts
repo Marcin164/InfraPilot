@@ -97,3 +97,19 @@ export const getFilter = async (token: any) => {
     return error;
   }
 };
+
+export const findApprovers = async (token: any) => {
+  try {
+    const result = await axios({
+      method: "get",
+      url: `http://localhost:3000/users/approvers`,
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    });
+    return result.data;
+  } catch (error) {
+    console.error("Error fetching approvers:", error);
+    throw error; // ✅ Rzuć błąd, aby React Query go przechytył
+  }
+};
