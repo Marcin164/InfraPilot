@@ -3,9 +3,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState } from "react";
 import TableSettingsModal from "../Modals/TableSettingsModal";
 
-type Props = {};
+type Props = {
+  settings: any;
+  checkboxes: any;
+  settingsKey: any;
+};
 
-const Index = (props: Props) => {
+const Index = ({ settings, checkboxes, settingsKey }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const toggleModal = () => setIsModalOpen((prev) => !prev);
@@ -23,6 +27,9 @@ const Index = (props: Props) => {
           className="w-[700px]"
           isModalOpen={isModalOpen}
           onCloseModal={toggleModal}
+          settings={settings}
+          checkboxes={checkboxes}
+          settingsKey={settingsKey}
         />
       )}
     </div>

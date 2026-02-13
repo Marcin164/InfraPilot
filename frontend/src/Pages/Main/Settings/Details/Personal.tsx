@@ -9,6 +9,9 @@ import {
 import ButtonSecondary from "../../../../Components/Buttons/ButtonSecondary";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import Checkbox from "../../../../Components/Inputs/Checkbox";
+import { useAuthInfo } from "@propelauth/react";
+import { useQuery } from "@tanstack/react-query";
+import { getUserSettings } from "../../../../Services/settings";
 
 const Personal = () => {
   const [theme, setTheme] = useState("system"); // day | night | system
@@ -19,6 +22,14 @@ const Personal = () => {
     devices: true,
     users: false,
   });
+
+  const { accessToken, user } = useAuthInfo();
+  const settingsQuery = useQuery({
+    queryKey: ["settings"],
+    queryFn: () => getUserSettings(accessToken),
+  });
+
+  console.log(settingsQuery.data);
 
   const options = [
     {

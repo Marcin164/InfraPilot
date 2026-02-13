@@ -2,19 +2,10 @@ import React from "react";
 import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
 import CardHeader from "../../../Components/Headers/CardHeader";
 import Personal from "./Details/Personal";
-import { useAuthInfo } from "@propelauth/react";
-import { useQuery } from "@tanstack/react-query";
-import { getSettings } from "../../../Services/agent";
 
 type Props = {};
 
 const index = (props: Props) => {
-  const { accessToken, user } = useAuthInfo();
-  const settingsQuery = useQuery({
-    queryKey: ["settings"],
-    queryFn: () => getSettings(accessToken),
-  });
-
   return (
     <>
       <Personal />

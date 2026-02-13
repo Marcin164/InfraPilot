@@ -7,7 +7,6 @@ import { getFilteredData, getSearchedData } from "../../Helpers/tables";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { getUserSettings } from "../../Services/settings";
-import { access } from "fs";
 import { useAuthInfo } from "@propelauth/react";
 
 type Props = { data: any; filterOptions: any; searchValue: string };
@@ -22,6 +21,10 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
   });
   let navigate = useNavigate();
   const { t } = useTranslation();
+
+  if (!userSettings.data || userSettings.isLoading) {
+    return <div>Loading...</div>;
+  }
 
   const columns = [
     {
@@ -90,9 +93,17 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
     },
   ];
 
+  const filterColumns = () => {
+    return userSettings.data.usersTableColumnOrder
+      .map((columnId: string) =>
+        columns.find((column: any) => column.id === columnId.toLowerCase()),
+      )
+      .filter(Boolean);
+  };
+
   return (
     <MainTable
-      columns={columns}
+      columns={filterColumns()}
       data={getFilteredData(getSearchedData(data, searchValue), filterOptions)}
       onRowClicked={(row: any) => navigate(`/users/${row.id}`)}
     />

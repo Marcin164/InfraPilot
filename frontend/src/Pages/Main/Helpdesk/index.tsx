@@ -9,6 +9,7 @@ import { getTickets } from "../../../Services/tickets";
 import { buildQuery } from "../../../Helpers/queries";
 import { useDebounce } from "../../../Hooks/useDebounce";
 import TicketsTable from "../../../Components/Tables/TicketsTable";
+import { getUserSettings } from "../../../Services/settings";
 
 type TicketFilters = {
   type?: string[];
@@ -23,18 +24,16 @@ const Index = () => {
   const { accessToken } = useAuthInfo();
   const [limit, setLimit] = useState(30);
   const [isOpen, setIsOpen] = useState(false);
+  const [filters, setFilters] = useState<TicketFilters>({});
+  const [searchValue, setSearchValue] = useState("");
+  const debouncedSearch = useDebounce(searchValue, 500);
 
-  const [filterOptions] = useState({
+  const filterOptions = {
     type: ["Incident", "Service"],
     priority: ["Low", "Medium", "High", "Critical"],
     impact: ["Single user", "Multiple users", "Whole company"],
     urgency: ["Low", "Medium", "High"],
-  });
-
-  const [filters, setFilters] = useState<TicketFilters>({});
-
-  const [searchValue, setSearchValue] = useState("");
-  const debouncedSearch = useDebounce(searchValue, 500);
+  };
 
   const queryString = buildQuery({
     ...filters,
@@ -49,9 +48,63 @@ const Index = () => {
     placeholderData: (prev) => prev,
   });
 
+  const userSettings = useQuery({
+    queryKey: ["userSettings"],
+    queryFn: () => {
+      return getUserSettings(accessToken);
+    },
+  });
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchValue(e.target.value);
   };
+
+  const checkboxes = [
+    {
+      name: "number",
+      label: "Number",
+    },
+    {
+      name: "assignee",
+      label: "Assignee",
+    },
+    {
+      name: "requester",
+      label: "Requester",
+    },
+    {
+      name: "assignmentgroup",
+      label: "Assignment Group",
+    },
+    {
+      name: "state",
+      label: "State",
+    },
+    {
+      name: "urgency",
+      label: "Urgency",
+    },
+    {
+      name: "priority",
+      label: "Priority",
+    },
+    {
+      name: "impact",
+      label: "Impact",
+    },
+    {
+      name: "device",
+      label: "Device",
+    },
+    {
+      name: "createdat",
+      label: "Created At",
+    },
+    {
+      name: "approvers",
+      label: "Approvers",
+    },
+  ];
 
   return (
     <div className="w-full h-[calc(100vh-58px)] px-4">
@@ -64,13 +117,15 @@ const Index = () => {
           setIsOpen={setIsOpen}
         />
         <Search onChange={handleSearchChange} />
-        <TableSettings />
+        <TableSettings
+          settings={userSettings?.data}
+          checkboxes={checkboxes}
+          settingsKey="ticketsTableColumnOrder"
+        />
       </div>
       <TicketsTable
         data={helpdeskQuery.data?.data ?? []}
         total={helpdeskQuery.data?.total ?? 0}
-        page={page}
-        limit={limit}
         onPageChange={setPage}
         onRowsPerPageChange={(newLimit: any) => {
           setLimit(newLimit);

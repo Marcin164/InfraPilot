@@ -1,13 +1,63 @@
 import { Modal } from "react-responsive-modal";
 import CheckboxButton from "../Inputs/CheckboxButton";
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthInfo } from "@propelauth/react";
+import { updateUserSettings } from "../../Services/settings";
 
-type Props = { isModalOpen: any; onCloseModal: any; className: string };
+type Props = {
+  isModalOpen: any;
+  onCloseModal: any;
+  className: string;
+  settings: any;
+  checkboxes: any;
+  settingsKey: any;
+};
 
 const TableSettingsModal = ({
   isModalOpen,
   onCloseModal,
   className = "",
+  settings = [],
+  checkboxes,
+  settingsKey,
 }: Props) => {
+  const { accessToken } = useAuthInfo();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async (values: any) => {
+      if (!accessToken) {
+        throw new Error("User is not authenticated");
+      }
+      return updateUserSettings(accessToken, { [settingsKey]: values });
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["userSettings"] });
+      close();
+    },
+  });
+  console.log(settings);
+  const [choosenColumns, setChoosenColumns] = useState(settings[settingsKey]);
+
+  const handleToggleColumn = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+
+    setChoosenColumns((prev: any) => {
+      let updated: string[];
+
+      if (checked) {
+        updated = prev.includes(name) ? prev : [...prev, name];
+      } else {
+        updated = prev.filter((col: any) => col !== name);
+      }
+
+      mutation.mutate(updated);
+      return updated;
+    });
+  };
+
   return (
     <Modal
       classNames={{ modal: `${className} rounded-[10px]` }}
@@ -20,34 +70,14 @@ const TableSettingsModal = ({
           <div className="text-[#3C3C3C] text-[16px] font-bold py-2 capitalize">
             Columns
           </div>
-          <CheckboxButton label="Name" checked={false} onChange={() => {}} />
-          <CheckboxButton
-            label="Username"
-            checked={false}
-            onChange={() => {}}
-          />
-          <CheckboxButton
-            label="Current device"
-            checked={false}
-            onChange={() => {}}
-          />
-          <CheckboxButton
-            label="Last logon"
-            checked={false}
-            onChange={() => {}}
-          />
-          <CheckboxButton
-            label="Department"
-            checked={false}
-            onChange={() => {}}
-          />
-          <CheckboxButton label="Office" checked={false} onChange={() => {}} />
-          <CheckboxButton
-            label="Street address"
-            checked={false}
-            onChange={() => {}}
-          />
-          <CheckboxButton label="Country" checked={false} onChange={() => {}} />
+          {checkboxes.map((checkbox: any) => (
+            <CheckboxButton
+              label={checkbox.label}
+              name={checkbox.name}
+              onChange={handleToggleColumn}
+              checked={choosenColumns.includes(checkbox.name)}
+            />
+          ))}
         </div>
       </div>
     </Modal>

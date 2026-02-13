@@ -10,6 +10,7 @@ import AddUserModal from "../../../Components/Modals/AddUserModal";
 import ButtonSecondary from "../../../Components/Buttons/ButtonSecondary";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
+import { getUserSettings } from "../../../Services/settings";
 
 export type FilterKey =
   | "department"
@@ -39,7 +40,8 @@ const INITIAL_FILTERS: FilterOptions = {
 const UsersPage = () => {
   const { t } = useTranslation();
   const { accessToken } = useAuthInfo();
-
+  const [limit, setLimit] = useState(30);
+  const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>(INITIAL_FILTERS);
   const [searchValue, setSearchValue] = useState("");
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
@@ -51,22 +53,17 @@ const UsersPage = () => {
   });
 
   const filtersQuery = useQuery({
-    queryKey: ["users-filters"],
+    queryKey: ["usersFilters"],
     queryFn: () => getFilter(accessToken),
     enabled: Boolean(accessToken),
   });
 
-  const toggleFilterOption = (key: FilterKey, value: string) => {
-    setFilters((prev) => {
-      const values = prev[key];
-      const exists = values.includes(value);
-
-      return {
-        ...prev,
-        [key]: exists ? values.filter((v) => v !== value) : [...values, value],
-      };
-    });
-  };
+  const userSettings = useQuery({
+    queryKey: ["userSettings"],
+    queryFn: () => {
+      return getUserSettings(accessToken);
+    },
+  });
 
   if (usersQuery.isLoading) {
     return <div>Loading users…</div>;
@@ -76,16 +73,57 @@ const UsersPage = () => {
     return <div>Failed to load users</div>;
   }
 
+  const checkboxes = [
+    {
+      name: "name",
+      label: "Name",
+    },
+    {
+      name: "username",
+      label: "Username",
+    },
+    {
+      name: "currentdevice",
+      label: "Current device",
+    },
+    {
+      name: "lastLogon",
+      label: "Last logon",
+    },
+    {
+      name: "department",
+      label: "Department",
+    },
+    {
+      name: "office",
+      label: "Office",
+    },
+    {
+      name: "streetaddress",
+      label: "Street address",
+    },
+    {
+      name: "country",
+      label: "Country",
+    },
+  ];
+
   return (
     <div className="h-[calc(100vh-58px)] w-full px-4">
       <div className="flex gap-2 py-4">
         <Filter
-          filters={filtersQuery.data}
-          filterOptions={filters}
-          setFilters={toggleFilterOption}
+          filters={filters}
+          setFilters={setFilters}
+          filterOptions={filtersQuery?.data}
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
         />
         <Search onChange={setSearchValue} />
-        <TableSettings />
+        <TableSettings
+          settings={userSettings?.data}
+          checkboxes={checkboxes}
+          settingsKey="usersTableColumnOrder"
+        />
         <ButtonSecondary
           icon={faPlus}
           text={t("btn.add.user")}
