@@ -1,14 +1,17 @@
 import React from "react";
-import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
-import CardHeader from "../../../Components/Headers/CardHeader";
-import Personal from "./Details/Personal";
+import SettingsNavbar from "../../../Components/Navbar/SettingsNavbar";
+import { Outlet } from "react-router";
 
 type Props = {};
 
 const index = (props: Props) => {
   return (
-    <>
-      <Personal />
+    <div className="w-full p-4">
+      <SettingsNavbar />
+      <div className="py-4 w-full">
+        <Outlet />
+      </div>
+      {/* <Personal />
       <div className="bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 m-4">
         <CardHeader text="General" />
         <div className="pt-2 pb-4 text-[#3C3C3C] font-semibold">
@@ -20,8 +23,8 @@ const index = (props: Props) => {
             onClick={() => {}}
           />
         </div>
-      </div>
-    </>
+      </div> */}
+    </div>
   );
 };
 

@@ -19,6 +19,8 @@ import UsersInfo from "./Pages/Main/Devices/Details/UsersInfo";
 import Peripherals from "./Pages/Main/Devices/Details/Peripherals";
 import EditEquipment from "./Pages/Main/Users/EditEquipment";
 import HelpdeskDetails from "./Pages/Main/Helpdesk/Details";
+import Sla from "./Pages/Main/Settings/Details/Sla";
+import Personal from "./Pages/Main/Settings/Details/Personal";
 
 function App() {
   return (
@@ -26,7 +28,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Main />}>
-            <Route path="/dashboards" element={<Dashboards />} />
+            <Route index path="/dashboards" element={<Dashboards />} />
             <Route path="/users" element={<Users />} />
             <Route path="/users/:id" element={<UserDetails />} />
             <Route path="/users/:id/edit" element={<EditEquipment />} />
@@ -44,7 +46,10 @@ function App() {
             </Route>
             <Route path="/helpdesk" element={<Helpdesk />} />
             <Route path="/helpdesk/:id" element={<HelpdeskDetails />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/settings" element={<Settings />}>
+              <Route index path="personal" element={<Personal />} />
+              <Route path="sla" element={<Sla />} />
+            </Route>
           </Route>
         </Routes>
       </BrowserRouter>

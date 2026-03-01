@@ -23,6 +23,8 @@ const Details = () => {
     queryFn: () => getTicket(accessToken, params.id),
   });
 
+  console.log(accessToken);
+
   const ticket = ticketQuery.data;
   console.log("ticket", ticket);
 

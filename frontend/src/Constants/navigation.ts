@@ -100,3 +100,21 @@ export const deviceNavbarItems = [
     icon: faHistory,
   },
 ];
+
+export const settingsNavbarItems = [
+  {
+    to: "personal",
+    label: "Personal",
+    icon: faAddressBook,
+  },
+  {
+    to: "active-directory",
+    label: "Active Directory",
+    icon: faNetworkWired,
+  },
+  {
+    to: "sla",
+    label: "SLA",
+    icon: faCalendar,
+  },
+];

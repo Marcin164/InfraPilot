@@ -12,27 +12,8 @@ import { getUsers } from "../../Services/users";
 import { getDevicesOptions, assignDevice } from "../../Services/devices";
 import { createHistoryEntry } from "../../Services/histories";
 import { assignDeviceDefaultValues } from "../../Constants/defaultValues";
-import { t } from "i18next";
-import { assignDeviceFormFields } from "../../Constants/forms";
 import SelectSecondary from "../Inputs/SelectSecondary";
-import { requiredValidator } from "../../Helpers/validators";
 import { faPlus, faUserMinus } from "@fortawesome/free-solid-svg-icons";
-
-/* ---------------------------------- */
-/* Types & helpers */
-/* ---------------------------------- */
-
-type FieldConfig<TForm> = {
-  name: keyof TForm;
-  label: string;
-  required?: boolean;
-  Component: React.FC<any>;
-  props?: Record<string, unknown>;
-  showIf?: (ctx: {
-    isUserContext: boolean;
-    isDeviceContext: boolean;
-  }) => boolean;
-};
 
 type Props = {
   close: any;

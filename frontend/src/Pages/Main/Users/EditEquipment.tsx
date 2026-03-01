@@ -12,24 +12,24 @@ import AssignDeviceForm from "../../../Components/Forms/AssignDeviceForm";
 type Props = {};
 
 const EditEquipment = (props: Props) => {
-  const authInfo = useAuthInfo();
+  const { accessToken } = useAuthInfo();
   const params: any = useParams();
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
   const [addDeviceMode, setAddDeviceMode] = useState<any>(false);
   const userDevices = useQuery({
     queryKey: ["userDevice"],
-    queryFn: () => getDevicesByOwner(authInfo.accessToken, params.id),
+    queryFn: () => getDevicesByOwner(accessToken, params.id),
   });
 
   if (!userDevices.data) return null;
 
   const mainDevices = userDevices.data.filter(
-    (device: any) => device.userId == params.id && device.group === "Computers"
+    (device: any) => device.userId == params.id && device.group === "Computers",
   );
 
   const peripherals = userDevices.data.filter(
     (device: any) =>
-      device.userId == params.id && device.group === "Peripherals"
+      device.userId == params.id && device.group === "Peripherals",
   );
 
   const getAssetDetails = (assetId: any) => {
