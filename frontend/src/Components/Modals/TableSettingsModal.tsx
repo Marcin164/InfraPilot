@@ -38,7 +38,7 @@ const TableSettingsModal = ({
       close();
     },
   });
-  console.log(settings);
+
   const [choosenColumns, setChoosenColumns] = useState(settings[settingsKey]);
 
   const handleToggleColumn = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,7 +1,7 @@
 import React from "react";
 import Modal from "react-responsive-modal";
 import CardHeader from "../Headers/CardHeader";
-import EditRuleForm from "../Forms/EditRuleForm";
+import EditEscalationForm from "../Forms/EditEscalationForm";
 
 type Props = {
   data?: any;
@@ -9,7 +9,7 @@ type Props = {
   handleOnClose: () => void;
 };
 
-const EditRuleModal = ({ data, isModalOpen, handleOnClose }: Props) => {
+const EditEscalationModal = ({ data, isModalOpen, handleOnClose }: Props) => {
   return (
     <Modal
       classNames={{
@@ -19,10 +19,10 @@ const EditRuleModal = ({ data, isModalOpen, handleOnClose }: Props) => {
       onClose={handleOnClose}
       center
     >
-      <CardHeader text={data ? "Edit rule" : "Add rule"} />
-      <EditRuleForm data={data} />
+      <CardHeader text={data ? "Edit escalation" : "Add escalation"} />
+      <EditEscalationForm data={data} />
     </Modal>
   );
 };
 
-export default EditRuleModal;
+export default EditEscalationModal;

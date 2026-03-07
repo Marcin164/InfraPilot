@@ -34,7 +34,7 @@ const Sla = (props: Props) => {
 
   const escalationsQuery = useQuery({
     queryKey: ["escalations"],
-    queryFn: async () => getSlaEscalations(accessToken, "1234567890"),
+    queryFn: async () => getSlaEscalations(accessToken),
   });
 
   return (
@@ -44,7 +44,7 @@ const Sla = (props: Props) => {
           <SlaCalendar slaCalendars={calendarsQuery.data} />
           <SlaDefinitions slaDefinitions={definitionsQuery?.data} />
           <SlaRules slaRules={rulesQuery?.data} />
-          <Escalations />
+          <Escalations escalations={escalationsQuery?.data} />
         </Masonry>
       </ResponsiveMasonry>
     </div>

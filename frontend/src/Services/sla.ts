@@ -68,7 +68,6 @@ export const postCalendarHoliday = async (token: any, data: any) => {
 };
 
 export const deleteCalendarHoliday = async (token: any, id: string) => {
-  console.log(id);
   try {
     const result = await axios({
       method: "delete",
@@ -216,14 +215,78 @@ export const deleteSlaRule = async (token: any, id: string) => {
   }
 };
 
-export const getSlaEscalations = async (
-  token: any,
-  slaDefinitionId: string,
-) => {
+export const getSlaEscalations = async (token: any) => {
   try {
     const result = await axios({
       method: "get",
-      url: `http://localhost:3000/sla/escalations/${slaDefinitionId}`,
+      url: `http://localhost:3000/sla/escalations/definitions`,
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log(result.data);
+    return result.data;
+  } catch (error) {
+    return error;
+  }
+};
+
+export const postSlaEscalation = async (token: any, data: any) => {
+  try {
+    const result = await axios({
+      method: "post",
+      url: `http://localhost:3000/sla/escalations`,
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+      data: data,
+    });
+
+    return result.data;
+  } catch (error) {
+    return error;
+  }
+};
+
+export const patchSlaEscalation = async (token: any, data: any) => {
+  try {
+    const result = await axios({
+      method: "patch",
+      url: `http://localhost:3000/sla/escalations/${data.id}`,
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+      data: data,
+    });
+
+    return result.data;
+  } catch (error) {
+    return error;
+  }
+};
+
+export const deleteSlaEscalation = async (token: any, id: string) => {
+  try {
+    const result = await axios({
+      method: "delete",
+      url: `http://localhost:3000/sla/escalations/${id}`,
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    });
+
+    return result.data;
+  } catch (error) {
+    return error;
+  }
+};
+
+export const getTicketSla = async (token: any, ticketId: any) => {
+  try {
+    const result = await axios({
+      method: "get",
+      url: `http://localhost:3000/sla/ticket/${ticketId}`,
       headers: {
         authorization: `Bearer ${token}`,
       },

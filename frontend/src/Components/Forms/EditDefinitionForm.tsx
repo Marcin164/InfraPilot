@@ -21,12 +21,10 @@ type Props = {
 };
 
 const EditDefinitionForm = ({ data }: Props) => {
-  console.log(data);
   const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (values: any) => {
-      console.log(values);
       data
         ? patchSlaDefinition(accessToken, values)
         : postSlaDefinition(accessToken, values);
@@ -61,7 +59,6 @@ const EditDefinitionForm = ({ data }: Props) => {
       calendarId: "",
     },
     onSubmit: ({ value }) => {
-      console.log(value);
       mutation.mutate(value);
     },
   });

@@ -3,10 +3,13 @@ import CardHeader from "../Headers/CardHeader";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import EscalationsList from "../Lists/EscalationsList";
+import EditEscalationModal from "../Modals/EditEscalationModal";
 
-type Props = {};
+type Props = {
+  escalations: any[];
+};
 
-const Escalations = (props: Props) => {
+const Escalations = ({ escalations }: Props) => {
   const [isEditDefinitionModalOpen, setIsEditDefinitionModalOpen] =
     useState(false);
   const [selectedDefinition, setSelectedDefinition] = useState<any | null>(
@@ -37,15 +40,12 @@ const Escalations = (props: Props) => {
           onClick={openAddDefinitionModal}
         />
       </div>
-      <EscalationsList
-      // data={slaDefinitions}
-      // onEdit={openEditDefinitionModal}
-      />
-      {/* <EditDefinitionModal
+      <EscalationsList data={escalations} onEdit={openEditDefinitionModal} />
+      <EditEscalationModal
         data={selectedDefinition}
         isModalOpen={isEditDefinitionModalOpen}
         handleOnClose={closeDefinitionModal}
-      /> */}
+      />
     </div>
   );
 };

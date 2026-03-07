@@ -13,6 +13,7 @@ import ClosureNotesForm from "../../../Components/Forms/ClosureNotesForm";
 import MessageInput from "../../../Components/Messages/MessageInput";
 import { useTicketSocket } from "../../../Hooks/useTicketSocket";
 import Approvals from "../../../Components/Tickets/Approvals";
+import SLA from "../../../Components/Tickets/SLA";
 
 const Details = () => {
   const params = useParams();
@@ -23,10 +24,7 @@ const Details = () => {
     queryFn: () => getTicket(accessToken, params.id),
   });
 
-  console.log(accessToken);
-
   const ticket = ticketQuery.data;
-  console.log("ticket", ticket);
 
   const [comments, setComments] = useState<any[]>([]);
 
@@ -124,7 +122,7 @@ const Details = () => {
           closureCode={ticket.closureCode}
           closureNotes={ticket.closureNotes}
         />
-        <CardHeader text="SLA" />
+        <SLA />
         <Approvals
           requesterId={ticket.requester.id}
           approvals={ticket.approvals}

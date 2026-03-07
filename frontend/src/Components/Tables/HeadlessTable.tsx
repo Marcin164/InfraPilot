@@ -4,6 +4,18 @@ import DataTable from "react-data-table-component";
 type Props = { columns: any; data: any; onRowClicked?: any };
 
 const HeadlessTable = ({ columns, data, onRowClicked }: Props) => {
+  const customStyles = {
+    rows: {
+      style: {
+        borderBottomColor: "#eeeeee",
+        transition: "all 0.2s ease-in-out",
+        "&:hover": {
+          backgroundColor: "#d2ecff",
+        },
+      },
+    },
+  };
+
   return (
     <DataTable
       columns={columns}
@@ -11,6 +23,7 @@ const HeadlessTable = ({ columns, data, onRowClicked }: Props) => {
       noHeader
       noTableHead
       onRowClicked={onRowClicked}
+      customStyles={customStyles}
     />
   );
 };

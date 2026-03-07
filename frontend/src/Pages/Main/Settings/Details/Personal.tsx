@@ -29,8 +29,6 @@ const Personal = () => {
     queryFn: () => getUserSettings(accessToken),
   });
 
-  console.log(settingsQuery.data);
-
   const options = [
     {
       value: "pl",

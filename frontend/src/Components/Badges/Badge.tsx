@@ -6,15 +6,17 @@ type Props = {
   className?: string;
   icon?: any;
   text: string;
+  style: any;
 };
 
-const Badge = ({ icon, className = "", text }: Props) => {
+const Badge = ({ icon, className = "", text, style }: Props) => {
   return (
     <div
       className={twMerge(
         "w-fit mr-2 px-2 py-1 rounded-[5px] text-[16px] text-center text-[#FFFFFF]",
-        className
+        className,
       )}
+      style={style}
     >
       {icon && <FontAwesomeIcon className="mr-1" icon={icon} />}
       <span className="text-bold">{text}</span>

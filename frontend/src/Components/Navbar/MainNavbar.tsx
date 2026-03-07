@@ -1,7 +1,7 @@
 import React from "react";
 import NavbarLink from "./NavbarLink";
 import { navbarItems } from "../../Constants/navigation";
-import { useLogoutFunction } from "@propelauth/react";
+import { useAuthInfo, useLogoutFunction } from "@propelauth/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignOut } from "@fortawesome/free-solid-svg-icons";
 import Logo from "../../assets/Logo.png";
@@ -12,11 +12,17 @@ type Props = {};
 const MainNavbar = (props: Props) => {
   const logout = useLogoutFunction();
   const { t } = useTranslation();
+  const { accessToken }: any = useAuthInfo();
+  console.log(accessToken);
 
   return (
     <div className="w-[240px] h-screen bg-[#FFFFFF] px-2 flex flex-col justify-between">
       <div>
-        <img src={Logo} className="p-2 rounded" />
+        <img
+          src={Logo}
+          className="p-2 rounded"
+          onClick={() => navigator.clipboard.writeText(accessToken)}
+        />
         {navbarItems.map((navbarItem) => (
           <NavbarLink
             to={navbarItem.to}

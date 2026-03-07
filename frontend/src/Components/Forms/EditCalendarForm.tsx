@@ -20,7 +20,6 @@ const EditCalendarForm = ({ data }: Props) => {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (values: any) => {
-      console.log(values);
       data
         ? patchCalendar(accessToken, values)
         : postCalendar(accessToken, values);

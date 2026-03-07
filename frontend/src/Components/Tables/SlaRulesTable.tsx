@@ -7,7 +7,6 @@ type Props = {
 };
 
 const SlaRulesTable = ({ data, onEdit }: Props) => {
-  console.log(data);
   const parsePriorityClassName = (priority: string) => {
     switch (priority) {
       case "Low":

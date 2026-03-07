@@ -1,8 +1,6 @@
 import React, { useMemo } from "react";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import SelectSecondary from "../Inputs/SelectSecondary";
-import Input from "../Inputs/Input";
-import { requiredValidator } from "../../Helpers/validators";
 import { useForm } from "@tanstack/react-form";
 import { useAuthInfo } from "@propelauth/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,7 +20,6 @@ const EditRuleForm = ({ data }: Props) => {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (values: any) => {
-      console.log(values);
       data
         ? patchSlaRule(accessToken, values)
         : postSlaRule(accessToken, values);
@@ -63,7 +60,6 @@ const EditRuleForm = ({ data }: Props) => {
 
   const definitionOptions = useMemo(() => {
     if (!definitionQuery.data) return null;
-    console.log(definitionQuery.data);
     return definitionQuery.data.map((def: any) => ({
       value: def.id,
       label: def.name,
@@ -126,7 +122,7 @@ const EditRuleForm = ({ data }: Props) => {
           const selectedOption = definitionOptions.find(
             (option: any) => option.value === data?.slaDefinition?.id,
           );
-          console.log(selectedOption);
+
           return (
             <SelectSecondary
               label="Definition"
