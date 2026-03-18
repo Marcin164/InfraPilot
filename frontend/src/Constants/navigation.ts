@@ -12,6 +12,7 @@ import {
   faNetworkWired,
   faRobot,
   faShield,
+  faTicket,
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -116,5 +117,28 @@ export const settingsNavbarItems = [
     to: "sla",
     label: "SLA",
     icon: faCalendar,
+  },
+];
+
+export const reportsNavbarItems = [
+  {
+    to: "users",
+    label: "Users",
+    icon: faUsers,
+  },
+  {
+    to: "devices",
+    label: "Devices",
+    icon: faComputerMouse,
+  },
+  {
+    to: "tickets",
+    label: "Tickets",
+    icon: faTicket,
+  },
+  {
+    to: "security",
+    label: "Security",
+    icon: faShield,
   },
 ];

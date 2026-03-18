@@ -6,7 +6,7 @@ type Props = {
   className?: string;
   icon?: any;
   text: string;
-  style: any;
+  style?: any;
 };
 
 const Badge = ({ icon, className = "", text, style }: Props) => {

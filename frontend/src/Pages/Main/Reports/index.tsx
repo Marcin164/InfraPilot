@@ -1,5 +1,5 @@
 import React from "react";
-import SettingsNavbar from "../../../Components/Navbar/SettingsNavbar";
+import ReportsNavbar from "../../../Components/Navbar/ReportsNavbar";
 import { Outlet } from "react-router";
 
 type Props = {};
@@ -7,7 +7,7 @@ type Props = {};
 const index = (props: Props) => {
   return (
     <div className="w-full p-4">
-      <SettingsNavbar />
+      <ReportsNavbar />
       <div className="py-4 w-full">
         <Outlet />
       </div>
