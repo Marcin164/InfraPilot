@@ -16,13 +16,6 @@ import { getReports } from "../../Services/reports";
 
 type Props = {};
 
-// const devicesByOS = [
-//   { name: "Windows", value: 150 },
-//   { name: "macOS", value: 30 },
-//   { name: "Linux", value: 15 },
-//   { name: "Other", value: 10 },
-// ];
-
 const DevicesByOSReport = (props: Props) => {
   const { accessToken } = useAuthInfo();
   const devicesByOSQuery = useQuery({

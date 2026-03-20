@@ -29,7 +29,6 @@ const DevicesWithoutOwnerReport = (props: Props) => {
     return null;
   }
 
-  console.log(devicesWithoutOwner);
   return (
     <ReportCard
       title="Devices Without Assigned User"

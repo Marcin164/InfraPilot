@@ -40,15 +40,40 @@ export default function AdminAccountsReport() {
 
   if (!adminAccounts) return null;
 
+  const getTotalAdmins = () => {
+    const admins = adminAccounts.filter(
+      (admin: any) => admin.label !== "Non-Admins",
+    );
+    return admins.reduce((sum: any, d: any) => sum + Number(d.value), 0);
+  };
+
+  const getHighestDevicesDepartment = () => {
+    const maxValue = Math.max(...adminAccounts.map((d: any) => d.value));
+
+    return adminAccounts
+      .filter((d: any) => d.value === maxValue)
+      .map((d: any) => d.label)
+      .join(", ");
+  };
+
+  const getLowestDevicesDepartment = () => {
+    const minValue = Math.min(...adminAccounts.map((d: any) => d.value));
+
+    return adminAccounts
+      .filter((d: any) => d.value === minValue)
+      .map((d: any) => d.label)
+      .join(", ");
+  };
+
   return (
     <ReportCard
       title="Administrative Accounts"
       description="Users with elevated privileges"
       stats={[
-        { label: "Total Admins", value: 16 },
-        { label: "Departments", value: 5 },
-        { label: "Highest", value: "IT" },
-        { label: "Lowest", value: "HR" },
+        { label: "Total Admins", value: getTotalAdmins() },
+        { label: "Departments", value: adminAccounts.length },
+        { label: "Highest", value: getHighestDevicesDepartment() },
+        { label: "Lowest", value: getLowestDevicesDepartment() },
       ]}
       onExport={() => exportCSV(adminAccounts, "admin_accounts")}
     >

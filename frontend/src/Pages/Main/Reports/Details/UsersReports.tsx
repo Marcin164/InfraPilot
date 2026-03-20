@@ -6,7 +6,6 @@ import UsersWithoutDevicesReport from "../../../../Components/Reports/UsersWitho
 import PageContainer from "../../../../Components/Reports/PageContainer";
 import SectionTitle from "../../../../Components/Reports/SectionTitle";
 import UsersPerDepartmentReport from "../../../../Components/Reports/UsersPerDepartmentReport";
-import MultiDeviceUsersReport from "../../../../Components/Reports/MultiDeviceUsersReport";
 import InactiveUsersReport from "../../../../Components/Reports/InactiveUsersReport";
 import AccountStatusReport from "../../../../Components/Reports/AccountStatusReport";
 
@@ -17,7 +16,6 @@ const UsersReports = (props: Props) => {
     <PageContainer>
       <AdminAccountsReport />
       <UsersWithoutDevicesReport />
-      <MultiDeviceUsersReport />
       <AccountStatusReport />
       <UsersPerDepartmentReport />
       <NewUsersReport />

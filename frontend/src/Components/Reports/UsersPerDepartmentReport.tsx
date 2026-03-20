@@ -33,26 +33,54 @@ const UsersPerDepartmentReport = (props: Props) => {
   const usersByDepartment = usersPerDepartmentQuery?.data;
 
   if (!usersByDepartment) return null;
+
+  const getTotal = () => {
+    const totalDevices = usersByDepartment.reduce(
+      (sum: number, d: any) => sum + d.value,
+      0,
+    );
+
+    return totalDevices;
+  };
+
+  const getHighestDevicesDepartment = () => {
+    const maxValue = Math.max(...usersByDepartment.map((d: any) => d.value));
+
+    return usersByDepartment
+      .filter((d: any) => d.value === maxValue)
+      .map((d: any) => d.label)
+      .join(", ");
+  };
+
+  const getLowestDevicesDepartment = () => {
+    const minValue = Math.min(...usersByDepartment.map((d: any) => d.value));
+
+    return usersByDepartment
+      .filter((d: any) => d.value === minValue)
+      .map((d: any) => d.label)
+      .join(", ");
+  };
+
   return (
     <ReportCard
       title="Users per Department"
       description="Department distribution"
       stats={[
-        { label: "Departments", value: 5 },
-        { label: "Largest", value: "Sales" },
-        { label: "Smallest", value: "HR" },
-        { label: "Total", value: 139 },
+        { label: "Departments", value: usersByDepartment.length },
+        { label: "Largest", value: getHighestDevicesDepartment() },
+        { label: "Smallest", value: getLowestDevicesDepartment() },
+        { label: "Total", value: getTotal() },
       ]}
       onExport={() => exportCSV(usersByDepartment, "users_department")}
     >
       <ResponsiveContainer>
         <BarChart data={usersByDepartment}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="department" />
+          <XAxis dataKey="label" />
           <Tooltip cursor={false} />
 
           <Bar
-            dataKey="users"
+            dataKey="value"
             fill="#a855f7"
             radius={[6, 6, 0, 0]}
             isAnimationActive

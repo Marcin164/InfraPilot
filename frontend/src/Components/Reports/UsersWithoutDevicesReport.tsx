@@ -10,25 +10,28 @@ import {
 } from "recharts";
 import { exportCSV } from "../../Helpers/files";
 import { pieColors } from "../../Constants/charts";
+import { useAuthInfo } from "@propelauth/react";
+import { useQuery } from "@tanstack/react-query";
+import { getReports } from "../../Services/reports";
 
 type Props = {};
 
-const usersWithoutDevices = [
-  { name: "With Device", value: 182 },
-  { name: "Without Device", value: 18 },
-];
-
 const UsersWithoutDevicesReport = (props: Props) => {
+  const { accessToken } = useAuthInfo();
+  const usersWithoutDevicesQuery = useQuery({
+    queryKey: ["reports", "users-without-device"],
+    queryFn: () => getReports(accessToken, "users-without-device"),
+  });
+
+  const usersWithoutDevices: any = usersWithoutDevicesQuery?.data;
+
+  console.log(usersWithoutDevices);
+
+  if (!usersWithoutDevices) return null;
   return (
     <ReportCard
-      title="Users Without Devices"
+      title="Devices per Users"
       description="Device allocation overview"
-      stats={[
-        { label: "Total Users", value: 200 },
-        { label: "With Device", value: 182 },
-        { label: "Without", value: 18 },
-        { label: "Coverage", value: "91%" },
-      ]}
       onExport={() => exportCSV(usersWithoutDevices, "device_allocation")}
     >
       <ResponsiveContainer>
@@ -42,7 +45,7 @@ const UsersWithoutDevicesReport = (props: Props) => {
             isAnimationActive
             animationDuration={900}
           >
-            {usersWithoutDevices.map((entry, index) => (
+            {usersWithoutDevices.map((entry: any, index: any) => (
               <Cell key={index} fill={pieColors[index % pieColors.length]} />
             ))}
           </Pie>
