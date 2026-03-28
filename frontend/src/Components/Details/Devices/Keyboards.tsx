@@ -1,5 +1,5 @@
 import React from "react";
-import Parameter from "../Lists/Parameter";
+import Parameter from "../../Lists/Parameter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faKeyboard } from "@fortawesome/free-solid-svg-icons";
 

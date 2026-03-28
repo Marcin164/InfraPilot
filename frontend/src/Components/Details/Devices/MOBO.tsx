@@ -1,6 +1,6 @@
 import React from "react";
-import CardHeader from "../Headers/CardHeader";
-import Parameter from "../Lists/Parameter";
+import CardHeader from "../../Headers/CardHeader";
+import Parameter from "../../Lists/Parameter";
 
 type Props = { baseboard: any };
 

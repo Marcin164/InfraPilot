@@ -1,12 +1,12 @@
 import React from "react";
-import Badge from "../Badges/Badge";
+import Badge from "../../Badges/Badge";
 import {
   faBan,
   faLock,
   faLockOpen,
   faShield,
 } from "@fortawesome/free-solid-svg-icons";
-import Parameter from "../Lists/Parameter";
+import Parameter from "../../Lists/Parameter";
 
 type Props = { bitlocker: any };
 

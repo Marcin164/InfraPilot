@@ -50,6 +50,40 @@ export const addManyUsers = async (token: any, data: any) => {
   }
 };
 
+export const updateUser = async (token: any, data: any, id: string) => {
+  console.log(data);
+  try {
+    const result = await axios({
+      method: "patch",
+      url: `http://localhost:3000/users/${id}`,
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+      data,
+    });
+
+    return result.data;
+  } catch (error) {
+    return error;
+  }
+};
+
+export const deleteUser = async (token: any, id: any) => {
+  try {
+    const result = await axios({
+      method: "delete",
+      url: `http://localhost:3000/users/${id}`,
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    });
+
+    return result.data;
+  } catch (error) {
+    return error;
+  }
+};
+
 export const getUsersTable = async (token: any) => {
   try {
     const result = await axios({

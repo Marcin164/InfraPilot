@@ -8,12 +8,13 @@ import { toast } from "react-toastify";
 import Input from "../Inputs/Input";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 
-import { addUser } from "../../Services/users";
+import { addUser, updateUser } from "../../Services/users";
 import { addUserDefaultValues } from "../../Constants/defaultValues";
 import { requiredValidator } from "../../Helpers/validators";
 
 type AddUserFormProps = {
   close: () => void;
+  data: any;
 };
 
 type FormValues = typeof addUserDefaultValues;
@@ -25,7 +26,7 @@ type FieldConfig<TForm> = {
   Component: React.FC<any>;
 };
 
-const AddUserForm: React.FC<AddUserFormProps> = ({ close }) => {
+const AddUserForm: React.FC<AddUserFormProps> = ({ close, data }) => {
   const { t } = useTranslation();
   const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
@@ -35,7 +36,9 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ close }) => {
       if (!accessToken) {
         throw new Error("User is not authenticated");
       }
-      return addUser(accessToken, values);
+      return !data
+        ? addUser(accessToken, values)
+        : updateUser(accessToken, values, data?.id);
     },
 
     onSuccess: () => {
@@ -46,7 +49,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ close }) => {
   });
 
   const form = useForm({
-    defaultValues: addUserDefaultValues,
+    defaultValues: data ?? addUserDefaultValues,
 
     onSubmit: async ({ value }) => {
       await mutation.mutateAsync(value);

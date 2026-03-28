@@ -1,7 +1,7 @@
 import { faMouse } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
-import Parameter from "../Lists/Parameter";
+import Parameter from "../../Lists/Parameter";
 
 type Props = { mice: any };
 

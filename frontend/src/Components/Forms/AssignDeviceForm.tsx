@@ -15,10 +15,6 @@ import { assignDeviceDefaultValues } from "../../Constants/defaultValues";
 import SelectSecondary from "../Inputs/SelectSecondary";
 import { faPlus, faUserMinus } from "@fortawesome/free-solid-svg-icons";
 
-type Props = {
-  close: any;
-};
-
 type Option = {
   label: string;
   value: string;
@@ -26,7 +22,7 @@ type Option = {
 
 type FormValues = typeof assignDeviceDefaultValues;
 
-const AssignDeviceForm: React.FC<Props> = ({ close }: Props) => {
+const AssignDeviceForm: React.FC = () => {
   const { accessToken } = useAuthInfo();
   const { id: routeId } = useParams();
   const location = useLocation();
@@ -47,10 +43,12 @@ const AssignDeviceForm: React.FC<Props> = ({ close }: Props) => {
 
   const userOptions: Option[] = useMemo(() => {
     if (!usersQuery.data) return [];
-    return usersQuery.data.map((u: any) => ({
-      value: u.id,
-      label: `${u.distinguishedName} (${u.email})`,
-    }));
+    return usersQuery.data
+      .filter((u: any) => u?.isApprover)
+      .map((u: any) => ({
+        value: u.id,
+        label: `${u.distinguishedName} (${u.email})`,
+      }));
   }, [usersQuery.data]);
 
   const deviceOptions: Option[] = useMemo(() => {
@@ -114,6 +112,8 @@ const AssignDeviceForm: React.FC<Props> = ({ close }: Props) => {
   ) {
     return null;
   }
+
+  console.log(userOptions);
 
   return (
     <form
@@ -186,21 +186,13 @@ const AssignDeviceForm: React.FC<Props> = ({ close }: Props) => {
         name="date"
         children={(field) => <Input {...field} type="date" label="Date" />}
       />
-      <div>
-        <ButtonPrimary
-          type="submit"
-          text="Assign"
-          className="mt-4"
-          icon={faPlus}
-          disabled={!form.state.canSubmit || mutation.isPending}
-        />
-        <ButtonPrimary
-          text="Make unassigned"
-          className="mt-4 ml-2 bg-[#F3606E]"
-          icon={faUserMinus}
-          disabled={!form.state.canSubmit || mutation.isPending}
-        />
-      </div>
+      <ButtonPrimary
+        type="submit"
+        text="Assign"
+        className="mt-4"
+        icon={faPlus}
+        disabled={!form.state.canSubmit || mutation.isPending}
+      />
     </form>
   );
 };

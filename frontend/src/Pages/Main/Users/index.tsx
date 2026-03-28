@@ -11,6 +11,8 @@ import ButtonSecondary from "../../../Components/Buttons/ButtonSecondary";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
 import { getUserSettings } from "../../../Services/settings";
+import { motion } from "framer-motion";
+import PageMotion from "../../../Components/PageMotion/PageMotion";
 
 export type FilterKey =
   | "department"
@@ -40,7 +42,6 @@ const INITIAL_FILTERS: FilterOptions = {
 const UsersPage = () => {
   const { t } = useTranslation();
   const { accessToken } = useAuthInfo();
-  const [limit, setLimit] = useState(30);
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>(INITIAL_FILTERS);
   const [searchValue, setSearchValue] = useState("");
@@ -109,38 +110,40 @@ const UsersPage = () => {
   ];
 
   return (
-    <div className="h-[calc(100vh-58px)] w-full px-4">
-      <div className="flex gap-2 py-4">
-        <Filter
-          filters={filters}
-          setFilters={setFilters}
-          filterOptions={filtersQuery?.data}
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
-        />
-        <Search onChange={setSearchValue} />
-        <TableSettings
-          settings={userSettings?.data}
-          checkboxes={checkboxes}
-          settingsKey="usersTableColumnOrder"
-        />
-        <ButtonSecondary
-          icon={faPlus}
-          text={t("btn.add.user")}
-          onClick={() => setIsAddUserModalOpen(true)}
-          className="ml-2"
-        />
-        <AddUserModal
-          isModalOpen={isAddUserModalOpen}
-          onCloseModal={() => setIsAddUserModalOpen(false)}
+    <PageMotion>
+      <div className="h-[calc(100vh-58px)] w-full px-4">
+        <div className="flex gap-2 py-4">
+          <Filter
+            filters={filters}
+            setFilters={setFilters}
+            filterOptions={filtersQuery?.data}
+            isOpen={isOpen}
+            setIsOpen={setIsOpen}
+          />
+          <Search onChange={setSearchValue} />
+          <TableSettings
+            settings={userSettings?.data}
+            checkboxes={checkboxes}
+            settingsKey="usersTableColumnOrder"
+          />
+          <ButtonSecondary
+            icon={faPlus}
+            text={t("btn.add.user")}
+            onClick={() => setIsAddUserModalOpen(true)}
+            className="h-[34px] ml-2"
+          />
+          <AddUserModal
+            isModalOpen={isAddUserModalOpen}
+            onCloseModal={() => setIsAddUserModalOpen(false)}
+          />
+        </div>
+        <UsersTable
+          data={usersQuery.data ?? []}
+          filterOptions={filters}
+          searchValue={searchValue}
         />
       </div>
-      <UsersTable
-        data={usersQuery.data ?? []}
-        filterOptions={filters}
-        searchValue={searchValue}
-      />
-    </div>
+    </PageMotion>
   );
 };
 

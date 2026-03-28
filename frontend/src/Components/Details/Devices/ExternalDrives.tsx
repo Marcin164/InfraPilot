@@ -1,7 +1,7 @@
 import { faHardDrive } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
-import CardHeader from "../Headers/CardHeader";
+import CardHeader from "../../Headers/CardHeader";
 
 type Props = { drives: any };
 

@@ -1,5 +1,5 @@
 import React from "react";
-import ConnectionsTable from "../Tables/ConnectionsTable";
+import ConnectionsTable from "../../Tables/ConnectionsTable";
 
 type Props = { connections: any };
 

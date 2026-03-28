@@ -26,45 +26,51 @@ import UsersReports from "./Pages/Main/Reports/Details/UsersReports";
 import DevicesReports from "./Pages/Main/Reports/Details/DevicesReports";
 import TicketsReports from "./Pages/Main/Reports/Details/TicketsReports";
 import SecurityReports from "./Pages/Main/Reports/Details/SecurityReports";
+import { AnimatePresence } from "framer-motion";
 
 function App() {
   return (
-    <ParseProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Main />}>
-            <Route index path="/dashboards" element={<Dashboards />} />
-            <Route path="/users" element={<Users />} />
-            <Route path="/users/:id" element={<UserDetails />} />
-            <Route path="/users/:id/edit" element={<EditEquipment />} />
-            <Route path="/devices" element={<Devices />} />
-            <Route path="/devices/:id" element={<DeviceDetails />}>
-              <Route index path="system" element={<SystemInfo />} />
-              <Route path="hardware" element={<Hardware />} />
-              <Route path="software" element={<Software />} />
-              <Route path="network" element={<Network />} />
-              <Route path="security" element={<Security />} />
-              <Route path="events" element={<Events />} />
-              <Route path="users" element={<UsersInfo />} />
-              <Route path="peripherals" element={<Peripherals />} />
-              <Route path="history" element={<History />} />
+    <AnimatePresence mode="wait">
+      <ParseProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Main />}>
+              <Route index path="/dashboards" element={<Dashboards />} />
+              <Route path="/users" element={<Users />} />
+              <Route path="/users/:id" element={<UserDetails />} />
+              <Route
+                path="/users/:id/equipmentedit"
+                element={<EditEquipment />}
+              />
+              <Route path="/devices" element={<Devices />} />
+              <Route path="/devices/:id" element={<DeviceDetails />}>
+                <Route index path="system" element={<SystemInfo />} />
+                <Route path="hardware" element={<Hardware />} />
+                <Route path="software" element={<Software />} />
+                <Route path="network" element={<Network />} />
+                <Route path="security" element={<Security />} />
+                <Route path="events" element={<Events />} />
+                <Route path="users" element={<UsersInfo />} />
+                <Route path="peripherals" element={<Peripherals />} />
+                <Route path="history" element={<History />} />
+              </Route>
+              <Route path="/helpdesk" element={<Helpdesk />} />
+              <Route path="/helpdesk/:id" element={<HelpdeskDetails />} />
+              <Route path="/reports" element={<Reports />}>
+                <Route path="users" element={<UsersReports />} />
+                <Route path="devices" element={<DevicesReports />} />
+                <Route path="tickets" element={<TicketsReports />} />
+                <Route path="security" element={<SecurityReports />} />
+              </Route>
+              <Route path="/settings" element={<Settings />}>
+                <Route index path="personal" element={<Personal />} />
+                <Route path="sla" element={<Sla />} />
+              </Route>
             </Route>
-            <Route path="/helpdesk" element={<Helpdesk />} />
-            <Route path="/helpdesk/:id" element={<HelpdeskDetails />} />
-            <Route path="/reports" element={<Reports />}>
-              <Route path="users" element={<UsersReports />} />
-              <Route path="devices" element={<DevicesReports />} />
-              <Route path="tickets" element={<TicketsReports />} />
-              <Route path="security" element={<SecurityReports />} />
-            </Route>
-            <Route path="/settings" element={<Settings />}>
-              <Route index path="personal" element={<Personal />} />
-              <Route path="sla" element={<Sla />} />
-            </Route>
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </ParseProvider>
+          </Routes>
+        </BrowserRouter>
+      </ParseProvider>
+    </AnimatePresence>
   );
 }
 

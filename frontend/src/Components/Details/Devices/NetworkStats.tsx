@@ -1,5 +1,5 @@
 import React from "react";
-import Parameter from "../Lists/Parameter";
+import Parameter from "../../Lists/Parameter";
 
 type Props = { stats: any };
 

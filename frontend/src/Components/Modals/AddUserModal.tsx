@@ -6,9 +6,9 @@ import AddUserForm from "../Forms/AddUserForm";
 import FileUpload from "../Inputs/FileUpload";
 import { useTranslation } from "react-i18next";
 
-type Props = { isModalOpen: any; onCloseModal: any };
+type Props = { isModalOpen: any; onCloseModal: any; data?: any };
 
-const AddUserModal = ({ isModalOpen, onCloseModal }: Props) => {
+const AddUserModal = ({ isModalOpen, onCloseModal, data }: Props) => {
   const { t } = useTranslation();
   const [addUserMode, setAddUserMode] = useState(0);
 
@@ -25,19 +25,21 @@ const AddUserModal = ({ isModalOpen, onCloseModal }: Props) => {
       center
     >
       <CardHeader text={t("btn.add.user")} />
-      <div className="pt-2 pb-4">
-        <ButtonSecondary
-          text={t("btn.add.user.manual")}
-          className="mr-2"
-          onClick={() => toggleAddUserMode(0)}
-        />
-        <ButtonSecondary
-          text={t("btn.add.user.file")}
-          onClick={() => toggleAddUserMode(1)}
-        />
-      </div>
+      {!data && (
+        <div className="pt-2 pb-4">
+          <ButtonSecondary
+            text={t("btn.add.user.manual")}
+            className="mr-2"
+            onClick={() => toggleAddUserMode(0)}
+          />
+          <ButtonSecondary
+            text={t("btn.add.user.file")}
+            onClick={() => toggleAddUserMode(1)}
+          />
+        </div>
+      )}
       <div className="w-full">
-        {addUserMode === 0 && <AddUserForm close={onCloseModal} />}
+        {addUserMode === 0 && <AddUserForm close={onCloseModal} data={data} />}
         {addUserMode === 1 && <FileUpload close={onCloseModal} />}
       </div>
     </Modal>

@@ -8,6 +8,7 @@ import EditEquipmentForm from "../../../Components/Forms/EditEquipmentForm";
 import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
 import AssignDeviceForm from "../../../Components/Forms/AssignDeviceForm";
+import PageMotion from "../../../Components/PageMotion/PageMotion";
 
 type Props = {};
 
@@ -39,68 +40,70 @@ const EditEquipment = (props: Props) => {
   };
 
   return (
-    <div className="p-4 w-full flex">
-      <div className="h-fit w-[40%] bg-[#FFFFFF] shadow-xl rounded-[10px] row-span-3 p-4 mr-2">
-        <div className="text-[30px] font-semibold text-[#3C3C3C]">
-          Edit Equipment
+    <PageMotion>
+      <div className="p-4 w-full flex">
+        <div className="h-fit w-[40%] bg-[#FFFFFF] shadow-xl rounded-[10px] row-span-3 p-4 mr-2">
+          <div className="text-[30px] font-semibold text-[#3C3C3C]">
+            Edit Equipment
+          </div>
+          <div className="h-[calc(100%-100px)]">
+            <div className="py-2 font-bold">Computers</div>
+            {mainDevices?.length > 0 ? (
+              mainDevices.map((device: any) => (
+                <EquipmentItem
+                  {...device}
+                  editMode
+                  onEditClick={getAssetDetails}
+                />
+              ))
+            ) : (
+              <div>No device</div>
+            )}
+            <div className="py-2 font-bold">Peripherals</div>
+            {peripherals?.length > 0 ? (
+              peripherals.map((peripheral: any) => (
+                <EquipmentItem
+                  {...peripheral}
+                  editMode
+                  onEditClick={getAssetDetails}
+                />
+              ))
+            ) : (
+              <div>No device</div>
+            )}
+            <ButtonPrimary
+              icon={faPen}
+              text="Assign device"
+              className="mt-2"
+              onClick={() => {
+                setSelectedAsset(null);
+                setAddDeviceMode(true);
+              }}
+            />
+          </div>
         </div>
-        <div className="h-[calc(100%-100px)]">
-          <div className="py-2 font-bold">Computers</div>
-          {mainDevices?.length > 0 ? (
-            mainDevices.map((device: any) => (
-              <EquipmentItem
-                {...device}
-                editMode
-                onEditClick={getAssetDetails}
-              />
-            ))
-          ) : (
-            <div>No device</div>
-          )}
-          <div className="py-2 font-bold">Peripherals</div>
-          {peripherals?.length > 0 ? (
-            peripherals.map((peripheral: any) => (
-              <EquipmentItem
-                {...peripheral}
-                editMode
-                onEditClick={getAssetDetails}
-              />
-            ))
-          ) : (
-            <div>No device</div>
-          )}
-          <ButtonPrimary
-            icon={faPen}
-            text="Assign device"
-            className="mt-2"
-            onClick={() => {
-              setSelectedAsset(null);
-              setAddDeviceMode(true);
-            }}
-          />
-        </div>
+        {!selectedAsset && addDeviceMode && (
+          <div className="w-[60%] bg-[#FFFFFF] shadow-xl rounded-[10px] row-span-3 p-4 ml-2">
+            <div className="text-[30px] font-semibold text-[#3C3C3C]">
+              Assign device
+            </div>
+            <div>
+              <AssignDeviceForm />
+            </div>
+          </div>
+        )}
+        {!addDeviceMode && selectedAsset && (
+          <div className="w-[60%] bg-[#FFFFFF] shadow-xl rounded-[10px] row-span-3 p-4 ml-2">
+            <div className="text-[30px] font-semibold text-[#3C3C3C]">
+              Equipment details
+            </div>
+            <div>
+              <EditEquipmentForm {...selectedAsset} />
+            </div>
+          </div>
+        )}
       </div>
-      {!selectedAsset && addDeviceMode && (
-        <div className="w-[60%] bg-[#FFFFFF] shadow-xl rounded-[10px] row-span-3 p-4 ml-2">
-          <div className="text-[30px] font-semibold text-[#3C3C3C]">
-            Assign device
-          </div>
-          <div>
-            <AssignDeviceForm />
-          </div>
-        </div>
-      )}
-      {!addDeviceMode && selectedAsset && (
-        <div className="w-[60%] bg-[#FFFFFF] shadow-xl rounded-[10px] row-span-3 p-4 ml-2">
-          <div className="text-[30px] font-semibold text-[#3C3C3C]">
-            Equipment details
-          </div>
-          <div>
-            <EditEquipmentForm {...selectedAsset} />
-          </div>
-        </div>
-      )}
-    </div>
+    </PageMotion>
   );
 };
 

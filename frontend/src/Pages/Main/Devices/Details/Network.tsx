@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import Connections from "../../../../Components/Details/Connections";
+import Connections from "../../../../Components/Details/Devices/Connections";
 import { useOutletContext } from "react-router";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
 import FirewallRulesTable from "../../../../Components/Tables/FirewallRulesTable";
-import IPv4 from "../../../../Components/Details/IPv4";
-import IPv6 from "../../../../Components/Details/IPv6";
-import DNS from "../../../../Components/Details/DNS";
+import IPv4 from "../../../../Components/Details/Devices/IPv4";
+import IPv6 from "../../../../Components/Details/Devices/IPv6";
+import DNS from "../../../../Components/Details/Devices/DNS";
 import { twMerge } from "tailwind-merge";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -72,7 +72,7 @@ const Network = (props: Props) => {
                       <div
                         className={twMerge(
                           "w-fit mr-2 px-2 rounded-[5px] text-[14px] mt-2 text-center text-[#FFFFFF]",
-                          adapter.Connected ? "bg-[#30A712]" : "bg-[#F3606A]"
+                          adapter.Connected ? "bg-[#30A712]" : "bg-[#F3606A]",
                         )}
                       >
                         <FontAwesomeIcon

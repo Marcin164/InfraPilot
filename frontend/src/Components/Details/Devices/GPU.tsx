@@ -1,7 +1,7 @@
 import React from "react";
-import Parameter from "../Lists/Parameter";
-import CardHeader from "../Headers/CardHeader";
-import Badge from "../Badges/Badge";
+import Parameter from "../../Lists/Parameter";
+import CardHeader from "../../Headers/CardHeader";
+import Badge from "../../Badges/Badge";
 
 type Props = {
   gpus: any;

@@ -1,7 +1,7 @@
 import React from "react";
-import Parameter from "../Lists/Parameter";
-import CardHeader from "../Headers/CardHeader";
-import Badge from "../Badges/Badge";
+import Parameter from "../../Lists/Parameter";
+import CardHeader from "../../Headers/CardHeader";
+import Badge from "../../Badges/Badge";
 
 type Props = { cpus: any };
 
@@ -44,13 +44,13 @@ const CPU = ({ cpus }: Props) => {
             name="Architecture"
             value={`              ${
               architectures.find(
-                (architecture: any) => architecture.number === cpu.architecture
+                (architecture: any) => architecture.number === cpu.architecture,
               )?.name
             }
               (${
                 architectures.find(
                   (architecture: any) =>
-                    architecture.number === cpu.architecture
+                    architecture.number === cpu.architecture,
                 )?.description
               })
             `}

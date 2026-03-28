@@ -1,4 +1,4 @@
-import Badge from "../Badges/Badge";
+import Badge from "../../Badges/Badge";
 
 type Props = { firewall: any };
 
@@ -60,13 +60,13 @@ const Firewall = ({ firewall }: Props) => {
             <Badge
               text="Stealth Mode (IPsec)"
               className={setConfigurationStateColor(
-                fw.EnableStealthModeForIPSec
+                fw.EnableStealthModeForIPSec,
               )}
             />
             <Badge
               text="Uni-to-Multi Response"
               className={setConfigurationStateColor(
-                fw.AllowUnicastResponseToMulticast
+                fw.AllowUnicastResponseToMulticast,
               )}
             />
           </div>

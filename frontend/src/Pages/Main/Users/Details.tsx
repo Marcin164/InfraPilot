@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import Equipment from "../../../Components/Details/Equipment";
-import EquipmentHistory from "../../../Components/Details/EquipmentHistory";
-import UserInfo from "../../../Components/Details/UserInfo";
+import Equipment from "../../../Components/Details/Users/Equipment";
+import EquipmentHistory from "../../../Components/Details/Users/EquipmentHistory";
+import UserInfo from "../../../Components/Details/Users/UserInfo";
 import { getUser } from "../../../Services/users";
 import { useParams } from "react-router";
 import { getDevicesByOwner } from "../../../Services/devices";
 import { useEffect } from "react";
 import { useParser } from "../../../Hooks/useParser";
 import { useAuthInfo } from "@propelauth/react";
+import PageMotion from "../../../Components/PageMotion/PageMotion";
 
 const Details = () => {
   const params: any = useParams();
@@ -36,12 +37,15 @@ const Details = () => {
 
   if (!userQuery?.data) return null;
 
+  console.log(userQuery?.data);
   return (
-    <div className="grid grid-cols-3 gap-x-4 p-4">
-      <UserInfo {...userQuery.data} />
-      <Equipment devices={userDevices.data} userId={params.id} />
-      <EquipmentHistory />
-    </div>
+    <PageMotion>
+      <div className="grid grid-cols-3 gap-x-4 p-4">
+        <UserInfo data={userQuery.data} />
+        <Equipment devices={userDevices.data} />
+        <EquipmentHistory />
+      </div>
+    </PageMotion>
   );
 };
 

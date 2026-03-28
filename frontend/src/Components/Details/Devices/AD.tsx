@@ -1,5 +1,5 @@
 import React from "react";
-import CardHeader from "../Headers/CardHeader";
+import CardHeader from "../../Headers/CardHeader";
 
 type Props = {};
 

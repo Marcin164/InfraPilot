@@ -4,10 +4,17 @@ import {
   faLaptop,
   faPen,
   faTrashAlt,
+  faUserMinus,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Link } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import Badge from "../Badges/Badge";
+import ButtonPrimary from "../Buttons/ButtonPrimary";
+import ButtonSecondary from "../Buttons/ButtonSecondary";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { assignDevice } from "../../Services/devices";
+import { useAuthInfo } from "@propelauth/react";
+import { toast } from "react-toastify";
 
 type Props = {
   id: number;
@@ -26,6 +33,10 @@ const EquipmentItem = ({
   model,
   assetName,
 }: Props) => {
+  const queryClient = useQueryClient();
+  const { accessToken } = useAuthInfo();
+  const params = useParams();
+  const navigate = useNavigate();
   const getDeviceIcon = (type: string) => {
     switch (type) {
       case "Laptop":
@@ -36,6 +47,16 @@ const EquipmentItem = ({
         return faComputerMouse;
     }
   };
+
+  const mutation = useMutation({
+    mutationFn: async (values: any) =>
+      assignDevice(accessToken, { deviceId: id, userId: null }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["userDevice"] });
+      toast.success("Device unassigned!");
+      navigate(`/users/${params.id}`);
+    },
+  });
 
   return (
     <div className="flex justify-between">
@@ -52,6 +73,7 @@ const EquipmentItem = ({
           <Badge text={location} className="ml-2 bg-[#2B9AE9]" />
         </div>
       </Link>
+      <ButtonSecondary icon={faUserMinus} onClick={mutation.mutate} />
     </div>
   );
 };

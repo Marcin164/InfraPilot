@@ -1,7 +1,7 @@
 import React from "react";
-import Parameter from "../Lists/Parameter";
-import Partitions from "./Partitions";
-import CardHeader from "../Headers/CardHeader";
+import Parameter from "../../Lists/Parameter";
+import Partitions from "../Partitions";
+import CardHeader from "../../Headers/CardHeader";
 
 type Props = { disks: any };
 

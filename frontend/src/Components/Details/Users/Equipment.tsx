@@ -1,26 +1,23 @@
-import { faPen } from "@fortawesome/free-solid-svg-icons";
-import ButtonPrimary from "../Buttons/ButtonPrimary";
-import EquipmentItem from "../Lists/EquipmentItem";
-import { useNavigate } from "react-router";
+import EquipmentItem from "../../Lists/EquipmentItem";
+import { useParams } from "react-router";
 
 type Props = {
   devices: any;
-  userId: number;
 };
 
-const Equipment = ({ devices, userId }: Props) => {
-  let navigate = useNavigate();
+const Equipment = ({ devices }: Props) => {
+  const { id } = useParams();
 
   if (!devices) return null;
 
   const mainDevices = devices.filter(
-    (device: any) => device.userId === userId && device.group === "Computers"
+    (device: any) => device.userId === id && device.group === "Computers",
   );
 
   const loggedDevice: any = null;
 
   const peripherals = devices.filter(
-    (device: any) => device.userId === userId && device.group === "Peripherals"
+    (device: any) => device.userId === id && device.group === "Peripherals",
   );
 
   return (
@@ -47,13 +44,6 @@ const Equipment = ({ devices, userId }: Props) => {
         ) : (
           <div>No devices</div>
         )}
-      </div>
-      <div>
-        <ButtonPrimary
-          icon={faPen}
-          text="Edit equipment"
-          onClick={() => navigate(`/users/${userId}/edit`)}
-        />
       </div>
     </div>
   );

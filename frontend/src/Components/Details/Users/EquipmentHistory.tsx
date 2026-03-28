@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import TimelineLine from "../Timeline/TimelineLine";
-import { getUsersDevices } from "../../Services/histories";
+import TimelineLine from "../../Timeline/TimelineLine";
+import { getUsersDevices } from "../../../Services/histories";
 import { useAuthInfo } from "@propelauth/react";
 import { useParams } from "react-router";
 

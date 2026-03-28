@@ -1,12 +1,12 @@
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
-import Mice from "../../../../Components/Details/Mice";
+import Mice from "../../../../Components/Details/Devices/Mice";
 import { useOutletContext } from "react-router";
-import Keyboards from "../../../../Components/Details/Keyboards";
-import Monitors from "../../../../Components/Details/Monitors";
+import Keyboards from "../../../../Components/Details/Devices/Keyboards";
+import Monitors from "../../../../Components/Details/Devices/Monitors";
 import SoundDevices from "../../../../Components/Details/SoundDevices";
 import Printers from "../../../../Components/Details/Printers";
 import USBDevices from "../../../../Components/Details/USBDevices";
-import ExternalDrives from "../../../../Components/Details/ExternalDrives";
+import ExternalDrives from "../../../../Components/Details/Devices/ExternalDrives";
 import NoData from "../../../../Components/Details/NoData";
 
 type Props = {};
