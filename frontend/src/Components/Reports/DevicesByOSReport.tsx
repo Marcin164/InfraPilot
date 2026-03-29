@@ -10,17 +10,15 @@ import {
   Tooltip,
 } from "recharts";
 import { pieColors } from "../../Constants/charts";
-import { useAuthInfo } from "@propelauth/react";
 import { useQuery } from "@tanstack/react-query";
 import { getReports } from "../../Services/reports";
 
 type Props = {};
 
 const DevicesByOSReport = (props: Props) => {
-  const { accessToken } = useAuthInfo();
   const devicesByOSQuery = useQuery({
     queryKey: ["reports", "devices-by-os"],
-    queryFn: () => getReports(accessToken, "devices-by-os"),
+    queryFn: () => getReports("devices-by-os"),
   });
 
   const devicesByOS: any = devicesByOSQuery?.data;

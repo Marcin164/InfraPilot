@@ -1,7 +1,6 @@
 import React from "react";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthInfo } from "@propelauth/react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 
@@ -28,17 +27,11 @@ type FieldConfig<TForm> = {
 
 const AddUserForm: React.FC<AddUserFormProps> = ({ close, data }) => {
   const { t } = useTranslation();
-  const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
-      if (!accessToken) {
-        throw new Error("User is not authenticated");
-      }
-      return !data
-        ? addUser(accessToken, values)
-        : updateUser(accessToken, values, data?.id);
+      return !data ? addUser(values) : updateUser(values, data?.id);
     },
 
     onSuccess: () => {

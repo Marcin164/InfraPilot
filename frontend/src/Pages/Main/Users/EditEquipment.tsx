@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { getDevicesByOwner } from "../../../Services/devices";
-import { useAuthInfo } from "@propelauth/react";
 import { useParams } from "react-router";
 import EquipmentItem from "../../../Components/Lists/EquipmentItem";
 import EditEquipmentForm from "../../../Components/Forms/EditEquipmentForm";
@@ -13,13 +12,12 @@ import PageMotion from "../../../Components/PageMotion/PageMotion";
 type Props = {};
 
 const EditEquipment = (props: Props) => {
-  const { accessToken } = useAuthInfo();
   const params: any = useParams();
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
   const [addDeviceMode, setAddDeviceMode] = useState<any>(false);
   const userDevices = useQuery({
     queryKey: ["userDevice"],
-    queryFn: () => getDevicesByOwner(accessToken, params.id),
+    queryFn: () => getDevicesByOwner(params.id),
   });
 
   if (!userDevices.data) return null;

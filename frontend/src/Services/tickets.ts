@@ -1,110 +1,47 @@
-import axios from "axios";
+import api from "../lib/api";
 
-export const getTickets = async (token: any, query: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: `http://localhost:3000/tickets?${query}`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getTickets = async (query: string) => {
+  const { data } = await api.get(`/tickets?${query}`);
+  return data;
 };
 
-export const getTicket = async (token: any, id: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: `http://localhost:3000/tickets/${id}`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getTicket = async (id: string) => {
+  const { data } = await api.get(`/tickets/${id}`);
+  return data;
 };
 
-export const updateTicket = async (token: any, id: any, data: any) => {
-  try {
-    const result = await axios({
-      method: "patch",
-      url: `http://localhost:3000/tickets/${id}`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-      data,
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const updateTicket = async (id: string, data: any) => {
+  const { data: result } = await api.patch(`/tickets/${id}`, data);
+  return result;
 };
 
 export const createComment = async (
-  token: any,
-  id: any,
-  authorId: any,
+  id: string,
+  authorId: string,
   data: any,
 ) => {
-  try {
-    const result = await axios({
-      method: "post",
-      url: `http://localhost:3000/tickets/comment/${id}/${authorId}`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-      data,
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+  const { data: result } = await api.post(
+    `/tickets/comment/${id}/${authorId}`,
+    data,
+  );
+  return result;
 };
 
 export const createApproval = async (
-  token: any,
-  ticketId: any,
-  requesterId: any,
-  approverId: any,
+  ticketId: string,
+  requesterId: string,
+  approverId: string,
 ) => {
-  try {
-    const result = await axios({
-      method: "post",
-      url: `http://localhost:3000/tickets/approve/${ticketId}/${requesterId}/${approverId}`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+  const { data } = await api.post(
+    `/tickets/approve/${ticketId}/${requesterId}/${approverId}`,
+  );
+  return data;
 };
 
-export const updateApproval = async (token: any, ticketId: any, data: any) => {
-  try {
-    const result = await axios({
-      method: "patch",
-      url: `http://localhost:3000/tickets/approve/${ticketId}`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-      data,
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const updateApproval = async (ticketId: string, data: any) => {
+  const { data: result } = await api.patch(
+    `/tickets/approve/${ticketId}`,
+    data,
+  );
+  return result;
 };

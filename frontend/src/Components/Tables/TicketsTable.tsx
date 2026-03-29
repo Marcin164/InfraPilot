@@ -6,7 +6,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTicket } from "@fortawesome/free-solid-svg-icons";
 import { useQuery } from "@tanstack/react-query";
 import { getUserSettings } from "../../Services/settings";
-import { useAuthInfo } from "@propelauth/react";
 
 type Props = {
   data: any[];
@@ -23,13 +22,10 @@ const TicketsTable = ({
   onRowsPerPageChange,
   isLoading,
 }: Props) => {
-  const { accessToken } = useAuthInfo();
   const navigate = useNavigate();
   const userSettings = useQuery({
     queryKey: ["userSettings"],
-    queryFn: () => {
-      return getUserSettings(accessToken);
-    },
+    queryFn: () => getUserSettings(),
   });
 
   if (!userSettings.data || userSettings.isLoading) {

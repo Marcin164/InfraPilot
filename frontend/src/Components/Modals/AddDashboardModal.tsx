@@ -7,6 +7,7 @@ import { createDashboard } from "../../Services/dashboards";
 import { useAuthInfo } from "@propelauth/react";
 import { useState } from "react";
 
+
 type AddDashboardModalProps = {
   isModalOpen: boolean;
   onCloseModal: () => void;
@@ -23,13 +24,12 @@ const AddDashboardModal: React.FC<AddDashboardModalProps> = ({
   selectDashboard,
 }) => {
   const queryClient = useQueryClient();
-  const { accessToken, user } = useAuthInfo();
+  const { user } = useAuthInfo();
   const [dashboardName, setDashboardName] = useState("");
 
   const mutation = useMutation({
     mutationFn: (body: { name: string; userId: string }) => {
-      if (!accessToken) throw new Error("User is not authenticated");
-      return createDashboard(accessToken, body);
+      return createDashboard(body);
     },
     onSuccess: (newDashboard) => {
       queryClient.invalidateQueries({ queryKey: ["dashboards"] });

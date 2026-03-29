@@ -9,17 +9,15 @@ import {
   Tooltip,
   XAxis,
 } from "recharts";
-import { useAuthInfo } from "@propelauth/react";
 import { useQuery } from "@tanstack/react-query";
 import { getReports } from "../../Services/reports";
 
 type Props = {};
 
 const DevicesWithoutUpdatesReport = (props: Props) => {
-  const { accessToken } = useAuthInfo();
   const reportsQuery = useQuery({
     queryKey: ["reports", "devices-without-updates"],
-    queryFn: () => getReports(accessToken, "devices-without-updates"),
+    queryFn: () => getReports("devices-without-updates"),
   });
 
   const devicesWithoutUpdatesByType = reportsQuery?.data;

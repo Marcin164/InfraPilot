@@ -2,7 +2,6 @@ import { Modal } from "react-responsive-modal";
 import CheckboxButton from "../Inputs/CheckboxButton";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthInfo } from "@propelauth/react";
 import { updateUserSettings } from "../../Services/settings";
 
 type Props = {
@@ -22,15 +21,11 @@ const TableSettingsModal = ({
   checkboxes,
   settingsKey,
 }: Props) => {
-  const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async (values: any) => {
-      if (!accessToken) {
-        throw new Error("User is not authenticated");
-      }
-      return updateUserSettings(accessToken, { [settingsKey]: values });
+      return updateUserSettings({ [settingsKey]: values });
     },
 
     onSuccess: () => {

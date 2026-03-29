@@ -9,7 +9,6 @@ import {
   ticketUrgencyOptions,
 } from "../../Constants/options";
 import { useMutation } from "@tanstack/react-query";
-import { useAuthInfo } from "@propelauth/react";
 import { updateTicket } from "../../Services/tickets";
 import ButtonSecondary from "../Buttons/ButtonSecondary";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
@@ -35,13 +34,9 @@ const UpdateTicketForm = ({
   impact,
   urgency,
 }: Props) => {
-  const { accessToken } = useAuthInfo();
   const mutation = useMutation({
     mutationFn: async (values: any) => {
-      if (!accessToken) {
-        throw new Error("User is not authenticated");
-      }
-      return updateTicket(accessToken, id, values);
+      return updateTicket(id, values);
     },
 
     onSuccess: () => {

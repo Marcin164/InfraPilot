@@ -11,19 +11,19 @@ import { useAuthInfo } from "@propelauth/react";
 import { toast } from "react-toastify";
 import { createComment } from "../../Services/tickets";
 
+
 type Props = {
   ticketId: string;
   onOptimisticComment: (comment: any) => void;
 };
 
 const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
-  const { accessToken, user }: any = useAuthInfo();
+  const { user }: any = useAuthInfo();
   const [message, setMessage] = useState("");
 
   const mutation = useMutation({
     mutationFn: async (payload: { content: string; type: string }) => {
-      if (!accessToken) throw new Error("Not authenticated");
-      return createComment(accessToken, ticketId, user?.metadata?.id, payload);
+      return createComment(ticketId, user?.metadata?.id, payload);
     },
 
     onMutate: async (payload) => {

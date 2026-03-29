@@ -12,7 +12,6 @@ import CustomTooltip from "./CustomTooltip";
 import { exportCSV } from "../../Helpers/files";
 import { getReports } from "../../Services/reports";
 import { useQuery } from "@tanstack/react-query";
-import { useAuthInfo } from "@propelauth/react";
 
 type Data = {
   department: string;
@@ -28,10 +27,9 @@ type Data = {
 // ];
 
 export default function AdminAccountsReport() {
-  const { accessToken } = useAuthInfo();
   const adminAccountsQuery = useQuery({
     queryKey: ["reports", "users-with-admin"],
-    queryFn: () => getReports(accessToken, "users-with-admin"),
+    queryFn: () => getReports("users-with-admin"),
   });
 
   const adminAccounts: any = adminAccountsQuery?.data;

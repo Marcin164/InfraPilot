@@ -9,7 +9,6 @@ import {
 import ButtonSecondary from "../../../../Components/Buttons/ButtonSecondary";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import Checkbox from "../../../../Components/Inputs/Checkbox";
-import { useAuthInfo } from "@propelauth/react";
 import { useQuery } from "@tanstack/react-query";
 import { getUserSettings } from "../../../../Services/settings";
 
@@ -23,10 +22,9 @@ const Personal = () => {
     users: false,
   });
 
-  const { accessToken, user } = useAuthInfo();
   const settingsQuery = useQuery({
     queryKey: ["settings"],
-    queryFn: () => getUserSettings(accessToken),
+    queryFn: () => getUserSettings(),
   });
 
   const options = [

@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAuthInfo } from "@propelauth/react";
 import {
   getCalendar,
   getSlaDefinitions,
@@ -15,26 +14,24 @@ import Escalations from "../../../../Components/Details/Escalations";
 type Props = {};
 
 const Sla = (props: Props) => {
-  const { accessToken } = useAuthInfo();
-
   const calendarsQuery = useQuery({
     queryKey: ["calendars"],
-    queryFn: async () => getCalendar(accessToken),
+    queryFn: async () => getCalendar(),
   });
 
   const definitionsQuery = useQuery({
     queryKey: ["definitions"],
-    queryFn: async () => getSlaDefinitions(accessToken),
+    queryFn: async () => getSlaDefinitions(),
   });
 
   const rulesQuery = useQuery({
     queryKey: ["rules"],
-    queryFn: async () => getSlaRules(accessToken),
+    queryFn: async () => getSlaRules(),
   });
 
   const escalationsQuery = useQuery({
     queryKey: ["escalations"],
-    queryFn: async () => getSlaEscalations(accessToken),
+    queryFn: async () => getSlaEscalations(),
   });
 
   return (

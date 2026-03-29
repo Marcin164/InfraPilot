@@ -13,7 +13,6 @@ import ButtonPrimary from "../Buttons/ButtonPrimary";
 import ButtonSecondary from "../Buttons/ButtonSecondary";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { assignDevice } from "../../Services/devices";
-import { useAuthInfo } from "@propelauth/react";
 import { toast } from "react-toastify";
 
 type Props = {
@@ -34,7 +33,6 @@ const EquipmentItem = ({
   assetName,
 }: Props) => {
   const queryClient = useQueryClient();
-  const { accessToken } = useAuthInfo();
   const params = useParams();
   const navigate = useNavigate();
   const getDeviceIcon = (type: string) => {
@@ -50,7 +48,7 @@ const EquipmentItem = ({
 
   const mutation = useMutation({
     mutationFn: async (values: any) =>
-      assignDevice(accessToken, { deviceId: id, userId: null }),
+      assignDevice({ deviceId: id, userId: null }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userDevice"] });
       toast.success("Device unassigned!");

@@ -7,23 +7,20 @@ import { useParams } from "react-router";
 import { getDevicesByOwner } from "../../../Services/devices";
 import { useEffect } from "react";
 import { useParser } from "../../../Hooks/useParser";
-import { useAuthInfo } from "@propelauth/react";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
 
 const Details = () => {
   const params: any = useParams();
   const { setParser } = useParser();
 
-  const authInfo = useAuthInfo();
-
   const userQuery = useQuery({
     queryKey: ["user"],
-    queryFn: () => getUser(authInfo.accessToken, params.id),
+    queryFn: () => getUser(params.id),
   });
 
   const userDevices = useQuery({
     queryKey: ["userDevice"],
-    queryFn: () => getDevicesByOwner(authInfo.accessToken, params.id),
+    queryFn: () => getDevicesByOwner(params.id),
   });
 
   useEffect(() => {

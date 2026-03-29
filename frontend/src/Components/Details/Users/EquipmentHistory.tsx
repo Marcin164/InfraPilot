@@ -1,17 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import TimelineLine from "../../Timeline/TimelineLine";
 import { getUsersDevices } from "../../../Services/histories";
-import { useAuthInfo } from "@propelauth/react";
 import { useParams } from "react-router";
 
 type Props = {};
 
 const EquipmentHistory = (props: Props) => {
-  const { accessToken } = useAuthInfo();
   const params = useParams();
   const historyQuery = useQuery({
     queryKey: ["history"],
-    queryFn: () => getUsersDevices(accessToken, params.id),
+    queryFn: () => getUsersDevices(params.id!),
   });
 
   if (!historyQuery.data) return null;

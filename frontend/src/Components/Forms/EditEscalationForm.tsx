@@ -1,4 +1,3 @@
-import { useAuthInfo } from "@propelauth/react";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
@@ -31,19 +30,16 @@ type EscalationForm = {
 };
 
 const EditEscalationForm = ({ data }: Props) => {
-  const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
 
   const definitionsQuery = useQuery({
     queryKey: ["definitions"],
-    queryFn: () => getSlaDefinitions(accessToken),
+    queryFn: () => getSlaDefinitions(),
   });
 
   const mutation = useMutation({
     mutationFn: (values: any) =>
-      data
-        ? patchSlaEscalation(accessToken, values)
-        : postSlaEscalation(accessToken, values),
+      data ? patchSlaEscalation(values) : postSlaEscalation(values),
 
     onSuccess: async () => {
       toast.success("Escalation updated");

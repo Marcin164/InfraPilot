@@ -4,7 +4,6 @@ import { Outlet, useParams, useNavigate, useLocation } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getDevice } from "../../../Services/devices";
 import { useParser } from "../../../Hooks/useParser";
-import { useAuthInfo } from "@propelauth/react";
 import DataLoader from "../../../Components/Loaders/DataLoader";
 
 type Props = {};
@@ -15,11 +14,9 @@ const Details = () => {
   const navigate = useNavigate();
   const { setParser } = useParser();
 
-  const authInfo = useAuthInfo();
-
   const deviceQuery = useQuery({
     queryKey: ["device"],
-    queryFn: () => getDevice(authInfo.accessToken, params.id),
+    queryFn: () => getDevice(params.id),
   });
 
   useEffect(() => {

@@ -8,7 +8,6 @@ import {
 } from "recharts";
 import ReportCard from "./ReportCard";
 import { exportCSV } from "../../Helpers/files";
-import { useAuthInfo } from "@propelauth/react";
 import { useQuery } from "@tanstack/react-query";
 import { getReports } from "../../Services/reports";
 
@@ -21,10 +20,9 @@ import { getReports } from "../../Services/reports";
 // ];
 
 export default function NewUsersReport() {
-  const { accessToken } = useAuthInfo();
   const newUsersQuery = useQuery({
     queryKey: ["reports", "users-new-over-time"],
-    queryFn: () => getReports(accessToken, "users-new-over-time"),
+    queryFn: () => getReports("users-new-over-time"),
   });
 
   const newUsers = newUsersQuery?.data;

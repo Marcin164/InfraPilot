@@ -6,7 +6,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateApproval } from "../../Services/tickets";
-import { useAuthInfo } from "@propelauth/react";
 import { twMerge } from "tailwind-merge";
 import moment from "moment";
 import { useParams } from "react-router-dom";
@@ -28,12 +27,9 @@ const ApprovalDecision = ({
 }: Props) => {
   const params = useParams();
   const queryClient = useQueryClient();
-  const { accessToken } = useAuthInfo();
   const mutation = useMutation({
     mutationFn: async (values: any) => {
-      updateApproval(accessToken, id, {
-        decision: values.decision,
-      });
+      return updateApproval(id, { decision: values.decision });
     },
 
     onSuccess: () => {

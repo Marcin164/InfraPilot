@@ -1,4 +1,3 @@
-import { useAuthInfo } from "@propelauth/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import {
@@ -9,7 +8,6 @@ import {
 import { useForm } from "@tanstack/react-form";
 import Input from "../Inputs/Input";
 import SelectSecondary from "../Inputs/SelectSecondary";
-import ButtonSecondary from "../Buttons/ButtonSecondary";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import {
   requiredNumberValidator,
@@ -21,13 +19,10 @@ type Props = {
 };
 
 const EditDefinitionForm = ({ data }: Props) => {
-  const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (values: any) => {
-      data
-        ? patchSlaDefinition(accessToken, values)
-        : postSlaDefinition(accessToken, values);
+      data ? patchSlaDefinition(values) : postSlaDefinition(values);
     },
 
     onSuccess: async () => {
@@ -48,7 +43,7 @@ const EditDefinitionForm = ({ data }: Props) => {
 
   const calendarQuery = useQuery({
     queryKey: ["calendars"],
-    queryFn: async () => getCalendar(accessToken),
+    queryFn: async () => getCalendar(),
   });
 
   const form = useForm({

@@ -9,7 +9,6 @@ import {
   Tooltip,
   XAxis,
 } from "recharts";
-import { useAuthInfo } from "@propelauth/react";
 import { useQuery } from "@tanstack/react-query";
 import { getReports } from "../../Services/reports";
 
@@ -24,10 +23,9 @@ type Props = {};
 // ];
 
 const DevicesPerDepartmentReport = (props: Props) => {
-  const { accessToken } = useAuthInfo();
   const devicesPerDepartmentQuery = useQuery({
     queryKey: ["reports", "devices-by-department"],
-    queryFn: () => getReports(accessToken, "devices-by-department"),
+    queryFn: () => getReports("devices-by-department"),
   });
 
   const devicesPerDepartment: any = devicesPerDepartmentQuery?.data;

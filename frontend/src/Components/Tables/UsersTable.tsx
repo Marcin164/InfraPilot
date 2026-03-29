@@ -7,17 +7,13 @@ import { getFilteredData, getSearchedData } from "../../Helpers/tables";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { getUserSettings } from "../../Services/settings";
-import { useAuthInfo } from "@propelauth/react";
 
 type Props = { data: any; filterOptions: any; searchValue: string };
 
 const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
-  const { accessToken } = useAuthInfo();
   const userSettings = useQuery({
     queryKey: ["userSettings"],
-    queryFn: () => {
-      return getUserSettings(accessToken);
-    },
+    queryFn: () => getUserSettings(),
   });
   let navigate = useNavigate();
   const { t } = useTranslation();

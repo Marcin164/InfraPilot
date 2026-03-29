@@ -10,16 +10,14 @@ import {
   XAxis,
 } from "recharts";
 import { getReports } from "../../Services/reports";
-import { useAuthInfo } from "@propelauth/react";
 import { useQuery } from "@tanstack/react-query";
 
 type Props = {};
 
 const DevicesByTypeReport = (props: Props) => {
-  const { accessToken } = useAuthInfo();
   const devicesByTypeQuery = useQuery({
     queryKey: ["reports", "devices-by-type"],
-    queryFn: () => getReports(accessToken, "devices-by-type"),
+    queryFn: () => getReports("devices-by-type"),
   });
 
   const devicesByType: any = devicesByTypeQuery?.data;

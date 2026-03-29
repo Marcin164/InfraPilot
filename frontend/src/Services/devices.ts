@@ -1,131 +1,41 @@
-import axios from "axios";
+import api from "../lib/api";
 
-export const addDevice = async (token: any, data: any) => {
-  try {
-    const result = await axios({
-      method: "post",
-      url: "http://localhost:3000/devices/",
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-      data,
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const addDevice = async (data: any) => {
+  const { data: result } = await api.post("/devices/", data);
+  return result;
 };
 
-export const assignDevice = async (token: any, data: any) => {
-  try {
-    const result = await axios({
-      method: "post",
-      url: "http://localhost:3000/devices/assign",
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-      data,
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const assignDevice = async (data: any) => {
+  const { data: result } = await api.post("/devices/assign", data);
+  return result;
 };
 
-export const getDevicesOptions = async (token: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: "http://localhost:3000/devices/options",
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getDevicesOptions = async () => {
+  const { data } = await api.get("/devices/options");
+  return data;
 };
 
-export const getDevices = async (token: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: "http://localhost:3000/devices/table",
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getDevices = async () => {
+  const { data } = await api.get("/devices/table");
+  return data;
 };
 
-export const getDevicesByOwner = async (token: any, idUser: string) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: `http://localhost:3000/devices/user/${idUser}`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getDevicesByOwner = async (idUser: string) => {
+  const { data } = await api.get(`/devices/user/${idUser}`);
+  return data;
 };
 
-export const getDevice = async (token: any, idUser: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: `http://localhost:3000/devices/${idUser}`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getDevice = async (idDevice: string) => {
+  const { data } = await api.get(`/devices/${idDevice}`);
+  return data;
 };
 
-export const getDevicesWithApplication = async (token: any, id: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: `http://localhost:3000/devices/application/${id}`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getDevicesWithApplication = async (id: string) => {
+  const { data } = await api.get(`/devices/application/${id}`);
+  return data;
 };
 
-export const getFilter = async (token: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: `http://localhost:3000/devices/filters`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getFilter = async () => {
+  const { data } = await api.get("/devices/filters");
+  return data;
 };

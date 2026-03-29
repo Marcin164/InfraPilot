@@ -8,7 +8,6 @@ import Checkbox from "../Inputs/Checkbox";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import { useMemo } from "react";
 import { patchCalendar, postCalendar } from "../../Services/sla";
-import { useAuthInfo } from "@propelauth/react";
 import { requiredValidator } from "../../Helpers/validators";
 
 type Props = {
@@ -16,13 +15,10 @@ type Props = {
 };
 
 const EditCalendarForm = ({ data }: Props) => {
-  const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (values: any) => {
-      data
-        ? patchCalendar(accessToken, values)
-        : postCalendar(accessToken, values);
+      data ? patchCalendar(values) : postCalendar(values);
     },
 
     onSuccess: async () => {

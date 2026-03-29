@@ -10,17 +10,15 @@ import {
 } from "recharts";
 import { exportCSV } from "../../Helpers/files";
 import { pieColors } from "../../Constants/charts";
-import { useAuthInfo } from "@propelauth/react";
 import { useQuery } from "@tanstack/react-query";
 import { getReports } from "../../Services/reports";
 
 type Props = {};
 
 const UsersWithoutDevicesReport = (props: Props) => {
-  const { accessToken } = useAuthInfo();
   const usersWithoutDevicesQuery = useQuery({
     queryKey: ["reports", "users-without-device"],
-    queryFn: () => getReports(accessToken, "users-without-device"),
+    queryFn: () => getReports("users-without-device"),
   });
 
   const usersWithoutDevices: any = usersWithoutDevicesQuery?.data;

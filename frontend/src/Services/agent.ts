@@ -1,17 +1,6 @@
-import axios from "axios";
+import api from "../lib/api";
 
-export const getSettings = async (token: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: "http://localhost:3000/agent/settings",
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getSettings = async () => {
+  const { data } = await api.get("/agent/settings");
+  return data;
 };

@@ -9,7 +9,6 @@ import {
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthInfo } from "@propelauth/react";
 import { addManyUsers } from "../../Services/users";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
@@ -44,7 +43,6 @@ const PREVIEW_LIMIT = 5;
 
 const FileUpload = ({ close }: Props) => {
   const { t } = useTranslation();
-  const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,8 +52,7 @@ const FileUpload = ({ close }: Props) => {
 
   const mutation = useMutation({
     mutationFn: async (users: Record<string, any>) => {
-      if (!accessToken) throw new Error("User is not authenticated.");
-      addManyUsers(accessToken, users);
+      return addManyUsers(users);
     },
 
     onSuccess: () => {

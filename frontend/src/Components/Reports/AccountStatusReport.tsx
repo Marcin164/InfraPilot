@@ -10,7 +10,6 @@ import {
 import ReportCard from "./ReportCard";
 import { pieColors } from "../../Constants/charts";
 import { exportCSV } from "../../Helpers/files";
-import { useAuthInfo } from "@propelauth/react";
 import { useQuery } from "@tanstack/react-query";
 import { getReports } from "../../Services/reports";
 
@@ -23,10 +22,9 @@ const accountStatus = [
 ];
 
 const AccountStatusReport = (props: Props) => {
-  const { accessToken } = useAuthInfo();
   const usersPerDepartmentQuery = useQuery({
     queryKey: ["reports", "users-by-department"],
-    queryFn: () => getReports(accessToken, "users-by-department"),
+    queryFn: () => getReports("users-by-department"),
   });
 
   const usersByDepartment = usersPerDepartmentQuery?.data;

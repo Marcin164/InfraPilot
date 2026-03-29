@@ -1,149 +1,46 @@
-import axios from "axios";
+import api from "../lib/api";
 
-export const getUsers = async (token: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: "http://localhost:3000/users/",
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getUsers = async () => {
+  const { data } = await api.get("/users/");
+  return data;
 };
 
-export const addUser = async (token: any, data: any) => {
-  try {
-    const result = await axios({
-      method: "post",
-      url: "http://localhost:3000/users/",
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-      data,
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const addUser = async (data: any) => {
+  const { data: result } = await api.post("/users/", data);
+  return result;
 };
 
-export const addManyUsers = async (token: any, data: any) => {
-  try {
-    const result = await axios({
-      method: "post",
-      url: "http://localhost:3000/users/many",
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-      data,
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const addManyUsers = async (data: any) => {
+  const { data: result } = await api.post("/users/many", data);
+  return result;
 };
 
-export const updateUser = async (token: any, data: any, id: string) => {
-  console.log(data);
-  try {
-    const result = await axios({
-      method: "patch",
-      url: `http://localhost:3000/users/${id}`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-      data,
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const updateUser = async (data: any, id: string) => {
+  const { data: result } = await api.patch(`/users/${id}`, data);
+  return result;
 };
 
-export const deleteUser = async (token: any, id: any) => {
-  try {
-    const result = await axios({
-      method: "delete",
-      url: `http://localhost:3000/users/${id}`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const deleteUser = async (id: string) => {
+  const { data } = await api.delete(`/users/${id}`);
+  return data;
 };
 
-export const getUsersTable = async (token: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: "http://localhost:3000/users/table",
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getUsersTable = async () => {
+  const { data } = await api.get("/users/table");
+  return data;
 };
 
-export const getUser = async (token: any, id: string) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: `http://localhost:3000/users/${id}`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getUser = async (id: string) => {
+  const { data } = await api.get(`/users/${id}`);
+  return data;
 };
 
-export const getFilter = async (token: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: `http://localhost:3000/users/filters`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getFilter = async () => {
+  const { data } = await api.get("/users/filters");
+  return data;
 };
 
-export const findApprovers = async (token: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: `http://localhost:3000/users/approvers`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-    return result.data;
-  } catch (error) {
-    console.error("Error fetching approvers:", error);
-    throw error; // ✅ Rzuć błąd, aby React Query go przechytył
-  }
+export const findApprovers = async () => {
+  const { data } = await api.get("/users/approvers");
+  return data;
 };

@@ -1,34 +1,11 @@
-import axios from "axios";
+import api from "../lib/api";
 
-export const getDashboards = async (token: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: "http://localhost:3000/dashboards",
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getDashboards = async () => {
+  const { data } = await api.get("/dashboards");
+  return data;
 };
 
-export const createDashboard = async (token: any, body: any) => {
-  try {
-    const result = await axios({
-      method: "post",
-      url: "http://localhost:3000/dashboards",
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-      data: body,
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const createDashboard = async (body: any) => {
+  const { data } = await api.post("/dashboards", body);
+  return data;
 };

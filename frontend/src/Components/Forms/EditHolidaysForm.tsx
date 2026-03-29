@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import Calendar from "../Calendar/Calendar";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthInfo } from "@propelauth/react";
 import { deleteCalendarHoliday, postCalendarHoliday } from "../../Services/sla";
 import { isSameDay } from "../../Helpers/date";
 
@@ -11,7 +10,6 @@ type Props = {
 };
 
 const EditHolidaysForm = ({ calendarId, holidayDates }: Props) => {
-  const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
 
   const [holidays, setHolidays] = useState<Date[]>(
@@ -20,7 +18,7 @@ const EditHolidaysForm = ({ calendarId, holidayDates }: Props) => {
 
   const addHolidayMutation = useMutation({
     mutationFn: (date: Date) =>
-      postCalendarHoliday(accessToken, {
+      postCalendarHoliday({
         id: calendarId,
         date: date,
         description: "",
@@ -35,7 +33,7 @@ const EditHolidaysForm = ({ calendarId, holidayDates }: Props) => {
 
   const removeHolidayMutation = useMutation({
     mutationFn: (holidayId: string) =>
-      deleteCalendarHoliday(accessToken, holidayId),
+      deleteCalendarHoliday(holidayId),
 
     onSuccess: () => {
       queryClient.invalidateQueries({

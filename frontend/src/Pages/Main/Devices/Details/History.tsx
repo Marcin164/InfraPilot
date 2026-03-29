@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
-import { useAuthInfo } from "@propelauth/react";
 import { faArrowsRotate, faMicrochip } from "@fortawesome/free-solid-svg-icons";
 import AssignDeviceModal from "../../../../Components/Modals/AssignDeviceModal";
 import ApplyChangesModal from "../../../../Components/Modals/ApplyChangesModal";
@@ -24,7 +23,6 @@ export interface HistoryItem {
 }
 
 const History = () => {
-  const { accessToken } = useAuthInfo();
   const { id: deviceId } = useParams<{ id: string }>();
 
   const [isAssignUserModalOpen, setIsAssignUserModalOpen] = useState(false);
@@ -32,8 +30,8 @@ const History = () => {
 
   const historyQuery = useQuery<HistoryItem[]>({
     queryKey: ["device-history", deviceId],
-    queryFn: () => getDeviceHistory(accessToken, deviceId),
-    enabled: Boolean(accessToken && deviceId),
+    queryFn: () => getDeviceHistory(deviceId),
+    enabled: Boolean(deviceId),
   });
 
   const ownersHistory = useMemo(() => {

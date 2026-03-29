@@ -2,7 +2,6 @@ import React, { useMemo } from "react";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import SelectSecondary from "../Inputs/SelectSecondary";
 import { useForm } from "@tanstack/react-form";
-import { useAuthInfo } from "@propelauth/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getSlaDefinitions,
@@ -16,13 +15,10 @@ type Props = {
 };
 
 const EditRuleForm = ({ data }: Props) => {
-  const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (values: any) => {
-      data
-        ? patchSlaRule(accessToken, values)
-        : postSlaRule(accessToken, values);
+      data ? patchSlaRule(values) : postSlaRule(values);
     },
 
     onSuccess: async () => {
@@ -55,7 +51,7 @@ const EditRuleForm = ({ data }: Props) => {
 
   const definitionQuery = useQuery({
     queryKey: ["definitions"],
-    queryFn: async () => getSlaDefinitions(accessToken),
+    queryFn: async () => getSlaDefinitions(),
   });
 
   const definitionOptions = useMemo(() => {

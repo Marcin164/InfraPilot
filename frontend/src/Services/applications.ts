@@ -1,49 +1,16 @@
-import axios from "axios";
+import api from "../lib/api";
 
-export const getApplicationsTable = async (token: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: "http://localhost:3000/applications/table",
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getApplicationsTable = async () => {
+  const { data } = await api.get("/applications/table");
+  return data;
 };
 
-export const getApplication = async (token: any, id: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: `http://localhost:3000/applications/${id}`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getApplication = async (id: string) => {
+  const { data } = await api.get(`/applications/${id}`);
+  return data;
 };
 
-export const getFilter = async (token: any) => {
-  try {
-    const result = await axios({
-      method: "get",
-      url: `http://localhost:3000/applications/filters`,
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    });
-
-    return result.data;
-  } catch (error) {
-    return error;
-  }
+export const getFilter = async () => {
+  const { data } = await api.get("/applications/filters");
+  return data;
 };

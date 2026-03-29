@@ -3,7 +3,6 @@ import Checkbox from "../../Inputs/Checkbox";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { updateUser } from "../../../Services/users";
-import { useAuthInfo } from "@propelauth/react";
 import { useParams } from "react-router";
 
 type Props = {
@@ -14,12 +13,10 @@ type Props = {
 };
 
 const UserPrivileges = ({ data }: Props) => {
-  const { accessToken } = useAuthInfo();
   const params = useParams();
 
   const mutation = useMutation({
-    mutationFn: (data: any) =>
-      updateUser(accessToken, { ...data, id: params.id }),
+    mutationFn: (data: any) => updateUser(data, params.id!),
   });
 
   const form = useForm({

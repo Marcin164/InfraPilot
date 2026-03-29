@@ -5,7 +5,6 @@ import TableSettings from "../../../Components/TableSettings";
 import { useQuery } from "@tanstack/react-query";
 import { getFilter, getUsersTable } from "../../../Services/users";
 import { useState } from "react";
-import { useAuthInfo } from "@propelauth/react";
 import AddUserModal from "../../../Components/Modals/AddUserModal";
 import ButtonSecondary from "../../../Components/Buttons/ButtonSecondary";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
@@ -41,7 +40,6 @@ const INITIAL_FILTERS: FilterOptions = {
 
 const UsersPage = () => {
   const { t } = useTranslation();
-  const { accessToken } = useAuthInfo();
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>(INITIAL_FILTERS);
   const [searchValue, setSearchValue] = useState("");
@@ -49,20 +47,18 @@ const UsersPage = () => {
 
   const usersQuery = useQuery({
     queryKey: ["users"],
-    queryFn: () => getUsersTable(accessToken),
-    enabled: Boolean(accessToken),
+    queryFn: () => getUsersTable(),
   });
 
   const filtersQuery = useQuery({
     queryKey: ["usersFilters"],
-    queryFn: () => getFilter(accessToken),
-    enabled: Boolean(accessToken),
+    queryFn: () => getFilter(),
   });
 
   const userSettings = useQuery({
     queryKey: ["userSettings"],
     queryFn: () => {
-      return getUserSettings(accessToken);
+      return getUserSettings();
     },
   });
 

@@ -11,7 +11,6 @@ import {
 import { exportCSV } from "../../Helpers/files";
 import { useQuery } from "@tanstack/react-query";
 import { getReports } from "../../Services/reports";
-import { useAuthInfo } from "@propelauth/react";
 
 type Props = {};
 
@@ -24,10 +23,9 @@ type Props = {};
 // ];
 
 const UsersPerDepartmentReport = (props: Props) => {
-  const { accessToken } = useAuthInfo();
   const usersPerDepartmentQuery = useQuery({
     queryKey: ["reports", "users-by-department"],
-    queryFn: () => getReports(accessToken, "users-by-department"),
+    queryFn: () => getReports("users-by-department"),
   });
 
   const usersByDepartment = usersPerDepartmentQuery?.data;

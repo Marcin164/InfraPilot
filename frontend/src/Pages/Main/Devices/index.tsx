@@ -3,7 +3,6 @@ import DevicesTable from "../../../Components/Tables/DevicesTable";
 import Filter from "../../../Components/Filter";
 import Search from "../../../Components/Inputs/Search";
 import { useNavigate, useParams } from "react-router";
-import { useAuthInfo } from "@propelauth/react";
 import { useQuery } from "@tanstack/react-query";
 import { getDevices, getFilter } from "../../../Services/devices";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
@@ -26,16 +25,14 @@ const index = (props: Props) => {
   });
   const [searchValue, setSearchValue] = useState("");
   const [addEQModal, setAddEQModal] = useState(false);
-  const authInfo = useAuthInfo();
-
   const devicesQuery = useQuery({
     queryKey: ["devices"],
-    queryFn: () => getDevices(authInfo.accessToken),
+    queryFn: () => getDevices(),
   });
 
   const filterQuery = useQuery({
     queryKey: ["filter"],
-    queryFn: () => getFilter(authInfo.accessToken),
+    queryFn: () => getFilter(),
   });
 
   useEffect(() => {

@@ -27,8 +27,11 @@ import DevicesReports from "./Pages/Main/Reports/Details/DevicesReports";
 import TicketsReports from "./Pages/Main/Reports/Details/TicketsReports";
 import SecurityReports from "./Pages/Main/Reports/Details/SecurityReports";
 import { AnimatePresence } from "framer-motion";
+import { useAuthSetup } from "./Hooks/useAuthSetup";
 
 function App() {
+  useAuthSetup();
+
   return (
     <AnimatePresence mode="wait">
       <ParseProvider>

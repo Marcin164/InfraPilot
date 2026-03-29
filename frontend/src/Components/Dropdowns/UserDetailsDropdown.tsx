@@ -6,14 +6,12 @@ import { useNavigate, useParams } from "react-router";
 import ConfirmationModal from "../Modals/ConfirmationModal";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteUser } from "../../Services/users";
-import { useAuthInfo } from "@propelauth/react";
 import { toast } from "react-toastify";
 import AddUserModal from "../Modals/AddUserModal";
 
 type Props = { data: any };
 
 const UserDetailsDropdown = ({ data }: Props) => {
-  const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
@@ -21,7 +19,7 @@ const UserDetailsDropdown = ({ data }: Props) => {
   const { id } = useParams();
 
   const mutation = useMutation({
-    mutationFn: () => deleteUser(accessToken, id),
+    mutationFn: () => deleteUser(id!),
     onSuccess: () => {
       toast.success("User has been deleted!");
       queryClient.invalidateQueries({ queryKey: ["users"] });

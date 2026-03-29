@@ -1,7 +1,6 @@
 import React, { useMemo } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuthInfo } from "@propelauth/react";
 import { useLocation, useParams } from "react-router";
 import { toast } from "react-toastify";
 
@@ -23,7 +22,6 @@ type Option = {
 type FormValues = typeof assignDeviceDefaultValues;
 
 const AssignDeviceForm: React.FC = () => {
-  const { accessToken } = useAuthInfo();
   const { id: routeId } = useParams();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -33,12 +31,12 @@ const AssignDeviceForm: React.FC = () => {
 
   const usersQuery = useQuery({
     queryKey: ["users"],
-    queryFn: () => getUsers(accessToken),
+    queryFn: () => getUsers(),
   });
 
   const devicesQuery = useQuery({
     queryKey: ["devicesOptions"],
-    queryFn: () => getDevicesOptions(accessToken),
+    queryFn: () => getDevicesOptions(),
   });
 
   const userOptions: Option[] = useMemo(() => {
@@ -68,14 +66,14 @@ const AssignDeviceForm: React.FC = () => {
       const userId = isUserContext ? routeId : values?.userId;
       const deviceId = isDeviceContext ? routeId : values?.deviceId;
 
-      await createHistoryEntry(accessToken, {
+      await createHistoryEntry({
         ...values,
         userId,
         deviceId,
         type: 0,
       });
 
-      return assignDevice(accessToken, {
+      return assignDevice({
         userId,
         deviceId,
       });

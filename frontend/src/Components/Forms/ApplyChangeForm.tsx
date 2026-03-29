@@ -1,5 +1,4 @@
 import React, { useMemo } from "react";
-import { useAuthInfo } from "@propelauth/react";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext, useParams } from "react-router";
@@ -28,13 +27,12 @@ type FormValues = typeof applyChangeDefaultValues;
 
 const ApplyChangeForm: React.FC = () => {
   const { id } = useParams();
-  const { accessToken } = useAuthInfo();
   const queryClient = useQueryClient();
   const deviceContext = useOutletContext<{ data: { location: string } }>();
 
   const devicesQuery = useQuery({
     queryKey: ["devices"],
-    queryFn: () => getDevices(accessToken),
+    queryFn: () => getDevices(),
   });
 
   const addedComponentsOptions = useMemo(() => {
@@ -55,7 +53,7 @@ const ApplyChangeForm: React.FC = () => {
       if (values.removedComponents.length > 0) {
         createdDevices = await Promise.all(
           values.removedComponents.map((component: any) =>
-            addDevice(accessToken, {
+            addDevice({
               ...component,
               location: deviceContext.data.location,
               group: "Components",
@@ -64,7 +62,7 @@ const ApplyChangeForm: React.FC = () => {
         );
       }
 
-      return createHistoryEntry(accessToken, {
+      return createHistoryEntry({
         deviceId: id,
         ...values,
         removedComponents: values.removedComponents.map(

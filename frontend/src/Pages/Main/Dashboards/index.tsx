@@ -7,7 +7,6 @@ import LastScan from "../../../Components/Widgets/LastScan";
 import ActiveUsers from "../../../Components/Widgets/ActiveUsers";
 import { useQuery } from "@tanstack/react-query";
 import { getDashboards } from "../../../Services/dashboards";
-import { useAuthInfo } from "@propelauth/react";
 import { useEffect, useState } from "react";
 import DataLoader from "../../../Components/Loaders/DataLoader";
 import { DASHBOARD_WIDGETS } from "../../../Constants/dashboardWidgets";
@@ -25,10 +24,9 @@ const componentMap: any = {
 };
 
 const Index = () => {
-  const authInfo = useAuthInfo();
   const dashboardsQuery = useQuery({
     queryKey: ["dashboards"],
-    queryFn: () => getDashboards(authInfo.accessToken),
+    queryFn: () => getDashboards(),
   });
   const [currentDashboard, setCurrentDashboard] = useState(
     dashboardsQuery.isSuccess ? dashboardsQuery?.data[0] : null

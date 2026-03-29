@@ -1,7 +1,6 @@
 import React from "react";
 import CardHeader from "../Headers/CardHeader";
 import { useQuery } from "@tanstack/react-query";
-import { useAuthInfo } from "@propelauth/react";
 import { getTicketSla } from "../../Services/sla";
 import { useParams } from "react-router";
 import { minutesToDaysHoursMinutes } from "../../Helpers/date";
@@ -10,12 +9,11 @@ import Badge from "../Badges/Badge";
 type Props = {};
 
 const SLA = (props: Props) => {
-  const { accessToken } = useAuthInfo();
   const params = useParams();
 
   const slaQuery = useQuery({
     queryKey: ["ticketSla", params.id],
-    queryFn: () => getTicketSla(accessToken, params.id),
+    queryFn: () => getTicketSla(params.id!),
   });
 
   const sla = slaQuery?.data?.instances || [];

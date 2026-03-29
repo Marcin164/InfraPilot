@@ -5,7 +5,6 @@ import Input from "../Inputs/Input";
 import { closureCodesOptions } from "../../Constants/options";
 import { toast } from "react-toastify";
 import { updateTicket } from "../../Services/tickets";
-import { useAuthInfo } from "@propelauth/react";
 import { useMutation } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
@@ -16,14 +15,10 @@ type Props = {
 };
 
 const ClosureNotesForm = ({ closureCode, closureNotes }: Props) => {
-  const { accessToken } = useAuthInfo();
   const params = useParams();
   const mutation = useMutation({
     mutationFn: async (values: any) => {
-      if (!accessToken) {
-        throw new Error("User is not authenticated");
-      }
-      return updateTicket(accessToken, params.id, values);
+      return updateTicket(params.id!, values);
     },
 
     onSuccess: () => {

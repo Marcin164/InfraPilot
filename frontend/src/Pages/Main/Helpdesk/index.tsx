@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import Filter from "../../../Components/Filter";
 import Search from "../../../Components/Inputs/Search";
 import { useTranslation } from "react-i18next";
-import { useAuthInfo } from "@propelauth/react";
 import { useQuery } from "@tanstack/react-query";
 import TableSettings from "../../../Components/TableSettings";
 import { getTickets } from "../../../Services/tickets";
@@ -21,7 +20,6 @@ type TicketFilters = {
 const Index = () => {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
-  const { accessToken } = useAuthInfo();
   const [limit, setLimit] = useState(30);
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<TicketFilters>({});
@@ -44,14 +42,14 @@ const Index = () => {
 
   const helpdeskQuery = useQuery({
     queryKey: ["helpdesk", filters, debouncedSearch, page, limit],
-    queryFn: () => getTickets(accessToken, queryString),
+    queryFn: () => getTickets(queryString),
     placeholderData: (prev) => prev,
   });
 
   const userSettings = useQuery({
     queryKey: ["userSettings"],
     queryFn: () => {
-      return getUserSettings(accessToken);
+      return getUserSettings();
     },
   });
 

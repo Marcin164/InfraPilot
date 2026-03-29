@@ -9,7 +9,6 @@ import {
   Tooltip,
   XAxis,
 } from "recharts";
-import { useAuthInfo } from "@propelauth/react";
 import { useQuery } from "@tanstack/react-query";
 import { getReports } from "../../Services/reports";
 
@@ -23,10 +22,9 @@ type Props = {};
 // ];
 
 const DeviceAgeReport = (props: Props) => {
-  const { accessToken } = useAuthInfo();
   const deviceAgeQuery = useQuery({
     queryKey: ["reports", "device-age"],
-    queryFn: () => getReports(accessToken, "device-age"),
+    queryFn: () => getReports("device-age"),
   });
 
   const deviceAge = deviceAgeQuery?.data;

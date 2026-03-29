@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import Search from "../../../Components/Inputs/Search";
 import Filter from "../../../Components/Filter";
 import ApplicationsTable from "../../../Components/Tables/ApplicationsTable";
-import { useAuthInfo } from "@propelauth/react";
 import { useQuery } from "@tanstack/react-query";
 import {
   getApplicationsTable,
@@ -17,15 +16,13 @@ const index = (props: Props) => {
   });
   const [searchValue, setSearchValue] = useState("");
 
-  const authInfo = useAuthInfo();
-
   const applicationsQuery = useQuery({
     queryKey: ["applications"],
-    queryFn: () => getApplicationsTable(authInfo.accessToken),
+    queryFn: () => getApplicationsTable(),
   });
   const filterQuery = useQuery({
     queryKey: ["filter"],
-    queryFn: () => getFilter(authInfo.accessToken),
+    queryFn: () => getFilter(),
   });
 
   if (!applicationsQuery?.data && applicationsQuery?.data?.length <= 0)

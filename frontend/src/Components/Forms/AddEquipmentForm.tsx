@@ -4,7 +4,6 @@ import ButtonPrimary from "../Buttons/ButtonPrimary";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addDevice } from "../../Services/devices";
-import { useAuthInfo } from "@propelauth/react";
 import {
   computersTypeOptions,
   groupMappings,
@@ -22,17 +21,13 @@ type FormValues = typeof addDeviceDefaultValues;
 
 const AddEquipmentForm: React.FC = () => {
   const queryClient = useQueryClient();
-  const { accessToken } = useAuthInfo();
 
   const [subgroupOptions, setSubgroupOptions] =
     useState<Option[]>(computersTypeOptions);
 
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
-      if (!accessToken) {
-        throw new Error("User is not authenticated");
-      }
-      return addDevice(accessToken, values);
+      return addDevice(values);
     },
 
     onSuccess: () => {

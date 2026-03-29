@@ -4,7 +4,6 @@ import SelectSecondary from "../Inputs/SelectSecondary";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { findApprovers } from "../../Services/users";
-import { useAuthInfo } from "@propelauth/react";
 import { toast } from "react-toastify";
 import { createApproval } from "../../Services/tickets";
 import { useParams } from "react-router-dom";
@@ -18,17 +17,12 @@ type Props = {
 
 const Approvals = ({ requesterId, approvals }: Props) => {
   const queryClient = useQueryClient();
-  const { accessToken } = useAuthInfo();
   const params = useParams();
   const [approverId, setApproverId] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: async (values: any) => {
-      if (!accessToken) {
-        throw new Error("User is not authenticated");
-      }
       return createApproval(
-        accessToken,
         params.id!,
         values.requesterId,
         values.approverId,
@@ -43,7 +37,7 @@ const Approvals = ({ requesterId, approvals }: Props) => {
 
   const approversQuery = useQuery({
     queryKey: ["approvers"],
-    queryFn: () => findApprovers(accessToken),
+    queryFn: () => findApprovers(),
   });
 
   const createApproversOptions = () => {

@@ -4,7 +4,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock, faDesktop, faUser } from "@fortawesome/free-solid-svg-icons";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
-import { useAuthInfo } from "@propelauth/react";
 import { getTicket } from "../../../Services/tickets";
 import moment from "moment";
 import UpdateTicketForm from "../../../Components/Forms/UpdateTicketForm";
@@ -17,11 +16,9 @@ import SLA from "../../../Components/Tickets/SLA";
 
 const Details = () => {
   const params = useParams();
-  const { accessToken } = useAuthInfo();
-
   const ticketQuery = useQuery({
     queryKey: ["ticket", params.id],
-    queryFn: () => getTicket(accessToken, params.id),
+    queryFn: () => getTicket(params.id),
   });
 
   const ticket = ticketQuery.data;

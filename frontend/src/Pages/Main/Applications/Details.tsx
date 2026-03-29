@@ -5,21 +5,19 @@ import { getApplication } from "../../../Services/applications";
 import Parameter from "../../../Components/Lists/Parameter";
 import InstalledOnTable from "../../../Components/Tables/InstalledOnTable";
 import { getDevicesWithApplication } from "../../../Services/devices";
-import { useAuthInfo } from "@propelauth/react";
 
 type Props = {};
 
 const Details = (props: Props) => {
   const params: any = useParams();
-  const authInfo = useAuthInfo();
   const applicationQuery = useQuery({
     queryKey: ["application"],
-    queryFn: () => getApplication(authInfo.accessToken, params.id),
+    queryFn: () => getApplication(params.id),
   });
 
   const devicesWithApplicationQuery = useQuery({
     queryKey: ["devicesWithApplication"],
-    queryFn: () => getDevicesWithApplication(authInfo.accessToken, params.id),
+    queryFn: () => getDevicesWithApplication(params.id),
   });
 
   if (!applicationQuery?.data) return null;
