@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import EventsTable from "../../../../Components/Tables/EventsTable";
 import { useOutletContext } from "react-router";
-import NoData from "../../../../Components/Details/NoData";
+import NoData from "../components/NoData";
 
 type Props = {};
 

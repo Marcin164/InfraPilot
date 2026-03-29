@@ -1,13 +1,13 @@
 import React from "react";
 import { useOutletContext } from "react-router";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
-import CPU from "../../../../Components/Details/Devices/CPU";
-import RAM from "../../../../Components/Details/RAM";
-import MOBO from "../../../../Components/Details/Devices/MOBO";
-import Disks from "../../../../Components/Details/Devices/Disks";
-import GPU from "../../../../Components/Details/Devices/GPU";
-import BIOS from "../../../../Components/Details/Devices/BIOS";
-import NoData from "../../../../Components/Details/NoData";
+import CPU from "../components/CPU";
+import RAM from "../components/RAM";
+import MOBO from "../components/MOBO";
+import Disks from "../components/Disks";
+import GPU from "../components/GPU";
+import BIOS from "../components/BIOS";
+import NoData from "../components/NoData";
 
 type Props = {};
 

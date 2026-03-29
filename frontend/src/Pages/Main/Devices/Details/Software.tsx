@@ -4,7 +4,7 @@ import { useOutletContext } from "react-router";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import AppxTable from "../../../../Components/Tables/AppxTable";
 import FeaturesTable from "../../../../Components/Tables/FeaturesTable";
-import NoData from "../../../../Components/Details/NoData";
+import NoData from "../components/NoData";
 
 type Props = {};
 

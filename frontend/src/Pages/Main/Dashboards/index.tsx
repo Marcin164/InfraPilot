@@ -1,10 +1,10 @@
 import RGL, { WidthProvider } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
-import BitlockerCompliance from "../../../Components/Widgets/BitlockerCompliance";
+import BitlockerCompliance from "./components/BitlockerCompliance";
 import DashboardTopbar from "../../../Components/Topbar/DashboardTopbar";
-import LastScan from "../../../Components/Widgets/LastScan";
-import ActiveUsers from "../../../Components/Widgets/ActiveUsers";
+import LastScan from "./components/LastScan";
+import ActiveUsers from "./components/ActiveUsers";
 import { useQuery } from "@tanstack/react-query";
 import { getDashboards } from "../../../Services/dashboards";
 import { useEffect, useState } from "react";
@@ -12,7 +12,7 @@ import DataLoader from "../../../Components/Loaders/DataLoader";
 import { DASHBOARD_WIDGETS } from "../../../Constants/dashboardWidgets";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
-import ActiveDevices from "../../../Components/Widgets/ActiveDevices";
+import ActiveDevices from "./components/ActiveDevices";
 
 const ReactGridLayout = WidthProvider(RGL);
 

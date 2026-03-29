@@ -5,7 +5,7 @@ import { faArrowsRotate, faMicrochip } from "@fortawesome/free-solid-svg-icons";
 import AssignDeviceModal from "../../../../Components/Modals/AssignDeviceModal";
 import ApplyChangesModal from "../../../../Components/Modals/ApplyChangesModal";
 import { getDeviceHistory } from "../../../../Services/histories";
-import HistorySection from "../../../../Components/Details/HistorySection";
+import HistorySection from "../components/HistorySection";
 
 export enum HistoryType {
   OWNER = 0,

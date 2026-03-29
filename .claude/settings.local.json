@@ -1,7 +1,47 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep -l \"useAuthInfo\\\\|accessToken\" *.tsx)"
+      "Bash(grep -l \"useAuthInfo\\\\|accessToken\" *.tsx)",
+      "Bash(grep -r from.*['']...*Components/ /d/Projects/WebDev/LanVentory/frontend/src --include=*.tsx --include=*.ts)",
+      "Bash(grep -r import.*from.*['']...* /d/Projects/WebDev/LanVentory/frontend/src/Components --include=*.tsx --include=*.ts)",
+      "Bash(grep -r from.*Details/ /d/Projects/WebDev/LanVentory/frontend/src/Components --include=*.tsx)",
+      "Bash(grep -r from.*[''].*Components/Details /d/Projects/WebDev/LanVentory/frontend/src/Pages --include=*.tsx)",
+      "Bash(__NEW_LINE_62898e822bcfe95d__ echo:*)",
+      "Bash(__NEW_LINE_e0c8f50bbfa6dcb9__ echo:*)",
+      "Read(//d/Projects/WebDev/LanVentory/**)",
+      "Bash(__NEW_LINE_801370b553884770__ echo:*)",
+      "Bash(__NEW_LINE_3d82838a51db58a3__ echo:*)",
+      "Bash(__NEW_LINE_2b97948aa0619879__ echo:*)",
+      "Bash(__NEW_LINE_9fe7b6824d344422__ echo:*)",
+      "Bash(__NEW_LINE_4201b0084e455646__ printf '%s\\\\n' ':*)",
+      "Bash(__NEW_LINE_d52806996e552eed__ cat:*)",
+      "Bash(cp Components/Details/Devices/*.tsx Pages/Main/Devices/components/)",
+      "Bash(cp Components/Details/OS.tsx Components/Details/RAM.tsx Components/Details/SoundDevices.tsx Components/Details/Printers.tsx Components/Details/USBDevices.tsx Components/Details/RDP.tsx Components/Details/TPM.tsx Components/Details/Partitions.tsx Components/Details/PasswordPolicy.tsx Components/Details/StartupApps.tsx Components/Details/Updates.tsx Components/Details/UAC.tsx Components/Details/HistorySection.tsx Components/Details/NetworkStats.tsx Pages/Main/Devices/components/)",
+      "Bash(for f:*)",
+      "Bash(do cp:*)",
+      "Bash(echo \"copied $f\")",
+      "Bash(done)",
+      "Bash(cp Components/Details/Users/*.tsx Pages/Main/Users/components/)",
+      "Bash(cp Components/Details/SlaCalendar.tsx Components/Details/SlaDefinitions.tsx Components/Details/SlaRules.tsx Components/Details/Escalations.tsx Pages/Main/Settings/components/)",
+      "Bash(cp Components/Details/NoData.tsx Components/)",
+      "Bash(grep -rn \"NoData\" *.tsx)",
+      "Bash(grep -h \"from \" *.tsx)",
+      "Bash(sed -i 's|from \"\"../../Badges/|from \"\"../../../../Components/Badges/|g' *.tsx)",
+      "Bash(sed -i 's|from \"\"../Badges/|from \"\"../../../../Components/Badges/|g' *.tsx)",
+      "Bash(sed -i 's|from \"\"../../Headers/|from \"\"../../../../Components/Headers/|g' *.tsx)",
+      "Bash(sed -i 's|from \"\"../Headers/|from \"\"../../../../Components/Headers/|g' *.tsx)",
+      "Bash(sed -i 's|from \"\"../../Lists/|from \"\"../../../../Components/Lists/|g' *.tsx)",
+      "Bash(sed -i 's|from \"\"../../Inputs/|from \"\"../../../../Components/Inputs/|g' *.tsx)",
+      "Bash(sed -i 's|from \"\"../../Timeline/|from \"\"../../../../Components/Timeline/|g' *.tsx)",
+      "Bash(sed -i 's|from \"\"../../Dropdowns/|from \"\"../../../../Components/Dropdowns/|g' *.tsx)",
+      "Bash(sed -i 's|from \"\"../Buttons/|from \"\"../../../../Components/Buttons/|g' *.tsx)",
+      "Bash(sed -i 's|from \"\"../Tables/|from \"\"../../../../Components/Tables/|g' *.tsx)",
+      "Bash(sed -i 's|from \"\"../Modals/|from \"\"../../../../Components/Modals/|g' *.tsx)",
+      "Bash(sed -i 's|from \"\"../Lists/|from \"\"../../../../Components/Lists/|g' *.tsx)",
+      "Bash(sed -i 's|from \"\"../../Helpers/|from \"\"../../../../Helpers/|g' *.tsx)",
+      "Bash(sed -i 's|from \"\"../../Services/|from \"\"../../../../Services/|g' *.tsx)",
+      "Bash(sed -i 's|from \"\"../../Constants/|from \"\"../../../../Constants/|g' *.tsx)",
+      "Bash(grep \"from.*ReportCard\" *.tsx)"
     ]
   }
 }

@@ -1,11 +1,11 @@
 import React from "react";
 import { useOutletContext } from "react-router";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
-import System from "../../../../Components/Details/OS";
-import AD from "../../../../Components/Details/Devices/AD";
+import System from "../components/OS";
+import AD from "../components/AD";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFile } from "@fortawesome/free-solid-svg-icons";
-import NoData from "../../../../Components/Details/NoData";
+import NoData from "../components/NoData";
 
 type Props = {};
 

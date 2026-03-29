@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import Connections from "../../../../Components/Details/Devices/Connections";
+import Connections from "../components/Connections";
 import { useOutletContext } from "react-router";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
 import FirewallRulesTable from "../../../../Components/Tables/FirewallRulesTable";
-import IPv4 from "../../../../Components/Details/Devices/IPv4";
-import IPv6 from "../../../../Components/Details/Devices/IPv6";
-import DNS from "../../../../Components/Details/Devices/DNS";
+import IPv4 from "../components/IPv4";
+import IPv6 from "../components/IPv6";
+import DNS from "../components/DNS";
 import { twMerge } from "tailwind-merge";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -14,7 +14,7 @@ import {
   faPlug,
   faPlugCircleXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import NoData from "../../../../Components/Details/NoData";
+import NoData from "../components/NoData";
 
 type Props = {};
 

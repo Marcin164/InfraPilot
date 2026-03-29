@@ -4,7 +4,7 @@ import { useOutletContext } from "react-router";
 import LocalUsersTable from "../../../../Components/Tables/LocalUsersTable";
 import LocalGroupsTable from "../../../../Components/Tables/LocalGroupsTable";
 import UsersProfilesTable from "../../../../Components/Tables/UsersProfilesTable";
-import NoData from "../../../../Components/Details/NoData";
+import NoData from "../components/NoData";
 
 type Props = {};
 

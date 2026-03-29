@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import Equipment from "../../../Components/Details/Users/Equipment";
-import EquipmentHistory from "../../../Components/Details/Users/EquipmentHistory";
-import UserInfo from "../../../Components/Details/Users/UserInfo";
+import Equipment from "./components/Equipment";
+import EquipmentHistory from "./components/EquipmentHistory";
+import UserInfo from "./components/UserInfo";
 import { getUser } from "../../../Services/users";
 import { useParams } from "react-router";
 import { getDevicesByOwner } from "../../../Services/devices";

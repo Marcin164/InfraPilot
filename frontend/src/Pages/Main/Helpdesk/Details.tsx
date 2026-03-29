@@ -7,12 +7,12 @@ import { Link, useParams } from "react-router";
 import { getTicket } from "../../../Services/tickets";
 import moment from "moment";
 import UpdateTicketForm from "../../../Components/Forms/UpdateTicketForm";
-import MessagesPanel from "../../../Components/Messages/MessagesPanel";
+import MessagesPanel from "./components/MessagesPanel";
 import ClosureNotesForm from "../../../Components/Forms/ClosureNotesForm";
-import MessageInput from "../../../Components/Messages/MessageInput";
+import MessageInput from "./components/MessageInput";
 import { useTicketSocket } from "../../../Hooks/useTicketSocket";
-import Approvals from "../../../Components/Tickets/Approvals";
-import SLA from "../../../Components/Tickets/SLA";
+import Approvals from "./components/Approvals";
+import SLA from "./components/SLA";
 
 const Details = () => {
   const params = useParams();

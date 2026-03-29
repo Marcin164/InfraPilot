@@ -1,12 +1,12 @@
 import React from "react";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
-import Antivirus from "../../../../Components/Details/Devices/Antivirus";
+import Antivirus from "../components/Antivirus";
 import { useOutletContext } from "react-router";
-import Bitlocker from "../../../../Components/Details/Devices/Bitlocker";
-import Firewall from "../../../../Components/Details/Devices/Firewall";
-import RDP from "../../../../Components/Details/RDP";
-import TPM from "../../../../Components/Details/TPM";
-import NoData from "../../../../Components/Details/NoData";
+import Bitlocker from "../components/Bitlocker";
+import Firewall from "../components/Firewall";
+import RDP from "../components/RDP";
+import TPM from "../components/TPM";
+import NoData from "../components/NoData";
 
 type Props = {};
 

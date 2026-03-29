@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import PageContainer from "../../../../Components/Reports/PageContainer";
-import DeviceAgeReport from "../../../../Components/Reports/DeviceAgeReport";
-import DeviceHealthReport from "../../../../Components/Reports/DeviceHealthReport";
-import DevicesByOSReport from "../../../../Components/Reports/DevicesByOSReport";
-import DevicesByTypeReport from "../../../../Components/Reports/DevicesByTypeReport";
-import DevicesPerDepartmentReport from "../../../../Components/Reports/DevicesPerDepartmentReport";
+import PageContainer from "../components/PageContainer";
+import DeviceAgeReport from "../components/DeviceAgeReport";
+import DeviceHealthReport from "../components/DeviceHealthReport";
+import DevicesByOSReport from "../components/DevicesByOSReport";
+import DevicesByTypeReport from "../components/DevicesByTypeReport";
+import DevicesPerDepartmentReport from "../components/DevicesPerDepartmentReport";
 
 type Props = {};
 

@@ -6,10 +6,10 @@ import {
   getSlaRules,
 } from "../../../../Services/sla";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
-import SlaCalendar from "../../../../Components/Details/SlaCalendar";
-import SlaDefinitions from "../../../../Components/Details/SlaDefinitions";
-import SlaRules from "../../../../Components/Details/SlaRules";
-import Escalations from "../../../../Components/Details/Escalations";
+import SlaCalendar from "../components/SlaCalendar";
+import SlaDefinitions from "../components/SlaDefinitions";
+import SlaRules from "../components/SlaRules";
+import Escalations from "../components/Escalations";
 
 type Props = {};
 

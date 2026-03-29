@@ -1,11 +1,11 @@
 import React from "react";
-import PageContainer from "../../../../Components/Reports/PageContainer";
-import DevicesWithoutUpdatesReport from "../../../../Components/Reports/DevicesWithoutUpdatesReport";
-import DevicesWithoutAVReport from "../../../../Components/Reports/DevicesWithoutAVReport";
-import LocalAdminUsersReport from "../../../../Components/Reports/LocalAdminUsersReport";
-import DevicesOutsideDomainReport from "../../../../Components/Reports/DevicesOutsideDomainReport";
-import DeviceAgeReport from "../../../../Components/Reports/DeviceAgeReport";
-import DevicesWithoutOwnerReport from "../../../../Components/Reports/DevicesWithoutOwnerReport";
+import PageContainer from "../components/PageContainer";
+import DevicesWithoutUpdatesReport from "../components/DevicesWithoutUpdatesReport";
+import DevicesWithoutAVReport from "../components/DevicesWithoutAVReport";
+import LocalAdminUsersReport from "../components/LocalAdminUsersReport";
+import DevicesOutsideDomainReport from "../components/DevicesOutsideDomainReport";
+import DeviceAgeReport from "../components/DeviceAgeReport";
+import DevicesWithoutOwnerReport from "../components/DevicesWithoutOwnerReport";
 
 type Props = {};
 
