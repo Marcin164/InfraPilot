@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { socket } from "../Helpers/socket";
+import { socket } from "../lib/socket";
 
 export const useTicketSocket = ({
   ticketId,

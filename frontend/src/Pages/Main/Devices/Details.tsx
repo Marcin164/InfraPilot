@@ -16,7 +16,7 @@ const Details = () => {
 
   const deviceQuery = useQuery({
     queryKey: ["device"],
-    queryFn: () => getDevice(params.id),
+    queryFn: () => getDevice(params.id!),
   });
 
   useEffect(() => {

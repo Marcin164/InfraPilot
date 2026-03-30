@@ -4,23 +4,25 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteCalendarHoliday, postCalendarHoliday } from "../../Services/sla";
 import { isSameDay } from "../../Helpers/date";
 
+import type { SlaHoliday } from "../../Types";
+
 type Props = {
   calendarId: string;
-  holidayDates: any[];
+  holidayDates: SlaHoliday[];
 };
 
 const EditHolidaysForm = ({ calendarId, holidayDates }: Props) => {
   const queryClient = useQueryClient();
 
   const [holidays, setHolidays] = useState<Date[]>(
-    holidayDates && holidayDates.map((h) => new Date(h.date)),
+    holidayDates ? holidayDates.map((h) => new Date(h.date)) : [],
   );
 
   const addHolidayMutation = useMutation({
     mutationFn: (date: Date) =>
       postCalendarHoliday({
         id: calendarId,
-        date: date,
+        date: date.toISOString(),
         description: "",
       }),
 
@@ -53,8 +55,8 @@ const EditHolidaysForm = ({ calendarId, holidayDates }: Props) => {
 
     if (added) addHolidayMutation.mutate(added);
     if (removed) {
-      const holiday = holidayDates.find((h) => h.date === removed);
-      if (holiday) removeHolidayMutation.mutate(holiday.id);
+      const holiday = holidayDates.find((h) => isSameDay(new Date(h.date), removed));
+      if (holiday?.id) removeHolidayMutation.mutate(holiday.id);
     }
 
     setHolidays(selected);

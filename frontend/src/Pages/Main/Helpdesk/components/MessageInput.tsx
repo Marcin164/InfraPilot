@@ -12,9 +12,11 @@ import { toast } from "react-toastify";
 import { createComment } from "../../../../Services/tickets";
 
 
+import type { Comment } from "../../../../Types";
+
 type Props = {
   ticketId: string;
-  onOptimisticComment: (comment: any) => void;
+  onOptimisticComment: (comment: Partial<Comment>) => void;
 };
 
 const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {

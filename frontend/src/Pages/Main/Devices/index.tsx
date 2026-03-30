@@ -15,7 +15,7 @@ const index = (props: Props) => {
   const navigate = useNavigate();
   const params = useParams();
 
-  const [filterOptions, setFilterOptions] = useState({
+  const [filterOptions, setFilterOptions] = useState<Record<string, string[]>>({
     group: [],
     model: [],
     subgroup: [],
@@ -39,7 +39,7 @@ const index = (props: Props) => {
     params.id && navigate(`/devices/${params.id}/systeminfo`);
   }, []);
 
-  if (!devicesQuery?.data && devicesQuery?.data?.length <= 0) return null;
+  if (!devicesQuery?.data || devicesQuery?.data?.length <= 0) return null;
 
   const getSearchValue = (e: any) => {
     const value = e.target.value;

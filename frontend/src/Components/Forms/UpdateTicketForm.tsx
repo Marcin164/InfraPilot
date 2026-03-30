@@ -15,14 +15,16 @@ import ButtonPrimary from "../Buttons/ButtonPrimary";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
 
+import type { TicketState, TicketPriority, TicketImpact, TicketUrgency, UpdateTicketData } from "../../Types";
+
 type Props = {
-  id: any;
-  state: any;
-  assignee: any;
-  assignmentGroup: any;
-  priority: any;
-  impact: any;
-  urgency: any;
+  id: string;
+  state: TicketState;
+  assignee?: string;
+  assignmentGroup?: string;
+  priority: TicketPriority;
+  impact: TicketImpact;
+  urgency: TicketUrgency;
 };
 
 const UpdateTicketForm = ({
@@ -35,7 +37,7 @@ const UpdateTicketForm = ({
   urgency,
 }: Props) => {
   const mutation = useMutation({
-    mutationFn: async (values: any) => {
+    mutationFn: async (values: UpdateTicketData) => {
       return updateTicket(id, values);
     },
 

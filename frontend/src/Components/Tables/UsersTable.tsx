@@ -8,7 +8,10 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { getUserSettings } from "../../Services/settings";
 
-type Props = { data: any; filterOptions: any; searchValue: string };
+import type { User, UserSettings } from "../../Types";
+import type { FilterOptions } from "../../Pages/Main/Users";
+
+type Props = { data: User[]; filterOptions: FilterOptions; searchValue: string };
 
 const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
   const userSettings = useQuery({
@@ -90,7 +93,7 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
   ];
 
   const filterColumns = () => {
-    return userSettings.data.usersTableColumnOrder
+    return (userSettings.data.usersTableColumnOrder ?? [])
       .map((columnId: string) =>
         columns.find((column: any) => column.id === columnId.toLowerCase()),
       )

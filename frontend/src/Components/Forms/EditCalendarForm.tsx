@@ -10,8 +10,10 @@ import { useMemo } from "react";
 import { patchCalendar, postCalendar } from "../../Services/sla";
 import { requiredValidator } from "../../Helpers/validators";
 
+import type { SlaCalendar } from "../../Types";
+
 type Props = {
-  data: any;
+  data?: SlaCalendar;
 };
 
 const EditCalendarForm = ({ data }: Props) => {
@@ -42,7 +44,7 @@ const EditCalendarForm = ({ data }: Props) => {
       timezone: "",
       workingDays: [] as number[],
     },
-    onSubmit: ({ value }) => {
+    onSubmit: ({ value }: any) => {
       value.holidays = value.holidays.map((holiday: any) => {
         return {
           date: holiday,

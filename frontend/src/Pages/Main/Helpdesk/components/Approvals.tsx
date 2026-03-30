@@ -10,9 +10,11 @@ import { useParams } from "react-router-dom";
 import moment from "moment";
 import { twMerge } from "tailwind-merge";
 
+import type { Approval, User } from "../../../../Types";
+
 type Props = {
   requesterId: string;
-  approvals: any[];
+  approvals: Approval[];
 };
 
 const Approvals = ({ requesterId, approvals }: Props) => {
@@ -21,7 +23,7 @@ const Approvals = ({ requesterId, approvals }: Props) => {
   const [approverId, setApproverId] = useState<string | null>(null);
 
   const mutation = useMutation({
-    mutationFn: async (values: any) => {
+    mutationFn: async (values: { requesterId: string; approverId: string }) => {
       return createApproval(
         params.id!,
         values.requesterId,
@@ -41,7 +43,7 @@ const Approvals = ({ requesterId, approvals }: Props) => {
   });
 
   const createApproversOptions = () => {
-    return approversQuery.data?.map((approver: any) => ({
+    return approversQuery.data?.map((approver: User) => ({
       label: approver.distinguishedName,
       value: approver.id,
     }));
@@ -52,10 +54,11 @@ const Approvals = ({ requesterId, approvals }: Props) => {
   };
 
   const addApproval = () => {
-    mutation.mutate({ requesterId: requesterId, approverId: approverId });
+    if (!approverId) return;
+    mutation.mutate({ requesterId, approverId });
   };
 
-  const parseDecision = (decision: string) => {
+  const parseDecision = (decision: string | null) => {
     switch (decision) {
       case "approved":
         return "bg-green-500";
@@ -72,7 +75,7 @@ const Approvals = ({ requesterId, approvals }: Props) => {
       <SelectSecondary
         label="Approver"
         onSelect={handleApproverSelect}
-        options={createApproversOptions()}
+        options={createApproversOptions() ?? []}
       />
       <ButtonPrimary
         text="Send approval"

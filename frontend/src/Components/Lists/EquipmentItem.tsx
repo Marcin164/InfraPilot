@@ -16,7 +16,7 @@ import { assignDevice } from "../../Services/devices";
 import { toast } from "react-toastify";
 
 type Props = {
-  id: number;
+  id: string;
   serialNumber: string;
   subgroup: string;
   location: string;

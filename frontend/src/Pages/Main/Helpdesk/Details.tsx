@@ -5,6 +5,7 @@ import { faClock, faDesktop, faUser } from "@fortawesome/free-solid-svg-icons";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
 import { getTicket } from "../../../Services/tickets";
+import type { Comment, Approval } from "../../../Types";
 import moment from "moment";
 import UpdateTicketForm from "../../../Components/Forms/UpdateTicketForm";
 import MessagesPanel from "./components/MessagesPanel";
@@ -18,12 +19,12 @@ const Details = () => {
   const params = useParams();
   const ticketQuery = useQuery({
     queryKey: ["ticket", params.id],
-    queryFn: () => getTicket(params.id),
+    queryFn: () => getTicket(params.id!),
   });
 
   const ticket = ticketQuery.data;
 
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
 
   useEffect(() => {
     if (ticket?.comments) {
@@ -41,7 +42,7 @@ const Details = () => {
     },
   });
 
-  const convertApprovalsToComments = (approvals: any[]) => {
+  const convertApprovalsToComments = (approvals: Approval[]) => {
     const approvalComments = approvals.map((approval) => ({
       id: approval.id,
       type: "decision",

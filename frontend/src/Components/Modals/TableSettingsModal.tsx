@@ -4,20 +4,22 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateUserSettings } from "../../Services/settings";
 
+import type { UserSettings } from "../../Types";
+
 type Props = {
-  isModalOpen: any;
-  onCloseModal: any;
-  className: string;
-  settings: any;
-  checkboxes: any;
-  settingsKey: any;
+  isModalOpen: boolean;
+  onCloseModal: () => void;
+  className?: string;
+  settings: UserSettings;
+  checkboxes: { name: string; label: string }[];
+  settingsKey: keyof Pick<UserSettings, "usersTableColumnOrder" | "ticketsTableColumnOrder">;
 };
 
 const TableSettingsModal = ({
   isModalOpen,
   onCloseModal,
   className = "",
-  settings = [],
+  settings,
   checkboxes,
   settingsKey,
 }: Props) => {
@@ -34,7 +36,7 @@ const TableSettingsModal = ({
     },
   });
 
-  const [choosenColumns, setChoosenColumns] = useState(settings[settingsKey]);
+  const [choosenColumns, setChoosenColumns] = useState<string[]>(settings?.[settingsKey] ?? []);
 
   const handleToggleColumn = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;

@@ -6,21 +6,7 @@ import AssignDeviceModal from "../../../../Components/Modals/AssignDeviceModal";
 import ApplyChangesModal from "../../../../Components/Modals/ApplyChangesModal";
 import { getDeviceHistory } from "../../../../Services/histories";
 import HistorySection from "../components/HistorySection";
-
-export enum HistoryType {
-  OWNER = 0,
-  CHANGE = 1,
-}
-
-export interface HistoryItem {
-  id: string;
-  type: HistoryType;
-  user?: {
-    distinguishedName: string;
-  };
-  device?: string | null;
-  owner?: string;
-}
+import type { HistoryEntry } from "../../../../Types";
 
 const History = () => {
   const { id: deviceId } = useParams<{ id: string }>();
@@ -28,9 +14,9 @@ const History = () => {
   const [isAssignUserModalOpen, setIsAssignUserModalOpen] = useState(false);
   const [isApplyChangesModalOpen, setIsApplyChangesModalOpen] = useState(false);
 
-  const historyQuery = useQuery<HistoryItem[]>({
+  const historyQuery = useQuery({
     queryKey: ["device-history", deviceId],
-    queryFn: () => getDeviceHistory(deviceId),
+    queryFn: () => getDeviceHistory(deviceId!),
     enabled: Boolean(deviceId),
   });
 
@@ -38,8 +24,8 @@ const History = () => {
     if (!historyQuery.data) return [];
 
     return historyQuery.data
-      .filter((history) => history.type === HistoryType.OWNER)
-      .map((history) => ({
+      .filter((history: HistoryEntry) => history.type === 0)
+      .map((history: HistoryEntry) => ({
         ...history,
         device: null,
         owner: history.user?.distinguishedName ?? "",
@@ -49,7 +35,7 @@ const History = () => {
   const changesHistory = useMemo(() => {
     if (!historyQuery.data) return [];
     return historyQuery.data.filter(
-      (history) => history.type !== HistoryType.OWNER
+      (history: HistoryEntry) => history.type !== 0
     );
   }, [historyQuery.data]);
 

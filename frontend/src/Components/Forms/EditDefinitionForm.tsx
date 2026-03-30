@@ -14,8 +14,10 @@ import {
   requiredValidator,
 } from "../../Helpers/validators";
 
+import type { SlaCalendar, SlaDefinition } from "../../Types";
+
 type Props = {
-  data?: any;
+  data?: SlaDefinition;
 };
 
 const EditDefinitionForm = ({ data }: Props) => {
@@ -60,7 +62,7 @@ const EditDefinitionForm = ({ data }: Props) => {
 
   if (!calendarQuery.data) return null;
 
-  const calendarOptions = calendarQuery.data.map((calendar: any) => {
+  const calendarOptions = calendarQuery.data.map((calendar: SlaCalendar) => {
     return { value: calendar.id, label: calendar.name };
   });
 

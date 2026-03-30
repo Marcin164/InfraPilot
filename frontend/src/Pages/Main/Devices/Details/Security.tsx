@@ -1,4 +1,3 @@
-import React from "react";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
 import Antivirus from "../components/Antivirus";
 import { useOutletContext } from "react-router";

@@ -12,7 +12,7 @@ import { getDevicesOptions, assignDevice } from "../../Services/devices";
 import { createHistoryEntry } from "../../Services/histories";
 import { assignDeviceDefaultValues } from "../../Constants/defaultValues";
 import SelectSecondary from "../Inputs/SelectSecondary";
-import { faPlus, faUserMinus } from "@fortawesome/free-solid-svg-icons";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
 
 type Option = {
   label: string;

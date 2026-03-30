@@ -112,7 +112,7 @@ const UsersPage = () => {
           <Filter
             filters={filters}
             setFilters={setFilters}
-            filterOptions={filtersQuery?.data}
+            filterOptions={(filtersQuery?.data ?? {}) as Record<string, string[]>}
             isOpen={isOpen}
             setIsOpen={setIsOpen}
           />

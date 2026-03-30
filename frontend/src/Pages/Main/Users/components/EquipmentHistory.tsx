@@ -17,8 +17,8 @@ const EquipmentHistory = (props: Props) => {
   const convertToTimeline = () => {
     if (!historyQuery?.data) return null;
     return historyQuery.data
-      .filter((history: any) => history.type == 0)
-      .map((history: any) => {
+      .filter((history) => history.type === 0)
+      .map((history) => {
         return {
           ...history,
           device:
@@ -34,7 +34,7 @@ const EquipmentHistory = (props: Props) => {
         Equipment History
       </div>
       <div>
-        {convertToTimeline()?.length > 0 ? (
+        {(convertToTimeline()?.length ?? 0) > 0 ? (
           <TimelineLine items={convertToTimeline()} />
         ) : (
           <div>No history entries</div>

@@ -22,7 +22,5 @@ export const parseWorkdays = (workdays: number[]) => {
       }
     });
 
-  sortedWorkdays;
-
   return sortedWorkdays;
 };

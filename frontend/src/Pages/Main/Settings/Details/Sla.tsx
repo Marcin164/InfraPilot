@@ -41,7 +41,7 @@ const Sla = (props: Props) => {
           <SlaCalendar slaCalendars={calendarsQuery.data} />
           <SlaDefinitions slaDefinitions={definitionsQuery?.data} />
           <SlaRules slaRules={rulesQuery?.data} />
-          <Escalations escalations={escalationsQuery?.data} />
+          <Escalations escalations={escalationsQuery?.data ?? []} />
         </Masonry>
       </ResponsiveMasonry>
     </div>

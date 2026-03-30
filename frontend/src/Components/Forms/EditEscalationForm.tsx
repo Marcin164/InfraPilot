@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import SelectSecondary from "../Inputs/SelectSecondary";
 import Input from "../Inputs/Input";
-import { requiredValidator } from "../../Helpers/validators";
+import { requiredNumberValidator } from "../../Helpers/validators";
 import {
   getSlaDefinitions,
   patchSlaEscalation,
@@ -15,7 +15,9 @@ import Notify from "./EscalationFormActionTypes/Notify";
 import Reassign from "./EscalationFormActionTypes/Reassign";
 import PriorityUp from "./EscalationFormActionTypes/PriorityUp";
 
-type Props = { data: any };
+import type { SlaEscalation, SlaDefinition } from "../../Types";
+
+type Props = { data?: SlaEscalation };
 
 type EscalationForm = {
   slaDefinitionId: string;
@@ -76,7 +78,7 @@ const EditEscalationForm = ({ data }: Props) => {
   });
 
   const definitionOptions =
-    definitionsQuery.data?.map((definition: any) => ({
+    definitionsQuery.data?.map((definition: SlaDefinition) => ({
       value: definition.id,
       label: definition.name,
     })) ?? [];
@@ -111,14 +113,14 @@ const EditEscalationForm = ({ data }: Props) => {
       <form.Field
         name="triggerPercentage"
         validators={{
-          onChange: ({ value }) => requiredValidator(value),
+          onChange: ({ value }) => requiredNumberValidator(value),
         }}
       >
         {(field) => (
           <Input
             label="Trigger Percentage"
             suffix="%"
-            value={field.state.value}
+            value={String(field.state.value)}
             onChange={(e: any) => field.handleChange(e.target.value)}
             errors={field.state.meta.errors?.join(", ")}
           />

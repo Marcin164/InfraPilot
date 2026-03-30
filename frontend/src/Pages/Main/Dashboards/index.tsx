@@ -7,6 +7,7 @@ import LastScan from "./components/LastScan";
 import ActiveUsers from "./components/ActiveUsers";
 import { useQuery } from "@tanstack/react-query";
 import { getDashboards } from "../../../Services/dashboards";
+import type { Dashboard } from "../../../Types";
 import { useEffect, useState } from "react";
 import DataLoader from "../../../Components/Loaders/DataLoader";
 import { DASHBOARD_WIDGETS } from "../../../Constants/dashboardWidgets";
@@ -28,7 +29,7 @@ const Index = () => {
     queryKey: ["dashboards"],
     queryFn: () => getDashboards(),
   });
-  const [currentDashboard, setCurrentDashboard] = useState(
+  const [currentDashboard, setCurrentDashboard] = useState<Dashboard | null>(
     dashboardsQuery.isSuccess ? dashboardsQuery?.data[0] : null
   );
   const [layout, setLayout] = useState<any[]>([]);
@@ -58,7 +59,7 @@ const Index = () => {
   if (!dashboardsQuery.isSuccess) return null;
 
   const getDashboardsSelectValues = () => {
-    return dashboardsQuery.data.map((dashboard: any) => ({
+    return dashboardsQuery.data.map((dashboard: Dashboard) => ({
       value: dashboard.id,
       label: dashboard.name,
     }));
@@ -71,9 +72,9 @@ const Index = () => {
     }
 
     const dashboard = dashboardsQuery.data.find(
-      (dashboard: any) => dashboard.id === selectedDashboard.value
+      (dashboard: Dashboard) => dashboard.id === selectedDashboard.value
     );
-    setCurrentDashboard(dashboard);
+    setCurrentDashboard(dashboard ?? null);
   };
 
   const onDrop = (_layout: any[], item: any, e: any) => {

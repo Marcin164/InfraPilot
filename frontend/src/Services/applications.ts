@@ -1,16 +1,17 @@
 import api from "../lib/api";
+import type { Application } from "../Types";
 
-export const getApplicationsTable = async () => {
+export const getApplicationsTable = async (): Promise<Application[]> => {
   const { data } = await api.get("/applications/table");
   return data;
 };
 
-export const getApplication = async (id: string) => {
+export const getApplication = async (id: string): Promise<Application> => {
   const { data } = await api.get(`/applications/${id}`);
   return data;
 };
 
-export const getFilter = async () => {
+export const getFilter = async (): Promise<{ publisher?: string[] }> => {
   const { data } = await api.get("/applications/filters");
   return data;
 };

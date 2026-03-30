@@ -11,9 +11,11 @@ import { addUser, updateUser } from "../../Services/users";
 import { addUserDefaultValues } from "../../Constants/defaultValues";
 import { requiredValidator } from "../../Helpers/validators";
 
+import type { User } from "../../Types";
+
 type AddUserFormProps = {
   close: () => void;
-  data: any;
+  data?: User;
 };
 
 type FormValues = typeof addUserDefaultValues;

@@ -7,8 +7,10 @@ import { faTicket } from "@fortawesome/free-solid-svg-icons";
 import { useQuery } from "@tanstack/react-query";
 import { getUserSettings } from "../../Services/settings";
 
+import type { Ticket } from "../../Types";
+
 type Props = {
-  data: any[];
+  data: Ticket[];
   total: number;
   onPageChange: (page: number) => void;
   onRowsPerPageChange: (limit: number) => void;
@@ -99,7 +101,7 @@ const TicketsTable = ({
   ];
 
   const filterColumns = () => {
-    return userSettings?.data?.ticketsTableColumnOrder
+    return (userSettings?.data?.ticketsTableColumnOrder ?? [])
       .map((columnId: string) =>
         columns.find((column: any) => column.id === columnId.toLowerCase()),
       )

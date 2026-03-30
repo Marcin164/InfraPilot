@@ -13,6 +13,7 @@ import ButtonPrimary from "../Buttons/ButtonPrimary";
 
 import { createHistoryEntry } from "../../Services/histories";
 import { addDevice, getDevices } from "../../Services/devices";
+import type { Device } from "../../Types";
 import {
   componentsTypeOptions,
   historyTypeOptions,
@@ -48,7 +49,7 @@ const ApplyChangeForm: React.FC = () => {
 
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
-      let createdDevices: string[] = [];
+      let createdDevices: Device[] = [];
 
       if (values.removedComponents.length > 0) {
         createdDevices = await Promise.all(

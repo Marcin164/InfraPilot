@@ -14,7 +14,7 @@ import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 
-type Props = { close: any };
+type Props = { close: () => void };
 
 const ALLOWED_TYPES = [
   "text/csv",
@@ -51,7 +51,7 @@ const FileUpload = ({ close }: Props) => {
   const [progress, setProgress] = useState<number | null>(null);
 
   const mutation = useMutation({
-    mutationFn: async (users: Record<string, any>) => {
+    mutationFn: async (users: any[]) => {
       return addManyUsers(users);
     },
 

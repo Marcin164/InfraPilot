@@ -9,7 +9,9 @@ import { deleteUser } from "../../Services/users";
 import { toast } from "react-toastify";
 import AddUserModal from "../Modals/AddUserModal";
 
-type Props = { data: any };
+import type { User } from "../../Types";
+
+type Props = { data: User };
 
 const UserDetailsDropdown = ({ data }: Props) => {
   const queryClient = useQueryClient();

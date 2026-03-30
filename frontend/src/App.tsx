@@ -15,7 +15,7 @@ import Events from "./Pages/Main/Devices/Details/Events";
 import History from "./Pages/Main/Devices/Details/History";
 import Helpdesk from "./Pages/Main/Helpdesk";
 import Reports from "./Pages/Main/Reports";
-import { ParseProvider } from "./Hooks/useParser";
+import { ParseProvider } from "./Context/ParserContext";
 import UsersInfo from "./Pages/Main/Devices/Details/UsersInfo";
 import Peripherals from "./Pages/Main/Devices/Details/Peripherals";
 import EditEquipment from "./Pages/Main/Users/EditEquipment";

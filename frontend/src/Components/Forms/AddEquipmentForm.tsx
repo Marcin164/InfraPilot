@@ -14,10 +14,9 @@ import { requiredValidator } from "../../Helpers/validators";
 import Input from "../Inputs/Input";
 import SelectSecondary from "../Inputs/SelectSecondary";
 import { toast } from "react-toastify";
+import { CreateDeviceData } from "../../Types";
 
 type Option = { label: string; value: string };
-
-type FormValues = typeof addDeviceDefaultValues;
 
 const AddEquipmentForm: React.FC = () => {
   const queryClient = useQueryClient();
@@ -26,7 +25,7 @@ const AddEquipmentForm: React.FC = () => {
     useState<Option[]>(computersTypeOptions);
 
   const mutation = useMutation({
-    mutationFn: async (values: FormValues) => {
+    mutationFn: async (values: CreateDeviceData) => {
       return addDevice(values);
     },
 

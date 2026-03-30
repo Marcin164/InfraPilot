@@ -10,8 +10,10 @@ import {
 } from "../../Services/sla";
 import { toast } from "react-toastify";
 
+import type { SlaDefinition, SlaRule } from "../../Types";
+
 type Props = {
-  data?: any;
+  data?: SlaRule;
 };
 
 const EditRuleForm = ({ data }: Props) => {
@@ -55,8 +57,8 @@ const EditRuleForm = ({ data }: Props) => {
   });
 
   const definitionOptions = useMemo(() => {
-    if (!definitionQuery.data) return null;
-    return definitionQuery.data.map((def: any) => ({
+    if (!definitionQuery.data) return [];
+    return definitionQuery.data.map((def: SlaDefinition) => ({
       value: def.id,
       label: def.name,
     }));

@@ -9,15 +9,17 @@ import { useMutation } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 
+import type { ClosureCode, UpdateTicketData } from "../../Types";
+
 type Props = {
-  closureCode: any;
-  closureNotes: any;
+  closureCode?: ClosureCode;
+  closureNotes?: string;
 };
 
 const ClosureNotesForm = ({ closureCode, closureNotes }: Props) => {
   const params = useParams();
   const mutation = useMutation({
-    mutationFn: async (values: any) => {
+    mutationFn: async (values: UpdateTicketData) => {
       return updateTicket(params.id!, values);
     },
 

@@ -63,7 +63,7 @@ export const updateTicketDefaultValues = (
   state: any,
   priority: any,
   impact: any,
-  urgency: any
+  urgency: any,
 ) => {
   return {
     state: state,

@@ -11,7 +11,7 @@ import {
 type Props = {};
 
 const index = (props: Props) => {
-  const [filterOptions, setFilterOptions] = useState({
+  const [filterOptions, setFilterOptions] = useState<Record<string, string[]>>({
     publisher: [],
   });
   const [searchValue, setSearchValue] = useState("");
@@ -25,7 +25,7 @@ const index = (props: Props) => {
     queryFn: () => getFilter(),
   });
 
-  if (!applicationsQuery?.data && applicationsQuery?.data?.length <= 0)
+  if (!applicationsQuery?.data || applicationsQuery?.data?.length <= 0)
     return null;
 
   const getSearchValue = (e: any) => {
