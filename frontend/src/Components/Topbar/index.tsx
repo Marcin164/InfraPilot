@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router";
 import { capitalize, splitPath } from "../../Helpers/string";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
-import Search from "../Inputs/Search";
+import GlobalSearch from "./GlobalSearch";
 import { useParser } from "../../Hooks/useParser";
 import AccountButton from "./AccountButton";
 import { twMerge } from "tailwind-merge";
@@ -42,7 +42,7 @@ const index = (props: Props) => {
         ))}
       </div>
       <div className="flex">
-        <Search onChange={() => {}} className="border border-[#EFEFEF]" />
+        <GlobalSearch />
         <AccountButton />
       </div>
     </div>
