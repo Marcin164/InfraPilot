@@ -6,17 +6,24 @@ export const getUsers = async (): Promise<User[]> => {
   return data;
 };
 
-export const addUser = async (data: CreateUserData | Record<string, unknown>): Promise<User> => {
+export const addUser = async (
+  data: CreateUserData | Record<string, unknown>,
+): Promise<User> => {
   const { data: result } = await api.post("/users/", data);
   return result;
 };
 
-export const addManyUsers = async (data: Record<string, unknown>[]): Promise<User[]> => {
+export const addManyUsers = async (
+  data: Record<string, unknown>[],
+): Promise<User[]> => {
   const { data: result } = await api.post("/users/many", data);
   return result;
 };
 
-export const updateUser = async (data: Partial<User>, id: string): Promise<User> => {
+export const updateUser = async (
+  data: Partial<User>,
+  id: string,
+): Promise<User> => {
   const { data: result } = await api.patch(`/users/${id}`, data);
   return result;
 };

@@ -15,3 +15,11 @@ export const getFilter = async (): Promise<{ publisher?: string[] }> => {
   const { data } = await api.get("/applications/filters");
   return data;
 };
+
+export const searchApplications = async (
+  q: string
+): Promise<Array<{ name: string }>> => {
+  if (!q) return [];
+  const { data } = await api.get("/applications/search", { params: { q } });
+  return data;
+};

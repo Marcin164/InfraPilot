@@ -6,6 +6,11 @@ export const getTickets = async (query: string): Promise<{ data: Ticket[]; total
   return data;
 };
 
+export const searchTickets = async (search: string): Promise<Ticket[]> => {
+  const { data } = await api.get(`/tickets?search=${encodeURIComponent(search)}&limit=10`);
+  return data.data;
+};
+
 export const getTicket = async (id: string): Promise<Ticket> => {
   const { data } = await api.get(`/tickets/${id}`);
   return data;

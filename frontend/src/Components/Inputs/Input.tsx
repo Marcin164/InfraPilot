@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge";
 
 type Props = {
   label?: string;
-  type?: "text" | "number" | "date";
+  type?: "text" | "number" | "date" | "password";
   inputClassName?: string;
   className?: string;
   onChange?: any;

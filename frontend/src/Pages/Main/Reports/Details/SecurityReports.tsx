@@ -1,25 +1,9 @@
 import React from "react";
-import PageContainer from "../components/PageContainer";
-import DevicesWithoutUpdatesReport from "../components/DevicesWithoutUpdatesReport";
-import DevicesWithoutAVReport from "../components/DevicesWithoutAVReport";
-import LocalAdminUsersReport from "../components/LocalAdminUsersReport";
-import DevicesOutsideDomainReport from "../components/DevicesOutsideDomainReport";
-import DeviceAgeReport from "../components/DeviceAgeReport";
-import DevicesWithoutOwnerReport from "../components/DevicesWithoutOwnerReport";
+import CategoryReports from "../components/CategoryReports";
+import { reportPageCategories } from "../../../../Constants/navigation";
 
-type Props = {};
-
-const SecurityReports = (props: Props) => {
-  return (
-    <PageContainer>
-      <DevicesWithoutUpdatesReport />
-      <DevicesWithoutAVReport />
-      <LocalAdminUsersReport />
-      <DevicesOutsideDomainReport />
-      <DeviceAgeReport />
-      <DevicesWithoutOwnerReport />
-    </PageContainer>
-  );
-};
+const SecurityReports = () => (
+  <CategoryReports categories={reportPageCategories.security} />
+);
 
 export default SecurityReports;

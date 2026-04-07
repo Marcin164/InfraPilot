@@ -1,9 +1,9 @@
 import React from "react";
+import CategoryReports from "../components/CategoryReports";
+import { reportPageCategories } from "../../../../Constants/navigation";
 
-type Props = {};
-
-const TicketsReports = (props: Props) => {
-  return <div>TicketsReports</div>;
-};
+const TicketsReports = () => (
+  <CategoryReports categories={reportPageCategories.tickets} />
+);
 
 export default TicketsReports;

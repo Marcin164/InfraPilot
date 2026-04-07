@@ -5,6 +5,7 @@ import { useLocation, useParams } from "react-router";
 import { toast } from "react-toastify";
 
 import Input from "../Inputs/Input";
+import TicketSelect from "../Inputs/TicketSelect";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 
 import { getUsers } from "../../Services/users";
@@ -149,11 +150,13 @@ const AssignDeviceForm: React.FC = () => {
       <form.Field
         name="ticket"
         children={(field) => (
-          <Input
-            {...field}
-            label="Ticket"
+          <TicketSelect
+            value={field.state.value}
+            onChange={(val) => field.handleChange(val)}
             errors={
-              !field.state.meta.isValid && field.state.meta.errors.join(", ")
+              !field.state.meta.isValid
+                ? field.state.meta.errors.join(", ")
+                : undefined
             }
           />
         )}

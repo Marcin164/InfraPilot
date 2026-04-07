@@ -1,4 +1,5 @@
 import Input from "../Components/Inputs/Input";
+import TicketSelect from "../Components/Inputs/TicketSelect";
 import SelectSecondary from "../Components/Inputs/SelectSecondary";
 type Option = {
   label: string;
@@ -39,7 +40,10 @@ export const assignDeviceFormFields = (
     {
       name: "ticket",
       label: "Ticket",
-      Component: Input,
+      Component: TicketSelect,
+      props: {
+        onChange: (value: string, field: any) => field.handleChange(value),
+      },
     },
     {
       name: "justification",

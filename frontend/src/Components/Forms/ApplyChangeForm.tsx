@@ -7,6 +7,7 @@ import { faPlus, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
 
 import Input from "../Inputs/Input";
+import TicketSelect from "../Inputs/TicketSelect";
 import SelectSecondary from "../Inputs/SelectSecondary";
 import Checkbox from "../Inputs/Checkbox";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
@@ -245,7 +246,12 @@ const ApplyChangeForm: React.FC = () => {
         )}
       </form.Subscribe>
       <form.Field name="ticket">
-        {(field) => <Input {...field} label="Ticket" />}
+        {(field) => (
+          <TicketSelect
+            value={field.state.value}
+            onChange={(val) => field.handleChange(val)}
+          />
+        )}
       </form.Field>
       <form.Field name="justification">
         {(field) => <Input {...field} label="Justification" />}

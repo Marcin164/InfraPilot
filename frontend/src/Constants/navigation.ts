@@ -120,25 +120,21 @@ export const settingsNavbarItems = [
   },
 ];
 
+import type { ReportCategory } from "../Services/reports";
+
 export const reportsNavbarItems = [
-  {
-    to: "users",
-    label: "Users",
-    icon: faUsers,
-  },
-  {
-    to: "devices",
-    label: "Devices",
-    icon: faComputerMouse,
-  },
-  {
-    to: "tickets",
-    label: "Tickets",
-    icon: faTicket,
-  },
-  {
-    to: "security",
-    label: "Security",
-    icon: faShield,
-  },
+  { to: "users", label: "Users", icon: faUsers },
+  { to: "devices", label: "Devices", icon: faComputerMouse },
+  { to: "tickets", label: "Tickets", icon: faTicket },
+  { to: "security", label: "Security", icon: faShield },
 ];
+
+// Single source of truth mapping each Reports page route to the report
+// categories it should render. Both ReportsNavbar and the Details/*.tsx pages
+// read from this, so adding a category in one place propagates everywhere.
+export const reportPageCategories: Record<string, ReportCategory[]> = {
+  users: ["users", "forms"],
+  devices: ["devices", "applications", "histories"],
+  tickets: ["tickets", "sla"],
+  security: ["security", "audit"],
+};
