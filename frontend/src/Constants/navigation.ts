@@ -118,6 +118,11 @@ export const settingsNavbarItems = [
     label: "SLA",
     icon: faCalendar,
   },
+  {
+    to: "assignment-groups",
+    label: "Assignment Groups",
+    icon: faUsers,
+  },
 ];
 
 import type { ReportCategory } from "../Services/reports";

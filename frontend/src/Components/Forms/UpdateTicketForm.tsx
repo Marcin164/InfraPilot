@@ -1,5 +1,5 @@
-import { useForm } from "@tanstack/react-form";
-import React from "react";
+import { useForm, useStore } from "@tanstack/react-form";
+import { useMemo } from "react";
 import { updateTicketDefaultValues } from "../../Constants/defaultValues";
 import SelectSecondary from "../Inputs/SelectSecondary";
 import {
@@ -8,14 +8,23 @@ import {
   ticketStateOptions,
   ticketUrgencyOptions,
 } from "../../Constants/options";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { updateTicket } from "../../Services/tickets";
-import ButtonSecondary from "../Buttons/ButtonSecondary";
+import {
+  getAssignmentGroups,
+  getAssignmentGroupMembers,
+} from "../../Services/assignmentGroups";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
 
-import type { TicketState, TicketPriority, TicketImpact, TicketUrgency, UpdateTicketData } from "../../Types";
+import type {
+  TicketState,
+  TicketPriority,
+  TicketImpact,
+  TicketUrgency,
+  UpdateTicketData,
+} from "../../Types";
 
 type Props = {
   id: string;
@@ -47,14 +56,63 @@ const UpdateTicketForm = ({
   });
 
   const form = useForm({
-    defaultValues: updateTicketDefaultValues(state, priority, impact, urgency),
+    defaultValues: {
+      ...updateTicketDefaultValues(state, priority, impact, urgency),
+      assignee: assignee ?? "",
+      assignmentGroup: assignmentGroup ?? "",
+    },
     onSubmit: ({ value }) => {
       mutation.mutate(value);
     },
   });
 
+  const selectedGroup = useStore(
+    form.store,
+    (s: any) => s.values.assignmentGroup as string,
+  );
+  const selectedAssignee = useStore(
+    form.store,
+    (s: any) => s.values.assignee as string,
+  );
+
+  const groupsQuery = useQuery({
+    queryKey: ["assignment-groups"],
+    queryFn: getAssignmentGroups,
+  });
+
+  const membersQuery = useQuery({
+    queryKey: ["assignment-group-members", selectedGroup],
+    queryFn: () => getAssignmentGroupMembers(selectedGroup),
+    enabled: Boolean(selectedGroup),
+  });
+
+  const groupOptions = useMemo(
+    () =>
+      (groupsQuery.data ?? []).map((g) => ({
+        value: g.name,
+        label: g.name,
+      })),
+    [groupsQuery.data],
+  );
+
+  const assigneeOptions = useMemo(
+    () =>
+      (membersQuery.data ?? []).map((m) => ({
+        value: `${m.name} ${m.surname}`,
+        label: `${m.name} ${m.surname}${m.email ? ` (${m.email})` : ""}`,
+      })),
+    [membersQuery.data],
+  );
+
   const handleSelect = (opt: any, field: any) => {
-    field.handleChange(opt.value);
+    field.handleChange(opt?.value ?? "");
+  };
+
+  const handleGroupSelect = (opt: any, field: any) => {
+    const newGroup = opt?.value ?? "";
+    field.handleChange(newGroup);
+    // Reset assignee when group changes — the previous assignee may not belong to the new group
+    form.setFieldValue("assignee", "");
   };
 
   return (
@@ -65,23 +123,27 @@ const UpdateTicketForm = ({
       }}
     >
       <form.Field
-        name="assignee"
-        children={(field) => (
-          <SelectSecondary
-            label="Assignee"
-            options={[]}
-            value=""
-            onSelect={(opt: any) => handleSelect(opt, field)}
-          />
-        )}
-      />
-      <form.Field
         name="assignmentGroup"
         children={(field) => (
           <SelectSecondary
             label="Assignment Group"
-            options={[]}
-            value=""
+            options={groupOptions}
+            value={
+              groupOptions.find((o) => o.value === selectedGroup) ?? null
+            }
+            onSelect={(opt: any) => handleGroupSelect(opt, field)}
+          />
+        )}
+      />
+      <form.Field
+        name="assignee"
+        children={(field) => (
+          <SelectSecondary
+            label="Assignee"
+            options={assigneeOptions}
+            value={
+              assigneeOptions.find((o) => o.value === selectedAssignee) ?? null
+            }
             onSelect={(opt: any) => handleSelect(opt, field)}
           />
         )}

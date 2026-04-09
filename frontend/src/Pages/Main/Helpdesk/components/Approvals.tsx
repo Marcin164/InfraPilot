@@ -33,7 +33,10 @@ const Approvals = ({ requesterId, approvals }: Props) => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ticket", params.id] });
-      toast.success("Ticket updated!");
+      toast.success("Approval request sent");
+    },
+    onError: () => {
+      toast.error("Failed to send approval request");
     },
   });
 
@@ -69,6 +72,14 @@ const Approvals = ({ requesterId, approvals }: Props) => {
     }
   };
 
+  const decisionLabel = (decision?: string | null) => {
+    if (decision === "approved") return "Approved";
+    if (decision === "rejected") return "Rejected";
+    return "Pending";
+  };
+
+  const hasPending = approvals.some((a) => !a.decision);
+
   return (
     <div>
       <CardHeader text="Approvals" />
@@ -78,9 +89,10 @@ const Approvals = ({ requesterId, approvals }: Props) => {
         options={createApproversOptions() ?? []}
       />
       <ButtonPrimary
-        text="Send approval"
+        text={hasPending ? "Approval pending" : "Send approval"}
         className="mt-4"
         onClick={addApproval}
+        disabled={hasPending || !approverId || mutation.isPending}
       />
       <div className="mt-4">
         {approvals.map((approval) => (
@@ -95,11 +107,14 @@ const Approvals = ({ requesterId, approvals }: Props) => {
               <div className="font-semibold">
                 {approval?.approver?.distinguishedName}
               </div>
+              <div className="text-[12px] uppercase font-bold ml-auto">
+                {decisionLabel(approval?.decision)}
+              </div>
             </div>
             <div className="text-[12px]">
-              {moment(approval?.decidedAt || approval?.createdAt).format(
-                "DD/MM/YYYY, HH:mm",
-              )}
+              {approval?.decidedAt
+                ? `Decided: ${moment(approval.decidedAt).format("DD/MM/YYYY, HH:mm")}`
+                : `Requested: ${moment(approval?.createdAt).format("DD/MM/YYYY, HH:mm")}`}
             </div>
           </div>
         ))}

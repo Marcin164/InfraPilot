@@ -1,10 +1,15 @@
-import React from "react";
+import React, { useEffect } from "react";
 import ReportsNavbar from "../../../Components/Navbar/ReportsNavbar";
-import { Outlet } from "react-router";
+import { Outlet, useNavigate } from "react-router";
 
 type Props = {};
 
 const index = (props: Props) => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    navigate("users");
+  }, []);
   return (
     <div className="w-full p-4">
       <ReportsNavbar />

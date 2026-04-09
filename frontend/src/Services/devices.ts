@@ -16,8 +16,10 @@ export const getDevicesOptions = async (): Promise<DeviceOption[]> => {
   return data;
 };
 
-export const getDevices = async (): Promise<Device[]> => {
-  const { data } = await api.get("/devices/table");
+export const getDevices = async (
+  query: string = "",
+): Promise<{ data: Device[]; total: number }> => {
+  const { data } = await api.get(`/devices/table${query ? `?${query}` : ""}`);
   return data;
 };
 

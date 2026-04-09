@@ -1,22 +1,29 @@
 import MainTable from "./MainTable";
 import { Link, useNavigate } from "react-router";
 import moment from "moment";
-import { getFilteredData, getSearchedData } from "../../Helpers/tables";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faComputer } from "@fortawesome/free-solid-svg-icons";
 
 type Props = {
-  data: any;
-  filterOptions: any;
-  searchValue: any;
+  data: any[];
+  total: number;
+  onPageChange: (page: number) => void;
+  onRowsPerPageChange: (limit: number) => void;
+  isLoading?: boolean;
 };
 
-const DevicesTable = ({ data, filterOptions, searchValue }: Props) => {
-  let navigate = useNavigate();
+const DevicesTable = ({
+  data,
+  total,
+  onPageChange,
+  onRowsPerPageChange,
+  isLoading,
+}: Props) => {
+  const navigate = useNavigate();
 
   const columns = [
     {
-      cell: (row: any) => (
+      cell: (_row: any) => (
         <div>
           <FontAwesomeIcon icon={faComputer} />
         </div>
@@ -26,7 +33,7 @@ const DevicesTable = ({ data, filterOptions, searchValue }: Props) => {
     {
       name: "Device",
       cell: (row: any) => (
-        <span className="font-bold">{`${row.manufacturer} ${row.model}`}</span>
+        <span className="font-bold">{`${row.manufacturer ?? ""} ${row.model ?? ""}`}</span>
       ),
       width: "200px",
     },
@@ -72,7 +79,7 @@ const DevicesTable = ({ data, filterOptions, searchValue }: Props) => {
             color: row.varranty < new Date().getTime() ? "#F3606E" : "#3C3C3C",
           }}
         >
-          {moment(row.varranty).format("DD.MM.YYYY")}
+          {row.varranty ? moment(row.varranty).format("DD.MM.YYYY") : "N/A"}
         </div>
       ),
     },
@@ -81,8 +88,13 @@ const DevicesTable = ({ data, filterOptions, searchValue }: Props) => {
   return (
     <MainTable
       columns={columns}
-      data={getFilteredData(getSearchedData(data, searchValue), filterOptions)}
+      data={data}
       onRowClicked={(row: any) => navigate(`/devices/${row.id}/system`)}
+      paginationServer
+      paginationTotalRows={total}
+      onChangePage={onPageChange}
+      onChangeRowsPerPage={onRowsPerPageChange}
+      progressPending={isLoading}
     />
   );
 };

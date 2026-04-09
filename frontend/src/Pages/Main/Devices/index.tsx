@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import DevicesTable from "../../../Components/Tables/DevicesTable";
 import Filter from "../../../Components/Filter";
 import Search from "../../../Components/Inputs/Search";
@@ -8,83 +8,84 @@ import { getDevices, getFilter } from "../../../Services/devices";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import ButtonSecondary from "../../../Components/Buttons/ButtonSecondary";
 import AddDeviceModal from "../../../Components/Modals/AddDeviceModal";
+import { buildQuery } from "../../../Helpers/queries";
+import { useDebounce } from "../../../Hooks/useDebounce";
 
-type Props = {};
+type DeviceFilters = {
+  group?: string[];
+  model?: string[];
+  subgroup?: string[];
+  state?: string[];
+  location?: string[];
+  manufacturer?: string[];
+};
 
-const index = (props: Props) => {
+const INITIAL_FILTERS: DeviceFilters = {
+  group: [],
+  model: [],
+  subgroup: [],
+  state: [],
+  location: [],
+  manufacturer: [],
+};
+
+const Index = () => {
   const navigate = useNavigate();
   const params = useParams();
 
-  const [filterOptions, setFilterOptions] = useState<Record<string, string[]>>({
-    group: [],
-    model: [],
-    subgroup: [],
-    state: [],
-    location: [],
-    manufacturer: [],
-  });
+  const [filters, setFilters] = useState<DeviceFilters>(INITIAL_FILTERS);
+  const [isOpen, setIsOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(30);
   const [addEQModal, setAddEQModal] = useState(false);
+  const debouncedSearch = useDebounce(searchValue, 500);
+
+  const queryString = buildQuery({
+    ...filters,
+    search: debouncedSearch,
+    page,
+    limit,
+  });
+
   const devicesQuery = useQuery({
-    queryKey: ["devices"],
-    queryFn: () => getDevices(),
+    queryKey: ["devices", filters, debouncedSearch, page, limit],
+    queryFn: () => getDevices(queryString),
+    placeholderData: (prev) => prev,
   });
 
   const filterQuery = useQuery({
-    queryKey: ["filter"],
+    queryKey: ["devicesFilters"],
     queryFn: () => getFilter(),
   });
 
   useEffect(() => {
-    params.id && navigate(`/devices/${params.id}/systeminfo`);
+    if (params.id) navigate(`/devices/${params.id}/systeminfo`);
   }, []);
 
-  if (!devicesQuery?.data || devicesQuery?.data?.length <= 0) return null;
-
-  const getSearchValue = (e: any) => {
-    const value = e.target.value;
-    setSearchValue(value);
-  };
-
-  const toggleFilterOptions = (e: any) => {
-    const targetValue: any = e.target.value;
-    const targetName: any = e.target.name;
-    const _filterOptions: any = { ...filterOptions };
-
-    Object.entries(_filterOptions).map(([key, array]: any) => {
-      const filterOption = array.find(
-        (option: any) => option === e.target.value
-      );
-
-      if (key === targetName) {
-        if (filterOption) {
-          const index = array.indexOf(targetValue);
-
-          if (index !== -1) {
-            array.splice(index, 1);
-          }
-        } else {
-          array.push(targetValue);
-        }
-      }
-    });
-
-    setFilterOptions(_filterOptions);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchValue(e.target.value);
+    setPage(1);
   };
 
   const toggleModal = () => {
-    setAddEQModal((prev: any) => !prev);
+    setAddEQModal((prev) => !prev);
   };
 
   return (
     <div className="w-full h-[calc(100vh-58px)] px-4">
-      <div className="pt-4 pb-4 flex">
+      <div className="pt-4 pb-4 flex gap-2">
         <Filter
-          filterData={filterQuery?.data}
-          setFilters={toggleFilterOptions}
-          filterOptions={filterOptions}
+          filters={filters as any}
+          setFilters={(next: any) => {
+            setFilters(next);
+            setPage(1);
+          }}
+          filterOptions={(filterQuery?.data ?? {}) as Record<string, string[]>}
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
         />
-        <Search onChange={getSearchValue} />
+        <Search onChange={handleSearchChange} />
         <ButtonSecondary
           icon={faPlus}
           text="Add device"
@@ -93,12 +94,17 @@ const index = (props: Props) => {
         <AddDeviceModal isModalOpen={addEQModal} onCloseModal={toggleModal} />
       </div>
       <DevicesTable
-        data={devicesQuery?.data}
-        filterOptions={filterOptions}
-        searchValue={searchValue}
+        data={devicesQuery.data?.data ?? []}
+        total={devicesQuery.data?.total ?? 0}
+        onPageChange={setPage}
+        onRowsPerPageChange={(newLimit: number) => {
+          setLimit(newLimit);
+          setPage(1);
+        }}
+        isLoading={devicesQuery.isFetching}
       />
     </div>
   );
 };
 
-export default index;
+export default Index;

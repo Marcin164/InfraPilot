@@ -1,4 +1,3 @@
-import React from "react";
 import MessagesPanel from "./MessagesPanel";
 import MessageInput from "./MessageInput";
 
@@ -16,18 +15,22 @@ const TicketContentPanel = ({
   onOptimisticComment,
 }: TicketContentPanelProps) => {
   return (
-    <div className="w-full m-4">
-      <div className="bg-white shadow-xl rounded-[10px] p-4">
+    <div className="flex flex-col w-full mx-4 my-4 h-[calc(100vh-90px)]">
+      <div className="bg-white shadow-xl rounded-[10px] p-4 shrink-0">
         <div className="text-[14px] font-light">Description</div>
         <div className="font-bold">{description}</div>
       </div>
 
-      <MessagesPanel comments={allComments} />
+      <div className="flex-1 min-h-0 overflow-y-auto py-2">
+        <MessagesPanel comments={allComments} />
+      </div>
 
-      <MessageInput
-        ticketId={ticketId}
-        onOptimisticComment={onOptimisticComment}
-      />
+      <div className="shrink-0">
+        <MessageInput
+          ticketId={ticketId}
+          onOptimisticComment={onOptimisticComment}
+        />
+      </div>
     </div>
   );
 };

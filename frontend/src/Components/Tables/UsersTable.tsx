@@ -3,22 +3,32 @@ import MainTable from "./MainTable";
 import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
-import { getFilteredData, getSearchedData } from "../../Helpers/tables";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { getUserSettings } from "../../Services/settings";
 
-import type { User, UserSettings } from "../../Types";
-import type { FilterOptions } from "../../Pages/Main/Users";
+import type { User } from "../../Types";
 
-type Props = { data: User[]; filterOptions: FilterOptions; searchValue: string };
+type Props = {
+  data: User[];
+  total: number;
+  onPageChange: (page: number) => void;
+  onRowsPerPageChange: (limit: number) => void;
+  isLoading?: boolean;
+};
 
-const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
+const UsersTable = ({
+  data,
+  total,
+  onPageChange,
+  onRowsPerPageChange,
+  isLoading,
+}: Props) => {
   const userSettings = useQuery({
     queryKey: ["userSettings"],
     queryFn: () => getUserSettings(),
   });
-  let navigate = useNavigate();
+  const navigate = useNavigate();
   const { t } = useTranslation();
 
   if (!userSettings.data || userSettings.isLoading) {
@@ -27,8 +37,8 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
 
   const columns = [
     {
-      cell: (row: any) => (
-        <div className="">
+      cell: (_row: any) => (
+        <div>
           <FontAwesomeIcon icon={faUser} />
         </div>
       ),
@@ -38,7 +48,7 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
       id: "name",
       name: t("user.name"),
       selector: (row: any) => (
-        <span className="font-bold">{`${row.name} ${row.surname}`}</span>
+        <span className="font-bold">{`${row.name ?? ""} ${row.surname ?? ""}`}</span>
       ),
     },
     {
@@ -66,7 +76,9 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
       name: t("user.lastlogon"),
       cell: (row: any) => (
         <div className="w-[170px] py-2 px-1 rounded-[10px] text-center bg-[#30A712] text-[#FFFFFF]">
-          {moment(row.lastlogon).format("DD.MM.YYYY, hh:mm:ss")}
+          {row.lastlogon
+            ? moment(row.lastlogon).format("DD.MM.YYYY, hh:mm:ss")
+            : "N/A"}
         </div>
       ),
     },
@@ -103,8 +115,13 @@ const UsersTable = ({ data, filterOptions, searchValue }: Props) => {
   return (
     <MainTable
       columns={filterColumns()}
-      data={getFilteredData(getSearchedData(data, searchValue), filterOptions)}
+      data={data}
       onRowClicked={(row: any) => navigate(`/users/${row.id}`)}
+      paginationServer
+      paginationTotalRows={total}
+      onChangePage={onPageChange}
+      onChangeRowsPerPage={onRowsPerPageChange}
+      progressPending={isLoading}
     />
   );
 };

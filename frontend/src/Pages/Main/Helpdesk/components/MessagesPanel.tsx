@@ -14,7 +14,7 @@ const MessagesPanel = ({ comments }: Props) => {
   };
 
   return (
-    <div className="py-2 overscroll-contain overflow-y-scroll h-[80%]">
+    <div className="h-full">
       {comments
         .sort((a, b) => {
           const dateA = new Date(a.decidedAt || a.createdAt).getTime();

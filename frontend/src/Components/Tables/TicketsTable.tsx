@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 import MainTable from "./MainTable";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTicket } from "@fortawesome/free-solid-svg-icons";
@@ -52,7 +52,19 @@ const TicketsTable = ({
     {
       id: "requester",
       name: "Requester",
-      selector: (row: any) => row.requesterId || "N/A",
+      cell: (row: any) =>
+        row.requester ? (
+          <Link
+            to={`/users/${row.requester.id}`}
+            className="text-[#2B9AE9] hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {row.requester.distinguishedName}
+          </Link>
+        ) : (
+          "N/A"
+        ),
+      selector: (row: any) => row.requester?.distinguishedName || "N/A",
     },
     {
       id: "assignmentgroup",

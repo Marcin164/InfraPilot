@@ -9,6 +9,7 @@ import { updateApproval } from "../../../../Services/tickets";
 import { twMerge } from "tailwind-merge";
 import moment from "moment";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 type Props = {
   id: string;
@@ -34,6 +35,13 @@ const ApprovalDecision = ({
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ticket", params.id] });
+      toast.success("Approval decision saved");
+    },
+    onError: (err: any) => {
+      const message =
+        err?.response?.data?.message ||
+        "Only the assigned approver can decide on this approval";
+      toast.error(message);
     },
   });
 

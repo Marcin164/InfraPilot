@@ -9,6 +9,7 @@ type Props = {
   defaultValue?: any;
   className?: string;
   isMulti?: boolean;
+  isClearable?: boolean;
   errors?: any;
 };
 
@@ -20,6 +21,7 @@ const SelectSecondary = ({
   defaultValue,
   className = "",
   isMulti = false,
+  isClearable,
   errors,
 }: Props) => {
   const [selectedOption, setSelectedOption] = useState(value);
@@ -39,7 +41,7 @@ const SelectSecondary = ({
     control: (styles: any) => ({
       ...styles,
       width: "100%",
-      height: "42px",
+      minHeight: "42px",
       fontSize: "16px",
       fontWeight: "700",
       borderColor: "#3C3C3C",
@@ -75,6 +77,7 @@ const SelectSecondary = ({
         options={options}
         styles={styles}
         isMulti={isMulti}
+        isClearable={isClearable}
       />
       {errors && <em role="alert">{errors}</em>}
     </div>

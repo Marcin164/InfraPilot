@@ -42,6 +42,9 @@ export interface Comment {
   createdAt: string;
   author: { id: string; distinguishedName: string };
   content?: string;
+  attachmentName?: string;
+  attachmentMimetype?: string;
+  attachmentSize?: number;
   optimistic?: boolean;
 }
 

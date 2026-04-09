@@ -10,8 +10,9 @@ import ButtonSecondary from "../../../Components/Buttons/ButtonSecondary";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
 import { getUserSettings } from "../../../Services/settings";
-import { motion } from "framer-motion";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
+import { buildQuery } from "../../../Helpers/queries";
+import { useDebounce } from "../../../Hooks/useDebounce";
 
 export type FilterKey =
   | "department"
@@ -43,11 +44,22 @@ const UsersPage = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>(INITIAL_FILTERS);
   const [searchValue, setSearchValue] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(30);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const debouncedSearch = useDebounce(searchValue, 500);
+
+  const queryString = buildQuery({
+    ...filters,
+    search: debouncedSearch,
+    page,
+    limit,
+  });
 
   const usersQuery = useQuery({
-    queryKey: ["users"],
-    queryFn: () => getUsersTable(),
+    queryKey: ["users", filters, debouncedSearch, page, limit],
+    queryFn: () => getUsersTable(queryString),
+    placeholderData: (prev) => prev,
   });
 
   const filtersQuery = useQuery({
@@ -57,52 +69,23 @@ const UsersPage = () => {
 
   const userSettings = useQuery({
     queryKey: ["userSettings"],
-    queryFn: () => {
-      return getUserSettings();
-    },
+    queryFn: () => getUserSettings(),
   });
 
-  if (usersQuery.isLoading) {
-    return <div>Loading users…</div>;
-  }
-
-  if (usersQuery.isError) {
-    return <div>Failed to load users</div>;
-  }
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchValue(e.target.value);
+    setPage(1);
+  };
 
   const checkboxes = [
-    {
-      name: "name",
-      label: "Name",
-    },
-    {
-      name: "username",
-      label: "Username",
-    },
-    {
-      name: "currentdevice",
-      label: "Current device",
-    },
-    {
-      name: "lastLogon",
-      label: "Last logon",
-    },
-    {
-      name: "department",
-      label: "Department",
-    },
-    {
-      name: "office",
-      label: "Office",
-    },
-    {
-      name: "streetaddress",
-      label: "Street address",
-    },
-    {
-      name: "country",
-      label: "Country",
-    },
+    { name: "name", label: "Name" },
+    { name: "username", label: "Username" },
+    { name: "currentdevice", label: "Current device" },
+    { name: "lastLogon", label: "Last logon" },
+    { name: "department", label: "Department" },
+    { name: "office", label: "Office" },
+    { name: "streetaddress", label: "Street address" },
+    { name: "country", label: "Country" },
   ];
 
   return (
@@ -111,12 +94,15 @@ const UsersPage = () => {
         <div className="flex gap-2 py-4">
           <Filter
             filters={filters}
-            setFilters={setFilters}
+            setFilters={(next: any) => {
+              setFilters(next);
+              setPage(1);
+            }}
             filterOptions={(filtersQuery?.data ?? {}) as Record<string, string[]>}
             isOpen={isOpen}
             setIsOpen={setIsOpen}
           />
-          <Search onChange={setSearchValue} />
+          <Search onChange={handleSearchChange} />
           <TableSettings
             settings={userSettings?.data}
             checkboxes={checkboxes}
@@ -134,9 +120,14 @@ const UsersPage = () => {
           />
         </div>
         <UsersTable
-          data={usersQuery.data ?? []}
-          filterOptions={filters}
-          searchValue={searchValue}
+          data={usersQuery.data?.data ?? []}
+          total={usersQuery.data?.total ?? 0}
+          onPageChange={setPage}
+          onRowsPerPageChange={(newLimit: number) => {
+            setLimit(newLimit);
+            setPage(1);
+          }}
+          isLoading={usersQuery.isFetching}
         />
       </div>
     </PageMotion>

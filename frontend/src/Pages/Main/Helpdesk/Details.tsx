@@ -4,6 +4,7 @@ import { useParams } from "react-router";
 import { getTicket } from "../../../Services/tickets";
 import type { Comment, Approval } from "../../../Types";
 import { useTicketSocket } from "../../../Hooks/useTicketSocket";
+import { useParser } from "../../../Hooks/useParser";
 import TicketInfoPanel from "./components/TicketInfoPanel";
 import TicketContentPanel from "./components/TicketContentPanel";
 import TicketSidePanel from "./components/TicketSidePanel";
@@ -21,12 +22,22 @@ const convertApprovalsToComments = (approvals: Approval[]) => {
 
 const Details = () => {
   const params = useParams();
+  const { setParser } = useParser();
   const ticketQuery = useQuery({
     queryKey: ["ticket", params.id],
     queryFn: () => getTicket(params.id!),
   });
 
   const ticket = ticketQuery.data;
+
+  useEffect(() => {
+    if (ticket?.id) {
+      setParser({
+        id: ticket.id,
+        name: ticket.requester?.distinguishedName ?? ticket.number?.toString(),
+      });
+    }
+  }, [ticket?.id, setParser]);
 
   const [comments, setComments] = useState<Comment[]>([]);
 
@@ -54,7 +65,7 @@ const Details = () => {
   if (!ticket) return null;
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-[calc(100vh-58px)]">
       <TicketInfoPanel ticket={ticket} />
 
       <TicketContentPanel

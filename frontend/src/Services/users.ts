@@ -33,8 +33,10 @@ export const deleteUser = async (id: string): Promise<void> => {
   return data;
 };
 
-export const getUsersTable = async (): Promise<User[]> => {
-  const { data } = await api.get("/users/table");
+export const getUsersTable = async (
+  query: string = "",
+): Promise<{ data: User[]; total: number }> => {
+  const { data } = await api.get(`/users/table${query ? `?${query}` : ""}`);
   return data;
 };
 

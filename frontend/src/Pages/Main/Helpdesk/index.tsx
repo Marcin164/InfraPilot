@@ -4,7 +4,7 @@ import Search from "../../../Components/Inputs/Search";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import TableSettings from "../../../Components/TableSettings";
-import { getTickets } from "../../../Services/tickets";
+import { getTickets, getTicketsFilters } from "../../../Services/tickets";
 import { buildQuery } from "../../../Helpers/queries";
 import { useDebounce } from "../../../Hooks/useDebounce";
 import TicketsTable from "../../../Components/Tables/TicketsTable";
@@ -15,6 +15,9 @@ type TicketFilters = {
   priority?: string[];
   impact?: string[];
   urgency?: string[];
+  state?: string[];
+  assignee?: string[];
+  assignmentGroup?: string[];
 };
 
 const Index = () => {
@@ -26,11 +29,28 @@ const Index = () => {
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearch = useDebounce(searchValue, 500);
 
+  const dynamicFiltersQuery = useQuery({
+    queryKey: ["ticketsFilters"],
+    queryFn: () => getTicketsFilters(),
+  });
+
   const filterOptions = {
     type: ["Incident", "Service"],
     priority: ["Low", "Medium", "High", "Critical"],
     impact: ["Single user", "Multiple users", "Whole company"],
     urgency: ["Low", "Medium", "High"],
+    state: [
+      "New",
+      "Assigned",
+      "In progress",
+      "Awaiting for user",
+      "Awaiting for vendor",
+      "Resolved",
+      "Closed",
+      "Cancelled",
+    ],
+    assignee: dynamicFiltersQuery.data?.assignee ?? [],
+    assignmentGroup: dynamicFiltersQuery.data?.assignmentGroup ?? [],
   };
 
   const queryString = buildQuery({
@@ -38,6 +58,7 @@ const Index = () => {
     search: debouncedSearch,
     page,
     limit,
+    current: filters.state && filters.state.length > 0 ? "false" : "true",
   });
 
   const helpdeskQuery = useQuery({
