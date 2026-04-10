@@ -3,7 +3,7 @@ import { useState } from "react";
 import AddDashboardModal from "../Modals/AddDashboardModal";
 import EditDashboardModal from "../Modals/EditDashboardModal";
 import Select from "../Inputs/Select";
-import ButtonSecondary from "../Buttons/ButtonSecondary";
+import ButtonPrimary from "../Buttons/ButtonPrimary";
 
 type Props = {
   selectOptions: Array<any>;
@@ -40,12 +40,12 @@ const DashboardTopbar = ({
         />
       </div>
       <div className="flex">
-        <ButtonSecondary
+        <ButtonPrimary
           icon={faPencil}
           onClick={onOpenEditDashboardModal}
           className="mr-2"
         />
-        <ButtonSecondary
+        <ButtonPrimary
           icon={faPlus}
           text="Add Dashboard"
           onClick={onOpenAddDashboardModal}

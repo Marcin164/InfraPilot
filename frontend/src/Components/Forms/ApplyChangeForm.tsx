@@ -10,7 +10,6 @@ import Input from "../Inputs/Input";
 import TicketSelect from "../Inputs/TicketSelect";
 import SelectSecondary from "../Inputs/SelectSecondary";
 import Checkbox from "../Inputs/Checkbox";
-import ButtonPrimary from "../Buttons/ButtonPrimary";
 
 import { createHistoryEntry } from "../../Services/histories";
 import { addDevice, getDevices } from "../../Services/devices";
@@ -21,7 +20,7 @@ import {
 } from "../../Constants/options";
 import { requiredValidator } from "../../Helpers/validators";
 import { applyChangeDefaultValues } from "../../Constants/defaultValues";
-import ButtonSecondary from "../Buttons/ButtonSecondary";
+import ButtonPrimary from "../Buttons/ButtonPrimary";
 
 type Option = { label: string; value: string };
 
@@ -32,7 +31,7 @@ const ApplyChangeForm: React.FC = () => {
   const queryClient = useQueryClient();
   const deviceContext = useOutletContext<{ data: { location: string } }>();
 
-  const devicesQuery = useQuery({
+  const devicesQuery = useQuery<any>({
     queryKey: ["devices"],
     queryFn: () => getDevices(),
   });
@@ -59,8 +58,8 @@ const ApplyChangeForm: React.FC = () => {
               ...component,
               location: deviceContext.data.location,
               group: "Components",
-            })
-          )
+            }),
+          ),
         );
       }
 
@@ -71,7 +70,7 @@ const ApplyChangeForm: React.FC = () => {
           (component: any, index) => ({
             ...component,
             deviceId: createdDevices[index],
-          })
+          }),
         ),
       });
     },
@@ -91,7 +90,7 @@ const ApplyChangeForm: React.FC = () => {
 
     onSubmit: ({ value }) => {
       const sanitized = Object.fromEntries(
-        Object.entries(value).map(([k, v]) => [k, v === "" ? null : v])
+        Object.entries(value).map(([k, v]) => [k, v === "" ? null : v]),
       );
 
       mutation.mutate(sanitized as FormValues);
@@ -208,7 +207,7 @@ const ApplyChangeForm: React.FC = () => {
                         </div>
                       ))}
 
-                      <ButtonSecondary
+                      <ButtonPrimary
                         type="button"
                         icon={faPlus}
                         text="Add removed component"

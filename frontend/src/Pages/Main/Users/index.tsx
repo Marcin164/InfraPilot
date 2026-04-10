@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getFilter, getUsersTable } from "../../../Services/users";
 import { useState } from "react";
 import AddUserModal from "../../../Components/Modals/AddUserModal";
-import ButtonSecondary from "../../../Components/Buttons/ButtonSecondary";
+import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
 import { getUserSettings } from "../../../Services/settings";
@@ -98,7 +98,9 @@ const UsersPage = () => {
               setFilters(next);
               setPage(1);
             }}
-            filterOptions={(filtersQuery?.data ?? {}) as Record<string, string[]>}
+            filterOptions={
+              (filtersQuery?.data ?? {}) as Record<string, string[]>
+            }
             isOpen={isOpen}
             setIsOpen={setIsOpen}
           />
@@ -108,7 +110,8 @@ const UsersPage = () => {
             checkboxes={checkboxes}
             settingsKey="usersTableColumnOrder"
           />
-          <ButtonSecondary
+          <ButtonPrimary
+            color="white"
             icon={faPlus}
             text={t("btn.add.user")}
             onClick={() => setIsAddUserModalOpen(true)}

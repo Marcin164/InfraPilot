@@ -2,7 +2,6 @@ import { faTrash, faWarning, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 import Modal from "react-responsive-modal";
-import ButtonSecondary from "../Buttons/ButtonSecondary";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 
 type Props = {

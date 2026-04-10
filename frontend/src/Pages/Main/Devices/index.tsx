@@ -6,10 +6,11 @@ import { useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getDevices, getFilter } from "../../../Services/devices";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
-import ButtonSecondary from "../../../Components/Buttons/ButtonSecondary";
+import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
 import AddDeviceModal from "../../../Components/Modals/AddDeviceModal";
 import { buildQuery } from "../../../Helpers/queries";
 import { useDebounce } from "../../../Hooks/useDebounce";
+import PageMotion from "../../../Components/PageMotion/PageMotion";
 
 type DeviceFilters = {
   group?: string[];
@@ -73,37 +74,42 @@ const Index = () => {
   };
 
   return (
-    <div className="w-full h-[calc(100vh-58px)] px-4">
-      <div className="pt-4 pb-4 flex gap-2">
-        <Filter
-          filters={filters as any}
-          setFilters={(next: any) => {
-            setFilters(next);
+    <PageMotion>
+      <div className="w-full h-[calc(100vh-58px)] px-4">
+        <div className="flex gap-2 py-4">
+          <Filter
+            filters={filters as any}
+            setFilters={(next: any) => {
+              setFilters(next);
+              setPage(1);
+            }}
+            filterOptions={
+              (filterQuery?.data ?? {}) as Record<string, string[]>
+            }
+            isOpen={isOpen}
+            setIsOpen={setIsOpen}
+          />
+          <Search onChange={handleSearchChange} />
+          <ButtonPrimary
+            color="white"
+            icon={faPlus}
+            text="Add device"
+            onClick={toggleModal}
+          />
+          <AddDeviceModal isModalOpen={addEQModal} onCloseModal={toggleModal} />
+        </div>
+        <DevicesTable
+          data={devicesQuery.data?.data ?? []}
+          total={devicesQuery.data?.total ?? 0}
+          onPageChange={setPage}
+          onRowsPerPageChange={(newLimit: number) => {
+            setLimit(newLimit);
             setPage(1);
           }}
-          filterOptions={(filterQuery?.data ?? {}) as Record<string, string[]>}
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
+          isLoading={devicesQuery.isFetching}
         />
-        <Search onChange={handleSearchChange} />
-        <ButtonSecondary
-          icon={faPlus}
-          text="Add device"
-          onClick={toggleModal}
-        />
-        <AddDeviceModal isModalOpen={addEQModal} onCloseModal={toggleModal} />
       </div>
-      <DevicesTable
-        data={devicesQuery.data?.data ?? []}
-        total={devicesQuery.data?.total ?? 0}
-        onPageChange={setPage}
-        onRowsPerPageChange={(newLimit: number) => {
-          setLimit(newLimit);
-          setPage(1);
-        }}
-        isLoading={devicesQuery.isFetching}
-      />
-    </div>
+    </PageMotion>
   );
 };
 

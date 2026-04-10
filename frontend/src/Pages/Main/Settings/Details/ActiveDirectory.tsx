@@ -16,7 +16,6 @@ import {
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
-import ButtonSecondary from "../../../../Components/Buttons/ButtonSecondary";
 import Input from "../../../../Components/Inputs/Input";
 import Modal from "react-responsive-modal";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -202,7 +201,7 @@ const ActiveDirectory = () => {
             className="hidden"
             onChange={handleCertUpload}
           />
-          <ButtonSecondary
+          <ButtonPrimary
             text={
               certUploadMutation.isPending
                 ? "Wysyłanie..."
@@ -215,7 +214,7 @@ const ActiveDirectory = () => {
             disabled={certUploadMutation.isPending}
           />
           {status?.hasCertificate && (
-            <ButtonSecondary
+            <ButtonPrimary
               text="Usuń certyfikat"
               icon={faTrash}
               onClick={() => certDeleteMutation.mutate()}
@@ -259,7 +258,7 @@ const ActiveDirectory = () => {
               onClick={() => syncMutation.mutate()}
               disabled={isLoading}
             />
-            <ButtonSecondary
+            <ButtonPrimary
               text="Rozłącz"
               icon={faPlugCircleXmark}
               onClick={() => setDisconnectModalOpen(true)}
@@ -274,9 +273,7 @@ const ActiveDirectory = () => {
               }`}
             >
               <FontAwesomeIcon
-                icon={
-                  syncMutation.data.success ? faCircleCheck : faCircleXmark
-                }
+                icon={syncMutation.data.success ? faCircleCheck : faCircleXmark}
               />
               {syncMutation.data.message}
             </div>
@@ -381,7 +378,7 @@ const ActiveDirectory = () => {
           </div>
 
           <div className="flex gap-3 mt-4">
-            <ButtonSecondary
+            <ButtonPrimary
               text={
                 testMutation.isPending ? "Testowanie..." : "Testuj połączenie"
               }

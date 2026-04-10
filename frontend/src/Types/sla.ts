@@ -52,8 +52,12 @@ export interface TicketSla {
 export interface SlaInstance {
   id: string;
   type: SlaType;
+  name: string;
+  status: "ACTIVE" | "PAUSED" | "BREACHED";
   remainingMinutes: number;
   usedPercentage: number;
   breached: boolean;
   paused: boolean;
+  dueAt: string;
+  targetMinutes: number;
 }

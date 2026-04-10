@@ -2,15 +2,12 @@ import {
   faAppleAlt,
   faComputerMouse,
   faLaptop,
-  faPen,
-  faTrashAlt,
   faUserMinus,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link, useNavigate, useParams } from "react-router";
 import Badge from "../Badges/Badge";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
-import ButtonSecondary from "../Buttons/ButtonSecondary";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { assignDevice } from "../../Services/devices";
 import { toast } from "react-toastify";
@@ -71,7 +68,7 @@ const EquipmentItem = ({
           <Badge text={location} className="ml-2 bg-[#2B9AE9]" />
         </div>
       </Link>
-      <ButtonSecondary icon={faUserMinus} onClick={mutation.mutate} />
+      <ButtonPrimary icon={faUserMinus} color="red" onClick={mutation.mutate} />
     </div>
   );
 };

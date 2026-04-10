@@ -12,7 +12,6 @@ import {
 import { useTranslation } from "react-i18next";
 import CardHeader from "../Headers/CardHeader";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
-import ButtonSecondary from "../Buttons/ButtonSecondary";
 
 type Props = {
   isModalOpen: boolean;
@@ -82,8 +81,7 @@ const AddFormModal = ({ isModalOpen, onCloseModal, onSubmit }: Props) => {
   return (
     <Modal
       classNames={{
-        modal:
-          "w-[900px] rounded-[10px] h-[85vh] max-h-[85vh] overflow-y-auto",
+        modal: "w-[900px] rounded-[10px] h-[85vh] max-h-[85vh] overflow-y-auto",
       }}
       open={isModalOpen}
       onClose={close}
@@ -138,9 +136,7 @@ const AddFormModal = ({ isModalOpen, onCloseModal, onSubmit }: Props) => {
               type="file"
               accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               className="hidden"
-              onChange={(e) =>
-                e.target.files && handleFile(e.target.files[0])
-              }
+              onChange={(e) => e.target.files && handleFile(e.target.files[0])}
             />
           </div>
         )}
@@ -187,7 +183,7 @@ const AddFormModal = ({ isModalOpen, onCloseModal, onSubmit }: Props) => {
               {isDocx && previewUrl && (
                 <iframe
                   src={`https://docs.google.com/gview?url=${encodeURIComponent(
-                    previewUrl
+                    previewUrl,
                   )}&embedded=true`}
                   title="DOCX preview"
                   className="h-[55vh] w-full"
@@ -202,7 +198,10 @@ const AddFormModal = ({ isModalOpen, onCloseModal, onSubmit }: Props) => {
             )}
 
             <div className="mt-4 flex justify-end gap-2">
-              <ButtonSecondary text={t("btn.cancel") || "Anuluj"} onClick={close} />
+              <ButtonPrimary
+                text={t("btn.cancel") || "Anuluj"}
+                onClick={close}
+              />
               <ButtonPrimary
                 text={t("btn.send") || "Wyślij"}
                 onClick={() => {

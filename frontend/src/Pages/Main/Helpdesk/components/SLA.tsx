@@ -20,8 +20,6 @@ const SLA = (props: Props) => {
 
   if (!sla) return null;
 
-  console.log(sla);
-
   return (
     <div>
       <CardHeader text="SLA" />

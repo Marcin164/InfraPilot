@@ -14,7 +14,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
-import ButtonSecondary from "../../../../Components/Buttons/ButtonSecondary";
 import Input from "../../../../Components/Inputs/Input";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 
@@ -277,7 +276,7 @@ const AssignmentGroups = () => {
                             onClick={() => handleSaveEdit(group.id)}
                             disabled={updateMutation.isPending}
                           />
-                          <ButtonSecondary
+                          <ButtonPrimary
                             icon={faXmark}
                             text="Cancel"
                             onClick={cancelEdit}
@@ -285,12 +284,12 @@ const AssignmentGroups = () => {
                         </>
                       ) : (
                         <>
-                          <ButtonSecondary
+                          <ButtonPrimary
                             icon={faPen}
                             text="Edit"
                             onClick={() => startEdit(group)}
                           />
-                          <ButtonSecondary
+                          <ButtonPrimary
                             icon={faTrash}
                             text="Delete"
                             onClick={() => {

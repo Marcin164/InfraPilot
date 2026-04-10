@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Dropdown from "./Components/Dropdown";
-import ButtonSecondary from "../Buttons/ButtonSecondary";
+import ButtonPrimary from "../Buttons/ButtonPrimary";
 import {
   faComputer,
   faFile,
@@ -51,28 +51,32 @@ const UserDetailsDropdown = ({ data }: Props) => {
 
   return (
     <Dropdown>
-      <ButtonSecondary
+      <ButtonPrimary
+        color="white"
         icon={faPen}
         text="Edit"
-        className="h-[34px] w-full my-1 text-left shadow-none"
+        className="h-[34px] text-[16px] w-full my-1 text-left shadow-none"
         onClick={toggleEditUserModalOpen}
       />
-      <ButtonSecondary
+      <ButtonPrimary
+        color="white"
         icon={faTrash}
         text="Delete"
-        className="h-[34px] w-full my-1 text-left text-[#BC0E0E] shadow-none"
+        className="h-[34px] text-[16px] w-full my-1 text-left text-[#BC0E0E] shadow-none"
         onClick={toggleConfirmationModalOpen}
       />
-      <ButtonSecondary
+      <ButtonPrimary
+        color="white"
         icon={faComputer}
         text="Edit equipment"
-        className="h-[34px] w-full my-1 text-left shadow-none"
+        className="h-[34px] text-[16px] w-full my-1 text-left shadow-none"
         onClick={() => navigate(`/users/${id}/equipmentedit`)}
       />
-      <ButtonSecondary
+      <ButtonPrimary
+        color="white"
         icon={faFile}
         text="Add form"
-        className="h-[34px] w-full my-1 text-left shadow-none"
+        className="h-[34px] text-[16px] w-full my-1 text-left shadow-none"
         onClick={toggleAddFormModalOpen}
       />
       <ConfirmationModal

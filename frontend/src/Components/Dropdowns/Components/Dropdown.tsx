@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import ButtonSecondary from "../../Buttons/ButtonSecondary";
+import ButtonPrimary from "../../Buttons/ButtonPrimary";
 import { faEllipsis } from "@fortawesome/free-solid-svg-icons";
 import DropdownModal from "./DropdownModal";
 
@@ -11,8 +11,9 @@ const Dropdown = ({ children }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="relative">
-      <ButtonSecondary
+      <ButtonPrimary
         className="border border-[#3C3C3C] h-[34px]"
+        color="white"
         onClick={() => setIsOpen((v: any) => !v)}
         icon={faEllipsis}
       />

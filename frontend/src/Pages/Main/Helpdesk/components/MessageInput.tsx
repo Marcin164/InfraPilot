@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import ButtonSecondary from "../../../../Components/Buttons/ButtonSecondary";
+import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import {
   faFile,
   faMicrophone,
@@ -43,7 +43,9 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
   const { user }: any = useAuthInfo();
   const [message, setMessage] = useState("");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
+  const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(
+    null,
+  );
 
   // Recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -99,9 +101,7 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
       clearRecording();
     },
     onError: (err: any) => {
-      toast.error(
-        err?.response?.data?.message ?? "Failed to send attachment",
-      );
+      toast.error(err?.response?.data?.message ?? "Failed to send attachment");
     },
   });
 
@@ -200,11 +200,9 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
         : recordedBlob.type.includes("ogg")
           ? "ogg"
           : "wav";
-      const file = new File(
-        [recordedBlob],
-        `voice-${Date.now()}.${ext}`,
-        { type: recordedBlob.type || "audio/webm" },
-      );
+      const file = new File([recordedBlob], `voice-${Date.now()}.${ext}`, {
+        type: recordedBlob.type || "audio/webm",
+      });
       fileMutation.mutate({
         content: message.trim() || undefined,
         type: "Public",
@@ -221,16 +219,18 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
     !isPending && (pendingFile || recordedBlob || message.trim().length > 0);
 
   return (
-    <div className="bg-white shadow-xl rounded-[10px] p-2 space-y-2">
+    <div className="p-2 space-y-2">
       {(pendingFile || recordedBlob) && (
         <div className="flex items-center gap-2 bg-[#F6F6F6] rounded-[8px] p-2">
-          {pendingFile && pendingFile.type.startsWith("image/") && pendingPreviewUrl && (
-            <img
-              src={pendingPreviewUrl}
-              alt={pendingFile.name}
-              className="h-12 w-12 object-cover rounded"
-            />
-          )}
+          {pendingFile &&
+            pendingFile.type.startsWith("image/") &&
+            pendingPreviewUrl && (
+              <img
+                src={pendingPreviewUrl}
+                alt={pendingFile.name}
+                className="h-12 w-12 object-cover rounded"
+              />
+            )}
           {pendingFile && !pendingFile.type.startsWith("image/") && (
             <span className="text-[14px] font-semibold text-[#3C3C3C]">
               {pendingFile.name}
@@ -261,13 +261,13 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
           onChange={handleFileChange}
           className="hidden"
         />
-        <ButtonSecondary
+        <ButtonPrimary
           icon={faFile}
           className="shrink-0"
           onClick={handleFilePick}
           disabled={isPending || isRecording}
         />
-        <ButtonSecondary
+        <ButtonPrimary
           icon={isRecording ? faStop : faMicrophone}
           className={`shrink-0 ${isRecording ? "text-[#BC0E0E]" : ""}`}
           onClick={isRecording ? stopRecording : startRecording}
@@ -276,11 +276,9 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
 
         <textarea
           value={message}
-          rows={2}
-          placeholder={
-            isRecording ? "Recording..." : "Write a message..."
-          }
-          className="flex-1 resize-none border border-[#EFEFEF] rounded-[10px] px-3 py-2 text-[14px] outline-none focus:border-[#2B9AE9] min-h-[44px] max-h-[200px]"
+          rows={1}
+          placeholder={isRecording ? "Recording..." : "Write a message..."}
+          className="flex-1 resize-none border border-[#EFEFEF] rounded-[10px] px-3 py-2 text-[14px] outline-none focus:border-[#2B9AE9] min-h-[44px] max-h-[200px] shadow-xl"
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
@@ -290,7 +288,7 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
           }}
         />
 
-        <ButtonSecondary
+        <ButtonPrimary
           icon={faShare}
           onClick={send}
           disabled={!canSend}

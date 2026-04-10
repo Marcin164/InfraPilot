@@ -1,6 +1,6 @@
 import React, { ReactNode, useState } from "react";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
-import ButtonSecondary from "../../../../Components/Buttons/ButtonSecondary";
+import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import {
   faSquare,
   faTableCellsLarge,
@@ -25,15 +25,12 @@ const PageContainer = ({ children }: Props) => {
   return (
     <div className="mx-auto space-y-4">
       <div className="flex gap-2 justify-end h-[40px]">
-        <ButtonSecondary icon={faSquare} onClick={() => setLayout("small")} />
-        <ButtonSecondary
+        <ButtonPrimary icon={faSquare} onClick={() => setLayout("small")} />
+        <ButtonPrimary
           icon={faTableCellsLarge}
           onClick={() => setLayout("medium")}
         />
-        <ButtonSecondary
-          icon={faTableCells}
-          onClick={() => setLayout("large")}
-        />
+        <ButtonPrimary icon={faTableCells} onClick={() => setLayout("large")} />
       </div>
 
       <ResponsiveMasonry columnsCountBreakPoints={layouts[layout]}>

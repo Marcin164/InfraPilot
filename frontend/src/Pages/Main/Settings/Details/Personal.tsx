@@ -6,7 +6,7 @@ import {
   faDesktop,
   faBell,
 } from "@fortawesome/free-solid-svg-icons";
-import ButtonSecondary from "../../../../Components/Buttons/ButtonSecondary";
+import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import Checkbox from "../../../../Components/Inputs/Checkbox";
 import { useQuery } from "@tanstack/react-query";
@@ -51,17 +51,17 @@ const Personal = () => {
       <div>
         <h3 className="font-semibold mb-2">Theme</h3>
         <div className="flex gap-2">
-          <ButtonSecondary
+          <ButtonPrimary
             onClick={() => setTheme("day")}
             text="Day"
             icon={faSun}
           />
-          <ButtonSecondary
+          <ButtonPrimary
             onClick={() => setTheme("night")}
             text="Night"
             icon={faMoon}
           />
-          <ButtonSecondary
+          <ButtonPrimary
             onClick={() => setTheme("system")}
             text="System"
             icon={faDesktop}
