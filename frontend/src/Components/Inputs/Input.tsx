@@ -12,6 +12,7 @@ type Props = {
   value?: any;
   name?: any;
   disabled?: boolean;
+  placeholder?: string;
   suffix?: string;
   errors?: any;
 };
@@ -27,24 +28,29 @@ const Input = ({
   value,
   name,
   disabled = false,
+  placeholder,
   suffix,
   errors,
 }: Props) => {
   return (
     <div className={twMerge("pt-2", className)}>
-      <label htmlFor={name} className="font-bold text-[#3C3C3C]">
-        {label}
-      </label>
+      {label && (
+        <label htmlFor={name} className="font-bold text-[#3C3C3C]">
+          {label}
+        </label>
+      )}
       <div className="flex">
         <input
           id={name}
           name={name}
           defaultValue={defaultValue || null}
           value={value || null}
+          placeholder={placeholder}
           type={type}
           className={twMerge(
-            "w-full border border-[#535353] bg-[#FFFFFF] text-[16px] font-bold block rounded-[10px] px-3 py-2 mt-[6px]",
+            "w-full border border-[#535353] bg-[#FFFFFF] text-[16px] font-bold block rounded-[10px] px-3 py-2",
             suffix && "rounded-r-[0px] border-r-[0px]",
+            label && "mt-[6px]",
             inputClassName,
           )}
           onChange={

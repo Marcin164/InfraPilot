@@ -12,7 +12,7 @@ import Software from "./Pages/Main/Devices/Details/Software";
 import Network from "./Pages/Main/Devices/Details/Network";
 import Security from "./Pages/Main/Devices/Details/Security";
 import Events from "./Pages/Main/Devices/Details/Events";
-import History from "./Pages/Main/Devices/Details/History";
+import DeviceHistory from "./Pages/Main/Devices/Details/History";
 import Helpdesk from "./Pages/Main/Helpdesk";
 import Reports from "./Pages/Main/Reports";
 import { ParseProvider } from "./Context/ParserContext";
@@ -28,6 +28,10 @@ import UsersReports from "./Pages/Main/Reports/Details/UsersReports";
 import DevicesReports from "./Pages/Main/Reports/Details/DevicesReports";
 import TicketsReports from "./Pages/Main/Reports/Details/TicketsReports";
 import SecurityReports from "./Pages/Main/Reports/Details/SecurityReports";
+import Knowledge from "./Pages/Main/Knowledge";
+import KnowledgeDetails from "./Pages/Main/Knowledge/Details";
+import ArticlePage from "./Pages/Main/Knowledge/Details/ArticlePage";
+import History from "./Pages/Main/History";
 import { AnimatePresence } from "framer-motion";
 import { useAuthSetup } from "./Hooks/useAuthSetup";
 
@@ -57,10 +61,17 @@ function App() {
                 <Route path="events" element={<Events />} />
                 <Route path="users" element={<UsersInfo />} />
                 <Route path="peripherals" element={<Peripherals />} />
-                <Route path="history" element={<History />} />
+                <Route path="history" element={<DeviceHistory />} />
               </Route>
               <Route path="/helpdesk" element={<Helpdesk />} />
               <Route path="/helpdesk/:id" element={<HelpdeskDetails />} />
+              <Route path="/knowledge" element={<Knowledge />} />
+              <Route path="/knowledge/:id" element={<KnowledgeDetails />} />
+              <Route
+                path="/knowledge/:id/:articleId"
+                element={<ArticlePage />}
+              />
+              <Route path="/history" element={<History />} />
               <Route path="/reports" element={<Reports />}>
                 <Route path="users" element={<UsersReports />} />
                 <Route path="devices" element={<DevicesReports />} />
@@ -69,9 +80,15 @@ function App() {
               </Route>
               <Route path="/settings" element={<Settings />}>
                 <Route index path="personal" element={<Personal />} />
-                <Route path="active-directory" element={<ActiveDirectorySettings />} />
+                <Route
+                  path="active-directory"
+                  element={<ActiveDirectorySettings />}
+                />
                 <Route path="sla" element={<Sla />} />
-                <Route path="assignment-groups" element={<AssignmentGroups />} />
+                <Route
+                  path="assignment-groups"
+                  element={<AssignmentGroups />}
+                />
               </Route>
             </Route>
           </Routes>

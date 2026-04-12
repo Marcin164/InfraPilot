@@ -1,4 +1,3 @@
-import React from "react";
 import { Link, useLocation } from "react-router";
 import { capitalize, splitPath } from "../../Helpers/string";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -6,20 +5,24 @@ import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import GlobalSearch from "./GlobalSearch";
 import { useParser } from "../../Hooks/useParser";
 import AccountButton from "./AccountButton";
-import { twMerge } from "tailwind-merge";
 
-type Props = {};
-
-const index = (props: Props) => {
+const Topbar = () => {
   const location = useLocation();
-  const breadCrumbs: any = splitPath(location.pathname, "/");
-  const { parser } = useParser();
+  const breadCrumbs: string[] = splitPath(location.pathname, "/");
+  const { parsers, parser } = useParser();
+
+  const resolve = (segment: string): string => {
+    if (parsers[segment]) return parsers[segment];
+    if (segment === parser?.id && parser?.name) return capitalize(parser.name);
+    return capitalize(segment);
+  };
 
   return (
     <div className="flex items-center justify-between bg-[#FFFFFF] px-4 py-3">
       <div className="capitalize">
         {breadCrumbs.map((breadCrumb: string, index: number) => (
           <span
+            key={index}
             style={{ textTransform: "capitalize" }}
             className="text-[22px] text-[#3C3C3C]"
           >
@@ -31,9 +34,7 @@ const index = (props: Props) => {
                   : ""
               }
             >
-              {breadCrumb === parser?.id
-                ? capitalize(`${parser?.name}`)
-                : capitalize(breadCrumb)}
+              {resolve(breadCrumb)}
             </Link>
             {index !== breadCrumbs.length - 1 && (
               <FontAwesomeIcon icon={faChevronRight} className="px-2" />
@@ -49,4 +50,4 @@ const index = (props: Props) => {
   );
 };
 
-export default index;
+export default Topbar;

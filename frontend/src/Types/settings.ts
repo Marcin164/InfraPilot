@@ -9,4 +9,5 @@ export interface UserSettings {
   };
   usersTableColumnOrder?: string[];
   ticketsTableColumnOrder?: string[];
+  reportsLayout?: "small" | "medium" | "large";
 }

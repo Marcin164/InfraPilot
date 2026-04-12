@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode } from "react";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import {
@@ -6,6 +6,12 @@ import {
   faTableCellsLarge,
   faTableCells,
 } from "@fortawesome/free-solid-svg-icons";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  getUserSettings,
+  updateUserSettings,
+} from "../../../../Services/settings";
+import { twMerge } from "tailwind-merge";
 
 type Props = {
   children: ReactNode;
@@ -20,17 +26,50 @@ const layouts = {
 };
 
 const PageContainer = ({ children }: Props) => {
-  const [layout, setLayout] = useState<Layout>("small");
+  const queryClient = useQueryClient();
+
+  const { data: settings } = useQuery({
+    queryKey: ["userSettings"],
+    queryFn: getUserSettings,
+  });
+
+  const layout: Layout = (settings?.reportsLayout as Layout) || "small";
+
+  const mutation = useMutation({
+    mutationFn: (newLayout: Layout) =>
+      updateUserSettings({ reportsLayout: newLayout }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["userSettings"] });
+    },
+  });
+
+  const btnClass = (value: Layout) =>
+    twMerge(
+      value === layout &&
+        "ring-2 ring-white ring-offset-2 ring-offset-blue-500",
+    );
 
   return (
     <div className="mx-auto space-y-4">
       <div className="flex gap-2 justify-end h-[40px]">
-        <ButtonPrimary icon={faSquare} onClick={() => setLayout("small")} />
         <ButtonPrimary
-          icon={faTableCellsLarge}
-          onClick={() => setLayout("medium")}
+          color="white"
+          icon={faSquare}
+          className={btnClass("small")}
+          onClick={() => mutation.mutate("small")}
         />
-        <ButtonPrimary icon={faTableCells} onClick={() => setLayout("large")} />
+        <ButtonPrimary
+          color="white"
+          icon={faTableCellsLarge}
+          className={btnClass("medium")}
+          onClick={() => mutation.mutate("medium")}
+        />
+        <ButtonPrimary
+          color="white"
+          icon={faTableCells}
+          className={btnClass("large")}
+          onClick={() => mutation.mutate("large")}
+        />
       </div>
 
       <ResponsiveMasonry columnsCountBreakPoints={layouts[layout]}>

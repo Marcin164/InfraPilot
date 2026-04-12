@@ -7,3 +7,4 @@ export * from "./dashboard";
 export * from "./application";
 export * from "./settings";
 export * from "./common";
+export * from "./knowledge";

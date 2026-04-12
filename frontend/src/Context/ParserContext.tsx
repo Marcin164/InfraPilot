@@ -1,13 +1,16 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useCallback, useState } from "react";
 
-type ParserValue = {
-  id?: string;
-  name?: string;
-};
+type ParserMap = Record<string, string>;
 
 type ParserContextType = {
-  parser: ParserValue | null;
-  setParser: React.Dispatch<React.SetStateAction<ParserValue | null>>;
+  parsers: ParserMap;
+  setParsers: (entries: ParserMap) => void;
+  /** @deprecated Use setParsers instead — kept for backward compat */
+  parser: { id?: string; name?: string } | null;
+  /** @deprecated Use setParsers instead */
+  setParser: React.Dispatch<
+    React.SetStateAction<{ id?: string; name?: string } | null>
+  >;
 };
 
 export const ParserContext = createContext<ParserContextType | undefined>(
@@ -17,10 +20,25 @@ export const ParserContext = createContext<ParserContextType | undefined>(
 export const ParseProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [parser, setParser] = useState<ParserValue | null>(null);
+  const [parsers, _setParsers] = useState<ParserMap>({});
+  const [legacyParser, setLegacyParser] = useState<{
+    id?: string;
+    name?: string;
+  } | null>(null);
+
+  const setParsers = useCallback((entries: ParserMap) => {
+    _setParsers(entries);
+  }, []);
 
   return (
-    <ParserContext.Provider value={{ parser, setParser }}>
+    <ParserContext.Provider
+      value={{
+        parsers,
+        setParsers,
+        parser: legacyParser,
+        setParser: setLegacyParser,
+      }}
+    >
       {children}
     </ParserContext.Provider>
   );

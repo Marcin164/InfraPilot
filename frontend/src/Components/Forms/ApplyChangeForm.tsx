@@ -39,9 +39,9 @@ const ApplyChangeForm: React.FC = () => {
   const addedComponentsOptions = useMemo(() => {
     if (!devicesQuery.data) return [];
 
-    return devicesQuery.data
-      .filter((d: any) => d.group === "Components")
-      .map((d: any) => ({
+    return devicesQuery?.data?.data
+      ?.filter((d: any) => d.group === "Components")
+      ?.map((d: any) => ({
         label: `${d.manufacturer} ${d.model} (${d.serialNumber})`,
         value: d.id,
       }));

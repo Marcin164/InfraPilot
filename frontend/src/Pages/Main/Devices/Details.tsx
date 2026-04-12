@@ -12,7 +12,7 @@ const Details = () => {
   const params = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { setParser } = useParser();
+  const { setParsers } = useParser();
 
   const deviceQuery = useQuery({
     queryKey: ["device"],
@@ -20,13 +20,11 @@ const Details = () => {
   });
 
   useEffect(() => {
-    setParser({
-      id: deviceQuery?.data?.id,
-      name: deviceQuery?.data?.assetName,
-    });
-
-    return () => {};
-  }, [deviceQuery?.data?.id, setParser]);
+    if (deviceQuery?.data?.id) {
+      setParsers({ [deviceQuery.data.id]: deviceQuery.data.assetName ?? deviceQuery.data.id });
+    }
+    return () => setParsers({});
+  }, [deviceQuery?.data?.id, setParsers]);
 
   useEffect(() => {
     if (location.pathname === `/devices/${deviceQuery?.data?.id}`)

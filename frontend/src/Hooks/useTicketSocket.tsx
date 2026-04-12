@@ -4,9 +4,11 @@ import { socket } from "../lib/socket";
 export const useTicketSocket = ({
   ticketId,
   onNewComment,
+  onNewActivity,
 }: {
   ticketId?: string;
   onNewComment?: (comment: any) => void;
+  onNewActivity?: (activity: any) => void;
 }) => {
   const joinedRef = useRef(false);
 
@@ -26,6 +28,10 @@ export const useTicketSocket = ({
       socket.on("ticket.comment.created", onNewComment);
     }
 
+    if (onNewActivity) {
+      socket.on("ticket.activity.created", onNewActivity);
+    }
+
     return () => {
       if (joinedRef.current) {
         socket.emit("ticket.leave", ticketId);
@@ -34,6 +40,10 @@ export const useTicketSocket = ({
 
       if (onNewComment) {
         socket.off("ticket.comment.created", onNewComment);
+      }
+
+      if (onNewActivity) {
+        socket.off("ticket.activity.created", onNewActivity);
       }
     };
   }, [ticketId]);

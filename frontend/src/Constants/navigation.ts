@@ -1,5 +1,6 @@
 import {
   faAddressBook,
+  faBookAtlas,
   faCalendar,
   faChartBar,
   faChartPie,
@@ -16,7 +17,16 @@ import {
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 
-export const navbarItems = [
+export type NavbarRequirement = "admin" | "approverOrAdmin";
+
+export type NavbarItem = {
+  to: string;
+  label: string;
+  icon: any;
+  requires?: NavbarRequirement;
+};
+
+export const navbarItems: NavbarItem[] = [
   {
     to: "/dashboards",
     label: "nav.dashboards",
@@ -38,7 +48,12 @@ export const navbarItems = [
     icon: faRobot,
   },
   {
-    to: "/reports",
+    to: "/knowledge",
+    label: "nav.knowledge",
+    icon: faBookAtlas,
+  },
+  {
+    to: "/reports/users",
     label: "nav.reports",
     icon: faChartBar,
   },
@@ -46,6 +61,7 @@ export const navbarItems = [
     to: "/history",
     label: "nav.history",
     icon: faHistory,
+    requires: "approverOrAdmin",
   },
   {
     to: "/settings",
@@ -122,6 +138,11 @@ export const settingsNavbarItems = [
     to: "assignment-groups",
     label: "Assignment Groups",
     icon: faUsers,
+  },
+  {
+    to: "tickets",
+    label: "Tickets",
+    icon: faTicket,
   },
 ];
 

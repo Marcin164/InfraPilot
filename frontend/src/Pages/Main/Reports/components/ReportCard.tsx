@@ -1,5 +1,7 @@
 import React, { ReactNode } from "react";
 import { motion } from "framer-motion";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faDownload } from "@fortawesome/free-solid-svg-icons";
 import Stat from "./Stat";
 
 type Props = {
@@ -33,9 +35,11 @@ const ReportCard = ({
         {onExport && (
           <button
             onClick={onExport}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg"
+            title="Export CSV"
+            aria-label="Export CSV"
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
           >
-            Export CSV
+            <FontAwesomeIcon icon={faDownload} />
           </button>
         )}
       </div>

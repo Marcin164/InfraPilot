@@ -11,7 +11,7 @@ import PageMotion from "../../../Components/PageMotion/PageMotion";
 
 const Details = () => {
   const params: any = useParams();
-  const { setParser } = useParser();
+  const { setParsers } = useParser();
 
   const userQuery = useQuery({
     queryKey: ["user"],
@@ -24,13 +24,13 @@ const Details = () => {
   });
 
   useEffect(() => {
-    setParser({
-      id: userQuery?.data?.id,
-      name:
-        userQuery?.data &&
-        `${userQuery?.data?.name} ${userQuery?.data?.surname}`,
-    });
-  }, [userQuery?.data?.id, setParser]);
+    if (userQuery?.data?.id) {
+      setParsers({
+        [userQuery.data.id]: `${userQuery.data.name} ${userQuery.data.surname}`,
+      });
+    }
+    return () => setParsers({});
+  }, [userQuery?.data?.id, setParsers]);
 
   if (!userQuery?.data) return null;
 

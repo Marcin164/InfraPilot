@@ -1,3 +1,4 @@
+import { useRef, useEffect } from "react";
 import MessagesPanel from "./MessagesPanel";
 import MessageInput from "./MessageInput";
 
@@ -14,6 +15,15 @@ const TicketContentPanel = ({
   allComments,
   onOptimisticComment,
 }: TicketContentPanelProps) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }
+  }, [allComments.length]);
+
   return (
     <div className="flex flex-col w-full mx-4 my-4 h-[calc(100vh-90px)]">
       <div className="bg-white shadow-xl rounded-[10px] p-4 shrink-0">
@@ -21,7 +31,7 @@ const TicketContentPanel = ({
         <div className="font-bold">{description}</div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto py-2">
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto py-2">
         <MessagesPanel comments={allComments} />
       </div>
 

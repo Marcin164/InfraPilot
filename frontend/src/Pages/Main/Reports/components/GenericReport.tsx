@@ -17,6 +17,7 @@ import {
 } from "recharts";
 import ReportCard from "./ReportCard";
 import ReportFilters, { type ReportFilterValues } from "./ReportFilters";
+import ChartTooltip from "./ChartTooltip";
 import { pieColors } from "../../../../Constants/charts";
 import {
   getReports,
@@ -86,25 +87,32 @@ const GenericReport = ({ meta, filters: initialFilters }: Props) => {
           {!isLoading && !error && rows.length === 0 && (
             <div className="text-gray-400">No data</div>
           )}
-          {!isLoading && rows.length > 0 && renderChart(meta.chart, rows)}
+          {!isLoading && rows.length > 0 && renderChart(meta, rows)}
         </div>
       </div>
     </ReportCard>
   );
 };
 
-function renderChart(chart: ReportMeta["chart"], rows: any[]) {
+function renderChart(meta: ReportMeta, rows: any[]) {
   const data = rows.map((r) => ({
     label: r.label ?? r.name ?? "",
     value: Number(r.value) || 0,
     ...r,
   }));
+  const total = data.reduce((acc, r) => acc + (Number(r.value) || 0), 0);
+  const tooltip = (
+    <Tooltip
+      content={<ChartTooltip meta={meta} total={total} />}
+      cursor={{ fill: "rgba(59, 130, 246, 0.08)" }}
+    />
+  );
 
-  if (chart === "pie") {
+  if (meta.chart === "pie") {
     return (
       <ResponsiveContainer>
         <PieChart>
-          <Tooltip />
+          {tooltip}
           <Legend />
           <Pie data={data} dataKey="value" nameKey="label" outerRadius={160}>
             {data.map((_, i) => (
@@ -116,21 +124,28 @@ function renderChart(chart: ReportMeta["chart"], rows: any[]) {
     );
   }
 
-  if (chart === "line") {
+  if (meta.chart === "line") {
     return (
       <ResponsiveContainer>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="label" />
           <YAxis />
-          <Tooltip />
-          <Line type="monotone" dataKey="value" stroke={pieColors[0]} />
+          {tooltip}
+          <Line
+            type="monotone"
+            dataKey="value"
+            stroke={pieColors[0]}
+            strokeWidth={2}
+            dot={{ r: 3 }}
+            activeDot={{ r: 5 }}
+          />
         </LineChart>
       </ResponsiveContainer>
     );
   }
 
-  if (chart === "table") {
+  if (meta.chart === "table") {
     return (
       <div className="overflow-auto h-full">
         <table className="w-full text-sm">
@@ -159,8 +174,8 @@ function renderChart(chart: ReportMeta["chart"], rows: any[]) {
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="label" />
         <YAxis />
-        <Tooltip />
-        <Bar dataKey="value" fill={pieColors[0]} />
+        {tooltip}
+        <Bar dataKey="value" fill={pieColors[0]} radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

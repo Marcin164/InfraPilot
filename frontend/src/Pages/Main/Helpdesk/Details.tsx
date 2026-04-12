@@ -20,9 +20,21 @@ const convertApprovalsToComments = (approvals: Approval[]) => {
   }));
 };
 
+const convertActivitiesToEntries = (activities: any[]) => {
+  return activities.map((activity) => ({
+    id: activity.id,
+    type: "activity",
+    field: activity.field,
+    oldValue: activity.oldValue,
+    newValue: activity.newValue,
+    user: activity.user,
+    createdAt: activity.createdAt,
+  }));
+};
+
 const Details = () => {
   const params = useParams();
-  const { setParser } = useParser();
+  const { setParsers } = useParser();
   const ticketQuery = useQuery({
     queryKey: ["ticket", params.id],
     queryFn: () => getTicket(params.id!),
@@ -32,20 +44,28 @@ const Details = () => {
 
   useEffect(() => {
     if (ticket?.id) {
-      setParser({
-        id: ticket.id,
-        name: ticket.requester?.distinguishedName ?? ticket.number?.toString(),
+      setParsers({
+        [ticket.id]:
+          ticket.requester?.distinguishedName ?? ticket.number?.toString() ?? ticket.id,
       });
     }
-  }, [ticket?.id, setParser]);
+    return () => setParsers({});
+  }, [ticket?.id, setParsers]);
 
   const [comments, setComments] = useState<Comment[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
 
   useEffect(() => {
     if (ticket?.comments) {
       setComments(ticket.comments);
     }
   }, [ticket?.comments]);
+
+  useEffect(() => {
+    if (ticket?.activities) {
+      setActivities(ticket.activities);
+    }
+  }, [ticket?.activities]);
 
   useTicketSocket({
     ticketId: params.id!,
@@ -55,11 +75,18 @@ const Details = () => {
         return [...prev, comment];
       });
     },
+    onNewActivity: (activity) => {
+      setActivities((prev) => {
+        if (prev.some((a) => a.id === activity.id)) return prev;
+        return [...prev, activity];
+      });
+    },
   });
 
   const allComments = [
     ...comments,
     ...convertApprovalsToComments(ticket?.approvals || []),
+    ...convertActivitiesToEntries(activities),
   ];
 
   if (!ticket) return null;

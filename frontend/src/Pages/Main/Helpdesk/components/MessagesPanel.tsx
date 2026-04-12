@@ -1,15 +1,18 @@
 import ApprovalDecision from "./ApprovalDecision";
 import Comment from "./Comment";
+import ActivityEntry from "./ActivityEntry";
 
 type Props = { comments: any[] };
 
 const MessagesPanel = ({ comments }: Props) => {
-  const renderComments = (comment: any) => {
-    switch (comment?.type) {
+  const renderItem = (item: any) => {
+    switch (item?.type) {
       case "decision":
-        return <ApprovalDecision {...comment} />;
+        return <ApprovalDecision key={item.id} {...item} />;
+      case "activity":
+        return <ActivityEntry key={item.id} {...item} />;
       default:
-        return <Comment key={comment.id} {...comment} />;
+        return <Comment key={item.id} {...item} />;
     }
   };
 
@@ -21,7 +24,7 @@ const MessagesPanel = ({ comments }: Props) => {
           const dateB = new Date(b.decidedAt || b.createdAt).getTime();
           return dateA - dateB;
         })
-        .map((comment: any) => renderComments(comment))}
+        .map((item: any) => renderItem(item))}
     </div>
   );
 };
