@@ -1,16 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUsers } from "@fortawesome/free-solid-svg-icons";
-import { getReports } from "../../../../Services/reports";
 import { formatNumber } from "../helpers";
+import { useDashboardData } from "../DashboardDataContext";
 
 const TotalUsers = () => {
-  const { data } = useQuery({
-    queryKey: ["report", "users-by-department"],
-    queryFn: () => getReports("users-by-department"),
-  });
-
-  const total = (data ?? []).reduce((s, d) => s + d.value, 0);
+  const data = useDashboardData("users-by-department");
+  const total = data.reduce((s, d) => s + d.value, 0);
 
   return (
     <div className="flex h-full w-full items-center gap-4 px-5">

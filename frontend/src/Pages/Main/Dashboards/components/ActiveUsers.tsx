@@ -1,16 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserCheck } from "@fortawesome/free-solid-svg-icons";
-import { getReports } from "../../../../Services/reports";
 import { formatNumber } from "../helpers";
+import { useDashboardData } from "../DashboardDataContext";
 
 const ActiveUsers = () => {
-  const { data } = useQuery({
-    queryKey: ["report", "users-inactive"],
-    queryFn: () => getReports("users-inactive"),
-  });
-
-  const items = data ?? [];
+  const items = useDashboardData("users-inactive");
   const total = items.reduce((s, d) => s + d.value, 0);
   const inactive = items
     .filter((d) => {

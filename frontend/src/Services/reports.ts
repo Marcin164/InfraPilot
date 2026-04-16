@@ -33,6 +33,13 @@ export const getReports = async (
   return data;
 };
 
+export const getReportsBatch = async (
+  types: string[]
+): Promise<Record<string, ReportDataPoint[]>> => {
+  const { data } = await api.post(`/reports/batch`, { types });
+  return data;
+};
+
 export const listReports = async (): Promise<ReportMeta[]> => {
   const { data } = await api.get(`/reports/list`);
   return data;

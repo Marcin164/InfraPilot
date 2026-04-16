@@ -36,7 +36,7 @@ const Checkbox = ({
           }
           name={name}
           value={value}
-          checked={checked || null}
+          checked={checked ?? null}
         />
 
         <span

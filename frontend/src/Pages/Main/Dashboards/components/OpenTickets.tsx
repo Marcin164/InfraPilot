@@ -1,18 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTicket } from "@fortawesome/free-solid-svg-icons";
-import { getReports } from "../../../../Services/reports";
 import { formatNumber } from "../helpers";
+import { useDashboardData } from "../DashboardDataContext";
 
 const OPEN_STATES = ["new", "assigned", "in progress", "awaiting for user", "awaiting for vendor"];
 
 const OpenTickets = () => {
-  const { data } = useQuery({
-    queryKey: ["report", "tickets-by-state"],
-    queryFn: () => getReports("tickets-by-state"),
-  });
+  const data = useDashboardData("tickets-by-state");
 
-  const open = (data ?? [])
+  const open = data
     .filter((d) => OPEN_STATES.includes(d.label.toLowerCase()))
     .reduce((s, d) => s + d.value, 0);
 

@@ -1,16 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faComputer } from "@fortawesome/free-solid-svg-icons";
-import { getReports } from "../../../../Services/reports";
 import { formatNumber } from "../helpers";
+import { useDashboardData } from "../DashboardDataContext";
 
 const TotalDevices = () => {
-  const { data } = useQuery({
-    queryKey: ["report", "devices-by-manufacturer"],
-    queryFn: () => getReports("devices-by-manufacturer"),
-  });
-
-  const total = (data ?? []).reduce((s, d) => s + d.value, 0);
+  const data = useDashboardData("devices-by-manufacturer");
+  const total = data.reduce((s, d) => s + d.value, 0);
 
   return (
     <div className="flex h-full w-full items-center gap-4 px-5">

@@ -1,15 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import { getReports } from "../../../../Services/reports";
+import { useDashboardData } from "../DashboardDataContext";
 
 const OnlineDevices = () => {
-  const { data } = useQuery({
-    queryKey: ["report", "devices-online-offline"],
-    queryFn: () => getReports("devices-online-offline"),
-  });
+  const data = useDashboardData("devices-online-offline");
 
-  const online = (data ?? []).find((d) => d.label.toLowerCase() === "online")?.value ?? 0;
-  const offline = (data ?? []).find((d) => d.label.toLowerCase() === "offline")?.value ?? 0;
+  const online = data.find((d) => d.label.toLowerCase() === "online")?.value ?? 0;
+  const offline = data.find((d) => d.label.toLowerCase() === "offline")?.value ?? 0;
   const total = online + offline;
   const pct = total > 0 ? Math.round((online / total) * 100) : 0;
 

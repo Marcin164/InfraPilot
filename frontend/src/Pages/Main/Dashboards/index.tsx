@@ -27,6 +27,7 @@ import { DASHBOARD_WIDGETS } from "../../../Constants/dashboardWidgets";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
+import { DashboardDataProvider } from "./DashboardDataContext";
 
 const ReactGridLayout = WidthProvider(RGL);
 
@@ -154,6 +155,7 @@ const Index = () => {
 
   return (
     <PageMotion>
+    <DashboardDataProvider>
     <div className="w-[calc(100vw-240px)] px-4">
       <DashboardTopbar
         selectOptions={getDashboardsSelectValues()}
@@ -200,6 +202,7 @@ const Index = () => {
         </ReactGridLayout>
       </div>
     </div>
+    </DashboardDataProvider>
     </PageMotion>
   );
 };

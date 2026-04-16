@@ -1,17 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDesktop } from "@fortawesome/free-solid-svg-icons";
-import { getReports } from "../../../../Services/reports";
 import { formatNumber } from "../helpers";
+import { useDashboardData } from "../DashboardDataContext";
 
 const ActiveDevices = () => {
-  const { data } = useQuery({
-    queryKey: ["report", "devices-online-offline"],
-    queryFn: () => getReports("devices-online-offline"),
-  });
+  const data = useDashboardData("devices-online-offline");
 
-  const online = (data ?? []).find((d) => d.label.toLowerCase() === "online")?.value ?? 0;
-  const offline = (data ?? []).find((d) => d.label.toLowerCase() === "offline")?.value ?? 0;
+  const online = data.find((d) => d.label.toLowerCase() === "online")?.value ?? 0;
+  const offline = data.find((d) => d.label.toLowerCase() === "offline")?.value ?? 0;
   const total = online + offline;
 
   return (
