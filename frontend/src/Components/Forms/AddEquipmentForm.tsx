@@ -15,11 +15,13 @@ import Input from "../Inputs/Input";
 import SelectSecondary from "../Inputs/SelectSecondary";
 import { toast } from "react-toastify";
 import { CreateDeviceData } from "../../Types";
+import { useTranslation } from "react-i18next";
 
 type Option = { label: string; value: string };
 
 const AddEquipmentForm: React.FC = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const [subgroupOptions, setSubgroupOptions] =
     useState<Option[]>(computersTypeOptions);
@@ -30,7 +32,7 @@ const AddEquipmentForm: React.FC = () => {
     },
 
     onSuccess: () => {
-      toast.success("device added successfully");
+      toast.success(t("toast.success.device"));
       queryClient.invalidateQueries({ queryKey: ["users"] });
       close();
     },
@@ -63,7 +65,7 @@ const AddEquipmentForm: React.FC = () => {
         name="group"
         children={(field) => (
           <SelectSecondary
-            label="Group"
+            label={t("device.group")}
             options={groupTypeOptions}
             value={groupTypeOptions.find((o) => o.value === field.state.value)}
             onSelect={(opt: Option) => handleGroupSelect(opt, field)}
@@ -74,7 +76,7 @@ const AddEquipmentForm: React.FC = () => {
         name="subgroup"
         children={(field) => (
           <SelectSecondary
-            label="Subgroup"
+            label={t("device.subgroup")}
             options={subgroupOptions}
             value={subgroupOptions.find((o) => o.value === field.state.value)}
             onSelect={(opt: Option) => field.handleChange(opt.value)}
@@ -94,7 +96,7 @@ const AddEquipmentForm: React.FC = () => {
                 <Input
                   {...field}
                   value={field.state.value}
-                  label="Asset Name"
+                  label={t("device.assetname")}
                   errors={field.state.meta.errors?.join(", ")}
                 />
               )}
@@ -111,7 +113,7 @@ const AddEquipmentForm: React.FC = () => {
           <Input
             {...field}
             value={field.state.value}
-            label="Model"
+            label={t("device.model")}
             errors={field.state.meta.errors?.join(", ")}
           />
         )}
@@ -126,7 +128,7 @@ const AddEquipmentForm: React.FC = () => {
           <Input
             {...field}
             value={field.state.value}
-            label="Manufacturer"
+            label={t("device.manufacturer")}
             errors={field.state.meta.errors?.join(", ")}
           />
         )}
@@ -141,7 +143,7 @@ const AddEquipmentForm: React.FC = () => {
           <Input
             {...field}
             value={field.state.value}
-            label="Serial Number"
+            label={t("device.serial.number")}
             errors={field.state.meta.errors?.join(", ")}
           />
         )}
@@ -150,14 +152,18 @@ const AddEquipmentForm: React.FC = () => {
       <form.Field
         name="location"
         children={(field) => (
-          <Input {...field} value={field.state.value} label="Location" />
+          <Input
+            {...field}
+            value={field.state.value}
+            label={t("device.location")}
+          />
         )}
       />
       <div className="pt-4">
         <ButtonPrimary
           icon={faPlus}
           type="submit"
-          text="Save"
+          text={t("btn.add.device")}
           disabled={!form.state.canSubmit || mutation.isPending}
         />
       </div>

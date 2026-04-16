@@ -13,6 +13,8 @@ import { getUserSettings } from "../../../Services/settings";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
 import { buildQuery } from "../../../Helpers/queries";
 import { useDebounce } from "../../../Hooks/useDebounce";
+import { useFilterPresets } from "../../../Hooks/useFilterPresets";
+import FilterPresetsBar from "../../../Components/Filter/FilterPresetsBar";
 
 export type FilterKey =
   | "department"
@@ -48,6 +50,11 @@ const UsersPage = () => {
   const [limit, setLimit] = useState(30);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const debouncedSearch = useDebounce(searchValue, 500);
+
+  const presets = useFilterPresets("users", filters, (next) => {
+    setFilters(next as FilterOptions);
+    setPage(1);
+  });
 
   const queryString = buildQuery({
     ...filters,
@@ -97,12 +104,14 @@ const UsersPage = () => {
             setFilters={(next: any) => {
               setFilters(next);
               setPage(1);
+              presets.clearActive();
             }}
             filterOptions={
               (filtersQuery?.data ?? {}) as Record<string, string[]>
             }
             isOpen={isOpen}
             setIsOpen={setIsOpen}
+            onSavePreset={presets.savePreset}
           />
           <Search onChange={handleSearchChange} />
           <TableSettings
@@ -122,6 +131,12 @@ const UsersPage = () => {
             onCloseModal={() => setIsAddUserModalOpen(false)}
           />
         </div>
+        <FilterPresetsBar
+          presets={presets.presets}
+          activePresetId={presets.activePreset?.id ?? null}
+          onActivate={presets.activatePreset}
+          onDelete={presets.deletePreset}
+        />
         <UsersTable
           data={usersQuery.data?.data ?? []}
           total={usersQuery.data?.total ?? 0}

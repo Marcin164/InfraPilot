@@ -34,11 +34,14 @@ const TicketsTable = ({
     return <div>Loading...</div>;
   }
 
+  const iconColumn = {
+    id: "icon",
+    cell: () => <FontAwesomeIcon icon={faTicket} />,
+    width: "60px",
+  };
+
   const columns = [
-    {
-      cell: () => <FontAwesomeIcon icon={faTicket} />,
-      width: "60px",
-    },
+    iconColumn,
     {
       id: "number",
       name: "Number",
@@ -113,11 +116,14 @@ const TicketsTable = ({
   ];
 
   const filterColumns = () => {
-    return (userSettings?.data?.ticketsTableColumnOrder ?? [])
+    const order = userSettings?.data?.ticketsTableColumnOrder;
+    if (!order || order.length === 0) return columns;
+    const filtered = order
       .map((columnId: string) =>
         columns.find((column: any) => column.id === columnId.toLowerCase()),
       )
       .filter(Boolean);
+    return [iconColumn, ...filtered];
   };
 
   return (

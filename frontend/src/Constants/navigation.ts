@@ -144,6 +144,11 @@ export const settingsNavbarItems = [
     label: "Tickets",
     icon: faTicket,
   },
+  {
+    to: "admin",
+    label: "Admin",
+    icon: faShield,
+  },
 ];
 
 import type { ReportCategory } from "../Services/reports";

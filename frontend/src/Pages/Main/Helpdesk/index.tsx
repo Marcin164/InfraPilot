@@ -9,6 +9,8 @@ import { buildQuery } from "../../../Helpers/queries";
 import { useDebounce } from "../../../Hooks/useDebounce";
 import TicketsTable from "../../../Components/Tables/TicketsTable";
 import { getUserSettings } from "../../../Services/settings";
+import { useFilterPresets } from "../../../Hooks/useFilterPresets";
+import FilterPresetsBar from "../../../Components/Filter/FilterPresetsBar";
 
 type TicketFilters = {
   type?: string[];
@@ -28,6 +30,11 @@ const Index = () => {
   const [filters, setFilters] = useState<TicketFilters>({});
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearch = useDebounce(searchValue, 500);
+
+  const presets = useFilterPresets("tickets", filters, (next) => {
+    setFilters(next as TicketFilters);
+    setPage(1);
+  });
 
   const dynamicFiltersQuery = useQuery({
     queryKey: ["ticketsFilters"],
@@ -130,10 +137,15 @@ const Index = () => {
       <div className="pt-4 pb-4 flex gap-2">
         <Filter
           filters={filters}
-          setFilters={setFilters}
+          setFilters={(next: any) => {
+            setFilters(next);
+            setPage(1);
+            presets.clearActive();
+          }}
           filterOptions={filterOptions}
           isOpen={isOpen}
           setIsOpen={setIsOpen}
+          onSavePreset={presets.savePreset}
         />
         <Search onChange={handleSearchChange} />
         <TableSettings
@@ -142,6 +154,12 @@ const Index = () => {
           settingsKey="ticketsTableColumnOrder"
         />
       </div>
+      <FilterPresetsBar
+        presets={presets.presets}
+        activePresetId={presets.activePreset?.id ?? null}
+        onActivate={presets.activatePreset}
+        onDelete={presets.deletePreset}
+      />
       <TicketsTable
         data={helpdeskQuery.data?.data ?? []}
         total={helpdeskQuery.data?.total ?? 0}

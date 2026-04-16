@@ -9,6 +9,7 @@ type Props = {
   handleOnClose: any;
   onCancel: any;
   onDelete: any;
+  message?: string;
 };
 
 const ConfirmationModal = ({
@@ -16,6 +17,7 @@ const ConfirmationModal = ({
   handleOnClose,
   onCancel,
   onDelete,
+  message,
 }: Props) => {
   return (
     <Modal
@@ -34,7 +36,7 @@ const ConfirmationModal = ({
         />
       </div>
       <div className="pb-4 font-light text-[20px] text-justify">
-        Are you sure you want to delete user? This action is irreversible.
+        {message || "Are you sure you want to delete this item? This action is irreversible."}
       </div>
       <div className="flex justify-around">
         <ButtonPrimary icon={faXmark} text="Cancel" onClick={onCancel} />

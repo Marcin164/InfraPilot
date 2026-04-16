@@ -11,6 +11,11 @@ import AddDeviceModal from "../../../Components/Modals/AddDeviceModal";
 import { buildQuery } from "../../../Helpers/queries";
 import { useDebounce } from "../../../Hooks/useDebounce";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
+import { useTranslation } from "react-i18next";
+import { useFilterPresets } from "../../../Hooks/useFilterPresets";
+import FilterPresetsBar from "../../../Components/Filter/FilterPresetsBar";
+import TableSettings from "../../../Components/TableSettings";
+import { getUserSettings } from "../../../Services/settings";
 
 type DeviceFilters = {
   group?: string[];
@@ -33,9 +38,15 @@ const INITIAL_FILTERS: DeviceFilters = {
 const Index = () => {
   const navigate = useNavigate();
   const params = useParams();
+  const { t } = useTranslation();
 
   const [filters, setFilters] = useState<DeviceFilters>(INITIAL_FILTERS);
   const [isOpen, setIsOpen] = useState(false);
+
+  const presets = useFilterPresets("devices", filters, (next) => {
+    setFilters(next as DeviceFilters);
+    setPage(1);
+  });
   const [searchValue, setSearchValue] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(30);
@@ -60,6 +71,20 @@ const Index = () => {
     queryFn: () => getFilter(),
   });
 
+  const userSettings = useQuery({
+    queryKey: ["userSettings"],
+    queryFn: () => getUserSettings(),
+  });
+
+  const deviceCheckboxes = [
+    { name: "device", label: "Device" },
+    { name: "user", label: "User" },
+    { name: "state", label: "State" },
+    { name: "assetname", label: "Asset name" },
+    { name: "serialnumber", label: "Serial number" },
+    { name: "warranty", label: "Warranty" },
+  ];
+
   useEffect(() => {
     if (params.id) navigate(`/devices/${params.id}/systeminfo`);
   }, []);
@@ -82,22 +107,35 @@ const Index = () => {
             setFilters={(next: any) => {
               setFilters(next);
               setPage(1);
+              presets.clearActive();
             }}
             filterOptions={
               (filterQuery?.data ?? {}) as Record<string, string[]>
             }
             isOpen={isOpen}
             setIsOpen={setIsOpen}
+            onSavePreset={presets.savePreset}
           />
           <Search onChange={handleSearchChange} />
+          <TableSettings
+            settings={userSettings?.data}
+            checkboxes={deviceCheckboxes}
+            settingsKey="devicesTableColumnOrder"
+          />
           <ButtonPrimary
             color="white"
             icon={faPlus}
-            text="Add device"
+            text={t("btn.add.device")}
             onClick={toggleModal}
           />
           <AddDeviceModal isModalOpen={addEQModal} onCloseModal={toggleModal} />
         </div>
+        <FilterPresetsBar
+          presets={presets.presets}
+          activePresetId={presets.activePreset?.id ?? null}
+          onActivate={presets.activatePreset}
+          onDelete={presets.deletePreset}
+        />
         <DevicesTable
           data={devicesQuery.data?.data ?? []}
           total={devicesQuery.data?.total ?? 0}

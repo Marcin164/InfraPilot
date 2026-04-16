@@ -2,6 +2,7 @@ import React from "react";
 import Modal from "react-responsive-modal";
 import AddEquipmentForm from "../Forms/AddEquipmentForm";
 import CardHeader from "../Headers/CardHeader";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   isModalOpen: any;
@@ -10,6 +11,7 @@ type Props = {
 };
 
 const AddDeviceModal = ({ isModalOpen, onCloseModal }: Props) => {
+  const { t } = useTranslation();
   const handleOnClose = () => {
     onCloseModal(false);
   };
@@ -21,7 +23,7 @@ const AddDeviceModal = ({ isModalOpen, onCloseModal }: Props) => {
       onClose={handleOnClose}
       center
     >
-      <CardHeader text="Add device" />
+      <CardHeader text={t("btn.add.device")} />
       <AddEquipmentForm />
     </Modal>
   );

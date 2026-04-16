@@ -7,7 +7,22 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { getUserSettings } from "../../Services/settings";
 
-import type { User } from "../../Types";
+import type { User, LastLogonThreshold } from "../../Types";
+
+const getLastLogonColor = (
+  lastlogon: string | null | undefined,
+  thresholds: LastLogonThreshold[],
+  defaultColor: string,
+): string => {
+  if (!lastlogon) return defaultColor;
+  const diffMs = Date.now() - new Date(lastlogon).getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  const sorted = [...thresholds].sort((a, b) => a.maxDays - b.maxDays);
+  for (const t of sorted) {
+    if (diffDays <= t.maxDays) return t.color;
+  }
+  return defaultColor;
+};
 
 type Props = {
   data: User[];
@@ -35,15 +50,18 @@ const UsersTable = ({
     return <div>Loading...</div>;
   }
 
+  const iconColumn = {
+    id: "icon",
+    cell: (_row: any) => (
+      <div>
+        <FontAwesomeIcon icon={faUser} />
+      </div>
+    ),
+    width: "60px",
+  };
+
   const columns = [
-    {
-      cell: (_row: any) => (
-        <div>
-          <FontAwesomeIcon icon={faUser} />
-        </div>
-      ),
-      width: "60px",
-    },
+    iconColumn,
     {
       id: "name",
       name: t("user.name"),
@@ -74,13 +92,21 @@ const UsersTable = ({
     {
       id: "lastlogon",
       name: t("user.lastlogon"),
-      cell: (row: any) => (
-        <div className="w-[170px] py-2 px-1 rounded-[10px] text-center bg-[#30A712] text-[#FFFFFF]">
-          {row.lastlogon
-            ? moment(row.lastlogon).format("DD.MM.YYYY, hh:mm:ss")
-            : "N/A"}
-        </div>
-      ),
+      cell: (row: any) => {
+        const thresholds = userSettings.data?.lastLogonThresholds ?? [];
+        const fallback = userSettings.data?.lastLogonDefaultColor ?? "#8A8A8A";
+        const bg = getLastLogonColor(row.lastlogon, thresholds, fallback);
+        return (
+          <div
+            className="w-[170px] py-2 px-1 rounded-[10px] text-center text-[#FFFFFF]"
+            style={{ backgroundColor: bg }}
+          >
+            {row.lastlogon
+              ? moment(row.lastlogon).format("DD.MM.YYYY, hh:mm:ss")
+              : "N/A"}
+          </div>
+        );
+      },
     },
     {
       id: "department",
@@ -105,11 +131,13 @@ const UsersTable = ({
   ];
 
   const filterColumns = () => {
-    return (userSettings.data.usersTableColumnOrder ?? [])
+    const filtered = (userSettings.data.usersTableColumnOrder ?? [])
       .map((columnId: string) =>
         columns.find((column: any) => column.id === columnId.toLowerCase()),
       )
       .filter(Boolean);
+
+    return [iconColumn, ...filtered];
   };
 
   return (

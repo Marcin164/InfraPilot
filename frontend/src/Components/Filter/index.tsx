@@ -9,6 +9,7 @@ type Props = {
   filterOptions: Record<string, string[]>;
   isOpen: any;
   setIsOpen: any;
+  onSavePreset?: (name: string) => void;
 };
 
 const Filter = ({
@@ -17,6 +18,7 @@ const Filter = ({
   filterOptions,
   isOpen,
   setIsOpen,
+  onSavePreset,
 }: Props) => {
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -44,6 +46,7 @@ const Filter = ({
               filters={filters}
               setFilters={setFilters}
               filterOptions={filterOptions}
+              onSavePreset={onSavePreset}
             />
           </div>
         </>

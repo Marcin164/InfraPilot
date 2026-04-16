@@ -22,12 +22,16 @@ const formatDate = (value?: string) => {
   });
 };
 
+const stripHtml = (html: string) =>
+  html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
+
 const ArticleCard = ({ article }: Props) => {
-  const preview = (article.content ?? "").slice(0, 120);
+  const plain = stripHtml(article.content ?? "");
+  const preview = plain.slice(0, 120);
 
   return (
     <Link
-      to={`/knowledge/${article.spaceId}/article/${article.id}`}
+      to={`/knowledge/${article.spaceId}/${article.id}`}
       className="flex flex-col rounded-[10px] bg-white p-4 shadow-xl transition hover:shadow-2xl"
     >
       <div className="flex items-start justify-between gap-2">
@@ -44,7 +48,7 @@ const ArticleCard = ({ article }: Props) => {
       {preview && (
         <p className="mt-2 text-[13px] leading-relaxed text-[#535353] line-clamp-3">
           {preview}
-          {(article.content?.length ?? 0) > 120 && "…"}
+          {plain.length > 120 && "…"}
         </p>
       )}
 

@@ -23,6 +23,10 @@ import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
 import { useParser } from "../../../../Hooks/useParser";
 import type { ArticleStatus } from "../../../../Types";
+import CategorySelect from "../components/CategorySelect";
+import RichTextEditor from "../../../../Components/RichTextEditor";
+import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
+import "../../../../Components/RichTextEditor/styles.css";
 
 const statusColor: Record<string, string> = {
   draft: "bg-[#F1C40F] text-[#3C3C3C]",
@@ -58,6 +62,7 @@ const ArticlePage = () => {
   const [editCategory, setEditCategory] = useState("");
   const [editStatus, setEditStatus] = useState<ArticleStatus>("draft");
   const [editTags, setEditTags] = useState("");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const spaceQuery = useQuery({
     queryKey: ["knowledge-space", spaceId],
@@ -200,9 +205,7 @@ const ArticlePage = () => {
           <ButtonPrimary
             color="red"
             icon={faTrash}
-            onClick={() => {
-              if (confirm("Delete this article?")) deleteMutation.mutate();
-            }}
+            onClick={() => setIsDeleteModalOpen(true)}
           />
         </div>
       </div>
@@ -265,11 +268,16 @@ const ArticlePage = () => {
 
           <hr className="my-4 border-[#E0E0E0]" />
 
-          <div className="prose max-w-none whitespace-pre-wrap text-[15px] leading-relaxed text-[#3C3C3C]">
-            {article.content || (
-              <span className="italic text-[#8A8A8A]">No content yet.</span>
-            )}
-          </div>
+          {article.content ? (
+            <div
+              className="article-content max-w-none"
+              dangerouslySetInnerHTML={{ __html: article.content }}
+            />
+          ) : (
+            <div className="text-[15px] italic text-[#8A8A8A]">
+              No content yet.
+            </div>
+          )}
         </div>
       )}
 
@@ -284,21 +292,25 @@ const ArticlePage = () => {
 
           <div className="pt-2">
             <label className="font-bold text-[#3C3C3C]">Content</label>
-            <textarea
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              rows={20}
-              className="mt-[6px] w-full rounded-[10px] border border-[#535353] bg-white px-3 py-2 text-[15px] leading-relaxed text-[#3C3C3C] outline-none focus:border-[#2B9AE9] resize-y"
-              placeholder="Write your article content here..."
-            />
+            <div className="mt-[6px]">
+              <RichTextEditor
+                content={editContent}
+                onChange={setEditContent}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <Input
-              label="Category"
-              value={editCategory}
-              onChange={(e: any) => setEditCategory(e.target.value)}
-            />
+            <div>
+              <label className="font-bold text-[#3C3C3C]">Category</label>
+              <div className="mt-[6px]">
+                <CategorySelect
+                  value={editCategory}
+                  onChange={setEditCategory}
+                  categories={categories}
+                />
+              </div>
+            </div>
             <Input
               label="Tags (comma-separated)"
               value={editTags}
@@ -329,6 +341,17 @@ const ArticlePage = () => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isModalOpen={isDeleteModalOpen}
+        handleOnClose={() => setIsDeleteModalOpen(false)}
+        onCancel={() => setIsDeleteModalOpen(false)}
+        onDelete={() => {
+          setIsDeleteModalOpen(false);
+          deleteMutation.mutate();
+        }}
+        message="Are you sure you want to delete this article? This action is irreversible."
+      />
     </div>
   );
 };

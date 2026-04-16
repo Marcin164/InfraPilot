@@ -1,5 +1,7 @@
 {
   "search": "Szukaj...",
+  "columns": "Kolumny",
+
   "nav.dashboards": "Panel główny",
   "nav.users": "Użytkownicy",
   "nav.devices": "Urządzenia",
@@ -9,6 +11,16 @@
   "nav.reports": "Raporty",
   "nav.history": "Historia",
   "nav.settings": "Ustawienia",
+
+  "btn.add.dashboard": "Dodaj panel",
+  "btn.add.user": "Dodaj użytkownika",
+  "btn.add.user.manual": "Pojedynczy użytkownik",
+  "btn.add.user.file": "Dodaj użytkowników z pliku",
+  "btn.add.device": "Dodaj urządzenie",
+
+  "dashboard.add": "Add Dashboard",
+  "dashboard.name": "Nazwa panelu",
+
   "user.name": "Imię",
   "user.surname": "Nazwisko",
   "user.username": "Nazwa użytkownika",
@@ -26,9 +38,6 @@
   "user.city": "Miasto",
   "user.country": "Kraj",
   "user.title": "Zawód",
-  "btn.add.user": "Dodaj użytkownika",
-  "btn.add.user.manual": "Pojedynczy użytkownik",
-  "btn.add.user.file": "Dodaj użytkowników z pliku",
   "groups": "Grupy",
   "groups.missing": "Brak przydzielonych grup",
   "forms": "Formularze",
@@ -42,5 +51,29 @@
   "file.placeholder": "Kliknij lub przeciągnij plik CSV / TSV / XLSX",
   "file.pending": "Przetwarzanie pliku",
   "file.send": "Wyślij dane",
-  "toast.success.user": "Użytkownik został dodany!"
+
+  "device.device": "Urządzenie",
+  "device.assignee": "Właściciel",
+  "device.state": "Status",
+  "device.assetname": "Nazwa",
+  "device.serial.number": "Numer seryjny",
+  "device.varranty": "Gwarancja",
+  "device.group": "Grupa",
+  "device.subgroup": "Podgrupa",
+  "device.model": "Model",
+  "device.location": "Lokalizacja",
+  "device.manufacturer": "Producent",
+
+  "toast.success.dashboard": "Panel został dodany!",
+  "toast.success.user": "Użytkownik został dodany!",
+  "toast.success.device": "Urządzenie zostało dodane!",
+  "toast.success.ticket": "Zgłoszenie zostało dodane!",
+  "toast.success.space": "Przestrzeń została dodana!",
+  "toast.success.article": "Artykuł został dodany!",
+  "toast.error.dashboard": "Nie udało się dodać panelu",
+  "toast.error.user": "Nie udało się dodać użytkownika",
+  "toast.error.device": "Nie udało się dodać urządzenia",
+  "toast.error.ticket": "Nie udało się dodać zgłoszenia",
+  "toast.error.space": "Nie udało się dodać przestrzeni",
+  "toast.error.article": "Nie udało się dodać atykułu"
 }
