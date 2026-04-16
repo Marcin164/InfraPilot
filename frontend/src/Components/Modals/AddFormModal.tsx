@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import Modal from "react-responsive-modal";
+import Modal from "./AnimatedModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUpload,

@@ -1,11 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuthInfo } from "@propelauth/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import {
+  faPlus,
+  faTrash,
+  faUsers,
+  faPen,
+  faXmark,
+  faCheck,
+} from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
 
 import { getUserSettings, updateUserSettings } from "../../../../Services/settings";
-import type { LastLogonThreshold } from "../../../../Types";
+import {
+  AssignmentGroup,
+  createAssignmentGroup,
+  deleteAssignmentGroup,
+  getAssignmentGroups,
+  setAssignmentGroupMembers,
+  updateAssignmentGroup,
+} from "../../../../Services/assignmentGroups";
+import { getUser, getUsers } from "../../../../Services/users";
+import CardHeader from "../../../../Components/Headers/CardHeader";
+import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import Input from "../../../../Components/Inputs/Input";
+import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
+import type { LastLogonThreshold, User } from "../../../../Types";
 
 const DEFAULT_THRESHOLDS: LastLogonThreshold[] = [
   { maxDays: 7, color: "#30A712", label: "Recent" },
@@ -13,7 +34,9 @@ const DEFAULT_THRESHOLDS: LastLogonThreshold[] = [
   { maxDays: 90, color: "#F3606E", label: "Inactive" },
 ];
 
-const Admin = () => {
+/* ───────────────────── Last Logon Section ───────────────────── */
+
+const LastLogonSection = () => {
   const queryClient = useQueryClient();
 
   const settingsQuery = useQuery({
@@ -21,16 +44,12 @@ const Admin = () => {
     queryFn: () => getUserSettings(),
   });
 
-  const [thresholds, setThresholds] = useState<LastLogonThreshold[]>(
-    DEFAULT_THRESHOLDS,
-  );
+  const [thresholds, setThresholds] = useState<LastLogonThreshold[]>(DEFAULT_THRESHOLDS);
   const [defaultColor, setDefaultColor] = useState("#8A8A8A");
 
   useEffect(() => {
     if (settingsQuery.data) {
-      setThresholds(
-        settingsQuery.data.lastLogonThresholds ?? DEFAULT_THRESHOLDS,
-      );
+      setThresholds(settingsQuery.data.lastLogonThresholds ?? DEFAULT_THRESHOLDS);
       setDefaultColor(settingsQuery.data.lastLogonDefaultColor ?? "#8A8A8A");
     }
   }, [settingsQuery.data]);
@@ -44,69 +63,37 @@ const Admin = () => {
       queryClient.invalidateQueries({ queryKey: ["userSettings"] });
       toast.success("Settings saved");
     },
-    onError: () => {
-      toast.error("Failed to save settings");
-    },
+    onError: () => toast.error("Failed to save settings"),
   });
 
-  const save = (
-    next: LastLogonThreshold[],
-    nextDefault: string = defaultColor,
-  ) => {
+  const save = (next: LastLogonThreshold[], nextDefault: string = defaultColor) => {
     const sorted = [...next].sort((a, b) => a.maxDays - b.maxDays);
     setThresholds(sorted);
-    mutation.mutate({
-      lastLogonThresholds: sorted,
-      lastLogonDefaultColor: nextDefault,
-    });
+    mutation.mutate({ lastLogonThresholds: sorted, lastLogonDefaultColor: nextDefault });
   };
 
-  const updateThreshold = (
-    idx: number,
-    field: keyof LastLogonThreshold,
-    value: string | number,
-  ) => {
-    const next = thresholds.map((t, i) =>
-      i === idx ? { ...t, [field]: value } : t,
-    );
-    setThresholds(next);
+  const updateThreshold = (idx: number, field: keyof LastLogonThreshold, value: string | number) => {
+    setThresholds((prev) => prev.map((t, i) => (i === idx ? { ...t, [field]: value } : t)));
   };
 
-  const removeThreshold = (idx: number) => {
-    const next = thresholds.filter((_, i) => i !== idx);
-    save(next);
-  };
+  const removeThreshold = (idx: number) => save(thresholds.filter((_, i) => i !== idx));
 
   const addThreshold = () => {
-    const maxExisting = thresholds.length
-      ? Math.max(...thresholds.map((t) => t.maxDays))
-      : 0;
-    const next = [
-      ...thresholds,
-      { maxDays: maxExisting + 30, color: "#535353", label: "New" },
-    ];
-    save(next);
+    const maxExisting = thresholds.length ? Math.max(...thresholds.map((t) => t.maxDays)) : 0;
+    save([...thresholds, { maxDays: maxExisting + 30, color: "#535353", label: "New" }]);
   };
 
   const getDaysSinceText = (maxDays: number, idx: number) => {
     const prev = idx > 0 ? thresholds[idx - 1].maxDays : 0;
-    if (prev === 0) return `0 – ${maxDays} days`;
-    return `${prev} – ${maxDays} days`;
+    return prev === 0 ? `0 – ${maxDays} days` : `${prev} – ${maxDays} days`;
   };
 
-  if (settingsQuery.isLoading) {
-    return <div className="p-6 text-[#535353]">Loading…</div>;
-  }
-
   return (
-    <div className="bg-white shadow-xl rounded-[10px] p-6 m-4">
-      <h2 className="text-[20px] font-bold text-[#3C3C3C] pb-1">
-        Last Logon Colors
-      </h2>
+    <div className="bg-white shadow-xl rounded-[10px] p-6">
+      <h2 className="text-[20px] font-bold text-[#3C3C3C] pb-1">Last Logon Colors</h2>
       <p className="text-[14px] text-[#535353] pb-4">
-        Configure how the Last Logon column in the Users table is color-coded
-        based on how many days ago a user last logged in. Thresholds are
-        automatically sorted by number of days.
+        Configure how the Last Logon column in the Users table is color-coded based on how many days
+        ago a user last logged in. Thresholds are automatically sorted by number of days.
       </p>
 
       <div className="space-y-2">
@@ -115,7 +102,6 @@ const Admin = () => {
             key={idx}
             className="flex items-center gap-3 rounded-[10px] border border-[#E0E0E0] bg-[#FAFAFA] px-4 py-3"
           >
-            {/* Color preview + picker */}
             <div className="relative">
               <div
                 className="h-[36px] w-[36px] rounded-[8px] border border-[#E0E0E0] cursor-pointer"
@@ -124,52 +110,38 @@ const Admin = () => {
               <input
                 type="color"
                 value={threshold.color}
-                onChange={(e) =>
-                  updateThreshold(idx, "color", e.target.value)
-                }
+                onChange={(e) => updateThreshold(idx, "color", e.target.value)}
                 onBlur={() => save(thresholds)}
                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               />
             </div>
 
-            {/* Label */}
             <input
               type="text"
               value={threshold.label}
-              onChange={(e) =>
-                updateThreshold(idx, "label", e.target.value)
-              }
+              onChange={(e) => updateThreshold(idx, "label", e.target.value)}
               onBlur={() => save(thresholds)}
               className="h-[36px] w-[120px] rounded-[8px] border border-[#535353] px-2 text-[14px] font-bold text-[#3C3C3C] outline-none focus:border-[#2B9AE9]"
               placeholder="Label"
             />
 
-            {/* Days */}
             <div className="flex items-center gap-2">
               <span className="text-[13px] text-[#535353]">Within</span>
               <input
                 type="number"
                 min={1}
                 value={threshold.maxDays}
-                onChange={(e) =>
-                  updateThreshold(
-                    idx,
-                    "maxDays",
-                    parseInt(e.target.value) || 1,
-                  )
-                }
+                onChange={(e) => updateThreshold(idx, "maxDays", parseInt(e.target.value) || 1)}
                 onBlur={() => save(thresholds)}
                 className="h-[36px] w-[70px] rounded-[8px] border border-[#535353] px-2 text-center text-[14px] font-bold text-[#3C3C3C] outline-none focus:border-[#2B9AE9]"
               />
               <span className="text-[13px] text-[#535353]">days</span>
             </div>
 
-            {/* Range preview */}
             <span className="text-[12px] text-[#8A8A8A] ml-auto hidden sm:inline">
               {getDaysSinceText(threshold.maxDays, idx)}
             </span>
 
-            {/* Remove */}
             <button
               type="button"
               onClick={() => removeThreshold(idx)}
@@ -190,7 +162,6 @@ const Admin = () => {
         Add threshold
       </button>
 
-      {/* Default / fallback */}
       <div className="mt-6 flex items-center gap-3">
         <span className="text-[14px] font-bold text-[#3C3C3C]">
           Default color (older than all thresholds or never logged in):
@@ -213,7 +184,6 @@ const Admin = () => {
         </span>
       </div>
 
-      {/* Preview */}
       <div className="mt-6">
         <h3 className="text-[16px] font-bold text-[#3C3C3C] pb-2">Preview</h3>
         <div className="flex flex-wrap gap-2">
@@ -234,6 +204,284 @@ const Admin = () => {
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+/* ───────────────── Assignment Groups Section ────────────────── */
+
+const AssignmentGroupsSection = () => {
+  const queryClient = useQueryClient();
+  const authInfo: any = useAuthInfo();
+  const currentUserId = authInfo?.user?.metadata?.id;
+
+  const [newName, setNewName] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+
+  const currentUserQuery = useQuery({
+    queryKey: ["current-user", currentUserId],
+    queryFn: () => getUser(currentUserId),
+    enabled: Boolean(currentUserId),
+  });
+
+  const isAdmin = Boolean(currentUserQuery.data?.isAdmin);
+
+  const groupsQuery = useQuery({
+    queryKey: ["assignment-groups"],
+    queryFn: getAssignmentGroups,
+  });
+
+  const usersQuery = useQuery({
+    queryKey: ["users-all"],
+    queryFn: getUsers,
+  });
+
+  const userOptions = useMemo(
+    () =>
+      (usersQuery.data ?? []).map((u: User) => ({
+        value: u.id,
+        label: `${u.name} ${u.surname}${u.email ? ` (${u.email})` : ""}`,
+      })),
+    [usersQuery.data],
+  );
+
+  const invalidateGroups = () =>
+    queryClient.invalidateQueries({ queryKey: ["assignment-groups"] });
+
+  const createMutation = useMutation({
+    mutationFn: () =>
+      createAssignmentGroup({
+        name: newName.trim(),
+        description: newDescription.trim() || undefined,
+      }),
+    onSuccess: () => {
+      toast.success("Assignment group created");
+      setNewName("");
+      setNewDescription("");
+      invalidateGroups();
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? "Failed to create group"),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, name, description }: { id: string; name?: string; description?: string }) =>
+      updateAssignmentGroup(id, { name, description }),
+    onSuccess: () => {
+      toast.success("Group updated");
+      setEditingId(null);
+      invalidateGroups();
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? "Failed to update group"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteAssignmentGroup(id),
+    onSuccess: () => {
+      toast.success("Group deleted");
+      invalidateGroups();
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? "Failed to delete group"),
+  });
+
+  const setMembersMutation = useMutation({
+    mutationFn: ({ id, userIds }: { id: string; userIds: string[] }) =>
+      setAssignmentGroupMembers(id, userIds),
+    onSuccess: () => {
+      toast.success("Members updated");
+      invalidateGroups();
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? "Failed to update members"),
+  });
+
+  const startEdit = (group: AssignmentGroup) => {
+    setEditingId(group.id);
+    setEditName(group.name);
+    setEditDescription(group.description ?? "");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditName("");
+    setEditDescription("");
+  };
+
+  const handleCreate = () => {
+    if (!newName.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    createMutation.mutate();
+  };
+
+  const handleSaveEdit = (id: string) => {
+    if (!editName.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    updateMutation.mutate({ id, name: editName.trim(), description: editDescription.trim() || undefined });
+  };
+
+  const handleMembersChange = (groupId: string, options: any) => {
+    const userIds = (options ?? []).map((o: any) => o.value);
+    setMembersMutation.mutate({ id: groupId, userIds });
+  };
+
+  if (currentUserQuery.isLoading || groupsQuery.isLoading) {
+    return (
+      <div className="bg-white shadow-xl rounded-[10px] p-4">Loading...</div>
+    );
+  }
+
+  return (
+    <>
+      {isAdmin && (
+        <div className="bg-white shadow-xl rounded-[10px] p-4">
+          <CardHeader text="Create Assignment Group" icon={faPlus} />
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input label="Name" value={newName} onChange={(e: any) => setNewName(e.target.value)} />
+            <Input
+              label="Description"
+              value={newDescription}
+              onChange={(e: any) => setNewDescription(e.target.value)}
+            />
+          </div>
+          <div className="mt-4">
+            <ButtonPrimary icon={faPlus} text="Create" onClick={handleCreate} disabled={createMutation.isPending} />
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white shadow-xl rounded-[10px] p-4">
+        <CardHeader text="Assignment Groups" icon={faUsers} />
+
+        {!isAdmin && (
+          <p className="text-[14px] text-[#7a7a7a] mt-2">
+            Read-only view. Only administrators can manage assignment groups.
+          </p>
+        )}
+
+        <div className="mt-4 space-y-4">
+          {(groupsQuery.data ?? []).length === 0 && (
+            <div className="text-[14px] text-[#7a7a7a]">No assignment groups yet.</div>
+          )}
+
+          {(groupsQuery.data ?? []).map((group) => {
+            const memberValues = (group.members ?? []).map((m) => ({
+              value: m.id,
+              label: `${m.name} ${m.surname}${m.email ? ` (${m.email})` : ""}`,
+            }));
+            const isEditing = editingId === group.id;
+
+            return (
+              <div key={group.id} className="border border-[#E6E6E6] rounded-[10px] p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    {isEditing ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input label="Name" value={editName} onChange={(e: any) => setEditName(e.target.value)} />
+                        <Input
+                          label="Description"
+                          value={editDescription}
+                          onChange={(e: any) => setEditDescription(e.target.value)}
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <div className="text-[18px] font-semibold text-[#3C3C3C]">{group.name}</div>
+                        {group.description && (
+                          <div className="text-[14px] text-[#7a7a7a]">{group.description}</div>
+                        )}
+                        <div className="text-[12px] text-[#9a9a9a] mt-1">
+                          {(group.members ?? []).length} member
+                          {(group.members ?? []).length === 1 ? "" : "s"}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {isAdmin && (
+                    <div className="flex gap-2 shrink-0">
+                      {isEditing ? (
+                        <>
+                          <ButtonPrimary
+                            icon={faCheck}
+                            text="Save"
+                            onClick={() => handleSaveEdit(group.id)}
+                            disabled={updateMutation.isPending}
+                          />
+                          <ButtonPrimary icon={faXmark} text="Cancel" onClick={cancelEdit} />
+                        </>
+                      ) : (
+                        <>
+                          <ButtonPrimary icon={faPen} text="Edit" onClick={() => startEdit(group)} />
+                          <ButtonPrimary
+                            icon={faTrash}
+                            text="Delete"
+                            onClick={() => {
+                              if (window.confirm(`Delete assignment group "${group.name}"?`)) {
+                                deleteMutation.mutate(group.id);
+                              }
+                            }}
+                          />
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4">
+                  {isAdmin ? (
+                    <SelectSecondary
+                      label="Members"
+                      options={userOptions}
+                      value={memberValues}
+                      isMulti
+                      isClearable={false}
+                      onSelect={(opts: any) => handleMembersChange(group.id, opts)}
+                    />
+                  ) : (
+                    <div>
+                      <div className="font-bold text-[#3C3C3C] mb-1">Members</div>
+                      <div className="flex flex-wrap gap-2">
+                        {(group.members ?? []).length === 0 && (
+                          <span className="text-[14px] text-[#9a9a9a]">No members</span>
+                        )}
+                        {(group.members ?? []).map((m) => (
+                          <span
+                            key={m.id}
+                            className="inline-flex items-center gap-1 bg-[#F0F7FE] text-[#2B9AE9] text-[13px] font-medium rounded-full px-3 py-1"
+                          >
+                            <FontAwesomeIcon icon={faUsers} />
+                            {m.name} {m.surname}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ──────────────────────── Admin Page ────────────────────────── */
+
+const Admin = () => {
+  return (
+    <div className="space-y-4 m-4">
+      <LastLogonSection />
+      <AssignmentGroupsSection />
     </div>
   );
 };

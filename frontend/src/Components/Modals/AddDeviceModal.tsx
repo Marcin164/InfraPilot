@@ -1,5 +1,5 @@
 import React from "react";
-import Modal from "react-responsive-modal";
+import Modal from "./AnimatedModal";
 import AddEquipmentForm from "../Forms/AddEquipmentForm";
 import CardHeader from "../Headers/CardHeader";
 import { useTranslation } from "react-i18next";

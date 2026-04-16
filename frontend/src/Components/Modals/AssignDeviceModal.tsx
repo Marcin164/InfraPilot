@@ -1,5 +1,5 @@
 import React from "react";
-import Modal from "react-responsive-modal";
+import Modal from "./AnimatedModal";
 import CardHeader from "../Headers/CardHeader";
 import AssignDeviceForm from "../Forms/AssignDeviceForm";
 

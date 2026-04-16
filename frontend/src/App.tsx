@@ -23,7 +23,6 @@ import HelpdeskDetails from "./Pages/Main/Helpdesk/Details";
 import Sla from "./Pages/Main/Settings/Details/Sla";
 import Personal from "./Pages/Main/Settings/Details/Personal";
 import ActiveDirectorySettings from "./Pages/Main/Settings/Details/ActiveDirectory";
-import AssignmentGroups from "./Pages/Main/Settings/Details/AssignmentGroups";
 import AdminSettings from "./Pages/Main/Settings/Details/Admin";
 import UsersReports from "./Pages/Main/Reports/Details/UsersReports";
 import DevicesReports from "./Pages/Main/Reports/Details/DevicesReports";
@@ -86,10 +85,6 @@ function App() {
                   element={<ActiveDirectorySettings />}
                 />
                 <Route path="sla" element={<Sla />} />
-                <Route
-                  path="assignment-groups"
-                  element={<AssignmentGroups />}
-                />
                 <Route path="admin" element={<AdminSettings />} />
               </Route>
             </Route>

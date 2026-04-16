@@ -10,6 +10,7 @@ import { useDebounce } from "../../../Hooks/useDebounce";
 import TicketsTable from "../../../Components/Tables/TicketsTable";
 import { getUserSettings } from "../../../Services/settings";
 import { useFilterPresets } from "../../../Hooks/useFilterPresets";
+import PageMotion from "../../../Components/PageMotion/PageMotion";
 import FilterPresetsBar from "../../../Components/Filter/FilterPresetsBar";
 
 type TicketFilters = {
@@ -133,6 +134,7 @@ const Index = () => {
   ];
 
   return (
+    <PageMotion>
     <div className="w-full h-[calc(100vh-58px)] px-4">
       <div className="pt-4 pb-4 flex gap-2">
         <Filter
@@ -171,6 +173,7 @@ const Index = () => {
         isLoading={helpdeskQuery.isFetching}
       />
     </div>
+    </PageMotion>
   );
 };
 

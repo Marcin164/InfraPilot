@@ -15,6 +15,7 @@ import HistoryFilters, {
   HistoryFiltersState,
 } from "./components/HistoryFilters";
 import HistoryFeedItem from "./components/HistoryFeedItem";
+import PageMotion from "../../../Components/PageMotion/PageMotion";
 
 const PAGE_SIZE = 30;
 
@@ -188,6 +189,7 @@ const History = () => {
   }
 
   return (
+    <PageMotion>
     <div className="flex flex-col gap-4 p-2">
       <HistoryFilters
         value={filters}
@@ -245,6 +247,7 @@ const History = () => {
         </div>
       )}
     </div>
+    </PageMotion>
   );
 };
 

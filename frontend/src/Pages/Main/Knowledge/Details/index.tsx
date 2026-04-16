@@ -15,6 +15,8 @@ import { useDebounce } from "../../../../Hooks/useDebounce";
 import { useParser } from "../../../../Hooks/useParser";
 import AddArticleModal from "../components/AddArticleModal";
 import ArticleCard from "../components/ArticleCard";
+import PageMotion from "../../../../Components/PageMotion/PageMotion";
+import { motion } from "framer-motion";
 
 const KnowledgeDetails = () => {
   const { id: spaceId } = useParams<{ id: string }>();
@@ -70,6 +72,7 @@ const KnowledgeDetails = () => {
   }
 
   return (
+    <PageMotion>
     <div className="h-[calc(100vh-58px)] w-full px-4">
       <div className="flex items-center gap-3 pt-4 pb-2">
         <Link
@@ -146,11 +149,24 @@ const KnowledgeDetails = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <motion.div
+        className="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        initial="hidden"
+        animate="show"
+        transition={{ staggerChildren: 0.05 }}
+      >
         {articles.map((article) => (
-          <ArticleCard key={article.id} article={article} />
+          <motion.div
+            key={article.id}
+            variants={{
+              hidden: { opacity: 0, y: 12 },
+              show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: "easeOut" } },
+            }}
+          >
+            <ArticleCard article={article} />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {spaceId && (
         <AddArticleModal
@@ -160,6 +176,7 @@ const KnowledgeDetails = () => {
         />
       )}
     </div>
+    </PageMotion>
   );
 };
 

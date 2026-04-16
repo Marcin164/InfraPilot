@@ -7,6 +7,7 @@ import Search from "../../../Components/Inputs/Search";
 import { useDebounce } from "../../../Hooks/useDebounce";
 import AddSpaceModal from "../../../Components/Modals/AddSpaceModal";
 import { getSpaces } from "../../../Services/knowledge";
+import PageMotion from "../../../Components/PageMotion/PageMotion";
 
 type Props = {};
 
@@ -35,6 +36,7 @@ const index = (props: Props) => {
   };
 
   return (
+    <PageMotion>
     <div className="w-full h-[calc(100vh-58px)] px-4">
       <div className="flex gap-2 py-4">
         <Search onChange={handleSearchChange} />
@@ -53,6 +55,7 @@ const index = (props: Props) => {
         onCloseModal={() => setIsAddSpaceModalOpen(false)}
       />
     </div>
+    </PageMotion>
   );
 };
 

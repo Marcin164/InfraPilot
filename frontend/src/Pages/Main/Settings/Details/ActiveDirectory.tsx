@@ -17,7 +17,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
-import Modal from "react-responsive-modal";
+import Modal from "../../../../Components/Modals/AnimatedModal";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getAdStatus,

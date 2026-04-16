@@ -11,10 +11,10 @@ import {
 import { getReports } from "../../../../Services/reports";
 import CardWrapper from "./CardWrapper";
 
-const LastScan = () => {
+const TicketsOverTime = () => {
   const { data } = useQuery({
-    queryKey: ["report", "audit-activity-over-time"],
-    queryFn: () => getReports("audit-activity-over-time"),
+    queryKey: ["report", "tickets-over-time"],
+    queryFn: () => getReports("tickets-over-time"),
   });
 
   const items = (data ?? []).map((d) => ({
@@ -23,13 +23,13 @@ const LastScan = () => {
   }));
 
   return (
-    <CardWrapper title="Last Scans" subtitle="Audit activity over time" accent="#9B59B6">
+    <CardWrapper title="Tickets Over Time" subtitle="Trend" accent="#E67E22">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={items} margin={{ left: 0, right: 12, top: 8, bottom: 4 }}>
           <defs>
-            <linearGradient id="scanGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#9B59B6" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="#9B59B6" stopOpacity={0} />
+            <linearGradient id="ticketsGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2B9AE9" stopOpacity={0.3} />
+              <stop offset="100%" stopColor="#2B9AE9" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
@@ -47,14 +47,14 @@ const LastScan = () => {
           />
           <Tooltip
             contentStyle={{ borderRadius: 8, fontSize: 13 }}
-            formatter={(v: number) => [v, "Events"]}
+            formatter={(v: number) => [v, "Tickets"]}
           />
           <Area
             type="monotone"
             dataKey="value"
-            stroke="#9B59B6"
+            stroke="#2B9AE9"
             strokeWidth={2.5}
-            fill="url(#scanGrad)"
+            fill="url(#ticketsGrad)"
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -62,4 +62,4 @@ const LastScan = () => {
   );
 };
 
-export default LastScan;
+export default TicketsOverTime;

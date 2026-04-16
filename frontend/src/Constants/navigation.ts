@@ -135,11 +135,6 @@ export const settingsNavbarItems = [
     icon: faCalendar,
   },
   {
-    to: "assignment-groups",
-    label: "Assignment Groups",
-    icon: faUsers,
-  },
-  {
     to: "tickets",
     label: "Tickets",
     icon: faTicket,

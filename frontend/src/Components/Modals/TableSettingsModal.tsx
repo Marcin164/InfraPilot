@@ -1,4 +1,4 @@
-import { Modal } from "react-responsive-modal";
+import Modal from "./AnimatedModal";
 import CheckboxButton from "../Inputs/CheckboxButton";
 import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";

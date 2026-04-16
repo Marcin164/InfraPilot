@@ -1,16 +1,30 @@
-import { faDesktop } from "@fortawesome/free-solid-svg-icons";
+import { useQuery } from "@tanstack/react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faDesktop } from "@fortawesome/free-solid-svg-icons";
+import { getReports } from "../../../../Services/reports";
+import { formatNumber } from "../helpers";
 
-type Props = {};
+const ActiveDevices = () => {
+  const { data } = useQuery({
+    queryKey: ["report", "devices-online-offline"],
+    queryFn: () => getReports("devices-online-offline"),
+  });
 
-const ActiveDevices = (props: Props) => {
+  const online = (data ?? []).find((d) => d.label.toLowerCase() === "online")?.value ?? 0;
+  const offline = (data ?? []).find((d) => d.label.toLowerCase() === "offline")?.value ?? 0;
+  const total = online + offline;
+
   return (
-    <div className="bg-[#FFFFFF] h-full p-2 rounded-[10px]">
-      <div className="w-[110px] h-full bg-[#D7EEFF] rounded-[10px] flex justify-center items-center">
-        <FontAwesomeIcon
-          icon={faDesktop}
-          className="text-[#2B9AE9] text-[40px]"
-        />
+    <div className="flex h-full w-full items-center gap-4 px-5">
+      <div className="flex h-[56px] w-[56px] shrink-0 items-center justify-center rounded-[14px] bg-[#D7EEFF]">
+        <FontAwesomeIcon icon={faDesktop} className="text-[24px] text-[#2B9AE9]" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-[36px] font-extrabold leading-none text-[#3C3C3C]">
+          {formatNumber(total)}
+        </div>
+        <div className="text-[13px] font-semibold text-[#8A8A8A]">Active Devices</div>
+        <div className="text-[11px] text-[#B0B0B0]">{online} online</div>
       </div>
     </div>
   );

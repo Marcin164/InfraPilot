@@ -9,12 +9,14 @@ type Props = {
   selectOptions: Array<any>;
   selectDashboard: any;
   currentDashboard: any;
+  onWidgetDragStart?: (widgetId: string) => void;
 };
 
 const DashboardTopbar = ({
   selectOptions,
   selectDashboard,
   currentDashboard,
+  onWidgetDragStart,
 }: Props) => {
   const [isOpenAddDashboardModal, setIsOpenAddDashboardModal] = useState(false);
   const [isOpenEditDashboardModal, setIsOpenEditDashboardModal] =
@@ -56,7 +58,7 @@ const DashboardTopbar = ({
         onCloseModal={onOpenAddDashboardModal}
         selectDashboard={selectDashboard}
       />
-      <EditDashboardModal isModalOpen={isOpenEditDashboardModal} />
+      <EditDashboardModal isModalOpen={isOpenEditDashboardModal} onWidgetDragStart={onWidgetDragStart} />
     </div>
   );
 };

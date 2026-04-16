@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from "framer-motion";
 import DataTable from "react-data-table-component";
 
 const MainTable = ({
@@ -49,23 +50,33 @@ const MainTable = ({
   };
 
   return (
-    <DataTable
-      className={className}
-      columns={columns}
-      data={data}
-      customStyles={customStyles}
-      onRowClicked={onRowClicked}
-      highlightOnHover
-      pointerOnHover
-      responsive
-      fixedHeader
-      pagination
-      paginationServer={paginationServer}
-      paginationTotalRows={paginationTotalRows}
-      onChangePage={onChangePage}
-      onChangeRowsPerPage={onChangeRowsPerPage}
-      progressPending={progressPending}
-    />
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={progressPending ? "loading" : "loaded"}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <DataTable
+          className={className}
+          columns={columns}
+          data={data}
+          customStyles={customStyles}
+          onRowClicked={onRowClicked}
+          highlightOnHover
+          pointerOnHover
+          responsive
+          fixedHeader
+          pagination
+          paginationServer={paginationServer}
+          paginationTotalRows={paginationTotalRows}
+          onChangePage={onChangePage}
+          onChangeRowsPerPage={onChangeRowsPerPage}
+          progressPending={progressPending}
+        />
+      </motion.div>
+    </AnimatePresence>
   );
 };
 

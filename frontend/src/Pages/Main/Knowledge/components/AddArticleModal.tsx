@@ -1,5 +1,4 @@
-import "react-responsive-modal/styles.css";
-import { Modal } from "react-responsive-modal";
+import Modal from "../../../../Components/Modals/AnimatedModal";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";

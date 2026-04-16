@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowRight,
@@ -21,7 +22,12 @@ const HistoryFeedItem = ({ entry }: Props) => {
   const components: any[] = (entry as any).components ?? [];
 
   return (
-    <div className="relative rounded-[10px] bg-white p-4 shadow-xl">
+    <motion.div
+      className="relative rounded-[10px] bg-white p-4 shadow-xl"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+    >
       <div
         className="absolute left-0 top-4 bottom-4 w-[4px] rounded-r-[4px]"
         style={{ backgroundColor: accent }}
@@ -158,7 +164,7 @@ const HistoryFeedItem = ({ entry }: Props) => {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

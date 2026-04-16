@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Modal from "react-responsive-modal";
+import Modal from "./AnimatedModal";
 import CardHeader from "../Headers/CardHeader";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import AddUserForm from "../Forms/AddUserForm";

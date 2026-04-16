@@ -1,5 +1,4 @@
-import "react-responsive-modal/styles.css";
-import { Modal } from "react-responsive-modal";
+import Modal from "./AnimatedModal";
 import Input from "../Inputs/Input";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
