@@ -11,6 +11,9 @@
   "nav.reports": "Raporty",
   "nav.history": "Historia",
   "nav.settings": "Ustawienia",
+  "nav.user": "Konto",
+  "nav.tickets": "Zgłoszenia",
+  "nav.mysettings": "Moje ustawienia",
 
   "btn.add.dashboard": "Dodaj panel",
   "btn.add.user": "Dodaj użytkownika",

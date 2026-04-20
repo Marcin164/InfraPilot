@@ -27,7 +27,7 @@ const Details = () => {
   }, [deviceQuery?.data?.id, setParsers]);
 
   useEffect(() => {
-    if (location.pathname === `/devices/${deviceQuery?.data?.id}`)
+    if (location.pathname === `/admin/devices/${deviceQuery?.data?.id}`)
       navigate("system");
   }, [location.pathname]);
 

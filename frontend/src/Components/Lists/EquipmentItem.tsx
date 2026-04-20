@@ -49,13 +49,13 @@ const EquipmentItem = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userDevice"] });
       toast.success("Device unassigned!");
-      navigate(`/users/${params.id}`);
+      navigate(`/admin/users/${params.id}`);
     },
   });
 
   return (
     <div className="flex justify-between">
-      <Link to={`/devices/${id}/system`} className="py-1">
+      <Link to={`/admin/devices/${id}/system`} className="py-1">
         <div className="flex items-center">
           <FontAwesomeIcon
             icon={getDeviceIcon(subgroup)}

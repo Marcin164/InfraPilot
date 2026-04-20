@@ -25,7 +25,7 @@ const TicketInfoPanel = ({ ticket }: TicketInfoPanelProps) => {
       <div className="py-1">
         <FontAwesomeIcon icon={faUser} className="w-[20px]" />
         <span className="ml-2 font-semibold">
-          <Link to={`/users/${ticket.requester.id}`}>
+          <Link to={`/admin/users/${ticket.requester.id}`}>
             {ticket.requester.distinguishedName}
           </Link>
         </span>
@@ -35,7 +35,7 @@ const TicketInfoPanel = ({ ticket }: TicketInfoPanelProps) => {
         <FontAwesomeIcon icon={faDesktop} className="w-[20px]" />
         <span className="ml-2 font-semibold">
           {ticket.device ? (
-            <Link to={`/devices/${ticket.device.id}`}>
+            <Link to={`/admin/devices/${ticket.device.id}/system`}>
               {ticket.device.assetName || ticket.device.serialNumber}
             </Link>
           ) : (

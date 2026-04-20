@@ -1,7 +1,10 @@
-import React from "react";
 import { motion } from "framer-motion";
 import NavbarLink from "./NavbarLink";
-import { navbarItems, type NavbarItem } from "../../Constants/navigation";
+import {
+  navbarItems,
+  userNavbarPaths,
+  type NavbarItem,
+} from "../../Constants/navigation";
 import { useAuthInfo, useLogoutFunction } from "@propelauth/react";
 import { useQuery } from "@tanstack/react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -10,7 +13,6 @@ import Logo from "../../assets/Logo.png";
 import { useTranslation } from "react-i18next";
 import { getUser } from "../../Services/users";
 
-type Props = {};
 
 const canSeeItem = (
   item: NavbarItem,
@@ -29,7 +31,7 @@ const navItem = {
   show: { opacity: 1, x: 0 },
 };
 
-const MainNavbar = (props: Props) => {
+const MainNavbar = () => {
   const logout = useLogoutFunction();
   const { t } = useTranslation();
   const authInfo: any = useAuthInfo();
@@ -42,8 +44,10 @@ const MainNavbar = (props: Props) => {
     enabled: Boolean(currentUserId),
   });
 
-  const visibleItems = navbarItems.filter((item) =>
-    canSeeItem(item, currentUserQuery.data),
+  const adminItems = navbarItems.filter(
+    (item) =>
+      !userNavbarPaths.has(item.to) &&
+      canSeeItem(item, currentUserQuery.data),
   );
 
   return (
@@ -62,7 +66,7 @@ const MainNavbar = (props: Props) => {
           animate="show"
           transition={{ staggerChildren: 0.04, delayChildren: 0.1 }}
         >
-          {visibleItems.map((navbarItem) => (
+          {adminItems.map((navbarItem) => (
             <motion.div key={navbarItem.to} variants={navItem} transition={{ duration: 0.2, ease: "easeOut" }}>
               <NavbarLink
                 to={navbarItem.to}

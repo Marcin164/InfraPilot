@@ -76,7 +76,7 @@ const KnowledgeDetails = () => {
     <div className="h-[calc(100vh-58px)] w-full px-4">
       <div className="flex items-center gap-3 pt-4 pb-2">
         <Link
-          to="/knowledge"
+          to="/admin/knowledge"
           className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-white text-[#535353] shadow-xl hover:bg-[#F0F0F0]"
         >
           <FontAwesomeIcon icon={faArrowLeft} />

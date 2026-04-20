@@ -58,7 +58,7 @@ const TicketsTable = ({
       cell: (row: any) =>
         row.requester ? (
           <Link
-            to={`/users/${row.requester.id}`}
+            to={`${row.requester.id}`}
             className="text-[#2B9AE9] hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
@@ -130,7 +130,7 @@ const TicketsTable = ({
     <MainTable
       columns={filterColumns()}
       data={data}
-      onRowClicked={(row: any) => navigate(`/helpdesk/${row.id}`)}
+      onRowClicked={(row: any) => navigate(`/admin/helpdesk/${row.id}`)}
       paginationServer
       paginationTotalRows={total}
       onChangePage={onPageChange}

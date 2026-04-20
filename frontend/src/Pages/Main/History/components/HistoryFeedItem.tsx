@@ -43,7 +43,7 @@ const HistoryFeedItem = ({ entry }: Props) => {
           </span>
           {entry.ticket && (
             <Link
-              to={`/helpdesk/${entry.ticket}`}
+              to={`/admin/helpdesk/${entry.ticket}`}
               className="text-[14px] font-bold text-[#2B9AE9] hover:underline"
             >
               Ticket {entry.ticket}
@@ -58,7 +58,7 @@ const HistoryFeedItem = ({ entry }: Props) => {
       <div className="mt-3 flex flex-wrap items-center gap-3 pl-3 text-[14px]">
         {user && (
           <Link
-            to={`/users/${user.id}`}
+            to={`/admin/users/${user.id}`}
             className="flex items-center gap-2 rounded-[8px] bg-[#F0F6FC] px-3 py-1 text-[#2B9AE9] hover:underline"
           >
             <FontAwesomeIcon icon={faUser} />
@@ -76,7 +76,7 @@ const HistoryFeedItem = ({ entry }: Props) => {
 
         {device && (
           <Link
-            to={`/devices/${device.id ?? entry.deviceId}`}
+            to={`/admin/devices/${device.id ?? entry.deviceId}/system`}
             className="flex items-center gap-2 rounded-[8px] bg-[#F0F6FC] px-3 py-1 text-[#2B9AE9] hover:underline"
           >
             <FontAwesomeIcon icon={faMouse} />
@@ -150,7 +150,7 @@ const HistoryFeedItem = ({ entry }: Props) => {
               <span key={approver?.user?.id ?? index}>
                 {approver?.user && (
                   <Link
-                    to={`/users/${approver.user.id}`}
+                    to={`/admin/users/${approver.user.id}`}
                     className="hover:underline"
                   >
                     {approver.user.distinguishedName}

@@ -33,8 +33,6 @@ const Details = () => {
   }, [userQuery?.data?.id, setParsers]);
 
   if (!userQuery?.data) return null;
-
-  console.log(userQuery?.data);
   return (
     <PageMotion>
       <div className="grid grid-cols-3 gap-x-4 p-4">

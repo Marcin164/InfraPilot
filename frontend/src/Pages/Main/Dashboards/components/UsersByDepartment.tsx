@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -8,17 +7,14 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { getReports } from "../../../../Services/reports";
 import CardWrapper from "./CardWrapper";
 import { CHART_COLORS } from "../helpers";
+import { useDashboardData } from "../DashboardDataContext";
 
 const UsersByDepartment = () => {
-  const { data } = useQuery({
-    queryKey: ["report", "users-by-department"],
-    queryFn: () => getReports("users-by-department"),
-  });
+  const data = useDashboardData("users-by-department");
 
-  const items = (data ?? [])
+  const items = [...data]
     .sort((a, b) => b.value - a.value)
     .slice(0, 8);
 

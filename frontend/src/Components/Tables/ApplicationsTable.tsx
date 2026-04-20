@@ -39,7 +39,7 @@ const ApplicationsTable = ({ data, filterOptions, searchValue }: Props) => {
       columns={columns}
       data={getFilteredData(getSearchedData(data, searchValue), filterOptions)}
       onRowClicked={(row: any) =>
-        navigate(`/applications/${row.id}`, {
+        navigate(`/admin/applications/${row.id}`, {
           state: { changeValue: row.name, changeIndex: row.id },
         })
       }

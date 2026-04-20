@@ -20,27 +20,27 @@ const Topbar = () => {
   return (
     <div className="flex items-center justify-between bg-[#FFFFFF] px-4 py-3">
       <div className="capitalize">
-        {breadCrumbs.map((breadCrumb: string, index: number) => (
-          <span
-            key={index}
-            style={{ textTransform: "capitalize" }}
-            className="text-[22px] text-[#3C3C3C]"
-          >
-            <Link
-              to={"/" + breadCrumbs.slice(0, index + 1).join("/")}
-              className={
-                index !== breadCrumbs.length - 1
-                  ? "underline hover:text-[#2B9AE9]"
-                  : ""
-              }
+        {breadCrumbs.map((breadCrumb: string, index: number) => {
+          if (breadCrumb === "admin") return null;
+          const isLast = index === breadCrumbs.length - 1;
+          return (
+            <span
+              key={index}
+              style={{ textTransform: "capitalize" }}
+              className="text-[22px] text-[#3C3C3C]"
             >
-              {resolve(breadCrumb)}
-            </Link>
-            {index !== breadCrumbs.length - 1 && (
-              <FontAwesomeIcon icon={faChevronRight} className="px-2" />
-            )}
-          </span>
-        ))}
+              <Link
+                to={"/" + breadCrumbs.slice(0, index + 1).join("/")}
+                className={isLast ? "" : "underline hover:text-[#2B9AE9]"}
+              >
+                {resolve(breadCrumb)}
+              </Link>
+              {!isLast && (
+                <FontAwesomeIcon icon={faChevronRight} className="px-2" />
+              )}
+            </span>
+          );
+        })}
       </div>
       <div className="flex">
         <GlobalSearch />

@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tailwind-scrollbar-hide/v4";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @font-face {
   font-family: "Lato";
   src: url("./Fonts/Lato-Black.ttf") format("truetype");
@@ -135,4 +137,80 @@ body {
 }
 .react-grid-item {
   animation: cardFadeIn 0.25s ease-out;
+}
+
+/* ── Dark theme baseline overrides ──
+   The app uses hardcoded hex colors — these rules flip the most common
+   surfaces when html.dark is applied. Not exhaustive, but covers the
+   primary backgrounds/text so the toggle has visible effect. */
+html.dark {
+  color-scheme: dark;
+}
+html.dark body {
+  background-color: #0F1419;
+  color: #E5E7EB;
+}
+html.dark .bg-white {
+  background-color: #1A1F26 !important;
+}
+html.dark .bg-\[\#FFFFFF\] {
+  background-color: #1A1F26 !important;
+}
+html.dark .bg-\[\#F0F0F0\],
+html.dark .bg-\[\#F5F5F5\],
+html.dark .bg-\[\#F7F7F7\],
+html.dark .bg-\[\#FAFAFA\] {
+  background-color: #111418 !important;
+}
+html.dark .bg-gray-50 {
+  background-color: #141820 !important;
+}
+html.dark .bg-gray-100 {
+  background-color: #181D25 !important;
+}
+html.dark .text-\[\#3C3C3C\],
+html.dark .text-\[\#2C2C2C\],
+html.dark .text-\[\#1C1C1C\] {
+  color: #E5E7EB !important;
+}
+html.dark .text-\[\#535353\] {
+  color: #C8CDD5 !important;
+}
+html.dark .text-\[\#8A8A8A\],
+html.dark .text-\[\#7A7A7A\] {
+  color: #9AA3AE !important;
+}
+html.dark .text-\[\#B0B0B0\],
+html.dark .text-\[\#C0C0C0\] {
+  color: #8A8F96 !important;
+}
+html.dark .text-gray-400 {
+  color: #8A8F96 !important;
+}
+html.dark .text-gray-500 {
+  color: #9AA3AE !important;
+}
+html.dark .border-\[\#E0E0E0\],
+html.dark .border-\[\#E5E5E5\],
+html.dark .border-\[\#EEEEEE\],
+html.dark .border-gray-200 {
+  border-color: #2A2F38 !important;
+}
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #1A1F26;
+  color: #E5E7EB;
+  border-color: #2A2F38;
+}
+html.dark .shadow-xl,
+html.dark .shadow-lg,
+html.dark .shadow-md {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+html.dark .recharts-cartesian-grid line {
+  stroke: #2A2F38 !important;
+}
+html.dark .recharts-text {
+  fill: #C8CDD5 !important;
 }

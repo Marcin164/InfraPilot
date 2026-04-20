@@ -31,7 +31,7 @@ const ArticleCard = ({ article }: Props) => {
 
   return (
     <Link
-      to={`/knowledge/${article.spaceId}/${article.id}`}
+      to={`/admin/knowledge/${article.spaceId}/${article.id}`}
       className="flex flex-col rounded-[10px] bg-white p-4 shadow-xl transition hover:shadow-2xl"
     >
       <div className="flex items-start justify-between gap-2">

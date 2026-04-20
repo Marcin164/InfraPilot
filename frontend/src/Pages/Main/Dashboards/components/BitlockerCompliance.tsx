@@ -1,18 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import { getReports } from "../../../../Services/reports";
 import CardWrapper from "./CardWrapper";
+import { useDashboardData } from "../DashboardDataContext";
 
 const BitlockerCompliance = () => {
-  const { data } = useQuery({
-    queryKey: ["report", "security-outside-domain"],
-    queryFn: () => getReports("security-outside-domain"),
-  });
+  const data = useDashboardData("security-outside-domain");
 
   const joined =
-    (data ?? []).find((d) => d.label.toLowerCase().includes("joined"))?.value ?? 0;
+    data.find((d) => d.label.toLowerCase().includes("joined"))?.value ?? 0;
   const outside =
-    (data ?? []).find((d) => d.label.toLowerCase().includes("outside") || d.label.toLowerCase().includes("not"))?.value ?? 0;
+    data.find((d) => d.label.toLowerCase().includes("outside") || d.label.toLowerCase().includes("not"))?.value ?? 0;
   const total = joined + outside;
   const pct = total > 0 ? Math.round((joined / total) * 100) : 0;
 

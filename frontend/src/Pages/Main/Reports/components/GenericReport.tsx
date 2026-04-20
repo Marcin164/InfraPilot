@@ -45,6 +45,7 @@ const GenericReport = ({ meta, filters: initialFilters }: Props) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ["reports", meta.key, activeFilters],
     queryFn: () => getReports(meta.key, activeFilters),
+    staleTime: 60_000,
   });
 
   const rows: any[] = Array.isArray(data) ? data : [];

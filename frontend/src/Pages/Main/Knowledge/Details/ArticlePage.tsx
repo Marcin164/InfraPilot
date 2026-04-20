@@ -144,7 +144,7 @@ const ArticlePage = () => {
         queryKey: ["knowledge-articles", spaceId],
       });
       toast.success("Article deleted");
-      navigate(`/knowledge/${spaceId}`);
+      navigate(`/admin/knowledge/${spaceId}`);
     },
     onError: () => {
       toast.error("Failed to delete article");
@@ -170,7 +170,7 @@ const ArticlePage = () => {
       {/* Top bar */}
       <div className="flex items-center justify-between gap-3 pb-4">
         <Link
-          to={`/knowledge/${spaceId}`}
+          to={`/admin/knowledge/${spaceId}`}
           className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-white text-[#535353] shadow-xl hover:bg-[#F0F0F0]"
         >
           <FontAwesomeIcon icon={faArrowLeft} />
@@ -234,7 +234,7 @@ const ArticlePage = () => {
               <span>
                 Space:{" "}
                 <Link
-                  to={`/knowledge/${article.spaceId}`}
+                  to={`/admin/knowledge/${article.spaceId}`}
                   className="text-[#2B9AE9] hover:underline"
                 >
                   {article.space.name}

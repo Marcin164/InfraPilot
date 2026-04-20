@@ -80,7 +80,7 @@ const UsersTable = ({
       selector: (row: any) =>
         row.assetname ? (
           <Link
-            to={`/devices/${row.deviceid}/system`}
+            to={`/admin/devices/${row.deviceid}/system`}
             className="text-[#2B9AE9] underline"
           >
             {row.assetname}
@@ -144,7 +144,7 @@ const UsersTable = ({
     <MainTable
       columns={filterColumns()}
       data={data}
-      onRowClicked={(row: any) => navigate(`/users/${row.id}`)}
+      onRowClicked={(row: any) => navigate(`/admin/users/${row.id}`)}
       paginationServer
       paginationTotalRows={total}
       onChangePage={onPageChange}

@@ -1,16 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import { getReports } from "../../../../Services/reports";
 import CardWrapper from "./CardWrapper";
+import { useDashboardData } from "../DashboardDataContext";
 
 const SecurityCompliance = () => {
-  const { data } = useQuery({
-    queryKey: ["report", "security-patch-compliance"],
-    queryFn: () => getReports("security-patch-compliance"),
-  });
+  const data = useDashboardData("security-patch-compliance");
 
-  const compliant = (data ?? []).find((d) => d.label.toLowerCase().includes("compliant") && !d.label.toLowerCase().includes("non"))?.value ?? 0;
-  const nonCompliant = (data ?? []).find((d) => d.label.toLowerCase().includes("non"))?.value ?? 0;
+  const compliant = data.find((d) => d.label.toLowerCase().includes("compliant") && !d.label.toLowerCase().includes("non"))?.value ?? 0;
+  const nonCompliant = data.find((d) => d.label.toLowerCase().includes("non"))?.value ?? 0;
   const total = compliant + nonCompliant;
   const pct = total > 0 ? Math.round((compliant / total) * 100) : 0;
 

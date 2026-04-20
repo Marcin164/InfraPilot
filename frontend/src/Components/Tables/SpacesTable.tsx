@@ -75,7 +75,7 @@ const SpacesTable = ({ data, isLoading }: Props) => {
     <MainTable
       columns={columns}
       data={data}
-      onRowClicked={(row: KnowledgeSpace) => navigate(`/knowledge/${row.id}`)}
+      onRowClicked={(row: KnowledgeSpace) => navigate(`/admin/knowledge/${row.id}`)}
       className="h-[calc(100vh-170px)]"
     />
   );

@@ -86,7 +86,7 @@ const Index = () => {
   ];
 
   useEffect(() => {
-    if (params.id) navigate(`/devices/${params.id}/systeminfo`);
+    if (params.id) navigate(`/admin/devices/${params.id}/systeminfo`);
   }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {

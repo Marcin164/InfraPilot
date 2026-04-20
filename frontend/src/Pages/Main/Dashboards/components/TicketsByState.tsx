@@ -1,16 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { getReports } from "../../../../Services/reports";
 import CardWrapper from "./CardWrapper";
 import { CHART_COLORS } from "../helpers";
+import { useDashboardData } from "../DashboardDataContext";
 
 const TicketsByState = () => {
-  const { data } = useQuery({
-    queryKey: ["report", "tickets-by-state"],
-    queryFn: () => getReports("tickets-by-state"),
-  });
+  const data = useDashboardData("tickets-by-state");
 
-  const items = (data ?? []).map((d, i) => ({
+  const items = data.map((d, i) => ({
     ...d,
     color: CHART_COLORS[i % CHART_COLORS.length],
   }));

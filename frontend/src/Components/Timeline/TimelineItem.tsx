@@ -79,7 +79,7 @@ const TimelineItem = ({
             {approvers.map((approver: any, index: number) => (
               <>
                 {approver?.user && (
-                  <Link to={`/users/${approver.user.id}`}>
+                  <Link to={`/admin/users/${approver.user.id}`}>
                     {approver.user.distinguishedName}
                   </Link>
                 )}

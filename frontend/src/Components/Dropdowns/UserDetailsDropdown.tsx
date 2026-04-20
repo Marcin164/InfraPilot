@@ -33,7 +33,7 @@ const UserDetailsDropdown = ({ data }: Props) => {
     onSuccess: () => {
       toast.success("User has been deleted!");
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      navigate("/users");
+      navigate("users");
     },
   });
 
@@ -70,7 +70,7 @@ const UserDetailsDropdown = ({ data }: Props) => {
         icon={faComputer}
         text="Edit equipment"
         className="h-[34px] text-[16px] w-full my-1 text-left shadow-none"
-        onClick={() => navigate(`/users/${id}/equipmentedit`)}
+        onClick={() => navigate(`/admin/users/${id}/equipmentedit`)}
       />
       <ButtonPrimary
         color="white"

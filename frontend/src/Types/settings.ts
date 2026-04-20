@@ -5,15 +5,26 @@ export interface FilterPreset {
   lastUsed?: boolean;
 }
 
+export type ThemeSetting = "light" | "dark" | "system";
+export type TimeFormat = "12h" | "24h";
+export type DateFormat = "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD";
+export type StartPage =
+  | "dashboards"
+  | "users"
+  | "devices"
+  | "helpdesk"
+  | "knowledge"
+  | "history"
+  | "reports";
+
 export interface UserSettings {
-  theme?: "system" | "day" | "night";
+  theme?: ThemeSetting;
   language?: string;
-  notificationsEnabled?: boolean;
-  notifications?: {
-    history: boolean;
-    devices: boolean;
-    users: boolean;
-  };
+  startPage?: StartPage;
+  dateFormat?: DateFormat;
+  timeFormat?: TimeFormat;
+  defaultPageSize?: number;
+  compactMode?: boolean;
   usersTableColumnOrder?: string[];
   ticketsTableColumnOrder?: string[];
   devicesTableColumnOrder?: string[];

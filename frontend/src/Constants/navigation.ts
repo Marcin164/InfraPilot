@@ -14,6 +14,7 @@ import {
   faRobot,
   faShield,
   faTicket,
+  faUser,
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -28,47 +29,68 @@ export type NavbarItem = {
 
 export const navbarItems: NavbarItem[] = [
   {
-    to: "/dashboards",
+    to: "/admin/dashboards",
     label: "nav.dashboards",
     icon: faChartPie,
   },
   {
-    to: "/users",
+    to: "/admin/users",
     label: "nav.users",
     icon: faUsers,
   },
   {
-    to: "/devices",
+    to: "/admin/devices",
     label: "nav.devices",
     icon: faComputer,
   },
   {
-    to: "/helpdesk",
+    to: "/admin/helpdesk",
     label: "nav.helpdesk",
     icon: faRobot,
   },
   {
-    to: "/knowledge",
+    to: "/admin/knowledge",
     label: "nav.knowledge",
     icon: faBookAtlas,
   },
   {
-    to: "/reports/users",
+    to: "/admin/reports/users",
     label: "nav.reports",
     icon: faChartBar,
   },
   {
-    to: "/history",
+    to: "/admin/history",
     label: "nav.history",
     icon: faHistory,
     requires: "approverOrAdmin",
   },
   {
-    to: "/settings",
+    to: "/admin/settings/personal",
     label: "nav.settings",
     icon: faGear,
   },
+  {
+    to: "/user/account",
+    label: "nav.user",
+    icon: faUser,
+  },
+  {
+    to: "/user/tickets",
+    label: "nav.tickets",
+    icon: faTicket,
+  },
+  {
+    to: "/user/settings",
+    label: "nav.mysettings",
+    icon: faGear,
+  },
 ];
+
+export const userNavbarPaths = new Set([
+  "/user/account",
+  "/user/tickets",
+  "/user/settings",
+]);
 
 export const deviceNavbarItems = [
   {

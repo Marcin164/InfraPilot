@@ -48,7 +48,7 @@ const FlowsTable = (props: Props) => {
     <MainTable
       columns={columns}
       data={data}
-      onRowClicked={(row: any) => navigate(`/flows/${row.id}`)}
+      onRowClicked={(row: any) => navigate(`/admin/flows/${row.id}`)}
     />
   );
 };

@@ -1,8 +1,51 @@
 import api from "../lib/api";
-import type { Ticket, UpdateTicketData, Comment, Approval, ApprovalDecision } from "../Types";
+import type { Ticket, UpdateTicketData, Comment, Approval, ApprovalDecision, TicketType, TicketPriority, TicketImpact, TicketUrgency } from "../Types";
 
 export const getTickets = async (query: string): Promise<{ data: Ticket[]; total: number }> => {
   const { data } = await api.get(`/tickets?${query}`);
+  return data;
+};
+
+export type TicketCategoryMap = {
+  Incident: string[];
+  Service: string[];
+};
+
+export const getMyTickets = async (
+  scope: "open" | "closed" = "open",
+): Promise<Ticket[]> => {
+  const { data } = await api.get(`/tickets/mine?scope=${scope}`);
+  return data;
+};
+
+export const getTicketCategories = async (): Promise<TicketCategoryMap> => {
+  const { data } = await api.get(`/tickets/categories`);
+  return data;
+};
+
+export const updateTicketCategories = async (
+  value: TicketCategoryMap,
+): Promise<TicketCategoryMap> => {
+  const { data } = await api.patch(`/tickets/categories`, value);
+  return data;
+};
+
+export type CreateTicketPayload = {
+  type: TicketType;
+  description: string;
+  requesterId: string;
+  category?: string;
+  deviceId?: string;
+  assignmentGroup?: string;
+  priority?: TicketPriority;
+  impact?: TicketImpact;
+  urgency?: TicketUrgency;
+};
+
+export const createTicket = async (
+  payload: CreateTicketPayload,
+): Promise<Ticket> => {
+  const { data } = await api.post(`/tickets`, payload);
   return data;
 };
 

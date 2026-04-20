@@ -14,16 +14,16 @@ import Search from "../Inputs/Search";
 import { globalSearch, type SearchResultItem } from "../../Services/search";
 
 const STATIC_REPORTS: SearchResultItem[] = [
-  { id: "r-users", type: "report", title: "Users report", url: "/reports/users" },
-  { id: "r-devices", type: "report", title: "Devices report", url: "/reports/devices" },
-  { id: "r-tickets", type: "report", title: "Tickets report", url: "/reports/tickets" },
-  { id: "r-security", type: "report", title: "Security report", url: "/reports/security" },
+  { id: "r-users", type: "report", title: "Users report", url: "/admin/reports/users" },
+  { id: "r-devices", type: "report", title: "Devices report", url: "/admin/reports/devices" },
+  { id: "r-tickets", type: "report", title: "Tickets report", url: "/admin/reports/tickets" },
+  { id: "r-security", type: "report", title: "Security report", url: "/admin/reports/security" },
 ];
 
 const STATIC_SETTINGS: SearchResultItem[] = [
-  { id: "s-personal", type: "setting", title: "Personal settings", url: "/settings/personal" },
-  { id: "s-ad", type: "setting", title: "Active Directory", url: "/settings/active-directory" },
-  { id: "s-sla", type: "setting", title: "SLA", url: "/settings/sla" },
+  { id: "s-personal", type: "setting", title: "Personal settings", url: "/admin/settings/personal" },
+  { id: "s-ad", type: "setting", title: "Active Directory", url: "/admin/settings/active-directory" },
+  { id: "s-sla", type: "setting", title: "SLA", url: "/admin/settings/sla" },
 ];
 
 const ICONS: Record<SearchResultItem["type"], any> = {

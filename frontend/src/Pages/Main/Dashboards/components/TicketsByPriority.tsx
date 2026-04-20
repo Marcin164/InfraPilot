@@ -1,7 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { getReports } from "../../../../Services/reports";
 import CardWrapper from "./CardWrapper";
+import { useDashboardData } from "../DashboardDataContext";
 
 const PRIORITY_COLORS: Record<string, string> = {
   low: "#2ECC71",
@@ -11,12 +10,9 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 const TicketsByPriority = () => {
-  const { data } = useQuery({
-    queryKey: ["report", "tickets-by-priority"],
-    queryFn: () => getReports("tickets-by-priority"),
-  });
+  const data = useDashboardData("tickets-by-priority");
 
-  const items = (data ?? []).map((d) => ({
+  const items = data.map((d) => ({
     ...d,
     color: PRIORITY_COLORS[d.label.toLowerCase()] ?? "#636E72",
   }));

@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import {
   AreaChart,
   Area,
@@ -8,16 +7,13 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { getReports } from "../../../../Services/reports";
 import CardWrapper from "./CardWrapper";
+import { useDashboardData } from "../DashboardDataContext";
 
 const TicketsOverTime = () => {
-  const { data } = useQuery({
-    queryKey: ["report", "tickets-over-time"],
-    queryFn: () => getReports("tickets-over-time"),
-  });
+  const data = useDashboardData("tickets-over-time");
 
-  const items = (data ?? []).map((d) => ({
+  const items = data.map((d) => ({
     label: d.label,
     value: d.value,
   }));
