@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Main from "./Pages/Main";
 import Dashboards from "./Pages/Main/Dashboards";
 import Users from "./Pages/Main/Users";
@@ -32,65 +32,86 @@ import Knowledge from "./Pages/Main/Knowledge";
 import KnowledgeDetails from "./Pages/Main/Knowledge/Details";
 import ArticlePage from "./Pages/Main/Knowledge/Details/ArticlePage";
 import History from "./Pages/Main/History";
+import UserLayout from "./Pages/User/index";
+import UserAccount from "./Pages/User/Account";
+import UserTickets from "./Pages/User/Tickets";
+import UserTicketDetails from "./Pages/User/Tickets/Details";
+import NewUserTicket from "./Pages/User/Tickets/New";
+import UserSettings from "./Pages/User/Settings";
 import { AnimatePresence } from "framer-motion";
 import { useAuthSetup } from "./Hooks/useAuthSetup";
+import { ThemeProvider } from "./Context/ThemeContext";
 
 function App() {
   useAuthSetup();
 
   return (
     <AnimatePresence mode="wait">
-      <ParseProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Main />}>
-              <Route index path="/dashboards" element={<Dashboards />} />
-              <Route path="/users" element={<Users />} />
-              <Route path="/users/:id" element={<UserDetails />} />
+      <ThemeProvider>
+        <ParseProvider>
+          <BrowserRouter>
+            <Routes>
               <Route
-                path="/users/:id/equipmentedit"
-                element={<EditEquipment />}
+                path="/"
+                element={<Navigate to="/admin/dashboards" replace />}
               />
-              <Route path="/devices" element={<Devices />} />
-              <Route path="/devices/:id" element={<DeviceDetails />}>
-                <Route index path="system" element={<SystemInfo />} />
-                <Route path="hardware" element={<Hardware />} />
-                <Route path="software" element={<Software />} />
-                <Route path="network" element={<Network />} />
-                <Route path="security" element={<Security />} />
-                <Route path="events" element={<Events />} />
-                <Route path="users" element={<UsersInfo />} />
-                <Route path="peripherals" element={<Peripherals />} />
-                <Route path="history" element={<DeviceHistory />} />
+              <Route path="/user" element={<UserLayout />}>
+                <Route index element={<Navigate to="account" replace />} />
+                <Route path="account" element={<UserAccount />} />
+                <Route path="tickets" element={<UserTickets />} />
+                <Route path="tickets/new" element={<NewUserTicket />} />
+                <Route path="tickets/:id" element={<UserTicketDetails />} />
+                <Route path="settings" element={<UserSettings />} />
               </Route>
-              <Route path="/helpdesk" element={<Helpdesk />} />
-              <Route path="/helpdesk/:id" element={<HelpdeskDetails />} />
-              <Route path="/knowledge" element={<Knowledge />} />
-              <Route path="/knowledge/:id" element={<KnowledgeDetails />} />
-              <Route
-                path="/knowledge/:id/:articleId"
-                element={<ArticlePage />}
-              />
-              <Route path="/history" element={<History />} />
-              <Route path="/reports" element={<Reports />}>
-                <Route path="users" element={<UsersReports />} />
-                <Route path="devices" element={<DevicesReports />} />
-                <Route path="tickets" element={<TicketsReports />} />
-                <Route path="security" element={<SecurityReports />} />
-              </Route>
-              <Route path="/settings" element={<Settings />}>
-                <Route index path="personal" element={<Personal />} />
+              <Route path="/admin" element={<Main />}>
+                <Route index path="dashboards" element={<Dashboards />} />
+                <Route path="users" element={<Users />} />
+                <Route path="users/:id" element={<UserDetails />} />
                 <Route
-                  path="active-directory"
-                  element={<ActiveDirectorySettings />}
+                  path="users/:id/equipmentedit"
+                  element={<EditEquipment />}
                 />
-                <Route path="sla" element={<Sla />} />
-                <Route path="admin" element={<AdminSettings />} />
+                <Route path="devices" element={<Devices />} />
+                <Route path="devices/:id" element={<DeviceDetails />}>
+                  <Route index path="system" element={<SystemInfo />} />
+                  <Route path="hardware" element={<Hardware />} />
+                  <Route path="software" element={<Software />} />
+                  <Route path="network" element={<Network />} />
+                  <Route path="security" element={<Security />} />
+                  <Route path="events" element={<Events />} />
+                  <Route path="users" element={<UsersInfo />} />
+                  <Route path="peripherals" element={<Peripherals />} />
+                  <Route path="history" element={<DeviceHistory />} />
+                </Route>
+                <Route path="helpdesk" element={<Helpdesk />} />
+                <Route path="helpdesk/:id" element={<HelpdeskDetails />} />
+                <Route path="knowledge" element={<Knowledge />} />
+                <Route path="knowledge/:id" element={<KnowledgeDetails />} />
+                <Route
+                  path="knowledge/:id/:articleId"
+                  element={<ArticlePage />}
+                />
+                <Route path="history" element={<History />} />
+                <Route path="reports" element={<Reports />}>
+                  <Route path="users" element={<UsersReports />} />
+                  <Route path="devices" element={<DevicesReports />} />
+                  <Route path="tickets" element={<TicketsReports />} />
+                  <Route path="security" element={<SecurityReports />} />
+                </Route>
+                <Route path="settings" element={<Settings />}>
+                  <Route index path="personal" element={<Personal />} />
+                  <Route
+                    path="active-directory"
+                    element={<ActiveDirectorySettings />}
+                  />
+                  <Route path="sla" element={<Sla />} />
+                  <Route path="admin" element={<AdminSettings />} />
+                </Route>
               </Route>
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </ParseProvider>
+            </Routes>
+          </BrowserRouter>
+        </ParseProvider>
+      </ThemeProvider>
     </AnimatePresence>
   );
 }
