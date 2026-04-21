@@ -2,6 +2,7 @@ import { useOutletContext } from "react-router";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
 import System from "../components/OS";
 import AD from "../components/AD";
+import AgentCredentials from "../components/AgentCredentials";
 import NoData from "../components/NoData";
 
 type Props = {};
@@ -12,6 +13,7 @@ const SystemInfo = ({}: Props) => {
   if (!device?.data?.system) return <NoData />;
 
   const systemInfo = device.data.system;
+  const deviceData = device.data;
 
   return (
     <div className="w-full cursor-default ">
@@ -19,6 +21,12 @@ const SystemInfo = ({}: Props) => {
         <Masonry className="scrollbar-hide w-full h-[82vh] overflow-y-scroll pb-4">
           <System systemInfo={systemInfo} />
           <AD />
+          <AgentCredentials
+            deviceId={deviceData.id}
+            lastScanAt={deviceData.lastScanAt}
+            apiSecretRotatedAt={deviceData.apiSecretRotatedAt}
+            apiSecretPrevValidUntil={deviceData.apiSecretPrevValidUntil}
+          />
         </Masonry>
       </ResponsiveMasonry>
     </div>
