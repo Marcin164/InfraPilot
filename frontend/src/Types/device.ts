@@ -12,6 +12,9 @@ export interface Device {
   user?: { id: string; distinguishedName: string };
   userId?: string;
   data?: DeviceData;
+  apiSecretRotatedAt?: string | null;
+  apiSecretPrevValidUntil?: string | null;
+  lastScanAt?: string | null;
 }
 
 export type DeviceGroup = "Computers" | "Peripherals" | "Network" | "Components" | "Other";

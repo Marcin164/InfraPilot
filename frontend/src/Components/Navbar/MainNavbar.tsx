@@ -14,16 +14,35 @@ import { useTranslation } from "react-i18next";
 import { getUser } from "../../Services/users";
 
 
-const canSeeItem = (
-  item: NavbarItem,
-  user: { isAdmin?: boolean; isApprover?: boolean } | undefined,
-) => {
+type RoleFlags = {
+  isAdmin?: boolean;
+  isApprover?: boolean;
+  isAuditor?: boolean;
+  isCompliance?: boolean;
+  isHelpdesk?: boolean;
+  isDpo?: boolean;
+};
+
+const canSeeItem = (item: NavbarItem, user: RoleFlags | undefined) => {
   if (!item.requires) return true;
   if (!user) return false;
-  if (item.requires === "admin") return Boolean(user.isAdmin);
-  if (item.requires === "approverOrAdmin")
-    return Boolean(user.isAdmin || user.isApprover);
-  return true;
+  if (user.isAdmin) return true;
+  switch (item.requires) {
+    case "admin":
+      return false;
+    case "approverOrAdmin":
+      return Boolean(user.isApprover);
+    case "auditorOrAdmin":
+      return Boolean(user.isAuditor);
+    case "complianceOrAdmin":
+      return Boolean(user.isCompliance);
+    case "helpdeskOrAdmin":
+      return Boolean(user.isHelpdesk);
+    case "dpoOrAdmin":
+      return Boolean(user.isDpo);
+    default:
+      return true;
+  }
 };
 
 const navItem = {

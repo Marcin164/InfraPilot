@@ -24,6 +24,9 @@ import Sla from "./Pages/Main/Settings/Details/Sla";
 import Personal from "./Pages/Main/Settings/Details/Personal";
 import ActiveDirectorySettings from "./Pages/Main/Settings/Details/ActiveDirectory";
 import AdminSettings from "./Pages/Main/Settings/Details/Admin";
+import AuditLog from "./Pages/Main/Settings/Details/AuditLog";
+import Retention from "./Pages/Main/Settings/Details/Retention";
+import Privacy from "./Pages/Main/Settings/Details/Privacy";
 import UsersReports from "./Pages/Main/Reports/Details/UsersReports";
 import DevicesReports from "./Pages/Main/Reports/Details/DevicesReports";
 import TicketsReports from "./Pages/Main/Reports/Details/TicketsReports";
@@ -106,6 +109,9 @@ function App() {
                   />
                   <Route path="sla" element={<Sla />} />
                   <Route path="admin" element={<AdminSettings />} />
+                  <Route path="audit" element={<AuditLog />} />
+                  <Route path="retention" element={<Retention />} />
+                  <Route path="privacy" element={<Privacy />} />
                 </Route>
               </Route>
             </Routes>

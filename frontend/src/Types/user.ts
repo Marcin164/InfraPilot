@@ -17,12 +17,27 @@ export interface User {
   enabled?: boolean;
   isApprover: boolean;
   isAdmin: boolean;
+  isAuditor?: boolean;
+  isCompliance?: boolean;
+  isHelpdesk?: boolean;
+  isDpo?: boolean;
   memberOf?: string[];
   distinguishedName: string;
   lastLogonDate?: string;
 }
 
-export type CreateUserData = Omit<User, "id" | "isApprover" | "isAdmin" | "enabled" | "distinguishedName">;
+export type CreateUserData = Omit<
+  User,
+  | "id"
+  | "isApprover"
+  | "isAdmin"
+  | "isAuditor"
+  | "isCompliance"
+  | "isHelpdesk"
+  | "isDpo"
+  | "enabled"
+  | "distinguishedName"
+>;
 
 export interface UserFilter {
   [key: string]: string[] | undefined;

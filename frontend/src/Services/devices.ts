@@ -42,3 +42,13 @@ export const getFilter = async (): Promise<DeviceFilter> => {
   const { data } = await api.get("/devices/filters");
   return data;
 };
+
+export const rotateAgentSecret = async (deviceId: string): Promise<{ secret: string }> => {
+  const { data } = await api.post(`/devices/${deviceId}/agent/secret`);
+  return data;
+};
+
+export const revokeAgentSecret = async (deviceId: string): Promise<{ ok: boolean }> => {
+  const { data } = await api.post(`/devices/${deviceId}/agent/secret/revoke`);
+  return data;
+};

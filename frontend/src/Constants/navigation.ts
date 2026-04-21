@@ -18,7 +18,13 @@ import {
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 
-export type NavbarRequirement = "admin" | "approverOrAdmin";
+export type NavbarRequirement =
+  | "admin"
+  | "approverOrAdmin"
+  | "auditorOrAdmin"
+  | "complianceOrAdmin"
+  | "helpdeskOrAdmin"
+  | "dpoOrAdmin";
 
 export type NavbarItem = {
   to: string;
@@ -165,6 +171,25 @@ export const settingsNavbarItems = [
     to: "admin",
     label: "Admin",
     icon: faShield,
+    requires: "admin" as NavbarRequirement,
+  },
+  {
+    to: "audit",
+    label: "Audit log",
+    icon: faBookAtlas,
+    requires: "auditorOrAdmin" as NavbarRequirement,
+  },
+  {
+    to: "retention",
+    label: "Retention",
+    icon: faShield,
+    requires: "complianceOrAdmin" as NavbarRequirement,
+  },
+  {
+    to: "privacy",
+    label: "Privacy",
+    icon: faUser,
+    requires: "dpoOrAdmin" as NavbarRequirement,
   },
 ];
 

@@ -9,6 +9,7 @@ import {
   faPen,
   faXmark,
   faCheck,
+  faUserShield,
 } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
 
@@ -21,7 +22,7 @@ import {
   setAssignmentGroupMembers,
   updateAssignmentGroup,
 } from "../../../../Services/assignmentGroups";
-import { getUser, getUsers } from "../../../../Services/users";
+import { getUser, getUsers, updateUser } from "../../../../Services/users";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
@@ -475,12 +476,145 @@ const AssignmentGroupsSection = () => {
   );
 };
 
+/* ─────────────────────── Roles Section ──────────────────────── */
+
+type RoleKey =
+  | "isAdmin"
+  | "isApprover"
+  | "isAuditor"
+  | "isCompliance"
+  | "isHelpdesk"
+  | "isDpo";
+
+const ROLE_DEFS: { key: RoleKey; label: string; color: string }[] = [
+  { key: "isAdmin", label: "Admin", color: "#F3606E" },
+  { key: "isApprover", label: "Approver", color: "#2B9AE9" },
+  { key: "isAuditor", label: "Auditor", color: "#8E44AD" },
+  { key: "isCompliance", label: "Compliance", color: "#16A085" },
+  { key: "isHelpdesk", label: "Helpdesk", color: "#F1C40F" },
+  { key: "isDpo", label: "DPO", color: "#E67E22" },
+];
+
+const RolesSection = () => {
+  const queryClient = useQueryClient();
+  const authInfo: any = useAuthInfo();
+  const currentUserId = authInfo?.user?.metadata?.id;
+  const [filter, setFilter] = useState("");
+
+  const currentUserQuery = useQuery({
+    queryKey: ["current-user", currentUserId],
+    queryFn: () => getUser(currentUserId),
+    enabled: Boolean(currentUserId),
+  });
+
+  const usersQuery = useQuery({
+    queryKey: ["users-all"],
+    queryFn: getUsers,
+  });
+
+  const isAdmin = Boolean(currentUserQuery.data?.isAdmin);
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<User> }) =>
+      updateUser(patch, id),
+    onSuccess: () => {
+      toast.success("Roles updated");
+      queryClient.invalidateQueries({ queryKey: ["users-all"] });
+      queryClient.invalidateQueries({ queryKey: ["current-user"] });
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? "Failed to update roles"),
+  });
+
+  const filteredUsers = useMemo(() => {
+    const term = filter.trim().toLowerCase();
+    const list = usersQuery.data ?? [];
+    if (!term) return list;
+    return list.filter((u: User) =>
+      [u.name, u.surname, u.email, u.username]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(term)),
+    );
+  }, [usersQuery.data, filter]);
+
+  if (!isAdmin) return null;
+
+  return (
+    <div className="bg-white shadow-xl rounded-[10px] p-4">
+      <CardHeader text="Role assignment" icon={faUserShield} />
+      <p className="text-[14px] text-[#7a7a7a] mt-2">
+        Grant compliance roles per user. Admins always pass any role check.
+      </p>
+
+      <div className="mt-4">
+        <Input
+          label="Search"
+          value={filter}
+          onChange={(e: any) => setFilter(e.target.value)}
+        />
+      </div>
+
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full text-[14px]">
+          <thead>
+            <tr className="text-left text-[#535353] border-b border-[#E6E6E6]">
+              <th className="py-2 pr-4">User</th>
+              {ROLE_DEFS.map((r) => (
+                <th key={r.key} className="py-2 px-2 text-center">
+                  {r.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filteredUsers.slice(0, 100).map((u: User) => (
+              <tr key={u.id} className="border-b border-[#F0F0F0]">
+                <td className="py-2 pr-4">
+                  <div className="font-bold text-[#3C3C3C]">
+                    {u.name} {u.surname}
+                  </div>
+                  <div className="text-[12px] text-[#9a9a9a]">{u.email}</div>
+                </td>
+                {ROLE_DEFS.map((r) => {
+                  const checked = Boolean((u as any)[r.key]);
+                  return (
+                    <td key={r.key} className="py-2 px-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={updateMutation.isPending}
+                        onChange={(e) =>
+                          updateMutation.mutate({
+                            id: u.id,
+                            patch: { [r.key]: e.target.checked } as Partial<User>,
+                          })
+                        }
+                        className="cursor-pointer h-4 w-4 accent-[#2B9AE9]"
+                      />
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {filteredUsers.length > 100 && (
+          <div className="text-[12px] text-[#9a9a9a] mt-2">
+            Showing first 100 of {filteredUsers.length} users — refine search.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 /* ──────────────────────── Admin Page ────────────────────────── */
 
 const Admin = () => {
   return (
     <div className="space-y-4 m-4">
       <LastLogonSection />
+      <RolesSection />
       <AssignmentGroupsSection />
     </div>
   );
