@@ -22,11 +22,17 @@ import {
   setAssignmentGroupMembers,
   updateAssignmentGroup,
 } from "../../../../Services/assignmentGroups";
-import { getUser, getUsers, updateUser } from "../../../../Services/users";
+import { getUser, getUsers, getUsersTable, updateUser } from "../../../../Services/users";
+import { getSodMatrix, type SodPair } from "../../../../Services/rbac";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
+import Checkbox from "../../../../Components/Inputs/Checkbox";
+import Search from "../../../../Components/Inputs/Search";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
+import MainTable from "../../../../Components/Tables/MainTable";
+import { buildQuery } from "../../../../Helpers/queries";
+import { useDebounce } from "../../../../Hooks/useDebounce";
 import type { LastLogonThreshold, User } from "../../../../Types";
 
 const DEFAULT_THRESHOLDS: LastLogonThreshold[] = [
@@ -368,7 +374,7 @@ const AssignmentGroupsSection = () => {
           </p>
         )}
 
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 space-y-4 max-h-[600px] overflow-y-auto pr-1">
           {(groupsQuery.data ?? []).length === 0 && (
             <div className="text-[14px] text-[#7a7a7a]">No assignment groups yet.</div>
           )}
@@ -486,20 +492,67 @@ type RoleKey =
   | "isHelpdesk"
   | "isDpo";
 
-const ROLE_DEFS: { key: RoleKey; label: string; color: string }[] = [
-  { key: "isAdmin", label: "Admin", color: "#F3606E" },
-  { key: "isApprover", label: "Approver", color: "#2B9AE9" },
-  { key: "isAuditor", label: "Auditor", color: "#8E44AD" },
-  { key: "isCompliance", label: "Compliance", color: "#16A085" },
-  { key: "isHelpdesk", label: "Helpdesk", color: "#F1C40F" },
-  { key: "isDpo", label: "DPO", color: "#E67E22" },
+const ROLE_DEFS: { key: RoleKey; label: string; color: string; role: string }[] = [
+  { key: "isAdmin", label: "Admin", color: "#F3606E", role: "admin" },
+  { key: "isApprover", label: "Approver", color: "#2B9AE9", role: "approver" },
+  { key: "isAuditor", label: "Auditor", color: "#8E44AD", role: "auditor" },
+  { key: "isCompliance", label: "Compliance", color: "#16A085", role: "compliance" },
+  { key: "isHelpdesk", label: "Helpdesk", color: "#F1C40F", role: "helpdesk" },
+  { key: "isDpo", label: "DPO", color: "#E67E22", role: "dpo" },
 ];
+
+const ROLE_BY_NAME: Record<string, RoleKey> = ROLE_DEFS.reduce(
+  (acc, def) => ({ ...acc, [def.role]: def.key }),
+  {} as Record<string, RoleKey>,
+);
+
+const roleLabel = (name: string) =>
+  ROLE_DEFS.find((d) => d.role === name)?.label ?? name;
+
+/**
+ * For each role checkbox on this row, return `{ disabled, reason }`.
+ * A currently-ON role is never disabled (user must be able to clear it).
+ * An OFF role is disabled when enabling it would trigger any SoD pair with a
+ * currently-ON role.
+ */
+const computeRowSoD = (
+  row: any,
+  pairs: SodPair[],
+): Record<RoleKey, { disabled: boolean; reason: string | null }> => {
+  const result = {} as Record<RoleKey, { disabled: boolean; reason: string | null }>;
+  for (const def of ROLE_DEFS) {
+    if (row[def.key]) {
+      result[def.key] = { disabled: false, reason: null };
+      continue;
+    }
+    const conflict = pairs.find((p) => {
+      const aKey = ROLE_BY_NAME[p.a];
+      const bKey = ROLE_BY_NAME[p.b];
+      if (p.a === def.role && bKey && row[bKey]) return true;
+      if (p.b === def.role && aKey && row[aKey]) return true;
+      return false;
+    });
+    if (conflict) {
+      const other = conflict.a === def.role ? conflict.b : conflict.a;
+      result[def.key] = {
+        disabled: true,
+        reason: `Conflicts with ${roleLabel(other)}: ${conflict.reason}`,
+      };
+    } else {
+      result[def.key] = { disabled: false, reason: null };
+    }
+  }
+  return result;
+};
 
 const RolesSection = () => {
   const queryClient = useQueryClient();
   const authInfo: any = useAuthInfo();
   const currentUserId = authInfo?.user?.metadata?.id;
-  const [filter, setFilter] = useState("");
+  const [searchValue, setSearchValue] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(15);
+  const debouncedSearch = useDebounce(searchValue, 400);
 
   const currentUserQuery = useQuery({
     queryKey: ["current-user", currentUserId],
@@ -507,37 +560,97 @@ const RolesSection = () => {
     enabled: Boolean(currentUserId),
   });
 
-  const usersQuery = useQuery({
-    queryKey: ["users-all"],
-    queryFn: getUsers,
+  const isAdmin = Boolean(currentUserQuery.data?.isAdmin);
+
+  const queryString = buildQuery({
+    search: debouncedSearch,
+    page,
+    limit,
   });
 
-  const isAdmin = Boolean(currentUserQuery.data?.isAdmin);
+  const usersQuery = useQuery({
+    queryKey: ["users-roles-table", debouncedSearch, page, limit],
+    queryFn: () => getUsersTable(queryString),
+    enabled: isAdmin,
+    placeholderData: (prev) => prev,
+  });
+
+  const sodQuery = useQuery({
+    queryKey: ["rbac-sod"],
+    queryFn: getSodMatrix,
+    enabled: isAdmin,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const sodPairs = sodQuery.data?.pairs ?? [];
 
   const updateMutation = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: Partial<User> }) =>
       updateUser(patch, id),
     onSuccess: () => {
       toast.success("Roles updated");
-      queryClient.invalidateQueries({ queryKey: ["users-all"] });
+      queryClient.invalidateQueries({ queryKey: ["users-roles-table"] });
       queryClient.invalidateQueries({ queryKey: ["current-user"] });
     },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Failed to update roles"),
+    onError: (err: any) => {
+      const data = err?.response?.data;
+      if (data?.conflicts && Array.isArray(data.conflicts)) {
+        const lines = data.conflicts
+          .map(
+            (c: any) =>
+              `${roleLabel(c.a)} ↔ ${roleLabel(c.b)}: ${c.reason}`,
+          )
+          .join("\n");
+        toast.error(`Segregation of duties violation:\n${lines}`);
+      } else {
+        toast.error(data?.message ?? "Failed to update roles");
+      }
+    },
   });
 
-  const filteredUsers = useMemo(() => {
-    const term = filter.trim().toLowerCase();
-    const list = usersQuery.data ?? [];
-    if (!term) return list;
-    return list.filter((u: User) =>
-      [u.name, u.surname, u.email, u.username]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(term)),
-    );
-  }, [usersQuery.data, filter]);
-
   if (!isAdmin) return null;
+
+  const userColumn = {
+    id: "user",
+    name: "User",
+    cell: (row: any) => (
+      <div className="py-1">
+        <div className="font-bold text-[#3C3C3C]">
+          {row.name} {row.surname}
+        </div>
+        <div className="text-[12px] text-[#9a9a9a]">{row.email ?? row.username}</div>
+      </div>
+    ),
+    grow: 2,
+  };
+
+  const roleColumns = ROLE_DEFS.map((r) => ({
+    id: r.key,
+    name: r.label,
+    center: true,
+    width: "110px",
+    cell: (row: any) => {
+      const sod = computeRowSoD(row, sodPairs)[r.key];
+      const disabled = updateMutation.isPending || sod.disabled;
+      return (
+        <div title={sod.reason ?? undefined}>
+          <Checkbox
+            id={`role-${r.key}-${row.id}`}
+            checked={Boolean(row[r.key])}
+            disabled={disabled}
+            color={r.color}
+            onClick={(e) => e.stopPropagation()}
+            handleChange={(checked: boolean) =>
+              updateMutation.mutate({
+                id: row.id,
+                patch: { [r.key]: checked } as Partial<User>,
+              })
+            }
+          />
+        </div>
+      );
+    },
+  }));
 
   return (
     <div className="bg-white shadow-xl rounded-[10px] p-4">
@@ -546,63 +659,48 @@ const RolesSection = () => {
         Grant compliance roles per user. Admins always pass any role check.
       </p>
 
+      {sodPairs.length > 0 && (
+        <div className="mt-3 rounded-[8px] border border-[#E0E0E0] bg-[#FAFAFA] p-3">
+          <div className="text-[13px] font-bold text-[#3C3C3C] mb-1">
+            Segregation of duties
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {sodPairs.map((p, idx) => (
+              <span
+                key={idx}
+                title={p.reason}
+                className="inline-flex items-center gap-1 rounded-full bg-white border border-[#E0E0E0] px-2 py-0.5 text-[12px] text-[#535353]"
+              >
+                {roleLabel(p.a)} <span className="text-[#9a9a9a]">⊥</span> {roleLabel(p.b)}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="mt-4">
-        <Input
-          label="Search"
-          value={filter}
-          onChange={(e: any) => setFilter(e.target.value)}
+        <Search
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            setSearchValue(e.target.value);
+            setPage(1);
+          }}
+          className="w-full md:w-[400px]"
         />
       </div>
 
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full text-[14px]">
-          <thead>
-            <tr className="text-left text-[#535353] border-b border-[#E6E6E6]">
-              <th className="py-2 pr-4">User</th>
-              {ROLE_DEFS.map((r) => (
-                <th key={r.key} className="py-2 px-2 text-center">
-                  {r.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.slice(0, 100).map((u: User) => (
-              <tr key={u.id} className="border-b border-[#F0F0F0]">
-                <td className="py-2 pr-4">
-                  <div className="font-bold text-[#3C3C3C]">
-                    {u.name} {u.surname}
-                  </div>
-                  <div className="text-[12px] text-[#9a9a9a]">{u.email}</div>
-                </td>
-                {ROLE_DEFS.map((r) => {
-                  const checked = Boolean((u as any)[r.key]);
-                  return (
-                    <td key={r.key} className="py-2 px-2 text-center">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        disabled={updateMutation.isPending}
-                        onChange={(e) =>
-                          updateMutation.mutate({
-                            id: u.id,
-                            patch: { [r.key]: e.target.checked } as Partial<User>,
-                          })
-                        }
-                        className="cursor-pointer h-4 w-4 accent-[#2B9AE9]"
-                      />
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filteredUsers.length > 100 && (
-          <div className="text-[12px] text-[#9a9a9a] mt-2">
-            Showing first 100 of {filteredUsers.length} users — refine search.
-          </div>
-        )}
+      <div className="mt-4">
+        <MainTable
+          columns={[userColumn, ...roleColumns]}
+          data={usersQuery.data?.data ?? []}
+          paginationServer
+          paginationTotalRows={usersQuery.data?.total ?? 0}
+          onChangePage={setPage}
+          onChangeRowsPerPage={(newLimit: number) => {
+            setLimit(newLimit);
+            setPage(1);
+          }}
+          progressPending={usersQuery.isFetching}
+        />
       </div>
     </div>
   );

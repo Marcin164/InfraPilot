@@ -9,8 +9,10 @@ import {
   faCircleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import { listAudit, verifyAudit } from "../../../../Services/audit";
-import type { AuditVerifyResult } from "../../../../Services/audit";
+import type { AuditEntry, AuditVerifyResult } from "../../../../Services/audit";
 import CardHeader from "../../../../Components/Headers/CardHeader";
+import MainTable from "../../../../Components/Tables/MainTable";
+import Input from "../../../../Components/Inputs/Input";
 
 const AuditLog = () => {
   const [entityType, setEntityType] = useState("");
@@ -25,7 +27,7 @@ const AuditLog = () => {
       listAudit({
         entityType: entityType || undefined,
         action: action || undefined,
-        limit: 100,
+        limit: 200,
       }),
   });
 
@@ -35,6 +37,53 @@ const AuditLog = () => {
   });
 
   const items = listQuery.data?.items ?? [];
+
+  const columns = [
+    {
+      id: "sequence",
+      name: "Seq",
+      width: "90px",
+      cell: (row: AuditEntry) => (
+        <span className="font-mono text-[12px]">{row.sequence}</span>
+      ),
+    },
+    {
+      id: "when",
+      name: "When",
+      width: "180px",
+      selector: (row: AuditEntry) =>
+        moment(row.createdAt).format("YYYY-MM-DD HH:mm:ss"),
+    },
+    {
+      id: "entity",
+      name: "Entity",
+      cell: (row: AuditEntry) => (
+        <div>
+          <span className="font-semibold">{row.entityType}</span>
+          <span className="ml-1 text-[12px] text-[#8A8A8A]">
+            {row.entityId.slice(0, 8)}…
+          </span>
+        </div>
+      ),
+    },
+    {
+      id: "action",
+      name: "Action",
+      selector: (row: AuditEntry) => row.action,
+    },
+    {
+      id: "hash",
+      name: "Hash",
+      cell: (row: AuditEntry) => (
+        <span
+          className="font-mono text-[11px] text-[#8A8A8A]"
+          title={row.hash ?? ""}
+        >
+          {row.hash ? `${row.hash.slice(0, 12)}…` : "—"}
+        </span>
+      ),
+    },
+  ];
 
   return (
     <div className="p-6">
@@ -76,72 +125,26 @@ const AuditLog = () => {
         </div>
       )}
 
-      <div className="mb-4 flex gap-3">
-        <input
-          className="rounded-[8px] border border-[#E8E8E8] bg-white px-3 py-2 text-[13px]"
-          placeholder="Entity type (Ticket, History, …)"
+      <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-[600px]">
+        <Input
+          label="Entity type"
+          placeholder="Ticket, History, …"
           value={entityType}
-          onChange={(e) => setEntityType(e.target.value)}
+          onChange={(e: any) => setEntityType(e.target.value)}
         />
-        <input
-          className="rounded-[8px] border border-[#E8E8E8] bg-white px-3 py-2 text-[13px]"
-          placeholder="Action"
+        <Input
+          label="Action"
+          placeholder="created, updated, …"
           value={action}
-          onChange={(e) => setAction(e.target.value)}
+          onChange={(e: any) => setAction(e.target.value)}
         />
       </div>
 
-      <div className="overflow-hidden rounded-[10px] bg-white shadow-xl">
-        <table className="w-full text-[13px]">
-          <thead className="bg-[#F6F6F6] text-[12px] uppercase text-[#8A8A8A]">
-            <tr>
-              <th className="px-4 py-2 text-left">Seq</th>
-              <th className="px-4 py-2 text-left">When</th>
-              <th className="px-4 py-2 text-left">Entity</th>
-              <th className="px-4 py-2 text-left">Action</th>
-              <th className="px-4 py-2 text-left">Hash</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((row) => (
-              <tr
-                key={row.id}
-                className="border-t border-[#F0F0F0] hover:bg-[#FAFAFA]"
-              >
-                <td className="px-4 py-2 font-mono text-[12px]">
-                  {row.sequence}
-                </td>
-                <td className="px-4 py-2">
-                  {moment(row.createdAt).format("YYYY-MM-DD HH:mm:ss")}
-                </td>
-                <td className="px-4 py-2">
-                  <span className="font-semibold">{row.entityType}</span>
-                  <span className="ml-1 text-[#8A8A8A]">
-                    {row.entityId.slice(0, 8)}…
-                  </span>
-                </td>
-                <td className="px-4 py-2">{row.action}</td>
-                <td
-                  className="px-4 py-2 font-mono text-[11px] text-[#8A8A8A]"
-                  title={row.hash ?? ""}
-                >
-                  {row.hash ? `${row.hash.slice(0, 12)}…` : "—"}
-                </td>
-              </tr>
-            ))}
-            {items.length === 0 && !listQuery.isLoading && (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-8 text-center text-[#8A8A8A]"
-                >
-                  No audit entries match the filters.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <MainTable
+        columns={columns}
+        data={items}
+        progressPending={listQuery.isFetching}
+      />
     </div>
   );
 };
