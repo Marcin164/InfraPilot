@@ -16,6 +16,7 @@ import { useFilterPresets } from "../../../Hooks/useFilterPresets";
 import FilterPresetsBar from "../../../Components/Filter/FilterPresetsBar";
 import TableSettings from "../../../Components/TableSettings";
 import { getUserSettings } from "../../../Services/settings";
+import MassActionBar from "./components/MassActionBar";
 
 type DeviceFilters = {
   group?: string[];
@@ -42,6 +43,8 @@ const Index = () => {
 
   const [filters, setFilters] = useState<DeviceFilters>(INITIAL_FILTERS);
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [clearSelection, setClearSelection] = useState(0);
 
   const presets = useFilterPresets("devices", filters, (next) => {
     setFilters(next as DeviceFilters);
@@ -136,6 +139,13 @@ const Index = () => {
           onActivate={presets.activatePreset}
           onDelete={presets.deletePreset}
         />
+        <MassActionBar
+          selectedIds={selectedIds}
+          onCleared={() => {
+            setSelectedIds([]);
+            setClearSelection((x) => x + 1);
+          }}
+        />
         <DevicesTable
           data={devicesQuery.data?.data ?? []}
           total={devicesQuery.data?.total ?? 0}
@@ -145,6 +155,11 @@ const Index = () => {
             setPage(1);
           }}
           isLoading={devicesQuery.isFetching}
+          selectable
+          onSelectedRowsChange={(rows) =>
+            setSelectedIds(rows.map((r: any) => r.id))
+          }
+          clearSelection={Boolean(clearSelection)}
         />
       </div>
     </PageMotion>

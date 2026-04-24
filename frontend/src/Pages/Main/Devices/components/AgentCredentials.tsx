@@ -45,14 +45,14 @@ const AgentCredentials = ({
     enabled: Boolean(currentUserId),
   });
 
-  if (!currentUserQuery.data?.isAdmin) return null;
-
   const rotateMutation = useMutation({
     mutationFn: () => rotateAgentSecret(deviceId),
     onSuccess: ({ secret }) => {
       setGeneratedSecret(secret);
       queryClient.invalidateQueries({ queryKey: ["device"] });
-      toast.success("New secret generated — copy it now, it won't be shown again.");
+      toast.success(
+        "New secret generated — copy it now, it won't be shown again.",
+      );
     },
     onError: (err: any) =>
       toast.error(err?.response?.data?.message ?? "Failed to rotate secret"),
@@ -68,6 +68,8 @@ const AgentCredentials = ({
     onError: (err: any) =>
       toast.error(err?.response?.data?.message ?? "Failed to revoke secret"),
   });
+
+  if (!currentUserQuery.data?.isAdmin) return null;
 
   const copySecret = async () => {
     if (!generatedSecret) return;
@@ -115,7 +117,8 @@ const AgentCredentials = ({
         {prevStillValid && (
           <div className="text-[12px] text-[#F59E0B]">
             Previous secret still accepted until{" "}
-            {moment(apiSecretPrevValidUntil!).format("DD MMMM YYYY, HH:mm:ss")} (rollout grace).
+            {moment(apiSecretPrevValidUntil!).format("DD MMMM YYYY, HH:mm:ss")}{" "}
+            (rollout grace).
           </div>
         )}
       </div>
@@ -140,7 +143,8 @@ const AgentCredentials = ({
             </button>
           </div>
           <p className="text-[11px] text-[#7a7a7a] mt-2">
-            Configure the agent with header <code>X-Device-Id: {deviceId}</code> and HMAC-SHA256 signature using this secret.
+            Configure the agent with header <code>X-Device-Id: {deviceId}</code>{" "}
+            and HMAC-SHA256 signature using this secret.
           </p>
         </div>
       )}

@@ -3,6 +3,7 @@ import Filter from "../../../Components/Filter";
 import Search from "../../../Components/Inputs/Search";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
+import { useAuthInfo } from "@propelauth/react";
 import TableSettings from "../../../Components/TableSettings";
 import { getTickets, getTicketsFilters } from "../../../Services/tickets";
 import { buildQuery } from "../../../Helpers/queries";
@@ -25,10 +26,14 @@ type TicketFilters = {
 
 const Index = () => {
   const { t } = useTranslation();
+  const authInfo: any = useAuthInfo();
+  const myId = authInfo?.user?.metadata?.id ?? authInfo?.user?.userId ?? null;
+
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(30);
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<TicketFilters>({});
+  const [onlyMine, setOnlyMine] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearch = useDebounce(searchValue, 500);
 
@@ -63,6 +68,7 @@ const Index = () => {
 
   const queryString = buildQuery({
     ...filters,
+    ...(onlyMine && myId ? { assignee: [myId] } : {}),
     search: debouncedSearch,
     page,
     limit,
@@ -128,6 +134,10 @@ const Index = () => {
       label: "Created At",
     },
     {
+      name: "sla",
+      label: "SLA",
+    },
+    {
       name: "approvers",
       label: "Approvers",
     },
@@ -136,7 +146,7 @@ const Index = () => {
   return (
     <PageMotion>
     <div className="w-full h-[calc(100vh-58px)] px-4">
-      <div className="pt-4 pb-4 flex gap-2">
+      <div className="pt-4 pb-4 flex gap-2 items-center">
         <Filter
           filters={filters}
           setFilters={(next: any) => {
@@ -155,6 +165,22 @@ const Index = () => {
           checkboxes={checkboxes}
           settingsKey="ticketsTableColumnOrder"
         />
+        <button
+          type="button"
+          onClick={() => {
+            setOnlyMine((v) => !v);
+            setPage(1);
+          }}
+          disabled={!myId}
+          className={`h-[36px] rounded-[6px] px-3 text-[13px] font-bold cursor-pointer transition-colors ${
+            onlyMine
+              ? "bg-[#2B9AE9] text-white"
+              : "bg-white text-[#3C3C3C] border border-[#D0D0D0]"
+          } disabled:opacity-50 disabled:cursor-not-allowed`}
+          title={myId ? "Toggle assignee = me filter" : "Current user unknown"}
+        >
+          My tickets
+        </button>
       </div>
       <FilterPresetsBar
         presets={presets.presets}

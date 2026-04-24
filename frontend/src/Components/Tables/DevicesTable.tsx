@@ -6,6 +6,7 @@ import { faComputer } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { getUserSettings } from "../../Services/settings";
+import { listDeviceTags, DeviceTag } from "../../Services/deviceTags";
 
 type Props = {
   data: any[];
@@ -13,6 +14,19 @@ type Props = {
   onPageChange: (page: number) => void;
   onRowsPerPageChange: (limit: number) => void;
   isLoading?: boolean;
+  selectable?: boolean;
+  onSelectedRowsChange?: (rows: any[]) => void;
+  clearSelection?: boolean;
+};
+
+const LIFECYCLE_COLOR: Record<string, string> = {
+  procurement: "#8A8A8A",
+  active: "#30A712",
+  in_repair: "#F1C40F",
+  in_storage: "#2B9AE9",
+  retired: "#8E44AD",
+  disposed: "#7F8C8D",
+  lost: "#F3606E",
 };
 
 const DevicesTable = ({
@@ -21,6 +35,9 @@ const DevicesTable = ({
   onPageChange,
   onRowsPerPageChange,
   isLoading,
+  selectable = false,
+  onSelectedRowsChange,
+  clearSelection,
 }: Props) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -29,9 +46,20 @@ const DevicesTable = ({
     queryFn: () => getUserSettings(),
   });
 
+  const tagsQuery = useQuery({
+    queryKey: ["device-tags"],
+    queryFn: listDeviceTags,
+  });
+
   if (!userSettings.data || userSettings.isLoading) {
     return <div>Loading...</div>;
   }
+
+  const tags = Array.isArray(tagsQuery?.data) ? tagsQuery.data : [];
+
+  const tagById = new Map<string, DeviceTag>(
+    (tags ?? []).map((t) => [t?.id, t]),
+  );
 
   const iconColumn = {
     id: "icon",
@@ -105,6 +133,48 @@ const DevicesTable = ({
         </div>
       ),
     },
+    {
+      id: "lifecycle",
+      name: "Lifecycle",
+      cell: (row: any) => {
+        const lc = row.lifecycle ?? "active";
+        return (
+          <span
+            className="rounded-full px-2 py-0.5 text-[11px] font-bold text-white"
+            style={{ backgroundColor: LIFECYCLE_COLOR[lc] ?? "#8A8A8A" }}
+          >
+            {lc.replace("_", " ")}
+          </span>
+        );
+      },
+      width: "120px",
+    },
+    {
+      id: "tags",
+      name: "Tags",
+      cell: (row: any) => {
+        const ids: string[] = row.tagIds ?? [];
+        if (ids.length === 0) return <span className="text-[#9a9a9a]">—</span>;
+        return (
+          <div className="flex flex-wrap gap-1">
+            {ids.map((id) => {
+              const tag = tagById.get(id);
+              if (!tag) return null;
+              return (
+                <span
+                  key={id}
+                  className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
+                  style={{ backgroundColor: tag.color }}
+                >
+                  {tag.label}
+                </span>
+              );
+            })}
+          </div>
+        );
+      },
+      width: "180px",
+    },
   ];
 
   const filterColumns = () => {
@@ -130,6 +200,13 @@ const DevicesTable = ({
       onChangePage={onPageChange}
       onChangeRowsPerPage={onRowsPerPageChange}
       progressPending={isLoading}
+      selectableRows={selectable}
+      onSelectedRowsChange={
+        onSelectedRowsChange
+          ? ({ selectedRows }: any) => onSelectedRowsChange(selectedRows)
+          : undefined
+      }
+      clearSelectedRows={clearSelection}
     />
   );
 };

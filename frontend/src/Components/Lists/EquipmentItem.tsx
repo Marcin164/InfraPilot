@@ -54,18 +54,18 @@ const EquipmentItem = ({
   });
 
   return (
-    <div className="flex justify-between">
+    <div className="flex justify-between items-center">
       <Link to={`/admin/devices/${id}/system`} className="py-1">
         <div className="flex items-center">
           <FontAwesomeIcon
             icon={getDeviceIcon(subgroup)}
             className="pr-2 text-[#535353]"
           />
-          <span className="uppercase text-[#2B9AE9]">
-            {assetName && `${assetName} - `}
-          </span>
-          <span className="text-[#535353]">{`${model}, ${serialNumber}`}</span>
-          <Badge text={location} className="ml-2 bg-[#2B9AE9]" />
+          <div>
+            <div className="uppercase text-[#2B9AE9]">{assetName}</div>
+            <div className="text-[#535353] text-[12px] font-bold">{`${model}, ${serialNumber}`}</div>
+          </div>
+          <Badge text={location} className="ml-8 bg-[#2B9AE9]" />
         </div>
       </Link>
       <ButtonPrimary icon={faUserMinus} color="red" onClick={mutation.mutate} />

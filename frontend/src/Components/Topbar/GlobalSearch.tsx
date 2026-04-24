@@ -9,6 +9,7 @@ import {
   faChartBar,
   faGear,
   faClockRotateLeft,
+  faCode,
 } from "@fortawesome/free-solid-svg-icons";
 import Search from "../Inputs/Search";
 import { globalSearch, type SearchResultItem } from "../../Services/search";
@@ -33,11 +34,13 @@ const ICONS: Record<SearchResultItem["type"], any> = {
   history: faClockRotateLeft,
   report: faChartBar,
   setting: faGear,
+  application: faCode,
 };
 
 const LABELS: Record<string, string> = {
   users: "Users",
   devices: "Devices",
+  applications: "Applications",
   tickets: "Tickets",
   histories: "History",
   reports: "Reports",
@@ -78,6 +81,7 @@ const GlobalSearch = () => {
   const groups: { key: string; items: SearchResultItem[] }[] = [
     { key: "users", items: data?.users ?? [] },
     { key: "devices", items: data?.devices ?? [] },
+    { key: "applications", items: data?.applications ?? [] },
     { key: "tickets", items: data?.tickets ?? [] },
     { key: "histories", items: data?.histories ?? [] },
     { key: "reports", items: staticMatches.reports },

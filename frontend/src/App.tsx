@@ -11,6 +11,12 @@ import Hardware from "./Pages/Main/Devices/Details/Hardware";
 import Software from "./Pages/Main/Devices/Details/Software";
 import Network from "./Pages/Main/Devices/Details/Network";
 import Security from "./Pages/Main/Devices/Details/Security";
+import Compliance from "./Pages/Main/Devices/Details/Compliance";
+import FleetHealth from "./Pages/Main/Fleet";
+import Cves from "./Pages/Main/Devices/Details/Cves";
+import Lifecycle from "./Pages/Main/Devices/Details/Lifecycle";
+import Tasks from "./Pages/Main/Devices/Details/Tasks";
+import Scans from "./Pages/Main/Devices/Details/Scans";
 import Events from "./Pages/Main/Devices/Details/Events";
 import DeviceHistory from "./Pages/Main/Devices/Details/History";
 import Helpdesk from "./Pages/Main/Helpdesk";
@@ -27,6 +33,9 @@ import AdminSettings from "./Pages/Main/Settings/Details/Admin";
 import AuditLog from "./Pages/Main/Settings/Details/AuditLog";
 import Retention from "./Pages/Main/Settings/Details/Retention";
 import Privacy from "./Pages/Main/Settings/Details/Privacy";
+import Tags from "./Pages/Main/Settings/Details/Tags";
+import ComplianceRules from "./Pages/Main/Settings/Details/ComplianceRules";
+import TicketTemplates from "./Pages/Main/Settings/Details/TicketTemplates";
 import UsersReports from "./Pages/Main/Reports/Details/UsersReports";
 import DevicesReports from "./Pages/Main/Reports/Details/DevicesReports";
 import TicketsReports from "./Pages/Main/Reports/Details/TicketsReports";
@@ -74,6 +83,7 @@ function App() {
                   path="users/:id/equipmentedit"
                   element={<EditEquipment />}
                 />
+                <Route path="fleet" element={<FleetHealth />} />
                 <Route path="devices" element={<Devices />} />
                 <Route path="devices/:id" element={<DeviceDetails />}>
                   <Route index path="system" element={<SystemInfo />} />
@@ -85,6 +95,11 @@ function App() {
                   <Route path="users" element={<UsersInfo />} />
                   <Route path="peripherals" element={<Peripherals />} />
                   <Route path="history" element={<DeviceHistory />} />
+                  <Route path="compliance" element={<Compliance />} />
+                  <Route path="cves" element={<Cves />} />
+                  <Route path="lifecycle" element={<Lifecycle />} />
+                  <Route path="tasks" element={<Tasks />} />
+                  <Route path="scans" element={<Scans />} />
                 </Route>
                 <Route path="helpdesk" element={<Helpdesk />} />
                 <Route path="helpdesk/:id" element={<HelpdeskDetails />} />
@@ -112,6 +127,15 @@ function App() {
                   <Route path="audit" element={<AuditLog />} />
                   <Route path="retention" element={<Retention />} />
                   <Route path="privacy" element={<Privacy />} />
+                  <Route path="tags" element={<Tags />} />
+                  <Route
+                    path="compliance-rules"
+                    element={<ComplianceRules />}
+                  />
+                  <Route
+                    path="ticket-templates"
+                    element={<TicketTemplates />}
+                  />
                 </Route>
               </Route>
             </Routes>

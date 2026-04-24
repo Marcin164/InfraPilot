@@ -106,6 +106,48 @@ const TicketsTable = ({
         row.createdAt ? new Date(row.createdAt).toLocaleString() : "N/A",
     },
     {
+      id: "sla",
+      name: "SLA",
+      cell: (row: any) => {
+        const sla = row.sla;
+        if (!sla) return <span className="text-[#9a9a9a]">—</span>;
+        if (sla.breached) {
+          return (
+            <span className="rounded-full px-2 py-0.5 text-[11px] font-bold text-white bg-[#C0392B]">
+              breached
+            </span>
+          );
+        }
+        if (sla.paused) {
+          return (
+            <span className="rounded-full px-2 py-0.5 text-[11px] font-bold text-[#8A8A8A] border border-[#D0D0D0]">
+              paused
+            </span>
+          );
+        }
+        const ms = new Date(sla.dueAt).getTime() - Date.now();
+        const hrs = ms / 3600000;
+        const color =
+          hrs < 1 ? "#C0392B" : hrs < 4 ? "#F3606E" : hrs < 24 ? "#F1C40F" : "#30A712";
+        const label =
+          hrs < 1
+            ? `${Math.max(0, Math.round(ms / 60000))}m`
+            : hrs < 48
+              ? `${Math.round(hrs)}h`
+              : `${Math.round(hrs / 24)}d`;
+        return (
+          <span
+            className="rounded-full px-2 py-0.5 text-[11px] font-bold"
+            style={{ color, border: `1px solid ${color}` }}
+            title={`Breaches at ${new Date(sla.dueAt).toLocaleString()}`}
+          >
+            in {label}
+          </span>
+        );
+      },
+      width: "110px",
+    },
+    {
       id: "approvers",
       name: "Approvers",
       selector: (row: any) =>

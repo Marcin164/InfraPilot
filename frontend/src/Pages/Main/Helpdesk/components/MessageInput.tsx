@@ -8,13 +8,15 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuthInfo } from "@propelauth/react";
 import { toast } from "react-toastify";
 import {
   createComment,
   createCommentWithAttachment,
+  getTicket,
 } from "../../../../Services/tickets";
+import TemplatePicker from "./TemplatePicker";
 
 import type { Comment } from "../../../../Types";
 
@@ -41,6 +43,12 @@ const ACCEPTED_MIMES = new Set([
 
 const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
   const { user }: any = useAuthInfo();
+  const ticketQuery = useQuery({
+    queryKey: ["ticket", ticketId],
+    queryFn: () => getTicket(ticketId),
+    enabled: Boolean(ticketId),
+    staleTime: 30000,
+  });
   const [message, setMessage] = useState("");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(
@@ -272,6 +280,13 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
           className={`shrink-0 ${isRecording ? "text-[#BC0E0E]" : ""}`}
           onClick={isRecording ? stopRecording : startRecording}
           disabled={isPending}
+        />
+        <TemplatePicker
+          ticket={ticketQuery.data}
+          disabled={isPending || isRecording}
+          onPick={(text) =>
+            setMessage((prev) => (prev ? `${prev}\n\n${text}` : text))
+          }
         />
 
         <textarea

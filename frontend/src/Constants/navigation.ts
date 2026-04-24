@@ -1,18 +1,26 @@
 import {
   faAddressBook,
   faBookAtlas,
+  faBoxArchive,
+  faBug,
   faCalendar,
   faChartBar,
+  faClockRotateLeft,
   faChartPie,
   faCode,
   faComputer,
+  faGaugeHigh,
   faComputerMouse,
   faGear,
   faHardDrive,
   faHistory,
   faNetworkWired,
+  faPaste,
+  faPlay,
   faRobot,
   faShield,
+  faShieldHalved,
+  faTag,
   faTicket,
   faUser,
   faUsers,
@@ -38,6 +46,11 @@ export const navbarItems: NavbarItem[] = [
     to: "/admin/dashboards",
     label: "nav.dashboards",
     icon: faChartPie,
+  },
+  {
+    to: "/admin/fleet",
+    label: "Fleet health",
+    icon: faGaugeHigh,
   },
   {
     to: "/admin/users",
@@ -144,6 +157,31 @@ export const deviceNavbarItems = [
     label: "History",
     icon: faHistory,
   },
+  {
+    to: "compliance",
+    label: "Compliance",
+    icon: faShieldHalved,
+  },
+  {
+    to: "cves",
+    label: "CVEs",
+    icon: faBug,
+  },
+  {
+    to: "lifecycle",
+    label: "Lifecycle",
+    icon: faBoxArchive,
+  },
+  {
+    to: "tasks",
+    label: "Tasks",
+    icon: faPlay,
+  },
+  {
+    to: "scans",
+    label: "Scans",
+    icon: faClockRotateLeft,
+  },
 ];
 
 export const settingsNavbarItems = [
@@ -190,6 +228,24 @@ export const settingsNavbarItems = [
     label: "Privacy",
     icon: faUser,
     requires: "dpoOrAdmin" as NavbarRequirement,
+  },
+  {
+    to: "tags",
+    label: "Device tags",
+    icon: faTag,
+    requires: "admin" as NavbarRequirement,
+  },
+  {
+    to: "compliance-rules",
+    label: "Compliance rules",
+    icon: faShieldHalved,
+    requires: "complianceOrAdmin" as NavbarRequirement,
+  },
+  {
+    to: "ticket-templates",
+    label: "Ticket templates",
+    icon: faPaste,
+    requires: "helpdeskOrAdmin" as NavbarRequirement,
   },
 ];
 

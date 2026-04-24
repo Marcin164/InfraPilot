@@ -2,7 +2,14 @@ import api from "../lib/api";
 
 export type SearchResultItem = {
   id: string;
-  type: "user" | "device" | "ticket" | "history" | "report" | "setting";
+  type:
+    | "user"
+    | "device"
+    | "ticket"
+    | "history"
+    | "report"
+    | "setting"
+    | "application";
   title: string;
   subtitle?: string;
   url: string;
@@ -13,6 +20,7 @@ export type SearchResults = {
   devices: SearchResultItem[];
   tickets: SearchResultItem[];
   histories: SearchResultItem[];
+  applications: SearchResultItem[];
 };
 
 export const globalSearch = async (q: string): Promise<SearchResults> => {

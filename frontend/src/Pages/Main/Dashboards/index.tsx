@@ -18,6 +18,8 @@ import DevicesByManufacturer from "./components/DevicesByManufacturer";
 import TicketsByState from "./components/TicketsByState";
 import SecurityCompliance from "./components/SecurityCompliance";
 import TopApplications from "./components/TopApplications";
+import ComplianceBaseline from "./components/ComplianceBaseline";
+import CveSummary from "./components/CveSummary";
 import { useQuery } from "@tanstack/react-query";
 import { getDashboards } from "../../../Services/dashboards";
 import type { Dashboard } from "../../../Types";
@@ -48,6 +50,8 @@ const componentMap: any = {
   TicketsByState,
   SecurityCompliance,
   TopApplications,
+  ComplianceBaseline,
+  CveSummary,
 };
 
 const Index = () => {

@@ -167,6 +167,28 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
     maxW: 8,
     maxH: 8,
   },
+  {
+    id: "c4e5a0d0-2222-4000-8000-0000000000c1",
+    label: "Compliance baseline",
+    component: "ComplianceBaseline",
+    w: 4,
+    h: 5,
+    minW: 3,
+    minH: 4,
+    maxW: 6,
+    maxH: 7,
+  },
+  {
+    id: "c4e5a0d0-2222-4000-8000-0000000000c2",
+    label: "CVE summary",
+    component: "CveSummary",
+    w: 4,
+    h: 5,
+    minW: 3,
+    minH: 4,
+    maxW: 6,
+    maxH: 7,
+  },
   // --- Large cards ---
   {
     id: "f65f5dd1-f822-470a-99aa-023d070ba5c3",

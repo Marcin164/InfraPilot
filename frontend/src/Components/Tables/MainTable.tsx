@@ -11,6 +11,10 @@ const MainTable = ({
   onChangePage,
   onChangeRowsPerPage,
   progressPending,
+  selectableRows,
+  onSelectedRowsChange,
+  clearSelectedRows,
+  noDataComponent,
 }: any) => {
   const customStyles = {
     table: {
@@ -74,6 +78,10 @@ const MainTable = ({
           onChangePage={onChangePage}
           onChangeRowsPerPage={onChangeRowsPerPage}
           progressPending={progressPending}
+          selectableRows={selectableRows}
+          onSelectedRowsChange={onSelectedRowsChange}
+          clearSelectedRows={clearSelectedRows}
+          noDataComponent={noDataComponent}
         />
       </motion.div>
     </AnimatePresence>
