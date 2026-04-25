@@ -134,6 +134,29 @@ export const diffDeviceScans = async (
   return data;
 };
 
+export type RemoteSession = {
+  url: string;
+  expiresAt: string;
+  ttlSeconds: number;
+};
+
+export const startRemoteSession = async (
+  deviceId: string,
+  ticketId?: string | null,
+): Promise<RemoteSession> => {
+  const { data } = await api.post(`/devices/${deviceId}/remote-session`, {
+    ticketId,
+  });
+  return data;
+};
+
+export const remoteSessionStatus = async (): Promise<{
+  configured: boolean;
+}> => {
+  const { data } = await api.get(`/devices/remote-session/status`);
+  return data;
+};
+
 export const downloadDeviceReportPdf = async (
   deviceId: string,
   filename = `device-${deviceId}.pdf`,

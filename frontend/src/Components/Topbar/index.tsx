@@ -5,6 +5,7 @@ import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import GlobalSearch from "./GlobalSearch";
 import { useParser } from "../../Hooks/useParser";
 import AccountButton from "./AccountButton";
+import NotificationsBell from "./NotificationsBell";
 
 const Topbar = () => {
   const location = useLocation();
@@ -42,8 +43,9 @@ const Topbar = () => {
           );
         })}
       </div>
-      <div className="flex">
+      <div className="flex items-center gap-2">
         <GlobalSearch />
+        <NotificationsBell />
         <AccountButton />
       </div>
     </div>

@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import moment from "moment";
+import { toast } from "react-toastify";
 import {
   faBug,
   faBoxArchive,
@@ -8,6 +9,7 @@ import {
   faPlay,
   faShield,
   faShieldHalved,
+  faDesktop,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -15,9 +17,12 @@ import {
   getDevice,
   listDeviceScans,
   diffDeviceScans,
+  remoteSessionStatus,
+  startRemoteSession,
 } from "../../../../Services/devices";
 import { complianceForDevice } from "../../../../Services/compliance";
 import { cvesForDevice } from "../../../../Services/cve";
+import { tagsForDevice } from "../../../../Services/deviceTags";
 
 const LIFECYCLE_COLOR: Record<string, string> = {
   procurement: "#8A8A8A",
@@ -37,15 +42,40 @@ const SEVERITY_COLOR: Record<string, string> = {
   UNKNOWN: "#8A8A8A",
 };
 
-type Props = { deviceId: string | null | undefined };
+type Props = {
+  deviceId: string | null | undefined;
+  ticketId?: string | null;
+};
 
 /**
  * At-a-glance device facts inside the ticket detail — so the agent does
  * not have to navigate away to judge whether the machine is online, what
  * policy it violates, and what changed recently.
  */
-const DeviceContextPanel = ({ deviceId }: Props) => {
+const DeviceContextPanel = ({ deviceId, ticketId }: Props) => {
   const enabled = Boolean(deviceId);
+
+  const remoteStatusQuery = useQuery({
+    queryKey: ["remote-session-status"],
+    queryFn: remoteSessionStatus,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const remoteMutation = useMutation({
+    mutationFn: () => startRemoteSession(deviceId!, ticketId ?? null),
+    onSuccess: (session) => {
+      const win = window.open(session.url, "_blank", "noopener,noreferrer");
+      if (!win) {
+        toast.error("Popup blocked — allow popups to start a remote session.");
+      } else {
+        toast.success(`Remote session started (valid ${session.ttlSeconds}s)`);
+      }
+    },
+    onError: (err: any) =>
+      toast.error(
+        err?.response?.data?.message ?? "Failed to start remote session",
+      ),
+  });
 
   const deviceQuery = useQuery({
     queryKey: ["device-ctx", deviceId],
@@ -74,6 +104,12 @@ const DeviceContextPanel = ({ deviceId }: Props) => {
   const diffQuery = useQuery({
     queryKey: ["device-ctx-diff", deviceId],
     queryFn: () => diffDeviceScans(deviceId!),
+    enabled,
+  });
+
+  const tagsQuery = useQuery({
+    queryKey: ["device-ctx-tags", deviceId],
+    queryFn: () => tagsForDevice(deviceId!),
     enabled,
   });
 
@@ -126,8 +162,25 @@ const DeviceContextPanel = ({ deviceId }: Props) => {
 
   const diff = diffQuery.data;
 
+  const tags = tagsQuery.data ?? [];
+  const remoteConfigured = remoteStatusQuery.data?.configured ?? false;
+
   return (
     <div className="mt-3 space-y-2">
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {tags.map((t: any) => (
+            <span
+              key={t.id}
+              className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
+              style={{ backgroundColor: t.color }}
+              title={t.description ?? undefined}
+            >
+              {t.label}
+            </span>
+          ))}
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <span
           className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
@@ -222,6 +275,19 @@ const DeviceContextPanel = ({ deviceId }: Props) => {
         >
           View scan history ({scansQuery.data.length} recent) →
         </Link>
+      )}
+
+      {remoteConfigured && (
+        <button
+          type="button"
+          onClick={() => remoteMutation.mutate()}
+          disabled={remoteMutation.isPending}
+          className="mt-2 inline-flex items-center gap-2 rounded-[6px] bg-[#3C3C3C] text-white px-3 py-1.5 text-[12px] font-bold cursor-pointer hover:bg-[#535353] disabled:opacity-50"
+          title="Open a remote-assist session for this device"
+        >
+          <FontAwesomeIcon icon={faDesktop} />
+          {remoteMutation.isPending ? "Starting…" : "Start remote session"}
+        </button>
       )}
     </div>
   );

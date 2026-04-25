@@ -8,6 +8,9 @@ import UpdateTicketForm from "../../../../Components/Forms/UpdateTicketForm";
 import DeviceContextPanel from "./DeviceContextPanel";
 import QuickActions from "./QuickActions";
 import TicketDiagnostics from "./TicketDiagnostics";
+import PreviousTicketsPanel from "./PreviousTicketsPanel";
+import LinkTicketPanel from "./LinkTicketPanel";
+import SuggestionsPanel from "./SuggestionsPanel";
 
 interface TicketInfoPanelProps {
   ticket: {
@@ -36,13 +39,18 @@ const TicketInfoPanel = ({ ticket }: TicketInfoPanelProps) => {
         }}
       />
 
-      <div className="py-1">
+      <div className="py-1 flex items-center gap-2">
         <FontAwesomeIcon icon={faUser} className="w-[20px]" />
-        <span className="ml-2 font-semibold">
+        <span className="font-semibold">
           <Link to={`/admin/users/${ticket.requester.id}`}>
             {ticket.requester.distinguishedName}
           </Link>
         </span>
+        {(ticket.requester as any)?.isVip && (
+          <span className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white bg-[#C0392B]">
+            ★ VIP
+          </span>
+        )}
       </div>
 
       <div className="py-1">
@@ -58,7 +66,10 @@ const TicketInfoPanel = ({ ticket }: TicketInfoPanelProps) => {
         </span>
       </div>
 
-      <DeviceContextPanel deviceId={ticket.device?.id ?? null} />
+      <DeviceContextPanel
+        deviceId={ticket.device?.id ?? null}
+        ticketId={ticket.id}
+      />
 
       {ticket.device?.id && (
         <TicketDiagnostics
@@ -66,6 +77,16 @@ const TicketInfoPanel = ({ ticket }: TicketInfoPanelProps) => {
           deviceId={ticket.device.id}
         />
       )}
+
+      <PreviousTicketsPanel
+        ticketId={ticket.id}
+        requesterId={ticket.requester?.id ?? null}
+        deviceId={ticket.device?.id ?? null}
+      />
+
+      <LinkTicketPanel ticket={ticket} />
+
+      <SuggestionsPanel ticket={ticket} />
 
       <div className="py-1 mt-3">
         <FontAwesomeIcon icon={faClock} className="w-[20px]" />

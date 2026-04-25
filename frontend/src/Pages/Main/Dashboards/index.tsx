@@ -20,6 +20,8 @@ import SecurityCompliance from "./components/SecurityCompliance";
 import TopApplications from "./components/TopApplications";
 import ComplianceBaseline from "./components/ComplianceBaseline";
 import CveSummary from "./components/CveSummary";
+import AgentScoreboard from "./components/AgentScoreboard";
+import AgentSlaQuality from "./components/AgentSlaQuality";
 import { useQuery } from "@tanstack/react-query";
 import { getDashboards } from "../../../Services/dashboards";
 import type { Dashboard } from "../../../Types";
@@ -52,6 +54,8 @@ const componentMap: any = {
   TopApplications,
   ComplianceBaseline,
   CveSummary,
+  AgentScoreboard,
+  AgentSlaQuality,
 };
 
 const Index = () => {

@@ -18,6 +18,20 @@ export const getMyTickets = async (
   return data;
 };
 
+export type AgentStats = {
+  openAssigned: number;
+  resolvedToday: number;
+  resolvedThisWeek: number;
+  avgMttrHours: number | null;
+  slaCompliancePct: number | null;
+  breachingToday: number;
+};
+
+export const getAgentStats = async (): Promise<AgentStats> => {
+  const { data } = await api.get(`/tickets/agent-stats`);
+  return data;
+};
+
 export const getTicketCategories = async (): Promise<TicketCategoryMap> => {
   const { data } = await api.get(`/tickets/categories`);
   return data;
@@ -67,6 +81,44 @@ export const getTicket = async (id: string): Promise<Ticket> => {
 export const updateTicket = async (id: string, data: UpdateTicketData): Promise<Ticket> => {
   const { data: result } = await api.patch(`/tickets/${id}`, data);
   return result;
+};
+
+export const getTicketsByRequester = async (
+  userId: string,
+  limit = 10,
+): Promise<Ticket[]> => {
+  const { data } = await api.get(`/tickets/by-requester/${userId}`, {
+    params: { limit },
+  });
+  return data;
+};
+
+export const getTicketsByDevice = async (
+  deviceId: string,
+  limit = 10,
+): Promise<Ticket[]> => {
+  const { data } = await api.get(`/tickets/by-device/${deviceId}`, {
+    params: { limit },
+  });
+  return data;
+};
+
+export const linkTicket = async (
+  id: string,
+  parentTicketId: string | null,
+): Promise<{ id: string; parentTicketId: string | null }> => {
+  const { data } = await api.post(`/tickets/${id}/link`, { parentTicketId });
+  return data;
+};
+
+export const getSimilarTickets = async (
+  ticketId: string,
+  limit = 5,
+): Promise<Ticket[]> => {
+  const { data } = await api.get(`/tickets/${ticketId}/similar`, {
+    params: { limit },
+  });
+  return data;
 };
 
 export const createComment = async (

@@ -189,6 +189,28 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
     maxW: 6,
     maxH: 7,
   },
+  {
+    id: "c4e5a0d0-2222-4000-8000-0000000000a1",
+    label: "My ticket scoreboard",
+    component: "AgentScoreboard",
+    w: 4,
+    h: 4,
+    minW: 3,
+    minH: 3,
+    maxW: 6,
+    maxH: 6,
+  },
+  {
+    id: "c4e5a0d0-2222-4000-8000-0000000000a2",
+    label: "My SLA compliance",
+    component: "AgentSlaQuality",
+    w: 4,
+    h: 5,
+    minW: 3,
+    minH: 4,
+    maxW: 6,
+    maxH: 7,
+  },
   // --- Large cards ---
   {
     id: "f65f5dd1-f822-470a-99aa-023d070ba5c3",

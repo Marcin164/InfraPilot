@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
+import { useAuthInfo } from "@propelauth/react";
 import { getTicket } from "../../../Services/tickets";
 import type { Comment, Approval } from "../../../Types";
-import { useTicketSocket } from "../../../Hooks/useTicketSocket";
+import {
+  useTicketSocket,
+  type TicketViewer,
+} from "../../../Hooks/useTicketSocket";
 import { useParser } from "../../../Hooks/useParser";
 import TicketInfoPanel from "./components/TicketInfoPanel";
 import TicketContentPanel from "./components/TicketContentPanel";
@@ -35,12 +39,20 @@ const convertActivitiesToEntries = (activities: any[]) => {
 const Details = () => {
   const params = useParams();
   const { setParsers } = useParser();
+  const { user }: any = useAuthInfo();
+  const myId = user?.metadata?.id ?? user?.userId ?? "";
+  const myLabel =
+    [user?.metadata?.firstName, user?.metadata?.lastName]
+      .filter(Boolean)
+      .join(" ") || user?.email || myId;
+
   const ticketQuery = useQuery({
     queryKey: ["ticket", params.id],
     queryFn: () => getTicket(params.id!),
   });
 
   const ticket = ticketQuery.data;
+  const [viewers, setViewers] = useState<TicketViewer[]>([]);
 
   useEffect(() => {
     if (ticket?.id) {
@@ -69,6 +81,8 @@ const Details = () => {
 
   useTicketSocket({
     ticketId: params.id!,
+    userId: myId,
+    userLabel: myLabel,
     onNewComment: (comment) => {
       setComments((prev) => {
         if (prev.some((c) => c.id === comment.id)) return prev;
@@ -81,6 +95,7 @@ const Details = () => {
         return [...prev, activity];
       });
     },
+    onViewers: setViewers,
   });
 
   const allComments = [
@@ -91,8 +106,16 @@ const Details = () => {
 
   if (!ticket) return null;
 
+  const otherViewers = viewers.filter((v) => v.userId !== myId);
+
   return (
-    <div className="flex h-[calc(100vh-58px)]">
+    <div className="flex h-[calc(100vh-58px)] relative">
+      {otherViewers.length > 0 && (
+        <div className="absolute top-2 right-2 z-30 rounded-full bg-[#3C3C3C] text-white px-3 py-1 text-[11px] font-bold shadow">
+          👁 Also viewing:{" "}
+          {otherViewers.map((v) => v.label).join(", ")}
+        </div>
+      )}
       <TicketInfoPanel ticket={ticket} />
 
       <TicketContentPanel

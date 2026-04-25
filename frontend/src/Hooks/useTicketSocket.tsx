@@ -1,14 +1,22 @@
 import { useEffect, useRef } from "react";
 import { socket } from "../lib/socket";
 
+export type TicketViewer = { userId: string; label: string };
+
 export const useTicketSocket = ({
   ticketId,
+  userId,
+  userLabel,
   onNewComment,
   onNewActivity,
+  onViewers,
 }: {
   ticketId?: string;
+  userId?: string;
+  userLabel?: string;
   onNewComment?: (comment: any) => void;
   onNewActivity?: (activity: any) => void;
+  onViewers?: (viewers: TicketViewer[]) => void;
 }) => {
   const joinedRef = useRef(false);
 
@@ -20,7 +28,11 @@ export const useTicketSocket = ({
     }
 
     if (!joinedRef.current) {
-      socket.emit("ticket.join", ticketId);
+      socket.emit("ticket.join", {
+        ticketId,
+        userId: userId ?? "",
+        label: userLabel ?? userId ?? "",
+      });
       joinedRef.current = true;
     }
 
@@ -32,9 +44,13 @@ export const useTicketSocket = ({
       socket.on("ticket.activity.created", onNewActivity);
     }
 
+    if (onViewers) {
+      socket.on("ticket.viewers", onViewers);
+    }
+
     return () => {
       if (joinedRef.current) {
-        socket.emit("ticket.leave", ticketId);
+        socket.emit("ticket.leave", { ticketId });
         joinedRef.current = false;
       }
 
@@ -45,6 +61,10 @@ export const useTicketSocket = ({
       if (onNewActivity) {
         socket.off("ticket.activity.created", onNewActivity);
       }
+
+      if (onViewers) {
+        socket.off("ticket.viewers", onViewers);
+      }
     };
-  }, [ticketId]);
+  }, [ticketId, userId]);
 };
