@@ -1,6 +1,8 @@
 import {
   faAddressBook,
   faBookAtlas,
+  faBell,
+  faBolt,
   faBoxArchive,
   faBug,
   faCalendar,
@@ -201,9 +203,14 @@ export const settingsNavbarItems = [
     icon: faCalendar,
   },
   {
-    to: "tickets",
-    label: "Tickets",
-    icon: faTicket,
+    to: "workflows",
+    label: "Workflows",
+    icon: faBolt,
+  },
+  {
+    to: "notifications",
+    label: "Notifications",
+    icon: faBell,
   },
   {
     to: "admin",

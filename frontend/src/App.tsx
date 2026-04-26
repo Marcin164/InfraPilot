@@ -36,6 +36,8 @@ import Privacy from "./Pages/Main/Settings/Details/Privacy";
 import Tags from "./Pages/Main/Settings/Details/Tags";
 import ComplianceRules from "./Pages/Main/Settings/Details/ComplianceRules";
 import TicketTemplates from "./Pages/Main/Settings/Details/TicketTemplates";
+import NotificationPreferences from "./Pages/Main/Settings/Details/NotificationPreferences";
+import Workflows from "./Pages/Main/Settings/Details/Workflows";
 import UsersReports from "./Pages/Main/Reports/Details/UsersReports";
 import DevicesReports from "./Pages/Main/Reports/Details/DevicesReports";
 import TicketsReports from "./Pages/Main/Reports/Details/TicketsReports";
@@ -54,7 +56,6 @@ import { AnimatePresence } from "framer-motion";
 import { useAuthSetup } from "./Hooks/useAuthSetup";
 import { ThemeProvider } from "./Context/ThemeContext";
 import Tickets from "./Pages/User/Tickets";
-import Workflows from "./Pages/Main/Settings/Details/Workflows";
 
 function App() {
   useAuthSetup();
@@ -125,7 +126,11 @@ function App() {
                     element={<ActiveDirectorySettings />}
                   />
                   <Route path="sla" element={<Sla />} />
-                  <Route path="tickets" element={<Workflows />} />
+                  <Route path="workflows" element={<Workflows />} />
+                  <Route
+                    path="notifications"
+                    element={<NotificationPreferences />}
+                  />
                   <Route path="admin" element={<AdminSettings />} />
                   <Route path="audit" element={<AuditLog />} />
                   <Route path="retention" element={<Retention />} />
