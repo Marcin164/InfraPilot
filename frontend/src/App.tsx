@@ -53,6 +53,8 @@ import UserSettings from "./Pages/User/Settings";
 import { AnimatePresence } from "framer-motion";
 import { useAuthSetup } from "./Hooks/useAuthSetup";
 import { ThemeProvider } from "./Context/ThemeContext";
+import Tickets from "./Pages/User/Tickets";
+import Workflows from "./Pages/Main/Settings/Details/Workflows";
 
 function App() {
   useAuthSetup();
@@ -123,6 +125,7 @@ function App() {
                     element={<ActiveDirectorySettings />}
                   />
                   <Route path="sla" element={<Sla />} />
+                  <Route path="tickets" element={<Workflows />} />
                   <Route path="admin" element={<AdminSettings />} />
                   <Route path="audit" element={<AuditLog />} />
                   <Route path="retention" element={<Retention />} />
