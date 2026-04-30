@@ -2,7 +2,12 @@ import React from "react";
 import Parameter from "../../../../Components/Lists/Parameter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { twMerge } from "tailwind-merge";
-import { faToggleOff, faToggleOn } from "@fortawesome/free-solid-svg-icons";
+import {
+  faHandshake,
+  faToggleOff,
+  faToggleOn,
+} from "@fortawesome/free-solid-svg-icons";
+import CardHeader from "../../../../Components/Headers/CardHeader";
 
 type Props = {
   SpecVersion: any;
@@ -23,7 +28,7 @@ const TPM = ({
 }: Props) => {
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <div className="text-[20px] font-semibold text-[#2B9AE9]">TPM</div>
+      <CardHeader text="TPM" icon={faHandshake} />
       <Parameter name="Spec Version" value={SpecVersion} />
       <Parameter
         name="Manufacturer"
@@ -32,7 +37,7 @@ const TPM = ({
       <div
         className={twMerge(
           "w-fit mr-2 px-2 rounded-[5px] text-[16px] mt-2 text-center text-[#FFFFFF]",
-          IsActivated_InitialValue ? "bg-[#30A712]" : "bg-[#F3606A]"
+          IsActivated_InitialValue ? "bg-[#30A712]" : "bg-[#F3606A]",
         )}
       >
         <FontAwesomeIcon
@@ -45,7 +50,7 @@ const TPM = ({
       <div
         className={twMerge(
           "w-fit mr-2 px-2 rounded-[5px] text-[16px] mt-2 text-center text-[#FFFFFF]",
-          IsEnabled_InitialValue ? "bg-[#30A712]" : "bg-[#F3606A]"
+          IsEnabled_InitialValue ? "bg-[#30A712]" : "bg-[#F3606A]",
         )}
       >
         <FontAwesomeIcon
@@ -58,7 +63,7 @@ const TPM = ({
       <div
         className={twMerge(
           "w-fit mr-2 px-2 rounded-[5px] text-[16px] mt-2 text-center text-[#FFFFFF]",
-          IsOwned_InitialValue ? "bg-[#30A712]" : "bg-[#F3606A]"
+          IsOwned_InitialValue ? "bg-[#30A712]" : "bg-[#F3606A]",
         )}
       >
         <FontAwesomeIcon

@@ -21,6 +21,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import Input from "../../../../Components/Inputs/Input";
+import Checkbox from "../../../../Components/Inputs/Checkbox";
+import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import {
   TicketCategory,
   TicketWorkflow,
@@ -295,30 +298,37 @@ const CategoriesPanel = ({
         creation.
       </p>
 
-      <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
-        <input
+      <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+        <Input
+          className="md:col-span-2 pt-0"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          handleChange={setName}
           placeholder="Category name"
-          className="md:col-span-2 h-[32px] rounded-[6px] border border-[#D0D0D0] px-2 text-[13px]"
         />
         <input
           type="color"
           value={color}
           onChange={(e) => setColor(e.target.value)}
-          className="h-[32px] rounded-[6px] border border-[#D0D0D0] cursor-pointer"
+          className="h-[44px] rounded-[10px] border border-[#535353] cursor-pointer"
+          aria-label="Category color"
         />
       </div>
-      <div className="mt-2 flex items-center gap-2">
-        <select
-          value={ticketType}
-          onChange={(e) => setTicketType(e.target.value as any)}
-          className="h-[32px] rounded-[6px] border border-[#D0D0D0] px-2 text-[13px]"
-        >
-          <option value="">Any type</option>
-          <option value="Incident">Incident</option>
-          <option value="Service">Service</option>
-        </select>
+      <div className="mt-2 flex items-center gap-2 flex-wrap">
+        <div className="min-w-[180px]">
+          <SelectSecondary
+            options={[
+              { value: "", label: "Any type" },
+              { value: "Incident", label: "Incident" },
+              { value: "Service", label: "Service" },
+            ]}
+            value={
+              ticketType
+                ? { value: ticketType, label: ticketType }
+                : { value: "", label: "Any type" }
+            }
+            onSelect={(opt: any) => setTicketType((opt?.value ?? "") as any)}
+          />
+        </div>
         <ButtonPrimary
           icon={editingId ? faCheck : faPlus}
           text={editingId ? "Update" : "Add"}
@@ -326,18 +336,16 @@ const CategoriesPanel = ({
           disabled={upsertMutation.isPending}
         />
         {editingId && (
-          <button
-            type="button"
+          <ButtonPrimary
+            color="white"
+            text="Cancel"
             onClick={() => {
               setEditingId(null);
               setName("");
               setColor("#2B9AE9");
               setTicketType("");
             }}
-            className="text-[12px] text-[#7a7a7a] cursor-pointer"
-          >
-            cancel
-          </button>
+          />
         )}
       </div>
 
@@ -370,23 +378,30 @@ const CategoriesPanel = ({
                   )}
                 </div>
               </div>
-              <select
-                value={c.workflowId ?? ""}
-                onChange={(e) =>
-                  upsertTicketCategory({
-                    ...c,
-                    workflowId: e.target.value || null,
-                  }).then(onChanged)
-                }
-                className="h-[26px] rounded-[6px] border border-[#D0D0D0] text-[11px] px-1"
-              >
-                <option value="">— no workflow —</option>
-                {workflows.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name}
-                  </option>
-                ))}
-              </select>
+              <div className="min-w-[160px]">
+                <SelectSecondary
+                  options={[
+                    { value: "", label: "— no workflow —" },
+                    ...workflows.map((w) => ({ value: w.id, label: w.name })),
+                  ]}
+                  value={
+                    c.workflowId
+                      ? {
+                          value: c.workflowId,
+                          label:
+                            workflows.find((w) => w.id === c.workflowId)?.name ??
+                            "—",
+                        }
+                      : { value: "", label: "— no workflow —" }
+                  }
+                  onSelect={(opt: any) =>
+                    upsertTicketCategory({
+                      ...c,
+                      workflowId: opt?.value || null,
+                    }).then(onChanged)
+                  }
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => {
@@ -473,40 +488,45 @@ const WorkflowEditor = ({
 
   return (
     <div className="bg-white shadow-xl rounded-[10px] p-4 space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1">
-          <input
+      <div className="flex items-end justify-between gap-3">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Input
+            label="Name"
             value={workflow.name}
-            onChange={(e) => setField("name", e.target.value)}
+            handleChange={(v: string) => setField("name", v)}
             placeholder="Workflow name"
-            className="w-full text-[18px] font-bold rounded-[6px] border border-transparent hover:border-[#E0E0E0] focus:border-[#2B9AE9] px-2 py-1 outline-none"
           />
-          <input
+          <Input
+            label="Description"
             value={workflow.description ?? ""}
-            onChange={(e) => setField("description", e.target.value)}
+            handleChange={(v: string) =>
+              setField("description", v as TicketWorkflow["description"])
+            }
             placeholder="Optional description"
-            className="w-full mt-1 text-[12px] text-[#535353] rounded-[6px] border border-transparent hover:border-[#E0E0E0] focus:border-[#2B9AE9] px-2 py-1 outline-none"
           />
         </div>
-        <label className="flex items-center gap-2 text-[13px]">
-          <input
-            type="checkbox"
-            checked={workflow.enabled}
-            onChange={(e) => setField("enabled", e.target.checked)}
-          />
-          enabled
-        </label>
+        <Checkbox
+          id={`workflow-${workflow.id}-enabled`}
+          checked={workflow.enabled}
+          color="#30A712"
+          handleChange={(v: boolean) => setField("enabled", v)}
+          label="Enabled"
+        />
       </div>
 
       <div className="flex items-center gap-2 text-[12px] text-[#7a7a7a]">
         <span>Trigger:</span>
-        <select
-          value={workflow.trigger}
-          onChange={(e) => setField("trigger", e.target.value as any)}
-          className="h-[28px] rounded-[6px] border border-[#D0D0D0] px-2 text-[12px]"
-        >
-          <option value="on_create">On ticket create</option>
-        </select>
+        <div className="min-w-[200px]">
+          <SelectSecondary
+            options={[
+              { value: "on_create", label: "On ticket create" },
+            ]}
+            value={{ value: workflow.trigger, label: "On ticket create" }}
+            onSelect={(opt: any) =>
+              opt?.value && setField("trigger", opt.value as any)
+            }
+          />
+        </div>
         <span className="text-[10px] text-[#9a9a9a]">
           (more triggers coming)
         </span>
@@ -594,13 +614,13 @@ const WorkflowEditor = ({
           onClick={() => onSave(workflow)}
           disabled={saving || !workflow.name.trim()}
         />
-        <button
-          type="button"
+        <ButtonPrimary
+          icon={faTrash}
+          text={workflow.id ? "Delete workflow" : "Discard"}
+          color="red"
           onClick={onDelete}
-          className="ml-auto text-[#F3606E] text-[13px] cursor-pointer"
-        >
-          {workflow.id ? "Delete workflow" : "Discard"}
-        </button>
+          className="ml-auto"
+        />
       </div>
     </div>
   );
@@ -608,23 +628,24 @@ const WorkflowEditor = ({
 
 // ───────────────────────── Step config form ─────────────────────────
 
-const Field = ({
+const SelectField = ({
   label,
-  children,
+  value,
+  options,
+  onChange,
 }: {
   label: string;
-  children: React.ReactNode;
+  value: any;
+  options: { value: string; label: string }[];
+  onChange: (v: string) => void;
 }) => (
-  <label className="block">
-    <div className="text-[10px] uppercase font-bold text-[#9a9a9a]">
-      {label}
-    </div>
-    {children}
-  </label>
+  <SelectSecondary
+    label={label}
+    options={options}
+    value={options.find((o) => o.value === value) ?? options[0]}
+    onSelect={(opt: any) => opt?.value && onChange(opt.value)}
+  />
 );
-
-const inputCls =
-  "w-full mt-0.5 h-[28px] rounded-[6px] border border-[#D0D0D0] px-2 text-[12px]";
 
 const StepConfig = ({
   step,
@@ -640,140 +661,118 @@ const StepConfig = ({
     case "request_approval":
       return (
         <div className="mt-2 grid grid-cols-1 gap-2">
-          <Field label="Approver IDs (comma-separated)">
-            <input
-              className={inputCls}
-              value={(step.config.approverIds ?? []).join(",")}
-              onChange={(e) =>
-                setCfg(
-                  "approverIds",
-                  e.target.value
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean),
-                )
-              }
-              placeholder="user-id-1, user-id-2"
-            />
-          </Field>
-          <Field label="Message (optional)">
-            <input
-              className={inputCls}
-              value={step.config.message ?? ""}
-              onChange={(e) => setCfg("message", e.target.value)}
-            />
-          </Field>
+          <Input
+            label="Approver IDs (comma-separated)"
+            value={(step.config.approverIds ?? []).join(",")}
+            handleChange={(v: string) =>
+              setCfg(
+                "approverIds",
+                v.split(",").map((s) => s.trim()).filter(Boolean),
+              )
+            }
+            placeholder="user-id-1, user-id-2"
+          />
+          <Input
+            label="Message (optional)"
+            value={step.config.message ?? ""}
+            handleChange={(v: string) => setCfg("message", v)}
+          />
         </div>
       );
 
     case "notify":
       return (
         <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-          <Field label="Recipient">
-            <select
-              className={inputCls}
-              value={step.config.recipientType ?? "requester"}
-              onChange={(e) => setCfg("recipientType", e.target.value)}
-            >
-              <option value="requester">Ticket requester</option>
-              <option value="assignee">Ticket assignee</option>
-              <option value="specific">Specific users</option>
-            </select>
-          </Field>
+          <SelectField
+            label="Recipient"
+            value={step.config.recipientType ?? "requester"}
+            options={[
+              { value: "requester", label: "Ticket requester" },
+              { value: "assignee", label: "Ticket assignee" },
+              { value: "specific", label: "Specific users" },
+            ]}
+            onChange={(v) => setCfg("recipientType", v)}
+          />
           {step.config.recipientType === "specific" && (
-            <Field label="User IDs (comma-separated)">
-              <input
-                className={inputCls}
-                value={(step.config.recipientIds ?? []).join(",")}
-                onChange={(e) =>
-                  setCfg(
-                    "recipientIds",
-                    e.target.value
-                      .split(",")
-                      .map((s) => s.trim())
-                      .filter(Boolean),
-                  )
-                }
-              />
-            </Field>
+            <Input
+              label="User IDs (comma-separated)"
+              value={(step.config.recipientIds ?? []).join(",")}
+              handleChange={(v: string) =>
+                setCfg(
+                  "recipientIds",
+                  v.split(",").map((s) => s.trim()).filter(Boolean),
+                )
+              }
+            />
           )}
-          <Field label="Title">
-            <input
-              className={inputCls}
-              value={step.config.title ?? ""}
-              onChange={(e) => setCfg("title", e.target.value)}
-            />
-          </Field>
-          <Field label="Body">
-            <input
-              className={inputCls}
-              value={step.config.body ?? ""}
-              onChange={(e) => setCfg("body", e.target.value)}
-            />
-          </Field>
+          <Input
+            label="Title"
+            value={step.config.title ?? ""}
+            handleChange={(v: string) => setCfg("title", v)}
+          />
+          <Input
+            label="Body"
+            value={step.config.body ?? ""}
+            handleChange={(v: string) => setCfg("body", v)}
+          />
         </div>
       );
 
     case "set_field":
       return (
         <div className="mt-2 grid grid-cols-2 gap-2">
-          <Field label="Field">
-            <select
-              className={inputCls}
-              value={step.config.field ?? "priority"}
-              onChange={(e) => setCfg("field", e.target.value)}
-            >
-              <option value="priority">priority</option>
-              <option value="urgency">urgency</option>
-              <option value="impact">impact</option>
-              <option value="assignmentGroup">assignmentGroup</option>
-            </select>
-          </Field>
-          <Field label="Value">
-            <input
-              className={inputCls}
-              value={step.config.value ?? ""}
-              onChange={(e) => setCfg("value", e.target.value)}
-            />
-          </Field>
+          <SelectField
+            label="Field"
+            value={step.config.field ?? "priority"}
+            options={[
+              { value: "priority", label: "priority" },
+              { value: "urgency", label: "urgency" },
+              { value: "impact", label: "impact" },
+              { value: "assignmentGroup", label: "assignmentGroup" },
+            ]}
+            onChange={(v) => setCfg("field", v)}
+          />
+          <Input
+            label="Value"
+            value={step.config.value ?? ""}
+            handleChange={(v: string) => setCfg("value", v)}
+          />
         </div>
       );
 
     case "assign_to":
       return (
         <div className="mt-2">
-          <Field label="User ID">
-            <input
-              className={inputCls}
-              value={step.config.userId ?? ""}
-              onChange={(e) => setCfg("userId", e.target.value)}
-              placeholder="paste user UUID"
-            />
-          </Field>
+          <Input
+            label="User ID"
+            value={step.config.userId ?? ""}
+            handleChange={(v: string) => setCfg("userId", v)}
+            placeholder="paste user UUID"
+          />
         </div>
       );
 
     case "create_comment":
       return (
         <div className="mt-2 grid grid-cols-1 gap-2">
-          <Field label="Comment type">
-            <select
-              className={inputCls}
-              value={step.config.type ?? "Worknotes"}
-              onChange={(e) => setCfg("type", e.target.value)}
-            >
-              <option value="Worknotes">Internal worknote</option>
-              <option value="Public">Public comment</option>
-            </select>
-          </Field>
-          <Field label="Content">
+          <SelectField
+            label="Comment type"
+            value={step.config.type ?? "Worknotes"}
+            options={[
+              { value: "Worknotes", label: "Internal worknote" },
+              { value: "Public", label: "Public comment" },
+            ]}
+            onChange={(v) => setCfg("type", v)}
+          />
+          <div className="pt-2">
+            <label className="font-bold text-[#3C3C3C]">Content</label>
             <textarea
               rows={2}
-              className="w-full mt-0.5 rounded-[6px] border border-[#D0D0D0] px-2 py-1 text-[12px]"
+              className="w-full mt-[6px] rounded-[10px] border border-[#535353] bg-white px-3 py-2 text-[16px] font-bold"
               value={step.config.content ?? ""}
               onChange={(e) => setCfg("content", e.target.value)}
             />
-          </Field>
+          </div>
         </div>
       );
 

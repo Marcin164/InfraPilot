@@ -11,6 +11,8 @@ import {
 
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
+import MergeCandidatesPanel from "../components/MergeCandidatesPanel";
 import {
   DeviceLifecyclePatch,
   updateDeviceLifecycle,
@@ -93,6 +95,7 @@ const Lifecycle = () => {
     : null;
 
   return (
+    <div>
     <div className="bg-white shadow-xl rounded-[10px] p-4">
       <div className="flex justify-between items-start">
         <CardHeader text="Asset lifecycle" icon={faBoxArchive} />
@@ -128,17 +131,17 @@ const Lifecycle = () => {
             {currentState.label}
           </span>
         ) : (
-          <select
-            value={draft.lifecycle ?? "active"}
-            onChange={(e) => setDraft({ ...draft, lifecycle: e.target.value })}
-            className="h-[36px] rounded-[6px] border border-[#D0D0D0] px-3 text-[14px]"
-          >
-            {LIFECYCLE_STATES.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
+          <div className="min-w-[200px]">
+            <SelectSecondary
+              options={LIFECYCLE_STATES}
+              value={LIFECYCLE_STATES.find(
+                (s) => s.value === (draft.lifecycle ?? "active"),
+              )}
+              onSelect={(opt: any) =>
+                opt?.value && setDraft({ ...draft, lifecycle: opt.value })
+              }
+            />
+          </div>
         )}
         {warrantyDaysLeft !== null && (
           <span
@@ -199,6 +202,9 @@ const Lifecycle = () => {
           </div>
         ))}
       </div>
+    </div>
+
+    <MergeCandidatesPanel device={data} />
     </div>
   );
 };

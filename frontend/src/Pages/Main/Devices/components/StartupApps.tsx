@@ -1,14 +1,14 @@
 import React from "react";
 import StartupAppsTable from "../../../../Components/Tables/StartupAppsTable";
+import CardHeader from "../../../../Components/Headers/CardHeader";
+import { faCirclePlay } from "@fortawesome/free-solid-svg-icons";
 
 type Props = { startupApps: any };
 
 const StartupApps = ({ startupApps }: Props) => {
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <div className="text-[20px] font-semibold text-[#2B9AE9]">
-        Startup apps
-      </div>
+      <CardHeader text="Startup Apps" icon={faCirclePlay} />
       <StartupAppsTable data={startupApps} />
     </div>
   );

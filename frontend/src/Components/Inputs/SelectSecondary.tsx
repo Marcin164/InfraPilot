@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import ReactSelect from "react-select";
 
 type Props = {
-  label: string;
+  label?: string;
   options: Array<any>;
   onSelect: any;
   value?: any;
@@ -10,6 +10,8 @@ type Props = {
   className?: string;
   isMulti?: boolean;
   isClearable?: boolean;
+  isDisabled?: boolean;
+  placeholder?: string;
   errors?: any;
 };
 
@@ -22,6 +24,8 @@ const SelectSecondary = ({
   className = "",
   isMulti = false,
   isClearable,
+  isDisabled,
+  placeholder,
   errors,
 }: Props) => {
   const [selectedOption, setSelectedOption] = useState(value);
@@ -48,7 +52,7 @@ const SelectSecondary = ({
       borderRadius: "10px",
       paddingLeft: "6px",
       outline: "none",
-      marginTop: "6px",
+      marginTop: label ? "6px" : "0",
     }),
     option: (styles: any, state: any) => ({
       ...styles,
@@ -68,8 +72,10 @@ const SelectSecondary = ({
   };
 
   return (
-    <div className={`pt-2 ${className}`}>
-      <label className="font-bold text-[#3C3C3C] mb-1">{label}</label>
+    <div className={`${label ? "pt-2" : ""} ${className}`}>
+      {label && (
+        <label className="font-bold text-[#3C3C3C] mb-1">{label}</label>
+      )}
       <ReactSelect
         value={selectedOption}
         defaultValue={defaultValue}
@@ -78,8 +84,14 @@ const SelectSecondary = ({
         styles={styles}
         isMulti={isMulti}
         isClearable={isClearable}
+        isDisabled={isDisabled}
+        placeholder={placeholder}
       />
-      {errors && <em role="alert">{errors}</em>}
+      {errors && (
+        <em role="alert" className="text-[14px] text-[#BC0E0E] font-bold">
+          {errors}
+        </em>
+      )}
     </div>
   );
 };

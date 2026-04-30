@@ -1,13 +1,13 @@
+import { faUserGroup } from "@fortawesome/free-solid-svg-icons";
 import React from "react";
+import CardHeader from "../../../../Components/Headers/CardHeader";
 
 type Props = { memberOf: any };
 
 const UserGroups = ({ memberOf }: Props) => {
   return (
     <div>
-      <div className="text-[30px] font-semibold text-[#3C3C3C] pt-2">
-        Groups
-      </div>
+      <CardHeader text="Groups" icon={faUserGroup} />
       <div className="flex flex-wrap">
         {memberOf && typeof memberOf !== "string" ? (
           memberOf.map((group: any) => (

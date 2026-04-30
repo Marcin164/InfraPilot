@@ -157,6 +157,41 @@ export const remoteSessionStatus = async (): Promise<{
   return data;
 };
 
+export type MergeCandidate = {
+  device: {
+    id: string;
+    assetName: string | null;
+    serialNumber: string | null;
+    manufacturer: string | null;
+    model: string | null;
+    lastScanAt: string | null;
+    mergedIntoId: string | null;
+  };
+  score: number;
+  reasons: string[];
+};
+
+export const getMergeCandidates = async (
+  deviceId: string,
+): Promise<MergeCandidate[]> => {
+  const { data } = await api.get(`/devices/${deviceId}/merge-candidates`);
+  return data;
+};
+
+export const mergeDevicesApi = async (
+  targetDeviceId: string,
+  sourceDeviceId: string,
+): Promise<{
+  target: string;
+  source: string;
+  moved: Record<string, number>;
+}> => {
+  const { data } = await api.post(`/devices/${targetDeviceId}/merge`, {
+    sourceDeviceId,
+  });
+  return data;
+};
+
 export const downloadDeviceReportPdf = async (
   deviceId: string,
   filename = `device-${deviceId}.pdf`,

@@ -44,21 +44,25 @@ const Details = () => {
   const myLabel =
     [user?.metadata?.firstName, user?.metadata?.lastName]
       .filter(Boolean)
-      .join(" ") || user?.email || myId;
+      .join(" ") ||
+    user?.email ||
+    myId;
 
   const ticketQuery = useQuery({
     queryKey: ["ticket", params.id],
     queryFn: () => getTicket(params.id!),
   });
 
-  const ticket = ticketQuery.data;
+  const ticket: any = ticketQuery.data;
   const [viewers, setViewers] = useState<TicketViewer[]>([]);
 
   useEffect(() => {
     if (ticket?.id) {
       setParsers({
         [ticket.id]:
-          ticket.requester?.distinguishedName ?? ticket.number?.toString() ?? ticket.id,
+          ticket.requester?.distinguishedName ??
+          ticket.number?.toString() ??
+          ticket.id,
       });
     }
     return () => setParsers({});
@@ -112,8 +116,7 @@ const Details = () => {
     <div className="flex h-[calc(100vh-58px)] relative">
       {otherViewers.length > 0 && (
         <div className="absolute top-2 right-2 z-30 rounded-full bg-[#3C3C3C] text-white px-3 py-1 text-[11px] font-bold shadow">
-          👁 Also viewing:{" "}
-          {otherViewers.map((v) => v.label).join(", ")}
+          👁 Also viewing: {otherViewers.map((v) => v.label).join(", ")}
         </div>
       )}
       <TicketInfoPanel ticket={ticket} />

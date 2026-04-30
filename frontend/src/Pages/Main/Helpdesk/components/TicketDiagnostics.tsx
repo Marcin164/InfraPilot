@@ -5,6 +5,8 @@ import moment from "moment";
 import { faPlay, faRotate, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
+import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import {
   listDeviceTasks,
   enqueueDeviceTask,
@@ -85,25 +87,21 @@ const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
       </div>
 
       <div className="mt-2 flex items-center gap-2">
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value as AgentTaskType)}
-          className="h-[30px] rounded-[6px] border border-[#D0D0D0] px-2 text-[12px]"
-        >
-          {TASK_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
+        <div className="flex-1 min-w-[160px]">
+          <SelectSecondary
+            options={TASK_TYPES}
+            value={TASK_TYPES.find((t) => t.value === type)}
+            onSelect={(opt: any) =>
+              opt?.value && setType(opt.value as AgentTaskType)
+            }
+          />
+        </div>
+        <ButtonPrimary
+          icon={faPlay}
+          text={enqueueMutation.isPending ? "Queuing…" : "Run"}
           onClick={() => enqueueMutation.mutate()}
           disabled={enqueueMutation.isPending}
-          className="h-[30px] rounded-[6px] bg-[#2B9AE9] text-white px-3 text-[12px] font-bold cursor-pointer disabled:opacity-50"
-        >
-          {enqueueMutation.isPending ? "Queuing…" : "Run"}
-        </button>
+        />
       </div>
 
       {relevantTasks.length > 0 && (

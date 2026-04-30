@@ -5,6 +5,7 @@ import { faPlay, faTag, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import {
   listDeviceTags,
   bulkTagDevices,
@@ -179,18 +180,17 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
 
       {mode === "lifecycle" && (
         <div className="w-full mt-2 bg-white text-[#3C3C3C] rounded-[8px] p-3 flex items-center gap-2">
-          <span className="text-[13px]">Set lifecycle to</span>
-          <select
-            value={lifecycle}
-            onChange={(e) => setLifecycle(e.target.value)}
-            className="h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[14px]"
-          >
-            {LIFECYCLES.map((l) => (
-              <option key={l} value={l}>
-                {l.replace("_", " ")}
-              </option>
-            ))}
-          </select>
+          <span className="text-[13px] shrink-0">Set lifecycle to</span>
+          <div className="min-w-[200px]">
+            <SelectSecondary
+              options={LIFECYCLES.map((l) => ({
+                value: l,
+                label: l.replace("_", " "),
+              }))}
+              value={{ value: lifecycle, label: lifecycle.replace("_", " ") }}
+              onSelect={(opt: any) => opt?.value && setLifecycle(opt.value)}
+            />
+          </div>
           <ButtonPrimary
             text={lifecycleMutation.isPending ? "Applying…" : "Apply"}
             onClick={() => lifecycleMutation.mutate()}
@@ -201,18 +201,16 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
 
       {mode === "task" && (
         <div className="w-full mt-2 bg-white text-[#3C3C3C] rounded-[8px] p-3 flex items-center gap-2">
-          <span className="text-[13px]">Queue task</span>
-          <select
-            value={taskType}
-            onChange={(e) => setTaskType(e.target.value as AgentTaskType)}
-            className="h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[14px]"
-          >
-            {TASK_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
+          <span className="text-[13px] shrink-0">Queue task</span>
+          <div className="min-w-[200px]">
+            <SelectSecondary
+              options={TASK_TYPES}
+              value={TASK_TYPES.find((t) => t.value === taskType)}
+              onSelect={(opt: any) =>
+                opt?.value && setTaskType(opt.value as AgentTaskType)
+              }
+            />
+          </div>
           <ButtonPrimary
             icon={faPlay}
             text={taskMutation.isPending ? "Queuing…" : "Queue"}

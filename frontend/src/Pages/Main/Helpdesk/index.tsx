@@ -36,7 +36,7 @@ const Index = () => {
   const [onlyMine, setOnlyMine] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearch = useDebounce(searchValue, 500);
-
+  console.log(authInfo?.accessToken);
   const presets = useFilterPresets("tickets", filters, (next) => {
     setFilters(next as TicketFilters);
     setPage(1);
@@ -80,6 +80,8 @@ const Index = () => {
     queryFn: () => getTickets(queryString),
     placeholderData: (prev) => prev,
   });
+
+  console.log(helpdeskQuery);
 
   const userSettings = useQuery({
     queryKey: ["userSettings"],
@@ -145,60 +147,62 @@ const Index = () => {
 
   return (
     <PageMotion>
-    <div className="w-full h-[calc(100vh-58px)] px-4">
-      <div className="pt-4 pb-4 flex gap-2 items-center">
-        <Filter
-          filters={filters}
-          setFilters={(next: any) => {
-            setFilters(next);
-            setPage(1);
-            presets.clearActive();
-          }}
-          filterOptions={filterOptions}
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
-          onSavePreset={presets.savePreset}
+      <div className="w-full h-[calc(100vh-58px)] px-4">
+        <div className="pt-4 pb-4 flex gap-2 items-center">
+          <Filter
+            filters={filters}
+            setFilters={(next: any) => {
+              setFilters(next);
+              setPage(1);
+              presets.clearActive();
+            }}
+            filterOptions={filterOptions}
+            isOpen={isOpen}
+            setIsOpen={setIsOpen}
+            onSavePreset={presets.savePreset}
+          />
+          <Search onChange={handleSearchChange} />
+          <TableSettings
+            settings={userSettings?.data}
+            checkboxes={checkboxes}
+            settingsKey="ticketsTableColumnOrder"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setOnlyMine((v) => !v);
+              setPage(1);
+            }}
+            disabled={!myId}
+            className={`h-[36px] rounded-[6px] px-3 text-[13px] font-bold cursor-pointer transition-colors ${
+              onlyMine
+                ? "bg-[#2B9AE9] text-white"
+                : "bg-white text-[#3C3C3C] border border-[#D0D0D0]"
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+            title={
+              myId ? "Toggle assignee = me filter" : "Current user unknown"
+            }
+          >
+            My tickets
+          </button>
+        </div>
+        <FilterPresetsBar
+          presets={presets.presets}
+          activePresetId={presets.activePreset?.id ?? null}
+          onActivate={presets.activatePreset}
+          onDelete={presets.deletePreset}
         />
-        <Search onChange={handleSearchChange} />
-        <TableSettings
-          settings={userSettings?.data}
-          checkboxes={checkboxes}
-          settingsKey="ticketsTableColumnOrder"
-        />
-        <button
-          type="button"
-          onClick={() => {
-            setOnlyMine((v) => !v);
+        <TicketsTable
+          data={helpdeskQuery.data?.data ?? []}
+          total={helpdeskQuery.data?.total ?? 0}
+          onPageChange={setPage}
+          onRowsPerPageChange={(newLimit: any) => {
+            setLimit(newLimit);
             setPage(1);
           }}
-          disabled={!myId}
-          className={`h-[36px] rounded-[6px] px-3 text-[13px] font-bold cursor-pointer transition-colors ${
-            onlyMine
-              ? "bg-[#2B9AE9] text-white"
-              : "bg-white text-[#3C3C3C] border border-[#D0D0D0]"
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
-          title={myId ? "Toggle assignee = me filter" : "Current user unknown"}
-        >
-          My tickets
-        </button>
+          isLoading={helpdeskQuery.isFetching}
+        />
       </div>
-      <FilterPresetsBar
-        presets={presets.presets}
-        activePresetId={presets.activePreset?.id ?? null}
-        onActivate={presets.activatePreset}
-        onDelete={presets.deletePreset}
-      />
-      <TicketsTable
-        data={helpdeskQuery.data?.data ?? []}
-        total={helpdeskQuery.data?.total ?? 0}
-        onPageChange={setPage}
-        onRowsPerPageChange={(newLimit: any) => {
-          setLimit(newLimit);
-          setPage(1);
-        }}
-        isLoading={helpdeskQuery.isFetching}
-      />
-    </div>
     </PageMotion>
   );
 };

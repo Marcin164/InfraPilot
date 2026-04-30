@@ -15,6 +15,7 @@ import UserDetailsDropdown from "../../../../Components/Dropdowns/UserDetailsDro
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import PrivacyDialog from "../../../../Components/Modals/PrivacyDialog";
 import { getUser } from "../../../../Services/users";
+import AuthLinkPanel from "./AuthLinkPanel";
 
 type Props = {
   data: any;
@@ -100,6 +101,10 @@ const UserDetails = ({ data }: Props) => {
         )}
         {data.company && <Parameter name="company" value={data.company} />}
       </div>
+
+      {(currentUserQuery.data?.isAdmin || canViewAsDpo) && (
+        <AuthLinkPanel user={data} />
+      )}
     </div>
   );
 };

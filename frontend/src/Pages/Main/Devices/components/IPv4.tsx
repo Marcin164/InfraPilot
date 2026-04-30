@@ -1,4 +1,5 @@
 import React from "react";
+import CardHeader from "../../../../Components/Headers/CardHeader";
 
 type Props = {
   IPv4Address: string;
@@ -9,9 +10,7 @@ type Props = {
 const IPv4 = ({ IPv4Address, NetMask, IPv4Gateway }: Props) => {
   return (
     <div>
-      <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">
-        IPv4 Config
-      </div>
+      <CardHeader text="IPv4 Config" />
       <div>
         <span className="text-[#3C3C3C] font-light">Address: </span>
         <span className="text-[#3C3C3C] font-semibold">{`${IPv4Address} | ${NetMask}`}</span>

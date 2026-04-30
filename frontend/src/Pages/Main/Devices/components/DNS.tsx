@@ -1,4 +1,6 @@
 import React from "react";
+import CardHeader from "../../../../Components/Headers/CardHeader";
+import { faCloud } from "@fortawesome/free-solid-svg-icons";
 
 type Props = {
   servers: any;
@@ -7,9 +9,7 @@ type Props = {
 const DNS = ({ servers }: Props) => {
   return (
     <div>
-      <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">
-        DNS Servers
-      </div>
+      <CardHeader text="DNS Servers" icon={faCloud} />
       <div>
         {servers.map((server: any) => (
           <div className="text-[#3C3C3C] font-semibold">{server}</div>

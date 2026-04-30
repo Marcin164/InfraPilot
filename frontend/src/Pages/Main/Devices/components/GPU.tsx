@@ -1,7 +1,7 @@
-import React from "react";
 import Parameter from "../../../../Components/Lists/Parameter";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import Badge from "../../../../Components/Badges/Badge";
+import { faDisplay } from "@fortawesome/free-solid-svg-icons";
 
 type Props = {
   gpus: any;
@@ -10,8 +10,8 @@ type Props = {
 const GPU = ({ gpus }: Props) => {
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4 overflow-hidden text-wrap wrap-break-word break-normal text-ellipsis">
-      <CardHeader text="GPU" />
-      {gpus.map((gpu: any, index: number) => (
+      <CardHeader text="GPU" icon={faDisplay} />
+      {gpus.map((gpu: any) => (
         <div className="inline-block mr-4">
           <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">
             {gpu.name}

@@ -5,6 +5,7 @@ import { faBell, faCheck } from "@fortawesome/free-solid-svg-icons";
 
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import Checkbox from "../../../../Components/Inputs/Checkbox";
 import {
   listNotificationPreferences,
   updateNotificationPreferences,
@@ -14,10 +15,15 @@ import {
   PreferenceRow,
 } from "../../../../Services/notificationPreferences";
 
-const CHANNELS: { key: NotificationChannel; label: string; hint: string }[] = [
-  { key: "inapp", label: "In-app", hint: "Bell badge in topbar" },
-  { key: "email", label: "Email", hint: "Requires user.email" },
-  { key: "sms", label: "SMS", hint: "Requires user.phone" },
+const CHANNELS: {
+  key: NotificationChannel;
+  label: string;
+  hint: string;
+  color: string;
+}[] = [
+  { key: "inapp", label: "In-app", hint: "Bell badge in topbar", color: "#2B9AE9" },
+  { key: "email", label: "Email", hint: "Requires user.email", color: "#16A085" },
+  { key: "sms", label: "SMS", hint: "Requires user.phone", color: "#F1C40F" },
 ];
 
 const NotificationPreferences = () => {
@@ -41,8 +47,7 @@ const NotificationPreferences = () => {
   }, [prefsQuery.data]);
 
   const saveMutation = useMutation({
-    mutationFn: (rows: PreferenceRow[]) =>
-      updateNotificationPreferences(rows),
+    mutationFn: (rows: PreferenceRow[]) => updateNotificationPreferences(rows),
     onSuccess: () => {
       toast.success("Preferences saved");
       queryClient.invalidateQueries({
@@ -114,19 +119,15 @@ const NotificationPreferences = () => {
                   const key = `${event}:${c.key}`;
                   const on = draft.get(key) ?? false;
                   return (
-                    <td key={c.key} className="py-2 text-center">
-                      <button
-                        type="button"
-                        onClick={() => toggle(event, c.key)}
-                        className={`w-[28px] h-[28px] rounded-[6px] border cursor-pointer transition-colors ${
-                          on
-                            ? "bg-[#2B9AE9] border-[#2B9AE9] text-white"
-                            : "bg-white border-[#D0D0D0] text-transparent hover:border-[#2B9AE9]"
-                        }`}
-                        aria-label={`${event} ${c.label}`}
-                      >
-                        ✓
-                      </button>
+                    <td key={c.key} className="py-2">
+                      <div className="flex justify-center">
+                        <Checkbox
+                          id={key}
+                          checked={on}
+                          color={c.color}
+                          handleChange={() => toggle(event, c.key)}
+                        />
+                      </div>
                     </td>
                   );
                 })}

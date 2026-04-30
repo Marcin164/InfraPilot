@@ -1,6 +1,37 @@
 import api from "../lib/api";
 import type { User, CreateUserData, UserFilter } from "../Types";
 
+export type AuthLinkResult = {
+  linked: boolean;
+  authUserId: string | null;
+  reason?: string;
+};
+
+export type AuthVerifyResult = {
+  valid: boolean;
+  authUserId: string | null;
+  email?: string;
+};
+
+export const linkUserAuth = async (id: string): Promise<AuthLinkResult> => {
+  const { data } = await api.post(`/users/${id}/link-auth`);
+  return data;
+};
+
+export const provisionUserAuth = async (
+  id: string,
+): Promise<{ authUserId: string | null; created: boolean; reason?: string }> => {
+  const { data } = await api.post(`/users/${id}/provision-auth`);
+  return data;
+};
+
+export const verifyUserAuth = async (
+  id: string,
+): Promise<AuthVerifyResult> => {
+  const { data } = await api.get(`/users/${id}/verify-auth`);
+  return data;
+};
+
 export const getUsers = async (): Promise<User[]> => {
   const { data } = await api.get("/users/");
   return data;

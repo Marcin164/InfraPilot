@@ -1,4 +1,6 @@
+import { faFire } from "@fortawesome/free-solid-svg-icons";
 import Badge from "../../../../Components/Badges/Badge";
+import CardHeader from "../../../../Components/Headers/CardHeader";
 
 type Props = { firewall: any };
 
@@ -24,7 +26,7 @@ const Firewall = ({ firewall }: Props) => {
 
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <div className="text-[20px] font-semibold text-[#2B9AE9]">Firewall</div>
+      <CardHeader text="Firewall" icon={faFire} />
       {firewall.map((fw: any) => (
         <div className="pt-2 pb-1">
           <div className="text-[#3C3C3C] font-semibold">{fw.Name}</div>

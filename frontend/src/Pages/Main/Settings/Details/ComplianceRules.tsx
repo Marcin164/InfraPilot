@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import {
   listComplianceRules,
   upsertComplianceRule,
@@ -143,22 +144,17 @@ const ComplianceRules = () => {
             placeholder="category (default: security)"
             className="h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
           />
-          <select
-            value={draft.severity}
-            onChange={(e) =>
+          <SelectSecondary
+            options={SEVERITIES.map((s) => ({ value: s, label: s }))}
+            value={{ value: draft.severity, label: draft.severity }}
+            onSelect={(opt: any) =>
+              opt?.value &&
               setDraft({
                 ...draft,
-                severity: e.target.value as ComplianceSeverity,
+                severity: opt.value as ComplianceSeverity,
               })
             }
-            className="h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
-          >
-            {SEVERITIES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+          />
           <label className="flex items-center gap-2 text-[13px]">
             <input
               type="checkbox"
@@ -177,22 +173,17 @@ const ComplianceRules = () => {
             placeholder="jsonPath (e.g. security.tpm.present)"
             className="md:col-span-2 h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
           />
-          <select
-            value={draft.operator}
-            onChange={(e) =>
+          <SelectSecondary
+            options={OPERATORS.map((o) => ({ value: o, label: o }))}
+            value={{ value: draft.operator, label: draft.operator }}
+            onSelect={(opt: any) =>
+              opt?.value &&
               setDraft({
                 ...draft,
-                operator: e.target.value as ComplianceOperator,
+                operator: opt.value as ComplianceOperator,
               })
             }
-            className="h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
-          >
-            {OPERATORS.map((o) => (
-              <option key={o} value={o}>
-                {o}
-              </option>
-            ))}
-          </select>
+          />
           <input
             value={draft.expected}
             onChange={(e) =>

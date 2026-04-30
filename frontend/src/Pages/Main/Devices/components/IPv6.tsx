@@ -1,4 +1,5 @@
 import React from "react";
+import CardHeader from "../../../../Components/Headers/CardHeader";
 
 type Props = {
   IPv6Address: string;
@@ -10,9 +11,7 @@ const IPv6 = ({ IPv6Address, IPv6Gateway, IPv6LinkLocal }: Props) => {
   if (!IPv6Address) return null;
   return (
     <div>
-      <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">
-        IPv6 Config
-      </div>
+      <CardHeader text="IPv6 Config" />
       <div>
         <span className="text-[#3C3C3C] font-light">Address: </span>
         <span className="text-[#3C3C3C] font-semibold">{`${IPv6Address}`}</span>

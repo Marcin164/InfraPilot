@@ -4,6 +4,8 @@ import { useMutation } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { updateUser } from "../../../../Services/users";
 import { useParams } from "react-router";
+import CardHeader from "../../../../Components/Headers/CardHeader";
+import { faUniversalAccess } from "@fortawesome/free-solid-svg-icons";
 
 type Props = {
   data: {
@@ -37,9 +39,7 @@ const UserPrivileges = ({ data }: Props) => {
 
   return (
     <div>
-      <div className="text-[30px] font-semibold text-[#3C3C3C] pt-2">
-        Privileges
-      </div>
+      <CardHeader text="Privileges" icon={faUniversalAccess} />
 
       <form className="flex flex-col gap-2 mt-2">
         <form.Field

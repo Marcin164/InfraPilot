@@ -1,8 +1,6 @@
 import Parameter from "../../../../Components/Lists/Parameter";
 import CardHeader from "../../../../Components/Headers/CardHeader";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import moment from "moment";
-import { faWindows } from "@fortawesome/free-brands-svg-icons";
 import Badge from "../../../../Components/Badges/Badge";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
 

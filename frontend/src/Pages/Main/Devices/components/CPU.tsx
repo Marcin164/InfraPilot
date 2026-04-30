@@ -2,6 +2,7 @@ import React from "react";
 import Parameter from "../../../../Components/Lists/Parameter";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import Badge from "../../../../Components/Badges/Badge";
+import { faMicrochip } from "@fortawesome/free-solid-svg-icons";
 
 type Props = { cpus: any };
 
@@ -27,7 +28,7 @@ const CPU = ({ cpus }: Props) => {
 
   return (
     <div className="w-full h-full h-fit bg-[#FFFFFF] shadow-xl rounded-[10px] p-4">
-      <CardHeader text="CPU" />
+      <CardHeader text="CPU" icon={faMicrochip} />
       {cpus.map((cpu: any, index: number) => (
         <div className="inline-block mr-4">
           <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">

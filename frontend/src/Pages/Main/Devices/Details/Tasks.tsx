@@ -8,6 +8,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import Input from "../../../../Components/Inputs/Input";
+import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import {
   AgentTask,
   AgentTaskType,
@@ -99,24 +101,21 @@ const Tasks = () => {
           times.
         </p>
 
-        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as AgentTaskType)}
-            className="h-[36px] rounded-[6px] border border-[#D0D0D0] px-3 text-[14px]"
-          >
-            {TASK_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-          <input
-            type="text"
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+          <SelectSecondary
+            label="Task type"
+            options={TASK_TYPES}
+            value={TASK_TYPES.find((t) => t.value === type)}
+            onSelect={(opt: any) =>
+              opt?.value && setType(opt.value as AgentTaskType)
+            }
+          />
+          <Input
+            className="md:col-span-2"
+            label="Payload"
             value={payload}
-            onChange={(e) => setPayload(e.target.value)}
-            placeholder='Optional JSON payload, e.g. {"source":"manual"}'
-            className="md:col-span-2 h-[36px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
+            handleChange={setPayload}
+            placeholder='Optional JSON, e.g. {"source":"manual"}'
           />
         </div>
         <div className="mt-3">

@@ -5,6 +5,8 @@ import { toast } from "react-toastify";
 import { faLink, faLinkSlash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
+import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import Input from "../../../../Components/Inputs/Input";
 import { linkTicket } from "../../../../Services/tickets";
 
 type Props = {
@@ -79,21 +81,19 @@ const LinkTicketPanel = ({ ticket }: Props) => {
       )}
 
       {!ticket.parent && (
-        <div className="flex gap-2">
-          <input
+        <div className="flex gap-2 items-end">
+          <Input
+            className="flex-1 pt-0"
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            handleChange={setDraft}
             placeholder="Parent ticket UUID (paste from URL)"
-            className="flex-1 h-[30px] rounded-[6px] border border-[#D0D0D0] px-2 text-[12px]"
           />
-          <button
-            type="button"
+          <ButtonPrimary
+            icon={faLink}
+            text="Link as duplicate"
             onClick={submit}
             disabled={mutation.isPending || !draft.trim()}
-            className="h-[30px] rounded-[6px] bg-[#2B9AE9] text-white px-3 text-[12px] font-bold cursor-pointer disabled:opacity-50"
-          >
-            Link as duplicate
-          </button>
+          />
         </div>
       )}
     </div>

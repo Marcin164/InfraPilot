@@ -7,6 +7,7 @@ import {
   faShield,
 } from "@fortawesome/free-solid-svg-icons";
 import Parameter from "../../../../Components/Lists/Parameter";
+import CardHeader from "../../../../Components/Headers/CardHeader";
 
 type Props = { bitlocker: any };
 
@@ -28,7 +29,7 @@ const Bitlocker = ({ bitlocker }: Props) => {
 
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <div className="text-[20px] font-semibold text-[#2B9AE9]">BitLocker</div>
+      <CardHeader text="Bitlocker" icon={faLock} />
       {bitlocker.map((bl: any) => (
         <div className="pb-2">
           <div className="text-[#3C3C3C] font-semibold">{`Partition ${
