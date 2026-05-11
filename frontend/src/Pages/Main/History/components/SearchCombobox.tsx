@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useDebounce } from "../../../../Hooks/useDebounce";
 
 export type ComboboxOption = {
@@ -22,6 +23,7 @@ const SearchCombobox = ({
   fetchOptions,
   queryKey,
 }: Props) => {
+  const { t } = useTranslation();
   const [text, setText] = useState("");
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<ComboboxOption[]>([]);
@@ -115,7 +117,7 @@ const SearchCombobox = ({
       {open && (options.length > 0 || loading) && (
         <ul className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-[10px] border border-[#3C3C3C] bg-white shadow-lg text-[14px]">
           {loading && options.length === 0 && (
-            <li className="px-3 py-2 text-[#8A8A8A]">Searching…</li>
+            <li className="px-3 py-2 text-[#8A8A8A]">{t("history.searching")}</li>
           )}
           {options.map((opt) => (
             <li

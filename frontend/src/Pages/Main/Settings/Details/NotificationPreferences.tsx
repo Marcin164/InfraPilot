@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { faBell, faCheck } from "@fortawesome/free-solid-svg-icons";
@@ -15,19 +16,21 @@ import {
   PreferenceRow,
 } from "../../../../Services/notificationPreferences";
 
-const CHANNELS: {
+const CHANNEL_KEYS: {
   key: NotificationChannel;
-  label: string;
-  hint: string;
+  labelKey: string;
+  hintKey: string;
   color: string;
 }[] = [
-  { key: "inapp", label: "In-app", hint: "Bell badge in topbar", color: "#2B9AE9" },
-  { key: "email", label: "Email", hint: "Requires user.email", color: "#16A085" },
-  { key: "sms", label: "SMS", hint: "Requires user.phone", color: "#F1C40F" },
+  { key: "inapp", labelKey: "settings.notif.channel.inapp", hintKey: "settings.notif.channel.inapp.hint", color: "#2B9AE9" },
+  { key: "email", labelKey: "settings.notif.channel.email", hintKey: "settings.notif.channel.email.hint", color: "#16A085" },
+  { key: "sms", labelKey: "settings.notif.channel.sms", hintKey: "settings.notif.channel.sms.hint", color: "#F1C40F" },
 ];
 
 const NotificationPreferences = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const CHANNELS = CHANNEL_KEYS.map((c) => ({ ...c, label: t(c.labelKey), hint: t(c.hintKey) }));
 
   const prefsQuery = useQuery({
     queryKey: ["notification-preferences"],
@@ -49,13 +52,13 @@ const NotificationPreferences = () => {
   const saveMutation = useMutation({
     mutationFn: (rows: PreferenceRow[]) => updateNotificationPreferences(rows),
     onSuccess: () => {
-      toast.success("Preferences saved");
+      toast.success(t("toast.success.preferencesSaved"));
       queryClient.invalidateQueries({
         queryKey: ["notification-preferences"],
       });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Save failed"),
+      toast.error(err?.response?.data?.message ?? t("users.auth.saveFailed")),
   });
 
   const toggle = (event: NotificationEvent, channel: NotificationChannel) => {
@@ -85,20 +88,18 @@ const NotificationPreferences = () => {
 
   return (
     <div className="m-4 bg-white shadow-xl rounded-[10px] p-4">
-      <CardHeader text="Notification preferences" icon={faBell} />
+      <CardHeader text={t("settings.notif.title")} icon={faBell} />
       <p className="text-[12px] text-[#7a7a7a] mt-2">
-        Pick which channels each event should fan out to. SMS requires the
-        operator to configure <code>SMS_RELAY_URL</code> and a phone number on
-        your user. In-app always shows in the bell.
+        {t("settings.notif.helpSms")}
       </p>
 
       {prefsQuery.isLoading ? (
-        <div className="mt-4 text-[13px] text-[#7a7a7a]">Loading…</div>
+        <div className="mt-4 text-[13px] text-[#7a7a7a]">{t("common.loading")}</div>
       ) : (
         <table className="mt-4 w-full text-[13px]">
           <thead>
             <tr className="text-left text-[11px] uppercase text-[#9a9a9a]">
-              <th className="py-2">Event</th>
+              <th className="py-2">{t("settings.notif.event")}</th>
               {CHANNELS.map((c) => (
                 <th key={c.key} className="py-2 text-center w-[110px]">
                   {c.label}
@@ -113,7 +114,7 @@ const NotificationPreferences = () => {
             {events.map((event) => (
               <tr key={event} className="border-t border-[#F0F0F0]">
                 <td className="py-2 text-[#3C3C3C]">
-                  {EVENT_LABELS[event] ?? event}
+                  {t(`notif.event.${event}`, { defaultValue: EVENT_LABELS[event] ?? event })}
                 </td>
                 {CHANNELS.map((c) => {
                   const key = `${event}:${c.key}`;
@@ -140,7 +141,7 @@ const NotificationPreferences = () => {
       <div className="mt-4">
         <ButtonPrimary
           icon={faCheck}
-          text={saveMutation.isPending ? "Saving…" : "Save preferences"}
+          text={saveMutation.isPending ? t("common.saving") : t("common.save")}
           onClick={save}
           disabled={saveMutation.isPending || draft.size === 0}
         />

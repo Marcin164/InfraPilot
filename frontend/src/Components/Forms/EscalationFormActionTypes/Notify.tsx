@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import SelectSecondary from "../../Inputs/SelectSecondary";
 import { requiredValidator } from "../../../Helpers/validators";
 import Input from "../../Inputs/Input";
@@ -6,10 +7,11 @@ import Input from "../../Inputs/Input";
 type Props = { form: any; actionConfig?: any };
 
 const Notify = ({ form }: Props) => {
+  const { t } = useTranslation();
   const channelOptions = [
-    { value: "email", label: "Email" },
-    { value: "sms", label: "SMS" },
-    { value: "teams", label: "Microsoft Teams" },
+    { value: "email", label: t("form.notify.email") },
+    { value: "sms", label: t("form.notify.sms") },
+    { value: "teams", label: t("form.notify.teams") },
     // { value: "discord", label: "Discord" },
     // { value: "slack", label: "Slack" },
     // { value: "webhook", label: "Webhook" },

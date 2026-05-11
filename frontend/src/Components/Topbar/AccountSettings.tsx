@@ -2,11 +2,13 @@ import { faGear, faSignOut, faUser } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAuthInfo, useLogoutFunction } from "@propelauth/react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router";
 
 type Props = { isOpen: boolean; closeModal: any };
 
 const AccountSettings = ({ isOpen, closeModal }: Props) => {
+  const { t } = useTranslation();
   const authInfo: any = useAuthInfo();
   const logout = useLogoutFunction();
   const user = authInfo.user;
@@ -31,7 +33,7 @@ const AccountSettings = ({ isOpen, closeModal }: Props) => {
           >
             <div className="my-2">
               <FontAwesomeIcon icon={faUser} />
-              <span className="pl-4">Account</span>
+              <span className="pl-4">{t("topbar.account")}</span>
             </div>
           </NavLink>
           <NavLink
@@ -41,7 +43,7 @@ const AccountSettings = ({ isOpen, closeModal }: Props) => {
           >
             <div className="my-2">
               <FontAwesomeIcon icon={faGear} />
-              <span className="pl-4">User settings</span>
+              <span className="pl-4">{t("topbar.userSettings")}</span>
             </div>
           </NavLink>
           <button
@@ -50,7 +52,7 @@ const AccountSettings = ({ isOpen, closeModal }: Props) => {
           >
             <div className="my-2">
               <FontAwesomeIcon icon={faSignOut} />
-              <span className="pl-4">Logout</span>
+              <span className="pl-4">{t("nav.logout")}</span>
             </div>
           </button>
         </div>

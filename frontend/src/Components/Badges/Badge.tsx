@@ -19,7 +19,7 @@ const Badge = ({ icon, className = "", text, style }: Props) => {
       style={style}
     >
       {icon && <FontAwesomeIcon className="mr-1" icon={icon} />}
-      <span className="text-bold">{text}</span>
+      <span className="font-bold">{text}</span>
     </div>
   );
 };

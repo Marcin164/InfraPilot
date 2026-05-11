@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import SpacesTable from "../../../Components/Tables/SpacesTable";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
@@ -12,6 +13,7 @@ import PageMotion from "../../../Components/PageMotion/PageMotion";
 type Props = {};
 
 const index = (props: Props) => {
+  const { t } = useTranslation();
   const [searchValue, setSearchValue] = useState("");
   const [isAddSpaceModalOpen, setIsAddSpaceModalOpen] = useState(false);
   const debouncedSearch = useDebounce(searchValue, 500);
@@ -43,7 +45,7 @@ const index = (props: Props) => {
         <ButtonPrimary
           color="white"
           icon={faPlus}
-          text="Add space"
+          text={t("btn.add.space")}
           onClick={() => setIsAddSpaceModalOpen(true)}
           className="h-[34px] ml-2"
         />

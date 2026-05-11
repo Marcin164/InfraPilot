@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlug,
@@ -31,6 +32,7 @@ import {
 } from "../../../../Services/activeDirectory";
 
 const ActiveDirectory = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const certInputRef = useRef<HTMLInputElement>(null);
 
@@ -215,7 +217,7 @@ const ActiveDirectory = () => {
           />
           {status?.hasCertificate && (
             <ButtonPrimary
-              text="Usuń certyfikat"
+              text={t("settings.removeCertificate")}
               icon={faTrash}
               onClick={() => certDeleteMutation.mutate()}
               disabled={certDeleteMutation.isPending}
@@ -259,7 +261,7 @@ const ActiveDirectory = () => {
               disabled={isLoading}
             />
             <ButtonPrimary
-              text="Rozłącz"
+              text={t("settings.disconnect")}
               icon={faPlugCircleXmark}
               onClick={() => setDisconnectModalOpen(true)}
               disabled={isLoading}
@@ -324,7 +326,7 @@ const ActiveDirectory = () => {
         <div className="flex justify-around mt-6">
           <ButtonPrimary
             icon={faXmark}
-            text="Anuluj"
+            text={t("common.cancel")}
             onClick={() => {
               setDisconnectModalOpen(false);
               setDisconnectPassword("");
@@ -333,7 +335,7 @@ const ActiveDirectory = () => {
           />
           <ButtonPrimary
             icon={faPlugCircleXmark}
-            text={disconnectMutation.isPending ? "Rozłączanie..." : "Rozłącz"}
+            text={disconnectMutation.isPending ? "..." : t("settings.disconnect")}
             className="bg-[#F3606E] hover:bg-[#e04e5c]"
             onClick={() => disconnectMutation.mutate(disconnectPassword)}
             disabled={!disconnectPassword || disconnectMutation.isPending}

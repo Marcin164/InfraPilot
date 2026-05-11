@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import {
@@ -39,37 +40,37 @@ import {
 
 const STEP_DEFS: {
   type: WorkflowStepType;
-  label: string;
+  labelKey: string;
   icon: any;
   defaultConfig: Record<string, any>;
 }[] = [
   {
     type: "request_approval",
-    label: "Request approval",
+    labelKey: "settings.workflow.step.request_approval",
     icon: faCircleCheck,
     defaultConfig: { approverIds: [], message: "" },
   },
   {
     type: "notify",
-    label: "Send notification",
+    labelKey: "settings.workflow.step.notify",
     icon: faPaperPlane,
     defaultConfig: { recipientType: "requester", title: "", body: "" },
   },
   {
     type: "set_field",
-    label: "Set field",
+    labelKey: "settings.workflow.step.set_field",
     icon: faGears,
     defaultConfig: { field: "priority", value: "Medium" },
   },
   {
     type: "assign_to",
-    label: "Assign to user",
+    labelKey: "settings.workflow.step.assign_to",
     icon: faUser,
     defaultConfig: { userId: "" },
   },
   {
     type: "create_comment",
-    label: "Auto-comment",
+    labelKey: "settings.workflow.step.create_comment",
     icon: faCommentDots,
     defaultConfig: { content: "", type: "Worknotes" },
   },
@@ -81,11 +82,12 @@ const newStep = (type: WorkflowStepType, order: number): WorkflowStep => ({
   id: crypto.randomUUID(),
   order,
   type,
-  label: stepDef(type).label,
+  label: stepDef(type).labelKey,
   config: { ...stepDef(type).defaultConfig },
 });
 
 const Workflows = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const workflowsQuery = useQuery({
@@ -108,29 +110,29 @@ const Workflows = () => {
   const saveMutation = useMutation({
     mutationFn: (w: TicketWorkflow) => upsertWorkflow(w),
     onSuccess: (saved) => {
-      toast.success("Workflow saved");
+      toast.success(t("settings.workflow.saved"));
       setEditing(saved);
       invalidateAll();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Save failed"),
+      toast.error(err?.response?.data?.message ?? t("settings.workflow.saveFailed")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteWorkflow(id),
     onSuccess: () => {
-      toast.success("Workflow deleted");
+      toast.success(t("settings.workflow.deleted"));
       setEditing(null);
       invalidateAll();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Delete failed"),
+      toast.error(err?.response?.data?.message ?? t("settings.workflow.deleteFailed")),
   });
 
   const startNew = () => {
     setEditing({
       id: "",
-      name: "New workflow",
+      name: t("settings.workflow.newName"),
       description: "",
       trigger: "on_create",
       enabled: true,
@@ -152,15 +154,15 @@ const Workflows = () => {
 
         <div className="bg-white shadow-xl rounded-[10px] p-4">
           <div className="flex items-center justify-between">
-            <CardHeader text="Workflows" icon={faBolt} />
-            <ButtonPrimary icon={faPlus} text="New" onClick={startNew} />
+            <CardHeader text={t("settings.workflow.title")} icon={faBolt} />
+            <ButtonPrimary icon={faPlus} text={t("settings.workflow.new")} onClick={startNew} />
           </div>
 
           {workflowsQuery.isLoading ? (
-            <div className="mt-3 text-[13px] text-[#7a7a7a]">Loading…</div>
+            <div className="mt-3 text-[13px] text-[#7a7a7a]">{t("settings.workflow.loading")}</div>
           ) : (workflowsQuery.data ?? []).length === 0 ? (
             <div className="mt-3 text-[13px] text-[#7a7a7a]">
-              No workflows yet.
+              {t("settings.workflow.empty")}
             </div>
           ) : (
             <div className="mt-3 space-y-1">
@@ -186,13 +188,11 @@ const Workflows = () => {
                           : "bg-[#F0F0F0] text-[#9a9a9a]"
                       }`}
                     >
-                      {w.enabled ? "on" : "off"}
+                      {w.enabled ? t("settings.workflow.on") : t("settings.workflow.off")}
                     </span>
                   </div>
                   <div className="text-[11px] text-[#9a9a9a] mt-0.5">
-                    {w.steps?.length ?? 0} step
-                    {(w.steps?.length ?? 0) === 1 ? "" : "s"} · trigger:{" "}
-                    {w.trigger}
+                    {t("settings.workflow.stepsTrigger", { steps: w.steps?.length ?? 0, trigger: w.trigger })}
                   </div>
                 </button>
               ))}
@@ -212,7 +212,7 @@ const Workflows = () => {
                 setEditing(null);
                 return;
               }
-              if (window.confirm(`Delete workflow "${editing.name}"?`))
+              if (window.confirm(t("settings.workflow.confirmDelete", { name: editing.name })))
                 deleteMutation.mutate(editing.id);
             }}
             saving={saveMutation.isPending}
@@ -224,7 +224,7 @@ const Workflows = () => {
               className="text-[#9a9a9a] text-[32px]"
             />
             <div className="mt-2 text-[13px] text-[#7a7a7a]">
-              Pick a workflow on the left, or create a new one.
+              {t("settings.workflow.pickHint")}
             </div>
           </div>
         )}
@@ -244,6 +244,7 @@ const CategoriesPanel = ({
   workflows: TicketWorkflow[];
   onChanged: () => void;
 }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [color, setColor] = useState("#2B9AE9");
   const [ticketType, setTicketType] = useState<"Incident" | "Service" | "">(
@@ -255,7 +256,7 @@ const CategoriesPanel = ({
     mutationFn: (c: Partial<TicketCategory> & { name: string }) =>
       upsertTicketCategory(c),
     onSuccess: () => {
-      toast.success("Category saved");
+      toast.success(t("settings.workflow.categories.saved"));
       setName("");
       setColor("#2B9AE9");
       setTicketType("");
@@ -263,22 +264,22 @@ const CategoriesPanel = ({
       onChanged();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Save failed"),
+      toast.error(err?.response?.data?.message ?? t("settings.workflow.saveFailed")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteTicketCategory(id),
     onSuccess: () => {
-      toast.success("Category deleted");
+      toast.success(t("settings.workflow.categories.deleted"));
       onChanged();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Delete failed"),
+      toast.error(err?.response?.data?.message ?? t("settings.workflow.deleteFailed")),
   });
 
   const submit = () => {
     if (!name.trim()) {
-      toast.error("Name is required");
+      toast.error(t("toast.error.nameRequired"));
       return;
     }
     upsertMutation.mutate({
@@ -292,10 +293,9 @@ const CategoriesPanel = ({
 
   return (
     <div className="bg-white shadow-xl rounded-[10px] p-4">
-      <CardHeader text="Categories" icon={faLayerGroup} />
+      <CardHeader text={t("settings.workflow.categories")} icon={faLayerGroup} />
       <p className="text-[12px] text-[#7a7a7a] mt-2">
-        Categories organise tickets and can attach a workflow that fires on
-        creation.
+        {t("settings.workflow.categories.help")}
       </p>
 
       <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
@@ -303,42 +303,48 @@ const CategoriesPanel = ({
           className="md:col-span-2 pt-0"
           value={name}
           handleChange={setName}
-          placeholder="Category name"
+          placeholder={t("settings.workflow.categories.namePlaceholder")}
         />
         <input
           type="color"
           value={color}
           onChange={(e) => setColor(e.target.value)}
           className="h-[44px] rounded-[10px] border border-[#535353] cursor-pointer"
-          aria-label="Category color"
+          aria-label={t("settings.workflows.categoryColor")}
         />
       </div>
       <div className="mt-2 flex items-center gap-2 flex-wrap">
         <div className="min-w-[180px]">
           <SelectSecondary
             options={[
-              { value: "", label: "Any type" },
-              { value: "Incident", label: "Incident" },
-              { value: "Service", label: "Service" },
+              { value: "", label: t("settings.workflow.categories.anyType") },
+              { value: "Incident", label: t("form.ticketType.incident") },
+              { value: "Service", label: t("form.ticketType.service") },
             ]}
             value={
               ticketType
-                ? { value: ticketType, label: ticketType }
-                : { value: "", label: "Any type" }
+                ? {
+                    value: ticketType,
+                    label:
+                      ticketType === "Incident"
+                        ? t("form.ticketType.incident")
+                        : t("form.ticketType.service"),
+                  }
+                : { value: "", label: t("settings.workflow.categories.anyType") }
             }
             onSelect={(opt: any) => setTicketType((opt?.value ?? "") as any)}
           />
         </div>
         <ButtonPrimary
           icon={editingId ? faCheck : faPlus}
-          text={editingId ? "Update" : "Add"}
+          text={editingId ? t("settings.workflow.categories.update") : t("settings.workflow.categories.add")}
           onClick={submit}
           disabled={upsertMutation.isPending}
         />
         {editingId && (
           <ButtonPrimary
             color="white"
-            text="Cancel"
+            text={t("common.cancel")}
             onClick={() => {
               setEditingId(null);
               setName("");
@@ -351,7 +357,7 @@ const CategoriesPanel = ({
 
       <div className="mt-3 space-y-1">
         {categories.length === 0 && (
-          <div className="text-[13px] text-[#7a7a7a]">No categories yet.</div>
+          <div className="text-[13px] text-[#7a7a7a]">{t("settings.workflow.categories.empty")}</div>
         )}
         {categories.map((c) => {
           const wf = workflows.find((w) => w.id === c.workflowId);
@@ -369,7 +375,7 @@ const CategoriesPanel = ({
                   {c.name}
                 </div>
                 <div className="text-[11px] text-[#9a9a9a]">
-                  {c.ticketType ?? "any"}
+                  {c.ticketType ?? t("settings.workflow.categories.any")}
                   {wf && (
                     <>
                       {" · "}
@@ -381,7 +387,7 @@ const CategoriesPanel = ({
               <div className="min-w-[160px]">
                 <SelectSecondary
                   options={[
-                    { value: "", label: "— no workflow —" },
+                    { value: "", label: t("settings.workflow.categories.noWorkflow") },
                     ...workflows.map((w) => ({ value: w.id, label: w.name })),
                   ]}
                   value={
@@ -392,7 +398,7 @@ const CategoriesPanel = ({
                             workflows.find((w) => w.id === c.workflowId)?.name ??
                             "—",
                         }
-                      : { value: "", label: "— no workflow —" }
+                      : { value: "", label: t("settings.workflow.categories.noWorkflow") }
                   }
                   onSelect={(opt: any) =>
                     upsertTicketCategory({
@@ -411,18 +417,18 @@ const CategoriesPanel = ({
                   setTicketType(c.ticketType ?? "");
                 }}
                 className="text-[#2B9AE9] cursor-pointer"
-                title="Edit"
+                title={t("common.edit")}
               >
                 <FontAwesomeIcon icon={faPen} />
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  if (window.confirm(`Delete category "${c.name}"?`))
+                  if (window.confirm(t("settings.workflow.categories.confirmDelete", { name: c.name })))
                     deleteMutation.mutate(c.id);
                 }}
                 className="text-[#F3606E] cursor-pointer"
-                title="Delete"
+                title={t("common.delete")}
               >
                 <FontAwesomeIcon icon={faTrash} />
               </button>
@@ -449,6 +455,7 @@ const WorkflowEditor = ({
   onDelete: () => void;
   saving: boolean;
 }) => {
+  const { t } = useTranslation();
   const setField = <K extends keyof TicketWorkflow>(
     key: K,
     value: TicketWorkflow[K],
@@ -491,18 +498,18 @@ const WorkflowEditor = ({
       <div className="flex items-end justify-between gap-3">
         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
           <Input
-            label="Name"
+            label={t("settings.workflow.editor.name")}
             value={workflow.name}
             handleChange={(v: string) => setField("name", v)}
-            placeholder="Workflow name"
+            placeholder={t("settings.workflow.editor.namePlaceholder")}
           />
           <Input
-            label="Description"
+            label={t("settings.workflow.editor.description")}
             value={workflow.description ?? ""}
             handleChange={(v: string) =>
               setField("description", v as TicketWorkflow["description"])
             }
-            placeholder="Optional description"
+            placeholder={t("settings.workflow.editor.descriptionPlaceholder")}
           />
         </div>
         <Checkbox
@@ -510,31 +517,31 @@ const WorkflowEditor = ({
           checked={workflow.enabled}
           color="#30A712"
           handleChange={(v: boolean) => setField("enabled", v)}
-          label="Enabled"
+          label={t("settings.workflow.editor.enabled")}
         />
       </div>
 
       <div className="flex items-center gap-2 text-[12px] text-[#7a7a7a]">
-        <span>Trigger:</span>
+        <span>{t("settings.workflow.editor.trigger")}</span>
         <div className="min-w-[200px]">
           <SelectSecondary
             options={[
-              { value: "on_create", label: "On ticket create" },
+              { value: "on_create", label: t("settings.workflow.editor.triggerCreate") },
             ]}
-            value={{ value: workflow.trigger, label: "On ticket create" }}
+            value={{ value: workflow.trigger, label: t("settings.workflow.editor.triggerCreate") }}
             onSelect={(opt: any) =>
               opt?.value && setField("trigger", opt.value as any)
             }
           />
         </div>
         <span className="text-[10px] text-[#9a9a9a]">
-          (more triggers coming)
+          {t("settings.workflow.editor.moreTriggers")}
         </span>
       </div>
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <CardHeader text="Steps" icon={faBell} />
+          <CardHeader text={t("settings.workflow.editor.steps")} icon={faBell} />
           <div className="flex items-center gap-1 flex-wrap">
             {STEP_DEFS.map((d) => (
               <button
@@ -542,10 +549,10 @@ const WorkflowEditor = ({
                 type="button"
                 onClick={() => addStep(d.type)}
                 className="rounded-[6px] border border-[#D0D0D0] px-2 py-1 text-[11px] hover:bg-[#F5F5F5] cursor-pointer"
-                title={d.label}
+                title={t(d.labelKey)}
               >
                 <FontAwesomeIcon icon={d.icon} className="mr-1" />
-                {d.label}
+                {t(d.labelKey)}
               </button>
             ))}
           </div>
@@ -553,7 +560,7 @@ const WorkflowEditor = ({
 
         {workflow.steps.length === 0 ? (
           <div className="text-[13px] text-[#7a7a7a] border border-dashed border-[#D0D0D0] rounded-[6px] p-3 text-center">
-            Add a step using the buttons above. Steps run in order.
+            {t("settings.workflow.editor.stepsHint")}
           </div>
         ) : (
           <ol className="space-y-2 relative">
@@ -571,7 +578,7 @@ const WorkflowEditor = ({
                     className="text-[#2B9AE9]"
                   />
                   <span className="font-bold text-[13px]">
-                    {stepDef(step.type).label}
+                    {t(stepDef(step.type).labelKey)}
                   </span>
                   <div className="ml-auto flex items-center gap-1">
                     <button
@@ -610,13 +617,13 @@ const WorkflowEditor = ({
       <div className="flex items-center gap-2 pt-2 border-t border-[#F0F0F0]">
         <ButtonPrimary
           icon={faCheck}
-          text={saving ? "Saving…" : workflow.id ? "Save changes" : "Create"}
+          text={saving ? t("settings.workflow.editor.saving") : workflow.id ? t("settings.workflow.editor.saveChanges") : t("settings.workflow.editor.create")}
           onClick={() => onSave(workflow)}
           disabled={saving || !workflow.name.trim()}
         />
         <ButtonPrimary
           icon={faTrash}
-          text={workflow.id ? "Delete workflow" : "Discard"}
+          text={workflow.id ? t("settings.workflow.editor.delete") : t("settings.workflow.editor.discard")}
           color="red"
           onClick={onDelete}
           className="ml-auto"
@@ -654,6 +661,7 @@ const StepConfig = ({
   step: WorkflowStep;
   onChange: (patch: Partial<WorkflowStep>) => void;
 }) => {
+  const { t } = useTranslation();
   const setCfg = (k: string, v: any) =>
     onChange({ config: { ...step.config, [k]: v } });
 
@@ -662,7 +670,7 @@ const StepConfig = ({
       return (
         <div className="mt-2 grid grid-cols-1 gap-2">
           <Input
-            label="Approver IDs (comma-separated)"
+            label={t("settings.workflow.config.approverIds")}
             value={(step.config.approverIds ?? []).join(",")}
             handleChange={(v: string) =>
               setCfg(
@@ -670,10 +678,10 @@ const StepConfig = ({
                 v.split(",").map((s) => s.trim()).filter(Boolean),
               )
             }
-            placeholder="user-id-1, user-id-2"
+            placeholder={t("settings.workflow.config.approverIdsPh")}
           />
           <Input
-            label="Message (optional)"
+            label={t("settings.workflow.config.message")}
             value={step.config.message ?? ""}
             handleChange={(v: string) => setCfg("message", v)}
           />
@@ -684,18 +692,18 @@ const StepConfig = ({
       return (
         <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
           <SelectField
-            label="Recipient"
+            label={t("settings.workflow.config.recipient")}
             value={step.config.recipientType ?? "requester"}
             options={[
-              { value: "requester", label: "Ticket requester" },
-              { value: "assignee", label: "Ticket assignee" },
-              { value: "specific", label: "Specific users" },
+              { value: "requester", label: t("settings.workflow.config.recipient.requester") },
+              { value: "assignee", label: t("settings.workflow.config.recipient.assignee") },
+              { value: "specific", label: t("settings.workflow.config.recipient.specific") },
             ]}
             onChange={(v) => setCfg("recipientType", v)}
           />
           {step.config.recipientType === "specific" && (
             <Input
-              label="User IDs (comma-separated)"
+              label={t("settings.workflow.config.recipientIds")}
               value={(step.config.recipientIds ?? []).join(",")}
               handleChange={(v: string) =>
                 setCfg(
@@ -706,12 +714,12 @@ const StepConfig = ({
             />
           )}
           <Input
-            label="Title"
+            label={t("settings.workflow.config.title")}
             value={step.config.title ?? ""}
             handleChange={(v: string) => setCfg("title", v)}
           />
           <Input
-            label="Body"
+            label={t("settings.workflow.config.body")}
             value={step.config.body ?? ""}
             handleChange={(v: string) => setCfg("body", v)}
           />
@@ -722,7 +730,7 @@ const StepConfig = ({
       return (
         <div className="mt-2 grid grid-cols-2 gap-2">
           <SelectField
-            label="Field"
+            label={t("settings.workflow.config.field")}
             value={step.config.field ?? "priority"}
             options={[
               { value: "priority", label: "priority" },
@@ -733,7 +741,7 @@ const StepConfig = ({
             onChange={(v) => setCfg("field", v)}
           />
           <Input
-            label="Value"
+            label={t("settings.workflow.config.value")}
             value={step.config.value ?? ""}
             handleChange={(v: string) => setCfg("value", v)}
           />
@@ -744,10 +752,10 @@ const StepConfig = ({
       return (
         <div className="mt-2">
           <Input
-            label="User ID"
+            label={t("settings.workflow.config.userId")}
             value={step.config.userId ?? ""}
             handleChange={(v: string) => setCfg("userId", v)}
-            placeholder="paste user UUID"
+            placeholder={t("settings.workflow.config.userIdPh")}
           />
         </div>
       );
@@ -756,16 +764,16 @@ const StepConfig = ({
       return (
         <div className="mt-2 grid grid-cols-1 gap-2">
           <SelectField
-            label="Comment type"
+            label={t("settings.workflow.config.commentType")}
             value={step.config.type ?? "Worknotes"}
             options={[
-              { value: "Worknotes", label: "Internal worknote" },
-              { value: "Public", label: "Public comment" },
+              { value: "Worknotes", label: t("settings.workflow.config.commentType.worknotes") },
+              { value: "Public", label: t("settings.workflow.config.commentType.public") },
             ]}
             onChange={(v) => setCfg("type", v)}
           />
           <div className="pt-2">
-            <label className="font-bold text-[#3C3C3C]">Content</label>
+            <label className="font-bold text-[#3C3C3C]">{t("settings.workflow.config.content")}</label>
             <textarea
               rows={2}
               className="w-full mt-[6px] rounded-[10px] border border-[#535353] bg-white px-3 py-2 text-[16px] font-bold"

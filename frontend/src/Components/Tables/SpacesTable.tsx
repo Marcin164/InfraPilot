@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import MainTable from "./MainTable";
 import { useNavigate } from "react-router-dom";
 import type { KnowledgeSpace } from "../../Types";
@@ -16,6 +17,7 @@ const formatDate = (value?: string) => {
 };
 
 const SpacesTable = ({ data, isLoading }: Props) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const columns = [
@@ -28,14 +30,14 @@ const SpacesTable = ({ data, isLoading }: Props) => {
       width: "70px",
     },
     {
-      name: "Name",
+      name: t("spaces.column.name"),
       cell: (row: KnowledgeSpace) => (
         <div className="font-bold">{row.name}</div>
       ),
       width: "260px",
     },
     {
-      name: "Description",
+      name: t("spaces.column.description"),
       cell: (row: KnowledgeSpace) => (
         <div className="truncate text-gray-600">
           {row.description || "-"}
@@ -44,32 +46,32 @@ const SpacesTable = ({ data, isLoading }: Props) => {
       grow: 2,
     },
     {
-      name: "Articles",
+      name: t("spaces.column.articles"),
       cell: (row: KnowledgeSpace) => (
         <div>{row.articles?.length ?? 0}</div>
       ),
       width: "110px",
     },
     {
-      name: "Author",
+      name: t("spaces.column.author"),
       cell: (row: KnowledgeSpace) => (
         <div>{row.author?.distinguishedName || "-"}</div>
       ),
       width: "220px",
     },
     {
-      name: "Created",
+      name: t("spaces.column.created"),
       cell: (row: KnowledgeSpace) => <div>{formatDate(row.createdAt)}</div>,
       width: "130px",
     },
     {
-      name: "Updated",
+      name: t("spaces.column.updated"),
       cell: (row: KnowledgeSpace) => <div>{formatDate(row.updatedAt)}</div>,
       width: "130px",
     },
   ];
 
-  if (isLoading) return <div>loading...</div>;
+  if (isLoading) return <div>{t("common.loading2")}</div>;
 
   return (
     <MainTable

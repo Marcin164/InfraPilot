@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext } from "react-router";
 import { toast } from "react-toastify";
@@ -48,9 +49,58 @@ const toInputValue = (v: any): string => {
 };
 
 const Lifecycle = () => {
+  const { t } = useTranslation();
   const device: any = useOutletContext();
   const data = device?.data ?? {};
   const queryClient = useQueryClient();
+
+  const stateLabel = (val: string) => {
+    switch (val) {
+      case "procurement":
+        return t("device.lifecycle.procurement");
+      case "active":
+        return t("device.lifecycle.active");
+      case "in_repair":
+        return t("device.lifecycle.repair");
+      case "in_storage":
+        return t("device.lifecycle.storage");
+      case "retired":
+        return t("device.lifecycle.retired");
+      case "disposed":
+        return t("device.lifecycle.disposed");
+      case "lost":
+        return t("device.lifecycle.lost");
+      default:
+        return val;
+    }
+  };
+
+  const fieldLabel = (key: string) => {
+    switch (key) {
+      case "purchaseDate":
+        return t("device.lifecycle.purchaseDate");
+      case "purchasePrice":
+        return t("device.lifecycle.purchasePrice");
+      case "purchaseCurrency":
+        return t("device.lifecycle.currency");
+      case "vendor":
+        return t("device.lifecycle.vendor");
+      case "purchaseOrder":
+        return t("device.lifecycle.purchaseOrder");
+      case "warrantyStart":
+        return t("device.lifecycle.warrantyStart");
+      case "warrantyEnd":
+        return t("device.lifecycle.warrantyEnd");
+      case "retiredAt":
+        return t("device.lifecycle.retiredAt");
+      case "disposedAt":
+        return t("device.lifecycle.disposedAt");
+      case "disposalMethod":
+        return t("device.lifecycle.disposalMethod");
+      default:
+        return key;
+    }
+  };
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<DeviceLifecyclePatch>({});
@@ -75,12 +125,12 @@ const Lifecycle = () => {
   const mutation = useMutation({
     mutationFn: () => updateDeviceLifecycle(data.id, draft),
     onSuccess: () => {
-      toast.success("Lifecycle updated");
+      toast.success(t("device.lifecycle.updated"));
       queryClient.invalidateQueries({ queryKey: ["device"] });
       setEditing(false);
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Update failed"),
+      toast.error(err?.response?.data?.message ?? t("device.lifecycle.updateFailed")),
   });
 
   const currentState =
@@ -98,24 +148,24 @@ const Lifecycle = () => {
     <div>
     <div className="bg-white shadow-xl rounded-[10px] p-4">
       <div className="flex justify-between items-start">
-        <CardHeader text="Asset lifecycle" icon={faBoxArchive} />
+        <CardHeader text={t("device.lifecycle.title")} icon={faBoxArchive} />
         {!editing ? (
           <ButtonPrimary
             icon={faPen}
-            text="Edit"
+            text={t("common.edit")}
             onClick={() => setEditing(true)}
           />
         ) : (
           <div className="flex gap-2">
             <ButtonPrimary
               icon={faCheck}
-              text={mutation.isPending ? "Saving…" : "Save"}
+              text={mutation.isPending ? t("common.saving") : t("common.save")}
               onClick={() => mutation.mutate()}
               disabled={mutation.isPending}
             />
             <ButtonPrimary
               icon={faXmark}
-              text="Cancel"
+              text={t("common.cancel")}
               onClick={() => setEditing(false)}
             />
           </div>
@@ -128,13 +178,13 @@ const Lifecycle = () => {
             className="rounded-full px-3 py-1 text-[13px] font-bold text-white"
             style={{ backgroundColor: currentState.color }}
           >
-            {currentState.label}
+            {stateLabel(currentState.value)}
           </span>
         ) : (
           <div className="min-w-[200px]">
             <SelectSecondary
-              options={LIFECYCLE_STATES}
-              value={LIFECYCLE_STATES.find(
+              options={LIFECYCLE_STATES.map((s) => ({ ...s, label: stateLabel(s.value) }))}
+              value={LIFECYCLE_STATES.map((s) => ({ ...s, label: stateLabel(s.value) })).find(
                 (s) => s.value === (draft.lifecycle ?? "active"),
               )}
               onSelect={(opt: any) =>
@@ -154,14 +204,14 @@ const Lifecycle = () => {
             }`}
           >
             {warrantyDaysLeft > 0
-              ? `Warranty: ${warrantyDaysLeft} days left`
-              : `Warranty expired ${-warrantyDaysLeft} days ago`}
+              ? t("device.lifecycle.warrantyDaysLeft", { days: warrantyDaysLeft })
+              : t("device.lifecycle.warrantyExpired", { days: -warrantyDaysLeft })}
           </span>
         )}
       </div>
 
       <div className="mt-4">
-        <div className="text-[12px] text-[#9a9a9a]">Note</div>
+        <div className="text-[12px] text-[#9a9a9a]">{t("device.lifecycle.note")}</div>
         {editing ? (
           <textarea
             value={draft.lifecycleNote ?? ""}
@@ -184,7 +234,7 @@ const Lifecycle = () => {
             key={f.key as string}
             className="border border-[#F0F0F0] rounded-[6px] px-3 py-2"
           >
-            <div className="text-[11px] text-[#9a9a9a]">{f.label}</div>
+            <div className="text-[11px] text-[#9a9a9a]">{fieldLabel(f.key as string)}</div>
             {editing ? (
               <input
                 type={f.type}

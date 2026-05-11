@@ -1,5 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import Input from "../Inputs/Input";
 import SelectSecondary from "../Inputs/SelectSecondary";
@@ -17,6 +18,7 @@ type Props = {
 };
 
 const EditCalendarForm = ({ data }: Props) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (values: any) => {
@@ -24,7 +26,7 @@ const EditCalendarForm = ({ data }: Props) => {
     },
 
     onSuccess: async () => {
-      toast.success("Calendar has been changed successfully");
+      toast.success(t("toast.success.calendarChanged"));
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["calendars"] }),
@@ -34,7 +36,7 @@ const EditCalendarForm = ({ data }: Props) => {
     },
 
     onError: () => {
-      toast.error("Cannot change calendar");
+      toast.error(t("toast.error.calendarChange", "Cannot change calendar"));
     },
   });
 
@@ -90,7 +92,7 @@ const EditCalendarForm = ({ data }: Props) => {
           <Input
             {...field}
             value={field?.state?.value}
-            label="Name"
+            label={t("form.name")}
             errors={field.state.meta.errors?.join(", ")}
           />
         )}
@@ -99,7 +101,7 @@ const EditCalendarForm = ({ data }: Props) => {
         name="timezone"
         children={(field) => (
           <SelectSecondary
-            label="Timezone"
+            label={t("form.field.timezone", "Timezone")}
             options={timezones}
             value={{ label: field.state.value, value: field.state.value }}
             onSelect={(value: any) => field.handleChange(value.value)}
@@ -109,7 +111,7 @@ const EditCalendarForm = ({ data }: Props) => {
       <form.Field name="workingDays">
         {(field) => (
           <div className="pt-4 mb-4">
-            <label className="font-bold text-[#3C3C3C]">Working days</label>
+            <label className="font-bold text-[#3C3C3C]">{t("form.field.workingDays", "Working days")}</label>
             <div className="space-y-2">
               {WEEK_DAYS.map((day) => {
                 const checked = field?.state?.value?.includes(day?.value);
@@ -118,7 +120,7 @@ const EditCalendarForm = ({ data }: Props) => {
                   <Checkbox
                     id={day.value.toString()}
                     key={day.value}
-                    label={day.label}
+                    label={t(day.label)}
                     checked={checked}
                     onChange={(e: any) => handleCheckboxChange(field, day, e)}
                   />
@@ -128,7 +130,7 @@ const EditCalendarForm = ({ data }: Props) => {
           </div>
         )}
       </form.Field>
-      <ButtonPrimary type="submit" text="Save changes" />
+      <ButtonPrimary type="submit" text={t("common.save")} />
     </form>
   );
 };

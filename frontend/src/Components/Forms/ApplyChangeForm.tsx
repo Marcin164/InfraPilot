@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext, useParams } from "react-router";
@@ -27,9 +28,12 @@ type Option = { label: string; value: string };
 type FormValues = typeof applyChangeDefaultValues;
 
 const ApplyChangeForm: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const queryClient = useQueryClient();
   const deviceContext = useOutletContext<{ data: { location: string } }>();
+  const trHistory = historyTypeOptions.map((o) => ({ ...o, label: t(o.label) }));
+  const trComponents = componentsTypeOptions.map((o) => ({ ...o, label: t(o.label) }));
 
   const devicesQuery = useQuery<any>({
     queryKey: ["devices"],
@@ -76,12 +80,12 @@ const ApplyChangeForm: React.FC = () => {
     },
 
     onSuccess: () => {
-      toast.success("Change has been applied successfully");
+      toast.success(t("toast.success.changeApplied"));
       queryClient.invalidateQueries({ queryKey: ["history"] });
     },
 
     onError: () => {
-      toast.error("Cannot apply change");
+      toast.error(t("toast.error.changeApply", "Cannot apply change"));
     },
   });
 
@@ -113,9 +117,9 @@ const ApplyChangeForm: React.FC = () => {
       <form.Field name="type">
         {(field) => (
           <SelectSecondary
-            label="Type"
-            options={historyTypeOptions}
-            defaultValue={historyTypeOptions[0]}
+            label={t("form.type")}
+            options={trHistory}
+            defaultValue={trHistory[0]}
             onSelect={(opt: any) => field.handleChange(opt.value)}
           />
         )}
@@ -127,7 +131,7 @@ const ApplyChangeForm: React.FC = () => {
               <>
                 <form.Field name="isUserFault">
                   {(field) => (
-                    <Checkbox {...field} label="User fault" className="pt-4" />
+                    <Checkbox {...field} label={t("form.field.userFault", "User fault")} className="pt-4" />
                   )}
                 </form.Field>
                 <form.Field
@@ -139,7 +143,7 @@ const ApplyChangeForm: React.FC = () => {
                   {(field) => (
                     <Input
                       {...field}
-                      label="Damages"
+                      label={t("form.field.damages", "Damages")}
                       errors={field.state.meta.errors?.join(", ")}
                     />
                   )}
@@ -153,7 +157,7 @@ const ApplyChangeForm: React.FC = () => {
                   {(field) => (
                     <Input
                       {...field}
-                      label="Fixes"
+                      label={t("form.field.fixes", "Fixes")}
                       errors={field.state.meta.errors?.join(", ")}
                     />
                   )}
@@ -170,8 +174,8 @@ const ApplyChangeForm: React.FC = () => {
                           <form.Field name={`removedComponents[${i}].subgroup`}>
                             {(f) => (
                               <SelectSecondary
-                                label="Component"
-                                options={componentsTypeOptions}
+                                label={t("form.field.component", "Component")}
+                                options={trComponents}
                                 onSelect={(e: Option) =>
                                   f.handleChange(e.value)
                                 }
@@ -210,7 +214,7 @@ const ApplyChangeForm: React.FC = () => {
                       <ButtonPrimary
                         type="button"
                         icon={faPlus}
-                        text="Add removed component"
+                        text={t("form.field.addRemovedComponent", "Add removed component")}
                         className="mt-4"
                         onClick={() =>
                           field.pushValue({
@@ -230,7 +234,7 @@ const ApplyChangeForm: React.FC = () => {
                 <form.Field name="addedComponents">
                   {(field) => (
                     <SelectSecondary
-                      label="Added components"
+                      label={t("form.field.addedComponents", "Added components")}
                       options={addedComponentsOptions}
                       isMulti
                       onSelect={(e: Option[]) =>
@@ -253,15 +257,15 @@ const ApplyChangeForm: React.FC = () => {
         )}
       </form.Field>
       <form.Field name="justification">
-        {(field) => <Input {...field} label="Justification" />}
+        {(field) => <Input {...field} label={t("form.field.justification")} />}
       </form.Field>
       <form.Field name="details">
-        {(field) => <Input {...field} label="Details" />}
+        {(field) => <Input {...field} label={t("form.field.details")} />}
       </form.Field>
       <form.Field name="agent">
         {(field) => (
           <SelectSecondary
-            label="Agent"
+            label={t("form.field.agent", "Agent")}
             options={[
               { label: "Marcin Nowakowski", value: "1" },
               { label: "Agent 2", value: "2" },
@@ -272,12 +276,12 @@ const ApplyChangeForm: React.FC = () => {
       </form.Field>
 
       <form.Field name="date">
-        {(field) => <Input {...field} type="date" label="Date" />}
+        {(field) => <Input {...field} type="date" label={t("form.field.date")} />}
       </form.Field>
 
       <ButtonPrimary
         type="submit"
-        text="Apply"
+        text={t("common.apply")}
         className="mt-4"
         disabled={!form.state.canSubmit || mutation.isPending}
       />

@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import type { FilterPreset } from "../../Types";
 
 type Props = {
@@ -16,12 +17,13 @@ const FilterPresetsBar = ({
   onActivate,
   onDelete,
 }: Props) => {
+  const { t } = useTranslation();
   if (presets.length === 0) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-2 pb-3">
       <span className="text-[13px] font-bold text-[#535353]">
-        Saved filters:
+        {t("filter.savedFilters")}
       </span>
       <AnimatePresence mode="popLayout">
         {presets.map((preset) => {
@@ -53,7 +55,7 @@ const FilterPresetsBar = ({
                   e.stopPropagation();
                   onDelete(preset.id);
                 }}
-                title="Delete preset"
+                title={t("filter.deletePreset")}
                 className={`flex h-[18px] w-[18px] items-center justify-center rounded-full text-[11px] transition cursor-pointer ${
                   isActive
                     ? "hover:bg-white/20"

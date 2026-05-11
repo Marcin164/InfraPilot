@@ -1,5 +1,6 @@
 import { faMinus, faMouse, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
 type Props = {
@@ -23,12 +24,13 @@ const TimelineItem = ({
   owner,
   device,
 }: Props) => {
+  const { t } = useTranslation();
   return (
     <div className="ml-[20px] pb-4">
       <div>
         <span className="text-[#535353] font-bold">{date}</span>
         <span className="text-[#2B9AE9] font-bold ml-2">
-          {ticket && `Ticket ${ticket}`}
+          {ticket && t("timeline.ticketPrefix", { number: ticket })}
         </span>
       </div>
       {components &&
@@ -60,13 +62,13 @@ const TimelineItem = ({
       )}
       {details && (
         <div className="py-1">
-          <div className="text-[#535353] font-bold">Details</div>
+          <div className="text-[#535353] font-bold">{t("form.field.details")}</div>
           <span className="text-[#3C3C3C] font-light italic">{details}</span>
         </div>
       )}
       {justification && (
         <div className="py-1">
-          <div className="text-[#535353] font-bold">Justification</div>
+          <div className="text-[#535353] font-bold">{t("form.field.justification")}</div>
           <span className="text-[#3C3C3C] font-light italic">
             {justification}
           </span>
@@ -74,7 +76,7 @@ const TimelineItem = ({
       )}
       {approvers && approvers.length > 0 && (
         <div className="py-1">
-          <div className="text-[#535353] font-bold">Approvers</div>
+          <div className="text-[#535353] font-bold">{t("form.field.approvers")}</div>
           <span className="text-[#3C3C3C] font-light italic">
             {approvers.map((approver: any, index: number) => (
               <>

@@ -1,6 +1,7 @@
 import Modal from "./AnimatedModal";
 import Input from "../Inputs/Input";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createDashboard } from "../../Services/dashboards";
 import { useAuthInfo } from "@propelauth/react";
@@ -22,6 +23,7 @@ const AddDashboardModal: React.FC<AddDashboardModalProps> = ({
   onCloseModal,
   selectDashboard,
 }) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { user } = useAuthInfo();
   const [dashboardName, setDashboardName] = useState("");
@@ -63,10 +65,10 @@ const AddDashboardModal: React.FC<AddDashboardModalProps> = ({
       onClose={handleOnClose}
       center
     >
-      <div className="text-gray-800 font-bold text-2xl mb-4">Add Dashboard</div>
-      <Input label="Name" value={dashboardName} onChange={handleInputChange} />
+      <div className="text-gray-800 font-bold text-2xl mb-4">{t("dashboard.add")}</div>
+      <Input label={t("form.name")} value={dashboardName} onChange={handleInputChange} />
       <div className="flex justify-end mt-4">
-        <ButtonPrimary text="Create" onClick={handleCreateDashboard} />
+        <ButtonPrimary text={t("common.create")} onClick={handleCreateDashboard} />
       </div>
     </Modal>
   );

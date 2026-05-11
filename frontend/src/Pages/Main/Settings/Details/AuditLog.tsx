@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import moment from "moment";
 import { twMerge } from "tailwind-merge";
@@ -15,6 +16,7 @@ import MainTable from "../../../../Components/Tables/MainTable";
 import Input from "../../../../Components/Inputs/Input";
 
 const AuditLog = () => {
+  const { t } = useTranslation();
   const [entityType, setEntityType] = useState("");
   const [action, setAction] = useState("");
   const [verifyResult, setVerifyResult] = useState<AuditVerifyResult | null>(
@@ -41,7 +43,7 @@ const AuditLog = () => {
   const columns = [
     {
       id: "sequence",
-      name: "Seq",
+      name: t("settings.audit.col.seq"),
       width: "90px",
       cell: (row: AuditEntry) => (
         <span className="font-mono text-[12px]">{row.sequence}</span>
@@ -49,14 +51,14 @@ const AuditLog = () => {
     },
     {
       id: "when",
-      name: "When",
+      name: t("settings.audit.col.when"),
       width: "180px",
       selector: (row: AuditEntry) =>
         moment(row.createdAt).format("YYYY-MM-DD HH:mm:ss"),
     },
     {
       id: "entity",
-      name: "Entity",
+      name: t("settings.audit.col.entity"),
       cell: (row: AuditEntry) => (
         <div>
           <span className="font-semibold">{row.entityType}</span>
@@ -68,12 +70,12 @@ const AuditLog = () => {
     },
     {
       id: "action",
-      name: "Action",
+      name: t("settings.audit.col.action"),
       selector: (row: AuditEntry) => row.action,
     },
     {
       id: "hash",
-      name: "Hash",
+      name: t("settings.audit.col.hash"),
       cell: (row: AuditEntry) => (
         <span
           className="font-mono text-[11px] text-[#8A8A8A]"
@@ -88,7 +90,7 @@ const AuditLog = () => {
   return (
     <div className="p-6">
       <div className="mb-4 flex items-center gap-3">
-        <CardHeader text="Audit log" />
+        <CardHeader text={t("settings.audit.title")} />
         <button
           type="button"
           onClick={() => verifyMutation.mutate()}
@@ -96,7 +98,7 @@ const AuditLog = () => {
           className="ml-auto rounded-[8px] bg-[#2B9AE9] px-3 py-1 text-[13px] font-semibold text-white hover:bg-[#1E86D2] disabled:opacity-60"
         >
           <FontAwesomeIcon icon={faShieldHalved} className="mr-2" />
-          {verifyMutation.isPending ? "Verifying…" : "Verify chain"}
+          {verifyMutation.isPending ? t("settings.audit.verifying") : t("settings.audit.verify")}
         </button>
       </div>
 
@@ -114,11 +116,13 @@ const AuditLog = () => {
           />
           <div>
             {verifyResult.ok ? (
-              <span>Chain OK — {verifyResult.total} records verified.</span>
+              <span>{t("settings.audit.chainOk", { count: verifyResult.total })}</span>
             ) : (
               <span>
-                Chain broken at sequence {verifyResult.firstMismatchSequence}:{" "}
-                {verifyResult.mismatchReason}
+                {t("settings.audit.chainBroken", {
+                  seq: verifyResult.firstMismatchSequence,
+                  reason: verifyResult.mismatchReason,
+                })}
               </span>
             )}
           </div>
@@ -127,14 +131,14 @@ const AuditLog = () => {
 
       <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-[600px]">
         <Input
-          label="Entity type"
-          placeholder="Ticket, History, …"
+          label={t("settings.audit.field.entityType")}
+          placeholder={t("settings.audit.entityPlaceholder")}
           value={entityType}
           onChange={(e: any) => setEntityType(e.target.value)}
         />
         <Input
-          label="Action"
-          placeholder="created, updated, …"
+          label={t("settings.audit.field.action")}
+          placeholder={t("settings.audit.actionPlaceholder")}
           value={action}
           onChange={(e: any) => setAction(e.target.value)}
         />

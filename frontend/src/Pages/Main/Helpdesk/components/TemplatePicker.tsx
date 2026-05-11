@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPaste } from "@fortawesome/free-solid-svg-icons";
@@ -16,6 +17,7 @@ type Props = {
 };
 
 const TemplatePicker = ({ ticket, onPick, disabled }: Props) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const boxRef = useRef<HTMLDivElement>(null);
@@ -101,7 +103,7 @@ const TemplatePicker = ({ ticket, onPick, disabled }: Props) => {
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search templates…"
+              placeholder={t("helpdesk.searchTemplates")}
               className="w-full h-[32px] rounded-[6px] border border-[#D0D0D0] px-2 text-[13px] outline-none"
             />
           </div>

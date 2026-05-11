@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useAuthInfo } from "@propelauth/react";
 import { useSearchParams } from "react-router-dom";
@@ -30,13 +31,16 @@ const parseTypes = (raw: string | null): HistoryType[] => {
 const serializeTypes = (types: HistoryType[]) =>
   types.length ? types.join(",") : "";
 
-const formatDayHeader = (date: string) => {
+const formatDayHeader = (
+  date: string,
+  t: (k: string) => string,
+): string => {
   const m = moment(date, "YYYY-MM-DD", true);
   if (!m.isValid()) return date;
   const today = moment().startOf("day");
   const diff = today.diff(m.startOf("day"), "days");
-  if (diff === 0) return "Today";
-  if (diff === 1) return "Yesterday";
+  if (diff === 0) return t("history.today");
+  if (diff === 1) return t("history.yesterday");
   return m.format("DD MMMM YYYY");
 };
 
@@ -50,6 +54,7 @@ const emptyFilters: HistoryFiltersState = {
 };
 
 const History = () => {
+  const { t } = useTranslation();
   const authInfo: any = useAuthInfo();
   const currentUserId = authInfo?.user?.metadata?.id;
 
@@ -160,16 +165,16 @@ const History = () => {
         deviceId: filters.deviceId,
         userId: filters.userId,
       });
-      toast.success("CSV exported");
+      toast.success(t("toast.success.csvExported"));
     } catch {
-      toast.error("Failed to export CSV");
+      toast.error(t("toast.error.csvExport"));
     } finally {
       setExporting(false);
     }
   };
 
   if (currentUserQuery.isLoading) {
-    return <div className="p-6 text-[#535353]">Loading…</div>;
+    return <div className="p-6 text-[#535353]">{t("history.loading")}</div>;
   }
 
   if (!hasAccess) {
@@ -177,11 +182,10 @@ const History = () => {
       <div className="mx-auto max-w-[600px] p-6">
         <div className="rounded-[10px] bg-white p-6 shadow-xl">
           <div className="text-[24px] font-bold text-[#BC0E0E]">
-            Access denied
+            {t("history.accessDenied")}
           </div>
           <div className="pt-2 text-[#535353]">
-            The global history feed is available only to administrators and
-            approvers.
+            {t("history.accessHelp")}
           </div>
         </div>
       </div>
@@ -201,19 +205,19 @@ const History = () => {
 
       {feedQuery.isLoading && (
         <div className="rounded-[10px] bg-white p-6 text-center text-[#535353] shadow-xl">
-          Loading history…
+          {t("history.loadingFeed")}
         </div>
       )}
 
       {feedQuery.isError && (
         <div className="rounded-[10px] bg-white p-6 text-center text-[#BC0E0E] shadow-xl">
-          Failed to load history
+          {t("history.loadFailed")}
         </div>
       )}
 
       {!feedQuery.isLoading && entries.length === 0 && !feedQuery.isError && (
         <div className="rounded-[10px] bg-white p-6 text-center text-[#535353] shadow-xl">
-          No history entries match the current filters.
+          {t("history.noEntries")}
         </div>
       )}
 
@@ -222,10 +226,10 @@ const History = () => {
           <div key={day} className="flex flex-col gap-3">
             <div className="sticky top-0 z-10 -mx-2 bg-[#F5F7FA] px-2 py-1">
               <span className="text-[16px] font-bold text-[#3C3C3C]">
-                {formatDayHeader(day)}
+                {formatDayHeader(day, t)}
               </span>
               <span className="pl-2 text-[13px] text-[#8A8A8A]">
-                {dayEntries.length} entr{dayEntries.length === 1 ? "y" : "ies"}
+                {t("history.entries", { count: dayEntries.length })}
               </span>
             </div>
             {dayEntries.map((entry) => (
@@ -238,12 +242,12 @@ const History = () => {
       <div ref={sentinelRef} className="h-[1px]" />
 
       {feedQuery.isFetchingNextPage && (
-        <div className="py-2 text-center text-[#535353]">Loading more…</div>
+        <div className="py-2 text-center text-[#535353]">{t("history.loadingMore")}</div>
       )}
 
       {!feedQuery.hasNextPage && entries.length > 0 && (
         <div className="py-4 text-center text-[13px] text-[#8A8A8A]">
-          End of history
+          {t("history.end")}
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 import React, { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDownload } from "@fortawesome/free-solid-svg-icons";
@@ -19,6 +20,7 @@ const ReportCard = ({
   stats,
   onExport,
 }: Props) => {
+  const { t } = useTranslation();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -35,8 +37,8 @@ const ReportCard = ({
         {onExport && (
           <button
             onClick={onExport}
-            title="Export CSV"
-            aria-label="Export CSV"
+            title={t("reports.exportCsv")}
+            aria-label={t("reports.exportCsv")}
             className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
           >
             <FontAwesomeIcon icon={faDownload} />

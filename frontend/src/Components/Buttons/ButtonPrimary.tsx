@@ -54,7 +54,7 @@ type ButtonPrimaryProps = {
   className?: string;
   disabled?: boolean;
   color?: ButtonColor;
-};
+} & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 const ButtonPrimary: React.FC<ButtonPrimaryProps> = ({
   icon,
@@ -69,6 +69,7 @@ const ButtonPrimary: React.FC<ButtonPrimaryProps> = ({
 
   return (
     <button
+      data-cy="button-primary"
       type={type}
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
@@ -81,11 +82,12 @@ const ButtonPrimary: React.FC<ButtonPrimaryProps> = ({
     >
       {icon && (
         <FontAwesomeIcon
+          data-cy="button-primary-icon"
           icon={icon}
           className={twMerge(style.icon, text && "w-[16px] pr-2")}
         />
       )}
-      {text && <span>{text}</span>}
+      {text && <span data-cy="button-primary-text">{text}</span>}
     </button>
   );
 };

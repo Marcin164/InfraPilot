@@ -66,8 +66,10 @@ const AddEquipmentForm: React.FC = () => {
         children={(field) => (
           <SelectSecondary
             label={t("device.group")}
-            options={groupTypeOptions}
-            value={groupTypeOptions.find((o) => o.value === field.state.value)}
+            options={groupTypeOptions.map((o) => ({ ...o, label: t(o.label) }))}
+            value={groupTypeOptions
+              .map((o) => ({ ...o, label: t(o.label) }))
+              .find((o) => o.value === field.state.value)}
             onSelect={(opt: Option) => handleGroupSelect(opt, field)}
           />
         )}
@@ -77,8 +79,10 @@ const AddEquipmentForm: React.FC = () => {
         children={(field) => (
           <SelectSecondary
             label={t("device.subgroup")}
-            options={subgroupOptions}
-            value={subgroupOptions.find((o) => o.value === field.state.value)}
+            options={subgroupOptions.map((o) => ({ ...o, label: t(o.label) }))}
+            value={subgroupOptions
+              .map((o) => ({ ...o, label: t(o.label) }))
+              .find((o) => o.value === field.state.value)}
             onSelect={(opt: Option) => field.handleChange(opt.value)}
           />
         )}

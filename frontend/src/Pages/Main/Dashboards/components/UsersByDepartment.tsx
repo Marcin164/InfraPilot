@@ -7,11 +7,13 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 import CardWrapper from "./CardWrapper";
 import { CHART_COLORS } from "../helpers";
 import { useDashboardData } from "../DashboardDataContext";
 
 const UsersByDepartment = () => {
+  const { t } = useTranslation();
   const data = useDashboardData("users-by-department");
 
   const items = [...data]
@@ -19,7 +21,7 @@ const UsersByDepartment = () => {
     .slice(0, 8);
 
   return (
-    <CardWrapper title="Users by Department" accent="#2B9AE9">
+    <CardWrapper title={t("dashboard.widget.usersByDepartment")} accent="#2B9AE9">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={items} layout="vertical" margin={{ left: 4, right: 16, top: 4, bottom: 4 }}>
           <XAxis type="number" hide />

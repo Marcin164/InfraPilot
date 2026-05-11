@@ -1,9 +1,11 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { useTranslation } from "react-i18next";
 import CardWrapper from "./CardWrapper";
 import { CHART_COLORS } from "../helpers";
 import { useDashboardData } from "../DashboardDataContext";
 
 const DevicesByOS = () => {
+  const { t } = useTranslation();
   const data = useDashboardData("devices-by-os");
 
   const items = data.map((d, i) => ({
@@ -14,7 +16,7 @@ const DevicesByOS = () => {
   const total = items.reduce((s, d) => s + d.value, 0);
 
   return (
-    <CardWrapper title="Devices by OS" accent="#9B59B6">
+    <CardWrapper title={t("dashboard.widget.devicesByOS")} accent="#9B59B6">
       <div className="flex h-full w-full items-center gap-2">
         <div className="relative h-full w-1/2 min-w-0">
           <ResponsiveContainer width="100%" height="100%">

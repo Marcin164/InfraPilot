@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { getDevicesByOwner } from "../../../Services/devices";
 import { useParams } from "react-router";
 import EquipmentItem from "../../../Components/Lists/EquipmentItem";
@@ -12,6 +13,7 @@ import PageMotion from "../../../Components/PageMotion/PageMotion";
 type Props = {};
 
 const EditEquipment = (props: Props) => {
+  const { t } = useTranslation();
   const params: any = useParams();
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
   const [addDeviceMode, setAddDeviceMode] = useState<any>(false);
@@ -42,10 +44,10 @@ const EditEquipment = (props: Props) => {
       <div className="p-4 w-full flex">
         <div className="h-fit w-[40%] bg-[#FFFFFF] shadow-xl rounded-[10px] row-span-3 p-4 mr-2">
           <div className="text-[30px] font-semibold text-[#3C3C3C]">
-            Edit Equipment
+            {t("users.equipment.editTitle")}
           </div>
           <div className="h-[calc(100%-100px)]">
-            <div className="py-2 font-bold">Computers</div>
+            <div className="py-2 font-bold">{t("users.equipment.computers")}</div>
             {mainDevices?.length > 0 ? (
               mainDevices.map((device: any) => (
                 <EquipmentItem
@@ -55,9 +57,9 @@ const EditEquipment = (props: Props) => {
                 />
               ))
             ) : (
-              <div>No device</div>
+              <div>{t("users.equipment.noDevice")}</div>
             )}
-            <div className="py-2 font-bold">Peripherals</div>
+            <div className="py-2 font-bold">{t("users.equipment.peripherals")}</div>
             {peripherals?.length > 0 ? (
               peripherals.map((peripheral: any) => (
                 <EquipmentItem
@@ -67,11 +69,11 @@ const EditEquipment = (props: Props) => {
                 />
               ))
             ) : (
-              <div>No device</div>
+              <div>{t("users.equipment.noDevice")}</div>
             )}
             <ButtonPrimary
               icon={faPen}
-              text="Assign device"
+              text={t("users.equipment.assignDevice")}
               className="mt-2"
               onClick={() => {
                 setSelectedAsset(null);
@@ -83,7 +85,7 @@ const EditEquipment = (props: Props) => {
         {!selectedAsset && addDeviceMode && (
           <div className="w-[60%] bg-[#FFFFFF] shadow-xl rounded-[10px] row-span-3 p-4 ml-2">
             <div className="text-[30px] font-semibold text-[#3C3C3C]">
-              Assign device
+              {t("users.equipment.assignDevice")}
             </div>
             <div>
               <AssignDeviceForm />
@@ -93,7 +95,7 @@ const EditEquipment = (props: Props) => {
         {!addDeviceMode && selectedAsset && (
           <div className="w-[60%] bg-[#FFFFFF] shadow-xl rounded-[10px] row-span-3 p-4 ml-2">
             <div className="text-[30px] font-semibold text-[#3C3C3C]">
-              Equipment details
+              {t("users.equipment.details")}
             </div>
             <div>
               <EditEquipmentForm {...selectedAsset} />

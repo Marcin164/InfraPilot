@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import moment from "moment";
 import {
@@ -63,6 +64,29 @@ const Kpi = ({
 );
 
 const FleetHealth = () => {
+  const { t } = useTranslation();
+
+  const lifecycleLabel = (state: string): string => {
+    switch (state) {
+      case "procurement":
+        return t("device.lifecycle.procurement");
+      case "active":
+        return t("device.lifecycle.active");
+      case "in_repair":
+        return t("device.lifecycle.repair");
+      case "in_storage":
+        return t("device.lifecycle.storage");
+      case "retired":
+        return t("device.lifecycle.retired");
+      case "disposed":
+        return t("device.lifecycle.disposed");
+      case "lost":
+        return t("device.lifecycle.lost");
+      default:
+        return state.replace("_", " ");
+    }
+  };
+
   const overview = useQuery({
     queryKey: ["fleet-overview"],
     queryFn: fleetOverview,
@@ -94,44 +118,46 @@ const FleetHealth = () => {
       <div className="w-full p-4 space-y-4">
         <h1 className="text-[22px] font-bold text-[#3C3C3C] flex items-center gap-2">
           <FontAwesomeIcon icon={faGaugeHigh} />
-          Fleet health
+          {t("nav.fleet.title")}
         </h1>
         <div className="text-[12px] text-[#8a8a8a]">
-          Refreshed every minute · last update{" "}
-          {moment(o.generatedAt).format("HH:mm:ss")}
+          {t("fleet.refreshed", { time: moment(o.generatedAt).format("HH:mm:ss") })}
         </div>
 
         {/* KPI row */}
         <div className="flex flex-wrap gap-4">
           <Kpi
-            label="Total devices"
+            label={t("fleet.kpi.totalDevices")}
             value={o.totalDevices}
-            sub={`${o.activeDevices} active`}
+            sub={t("fleet.kpi.activeSub", { count: o.activeDevices })}
             icon={faComputer}
           />
           <Kpi
-            label="Compliance"
+            label={t("fleet.kpi.compliance")}
             value={`${o.compliance.compliancePct}%`}
-            sub={`${o.compliance.compliantDevices} of ${o.compliance.totalDevices} clean`}
+            sub={t("fleet.kpi.cleanSub", {
+              clean: o.compliance.compliantDevices,
+              total: o.compliance.totalDevices,
+            })}
             color={pctColor}
             icon={faShieldHalved}
           />
           <Kpi
-            label="Stale agents"
+            label={t("fleet.staleAgents")}
             value={o.staleAgents}
-            sub={`no scan in ${o.staleAgentsThresholdHours}h`}
+            sub={t("fleet.kpi.noScanIn", { hours: o.staleAgentsThresholdHours })}
             color={o.staleAgents > 0 ? "#F3606E" : "#30A712"}
             icon={faHourglassHalf}
           />
           <Kpi
-            label="New in last 7 days"
+            label={t("fleet.kpi.newWeek")}
             value={o.newInLastWeek}
             icon={faPlus}
           />
           <Kpi
-            label="CVE exposures"
+            label={t("fleet.kpi.cveExposures")}
             value={totalCves}
-            sub={`${critical} critical · ${high} high`}
+            sub={t("fleet.kpi.criticalHighSub", { critical, high })}
             color={
               critical > 0 ? CVE_COLOR.CRITICAL : high > 0 ? CVE_COLOR.HIGH : undefined
             }
@@ -141,7 +167,7 @@ const FleetHealth = () => {
 
         {/* Lifecycle breakdown */}
         <div className="bg-white rounded-[10px] shadow p-4">
-          <CardHeader text="Lifecycle breakdown" icon={faComputer} />
+          <CardHeader text={t("fleet.lifecycle")} icon={faComputer} />
           <div className="mt-3 flex flex-wrap gap-2">
             {Object.entries(o.lifecycle).map(([state, count]) => (
               <div
@@ -155,7 +181,7 @@ const FleetHealth = () => {
                   }}
                 />
                 <span className="text-[#3C3C3C]">
-                  {state.replace("_", " ")}
+                  {lifecycleLabel(state)}
                 </span>
                 <span className="font-bold">{count}</span>
               </div>
@@ -165,7 +191,7 @@ const FleetHealth = () => {
 
         {/* CVE severity breakdown */}
         <div className="bg-white rounded-[10px] shadow p-4">
-          <CardHeader text="CVE severity breakdown" icon={faBug} />
+          <CardHeader text={t("fleet.cveSeverity")} icon={faBug} />
           <div className="mt-3 flex flex-wrap gap-2">
             {["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"].map((sev) => (
               <div
@@ -176,7 +202,7 @@ const FleetHealth = () => {
                   className="w-[10px] h-[10px] rounded-full"
                   style={{ backgroundColor: CVE_COLOR[sev] }}
                 />
-                <span className="text-[#3C3C3C]">{sev}</span>
+                <span className="text-[#3C3C3C]">{t(`fleet.cve.${sev}`)}</span>
                 <span className="font-bold">{o.cves[sev] ?? 0}</span>
               </div>
             ))}
@@ -185,12 +211,12 @@ const FleetHealth = () => {
 
         {/* Stale agents table */}
         <div className="bg-white rounded-[10px] shadow p-4">
-          <CardHeader text="Stale agents" icon={faHourglassHalf} />
+          <CardHeader text={t("fleet.staleAgents")} icon={faHourglassHalf} />
           {stale.isLoading ? (
-            <div className="text-[13px] text-[#7a7a7a] mt-3">Loading…</div>
+            <div className="text-[13px] text-[#7a7a7a] mt-3">{t("common.loading")}</div>
           ) : (stale.data ?? []).length === 0 ? (
             <div className="text-[13px] text-[#7a7a7a] mt-3">
-              Every active device has reported recently.
+              {t("fleet.allReporting")}
             </div>
           ) : (
             <div className="mt-3 divide-y divide-[#F0F0F0]">
@@ -208,19 +234,19 @@ const FleetHealth = () => {
                       SN: {d.serialNumber ?? "—"} ·{" "}
                       {d.user
                         ? `${d.user.name} ${d.user.surname}`
-                        : "unassigned"}
+                        : t("fleet.unassigned")}
                     </div>
                   </div>
                   <div className="text-[12px] text-[#F3606E] font-bold">
                     {d.lastScanAt
                       ? `${moment(d.lastScanAt).fromNow()}`
-                      : "never"}
+                      : t("fleet.never")}
                   </div>
                 </Link>
               ))}
               {(stale.data ?? []).length > 20 && (
                 <div className="text-[12px] text-[#8a8a8a] pt-2">
-                  … and {stale.data!.length - 20} more
+                  {t("fleet.andMore", { count: stale.data!.length - 20 })}
                 </div>
               )}
             </div>

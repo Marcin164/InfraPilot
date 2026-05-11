@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import Parameter from "../../../../Components/Lists/Parameter";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import Badge from "../../../../Components/Badges/Badge";
@@ -8,9 +9,10 @@ type Props = {
 };
 
 const GPU = ({ gpus }: Props) => {
+  const { t } = useTranslation();
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4 overflow-hidden text-wrap wrap-break-word break-normal text-ellipsis">
-      <CardHeader text="GPU" icon={faDisplay} />
+      <CardHeader text={t("device.section.gpu")} icon={faDisplay} />
       {gpus.map((gpu: any) => (
         <div className="inline-block mr-4">
           <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">

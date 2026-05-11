@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import Badge from "../../../../Components/Badges/Badge";
 import {
   faBan,
@@ -12,6 +13,7 @@ import CardHeader from "../../../../Components/Headers/CardHeader";
 type Props = { bitlocker: any };
 
 const Bitlocker = ({ bitlocker }: Props) => {
+  const { t } = useTranslation();
   const volumeTypeArray = ["OS Volume", "Fixed Data", "Removable Data"];
   const volumeEncryptingStatusArray = [
     "Fully Decrypted",
@@ -29,7 +31,7 @@ const Bitlocker = ({ bitlocker }: Props) => {
 
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <CardHeader text="Bitlocker" icon={faLock} />
+      <CardHeader text={t("device.section.bitlocker")} icon={faLock} />
       {bitlocker.map((bl: any) => (
         <div className="pb-2">
           <div className="text-[#3C3C3C] font-semibold">{`Partition ${

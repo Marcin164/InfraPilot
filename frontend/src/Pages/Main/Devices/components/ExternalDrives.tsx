@@ -1,14 +1,16 @@
 import { faHardDrive } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 
 type Props = { drives: any };
 
 const ExternalDrives = ({ drives }: Props) => {
+  const { t } = useTranslation();
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <CardHeader icon={faHardDrive} text="External Drives" />
+      <CardHeader icon={faHardDrive} text={t("device.section.externalDrives")} />
       {drives.map((drive: any) => (
         <div>
           <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">

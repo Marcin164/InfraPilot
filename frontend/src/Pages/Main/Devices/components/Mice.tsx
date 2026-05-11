@@ -1,11 +1,13 @@
 import { faMouse } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useTranslation } from "react-i18next";
 import Parameter from "../../../../Components/Lists/Parameter";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 
 type Props = { mice: any };
 
 const Mice = ({ mice }: Props) => {
+  const { t } = useTranslation();
   const parsePointingType = [
     "Unknown", // 0
     "Other", // 1
@@ -28,7 +30,7 @@ const Mice = ({ mice }: Props) => {
 
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <CardHeader text="Mice" icon={faMouse} />
+      <CardHeader text={t("device.section.mice")} icon={faMouse} />
       {mice.map((mouse: any) => (
         <div>
           <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">

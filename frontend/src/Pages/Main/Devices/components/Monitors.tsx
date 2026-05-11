@@ -1,14 +1,16 @@
 import { faDesktop } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useTranslation } from "react-i18next";
 import Parameter from "../../../../Components/Lists/Parameter";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 
 type Props = { screens: any };
 
 const Monitors = ({ screens }: Props) => {
+  const { t } = useTranslation();
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <CardHeader text="Screens" icon={faDesktop} />
+      <CardHeader text={t("device.section.monitors")} icon={faDesktop} />
       {screens.map((screen: any) => (
         <div>
           <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">

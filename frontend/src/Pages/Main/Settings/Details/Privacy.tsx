@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { faUserShield } from "@fortawesome/free-solid-svg-icons";
 import moment from "moment";
@@ -9,6 +10,7 @@ import MainTable from "../../../../Components/Tables/MainTable";
 import Input from "../../../../Components/Inputs/Input";
 
 const Privacy = () => {
+  const { t } = useTranslation();
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
 
@@ -26,24 +28,24 @@ const Privacy = () => {
     () => [
       {
         id: "when",
-        name: "When",
+        name: t("settings.privacy.column.when"),
         selector: (row: any) =>
           moment(row.createdAt).format("DD.MM.YYYY HH:mm:ss"),
         width: "180px",
       },
       {
         id: "actor",
-        name: "Actor",
+        name: t("settings.privacy.column.actor"),
         selector: (row: any) => row.metadata?.actor ?? "—",
       },
       {
         id: "target",
-        name: "Target user",
+        name: t("settings.privacy.column.target"),
         selector: (row: any) => row.entityId,
       },
       {
         id: "fields",
-        name: "Fields read",
+        name: t("settings.privacy.column.fields"),
         cell: (row: any) => (
           <span className="text-[12px] text-[#7a7a7a]">
             {(row.metadata?.fields ?? []).join(", ") || "—"}
@@ -52,22 +54,20 @@ const Privacy = () => {
         grow: 2,
       },
     ],
-    [],
+    [t],
   );
 
   return (
     <div className="space-y-4 m-4">
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text="Privacy access log" icon={faUserShield} />
+        <CardHeader text={t("settings.privacy.title")} icon={faUserShield} />
         <p className="text-[14px] text-[#7a7a7a] mt-2">
-          Every read of personal data via the <em>View as DPO</em> dialog on a
-          user's page is recorded here. Per-user data lookup has moved to the
-          user detail page.
+          {t("settings.privacy.help")}
         </p>
 
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-[520px]">
           <Input
-            label="From"
+            label={t("settings.privacy.from")}
             type="date"
             value={from}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -75,7 +75,7 @@ const Privacy = () => {
             }
           />
           <Input
-            label="To"
+            label={t("settings.privacy.to")}
             type="date"
             value={to}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>

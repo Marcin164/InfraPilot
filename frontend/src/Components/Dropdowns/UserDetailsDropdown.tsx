@@ -50,8 +50,9 @@ const UserDetailsDropdown = ({ data }: Props) => {
   };
 
   return (
-    <Dropdown>
+    <Dropdown data-cy="user-details-dropdown">
       <ButtonPrimary
+        data-cy="edit-user-btn"
         color="white"
         icon={faPen}
         text="Edit"
@@ -59,6 +60,7 @@ const UserDetailsDropdown = ({ data }: Props) => {
         onClick={toggleEditUserModalOpen}
       />
       <ButtonPrimary
+        data-cy="delete-user-btn"
         color="white"
         icon={faTrash}
         text="Delete"
@@ -66,6 +68,7 @@ const UserDetailsDropdown = ({ data }: Props) => {
         onClick={toggleConfirmationModalOpen}
       />
       <ButtonPrimary
+        data-cy="edit-equipment-btn"
         color="white"
         icon={faComputer}
         text="Edit equipment"
@@ -73,6 +76,7 @@ const UserDetailsDropdown = ({ data }: Props) => {
         onClick={() => navigate(`/admin/users/${id}/equipmentedit`)}
       />
       <ButtonPrimary
+        data-cy="add-form-btn"
         color="white"
         icon={faFile}
         text="Add form"
@@ -80,17 +84,20 @@ const UserDetailsDropdown = ({ data }: Props) => {
         onClick={toggleAddFormModalOpen}
       />
       <ConfirmationModal
+        data-cy="confirmation-modal"
         isModalOpen={isConfirmationModalOpen}
         handleOnClose={toggleConfirmationModalOpen}
         onCancel={toggleConfirmationModalOpen}
         onDelete={mutation.mutate}
       />
       <AddUserModal
+        data-cy="edit-user-modal"
         isModalOpen={isEditUserModalOpen}
         onCloseModal={toggleEditUserModalOpen}
         data={data}
       />
       <AddFormModal
+        data-cy="add-form-modal"
         isModalOpen={isAddFormModalOpen}
         onCloseModal={toggleAddFormModalOpen}
         onSubmit={async (file) => {

@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import { useQuery } from "@tanstack/react-query";
 import { getTicketSla } from "../../../../Services/sla";
@@ -9,6 +10,7 @@ import Badge from "../../../../Components/Badges/Badge";
 type Props = {};
 
 const SLA = (props: Props) => {
+  const { t } = useTranslation();
   const params = useParams();
 
   const slaQuery = useQuery({
@@ -22,7 +24,7 @@ const SLA = (props: Props) => {
 
   return (
     <div>
-      <CardHeader text="SLA" />
+      <CardHeader text={t("helpdesk.sla")} />
       <div>
         {sla.map((item: any) => {
           let status = "#30A712";

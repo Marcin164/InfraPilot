@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { faPlus, faShield, faTrash } from "@fortawesome/free-solid-svg-icons";
@@ -49,6 +50,7 @@ const emptyDraft = () => ({
 });
 
 const ComplianceRules = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(emptyDraft());
 
@@ -82,12 +84,12 @@ const ComplianceRules = () => {
         enabled: draft.enabled,
       }),
     onSuccess: () => {
-      toast.success("Rule saved");
+      toast.success(t("settings.compliance.saved"));
       setDraft(emptyDraft());
       invalidate();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Save failed"),
+      toast.error(err?.response?.data?.message ?? t("settings.compliance.saveFailed")),
   });
 
   const toggleMutation = useMutation({
@@ -95,19 +97,18 @@ const ComplianceRules = () => {
       upsertComplianceRule(rule.key, { enabled: !rule.enabled }),
     onSuccess: () => invalidate(),
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Toggle failed"),
+      toast.error(err?.response?.data?.message ?? t("settings.compliance.toggleFailed")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (key: string) => deleteComplianceRule(key),
     onSuccess: () => {
-      toast.success("Rule deleted");
+      toast.success(t("settings.compliance.deleted"));
       invalidate();
     },
     onError: (err: any) =>
       toast.error(
-        err?.response?.data?.message ??
-          "Delete failed (built-in rules cannot be deleted — disable instead)",
+        err?.response?.data?.message ?? t("settings.compliance.deleteFailed"),
       ),
   });
 
@@ -116,10 +117,9 @@ const ComplianceRules = () => {
   return (
     <div className="space-y-4 m-4">
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text="Define rule" icon={faPlus} />
+        <CardHeader text={t("settings.compliance.define")} icon={faPlus} />
         <p className="text-[12px] text-[#7a7a7a] mt-2">
-          Rules evaluate against each device after every scan. `jsonPath` is a
-          dot-path into the device record, e.g.{" "}
+          {t("settings.compliance.help")}{" "}
           <code>security.bitlocker.enabled</code>.
         </p>
 
@@ -127,13 +127,13 @@ const ComplianceRules = () => {
           <input
             value={draft.key}
             onChange={(e) => setDraft({ ...draft, key: e.target.value })}
-            placeholder="key (stable id)"
+            placeholder={t("settings.compliance.keyPlaceholder")}
             className="h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
           />
           <input
             value={draft.name}
             onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-            placeholder="Human name"
+            placeholder={t("settings.compliance.namePlaceholder")}
             className="md:col-span-2 h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
           />
           <input
@@ -141,7 +141,7 @@ const ComplianceRules = () => {
             onChange={(e) =>
               setDraft({ ...draft, category: e.target.value })
             }
-            placeholder="category (default: security)"
+            placeholder={t("settings.compliance.categoryPlaceholder")}
             className="h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
           />
           <SelectSecondary
@@ -163,14 +163,14 @@ const ComplianceRules = () => {
                 setDraft({ ...draft, enabled: e.target.checked })
               }
             />
-            enabled
+            {t("settings.compliance.enabled")}
           </label>
           <input
             value={draft.jsonPath}
             onChange={(e) =>
               setDraft({ ...draft, jsonPath: e.target.value })
             }
-            placeholder="jsonPath (e.g. security.tpm.present)"
+            placeholder={t("settings.compliance.jsonPathPlaceholder")}
             className="md:col-span-2 h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
           />
           <SelectSecondary
@@ -189,7 +189,7 @@ const ComplianceRules = () => {
             onChange={(e) =>
               setDraft({ ...draft, expected: e.target.value })
             }
-            placeholder='expected value (true / false / 5 / "string")'
+            placeholder={t("settings.compliance.expectedPlaceholder")}
             className="md:col-span-2 h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
           />
           <input
@@ -197,17 +197,17 @@ const ComplianceRules = () => {
             onChange={(e) =>
               setDraft({ ...draft, description: e.target.value })
             }
-            placeholder="Description (optional)"
+            placeholder={t("settings.compliance.descriptionPlaceholder")}
             className="md:col-span-3 h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
           />
         </div>
         <div className="mt-3">
           <ButtonPrimary
             icon={faPlus}
-            text={createMutation.isPending ? "Saving…" : "Save rule"}
+            text={createMutation.isPending ? t("settings.compliance.saving") : t("settings.compliance.saveRule")}
             onClick={() => {
               if (!draft.key.trim() || !draft.name.trim() || !draft.jsonPath.trim()) {
-                toast.error("key, name and jsonPath are required");
+                toast.error(t("settings.compliance.requiredFields"));
                 return;
               }
               createMutation.mutate();
@@ -218,9 +218,9 @@ const ComplianceRules = () => {
       </div>
 
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text="All rules" icon={faShield} />
+        <CardHeader text={t("settings.compliance.title")} icon={faShield} />
         {rules.length === 0 ? (
-          <div className="mt-3 text-[13px] text-[#7a7a7a]">No rules yet.</div>
+          <div className="mt-3 text-[13px] text-[#7a7a7a]">{t("settings.compliance.empty")}</div>
         ) : (
           <div className="mt-3 space-y-2">
             {rules.map((rule) => (
@@ -245,7 +245,7 @@ const ComplianceRules = () => {
                     </span>
                     {rule.builtin && (
                       <span className="text-[10px] font-bold rounded px-1.5 py-0.5 bg-[#E5F1FB] text-[#2B9AE9]">
-                        built-in
+                        {t("settings.compliance.builtin")}
                       </span>
                     )}
                     <span className="text-[11px] text-[#9a9a9a]">
@@ -271,17 +271,17 @@ const ComplianceRules = () => {
                   onClick={() => toggleMutation.mutate(rule)}
                   className="text-[12px] text-[#2B9AE9] hover:underline cursor-pointer"
                 >
-                  {rule.enabled ? "disable" : "enable"}
+                  {rule.enabled ? t("settings.compliance.disable") : t("settings.compliance.enable")}
                 </button>
                 {!rule.builtin && (
                   <button
                     type="button"
                     onClick={() => {
-                      if (window.confirm(`Delete rule "${rule.name}"?`))
+                      if (window.confirm(t("settings.compliance.confirmDelete", { name: rule.name })))
                         deleteMutation.mutate(rule.key);
                     }}
                     className="text-[#F3606E] hover:text-[#C0392B] cursor-pointer"
-                    title="Delete"
+                    title={t("common.delete")}
                   >
                     <FontAwesomeIcon icon={faTrash} />
                   </button>

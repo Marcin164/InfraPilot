@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthInfo } from "@propelauth/react";
 import { useQuery } from "@tanstack/react-query";
@@ -34,6 +35,7 @@ const AgentCredentials = ({
   apiSecretRotatedAt,
   apiSecretPrevValidUntil,
 }: Props) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const authInfo: any = useAuthInfo();
   const currentUserId = authInfo?.user?.metadata?.id;
@@ -87,7 +89,7 @@ const AgentCredentials = ({
 
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <CardHeader text="Agent credentials" icon={faKey} />
+      <CardHeader text={t("device.section.agentCredentials")} icon={faKey} />
 
       <div className="mt-3 text-[14px] text-[#535353] space-y-1">
         <div className="flex items-center gap-2">

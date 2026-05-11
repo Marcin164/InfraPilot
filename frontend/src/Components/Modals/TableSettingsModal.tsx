@@ -1,6 +1,7 @@
 import Modal from "./AnimatedModal";
 import CheckboxButton from "../Inputs/CheckboxButton";
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateUserSettings } from "../../Services/settings";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -30,6 +31,7 @@ const TableSettingsModal = ({
   checkboxes,
   settingsKey,
 }: Props) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -98,7 +100,7 @@ const TableSettingsModal = ({
     >
       <div className="max-h-[500px] overflow-y-auto">
         <div className="text-[#3C3C3C] text-[16px] font-bold py-2">
-          Columns
+          {t("columns")}
         </div>
         <div className="flex flex-wrap gap-0">
           {checkboxes.map((checkbox) => (
@@ -115,7 +117,7 @@ const TableSettingsModal = ({
         {chosenColumns.length > 0 && (
           <>
             <div className="text-[#3C3C3C] text-[16px] font-bold pt-4 pb-2">
-              Column order
+              {t("table.columnOrder")}
             </div>
             <div className="flex flex-col gap-1">
               {chosenColumns.map((colId, idx) => (

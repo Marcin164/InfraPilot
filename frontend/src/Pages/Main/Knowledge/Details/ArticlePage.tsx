@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useParams, Link, useNavigate } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -48,6 +49,7 @@ const formatDate = (value?: string) => {
 };
 
 const ArticlePage = () => {
+  const { t } = useTranslation();
   const { id: spaceId, articleId } = useParams<{
     id: string;
     articleId: string;
@@ -129,11 +131,11 @@ const ArticlePage = () => {
       queryClient.invalidateQueries({
         queryKey: ["knowledge-categories", spaceId],
       });
-      toast.success("Article saved");
+      toast.success(t("toast.success.articleSaved"));
       setEditing(false);
     },
     onError: () => {
-      toast.error("Failed to save article");
+      toast.error(t("toast.error.articleSave"));
     },
   });
 
@@ -143,23 +145,23 @@ const ArticlePage = () => {
       queryClient.invalidateQueries({
         queryKey: ["knowledge-articles", spaceId],
       });
-      toast.success("Article deleted");
+      toast.success(t("toast.success.articleDeleted"));
       navigate(`/admin/knowledge/${spaceId}`);
     },
     onError: () => {
-      toast.error("Failed to delete article");
+      toast.error(t("toast.error.articleDelete"));
     },
   });
 
   if (articleQuery.isLoading) {
-    return <div className="p-6 text-[#535353]">Loading…</div>;
+    return <div className="p-6 text-[#535353]">{t("history.loading")}</div>;
   }
 
   if (articleQuery.isError || !article) {
     return (
       <div className="p-6">
         <div className="rounded-[10px] bg-white p-6 shadow-xl text-[#BC0E0E]">
-          Article not found
+          {t("knowledge.notFound")}
         </div>
       </div>
     );
@@ -181,7 +183,7 @@ const ArticlePage = () => {
             <ButtonPrimary
               color="white"
               icon={faPen}
-              text="Edit"
+              text={t("common.edit")}
               onClick={startEditing}
             />
           )}
@@ -190,14 +192,14 @@ const ArticlePage = () => {
               <ButtonPrimary
                 color="blue"
                 icon={faSave}
-                text={saveMutation.isPending ? "Saving…" : "Save"}
+                text={saveMutation.isPending ? t("common.saving") : t("common.save")}
                 onClick={() => saveMutation.mutate()}
                 disabled={saveMutation.isPending || !editTitle.trim()}
               />
               <ButtonPrimary
                 color="white"
                 icon={faXmark}
-                text="Cancel"
+                text={t("common.cancel")}
                 onClick={cancelEditing}
               />
             </>
@@ -220,7 +222,7 @@ const ArticlePage = () => {
             <span
               className={`shrink-0 rounded-full px-3 py-1 text-[12px] font-bold uppercase ${statusColor[article.status] ?? ""}`}
             >
-              {article.status}
+              {t(`knowledge.status.${article.status}`, { defaultValue: article.status })}
             </span>
           </div>
 
@@ -232,7 +234,7 @@ const ArticlePage = () => {
             )}
             {article.space && (
               <span>
-                Space:{" "}
+                {t("knowledge.space")}
                 <Link
                   to={`/admin/knowledge/${article.spaceId}`}
                   className="text-[#2B9AE9] hover:underline"
@@ -241,7 +243,7 @@ const ArticlePage = () => {
                 </Link>
               </span>
             )}
-            <span>Updated {formatDate(article.updatedAt)}</span>
+            <span>{t("knowledge.updated", { date: formatDate(article.updatedAt) })}</span>
             <span className="flex items-center gap-1">
               <FontAwesomeIcon icon={faEye} className="text-[11px]" />
               {article.views}
@@ -275,7 +277,7 @@ const ArticlePage = () => {
             />
           ) : (
             <div className="text-[15px] italic text-[#8A8A8A]">
-              No content yet.
+              {t("knowledge.noContent")}
             </div>
           )}
         </div>
@@ -285,13 +287,13 @@ const ArticlePage = () => {
       {editing && (
         <div className="rounded-[10px] bg-white p-6 shadow-xl">
           <Input
-            label="Title"
+            label={t("knowledge.title")}
             value={editTitle}
             onChange={(e: any) => setEditTitle(e.target.value)}
           />
 
           <div className="pt-2">
-            <label className="font-bold text-[#3C3C3C]">Content</label>
+            <label className="font-bold text-[#3C3C3C]">{t("knowledge.content")}</label>
             <div className="mt-[6px]">
               <RichTextEditor
                 content={editContent}
@@ -302,7 +304,7 @@ const ArticlePage = () => {
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
-              <label className="font-bold text-[#3C3C3C]">Category</label>
+              <label className="font-bold text-[#3C3C3C]">{t("knowledge.category")}</label>
               <div className="mt-[6px]">
                 <CategorySelect
                   value={editCategory}
@@ -312,14 +314,14 @@ const ArticlePage = () => {
               </div>
             </div>
             <Input
-              label="Tags (comma-separated)"
+              label={t("knowledge.tagsLabel")}
               value={editTags}
               onChange={(e: any) => setEditTags(e.target.value)}
             />
           </div>
 
           <div className="pt-2">
-            <label className="font-bold text-[#3C3C3C]">Status</label>
+            <label className="font-bold text-[#3C3C3C]">{t("knowledge.status")}</label>
             <div className="mt-[6px] flex gap-2">
               {(["draft", "published", "archived"] as ArticleStatus[]).map(
                 (s) => (
@@ -333,7 +335,7 @@ const ArticlePage = () => {
                         : "border border-[#535353] bg-white text-[#535353]"
                     }`}
                   >
-                    {s}
+                    {t(`knowledge.status.${s}`)}
                   </button>
                 ),
               )}
@@ -350,7 +352,7 @@ const ArticlePage = () => {
           setIsDeleteModalOpen(false);
           deleteMutation.mutate();
         }}
-        message="Are you sure you want to delete this article? This action is irreversible."
+        message={t("knowledge.confirmDelete")}
       />
     </div>
   );

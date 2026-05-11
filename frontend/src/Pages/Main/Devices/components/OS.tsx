@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import Parameter from "../../../../Components/Lists/Parameter";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import moment from "moment";
@@ -7,10 +8,11 @@ import { faUser } from "@fortawesome/free-solid-svg-icons";
 type Props = { systemInfo: any };
 
 const OS = ({ systemInfo }: Props) => {
+  const { t } = useTranslation();
   if (!systemInfo) return null;
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <CardHeader text="System" />
+      <CardHeader text={t("device.section.os")} />
       <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">
         {systemInfo?.hostname}
       </div>

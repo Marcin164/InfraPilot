@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { faPlus, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
@@ -19,6 +20,7 @@ import PageMotion from "../../../../Components/PageMotion/PageMotion";
 import { motion } from "framer-motion";
 
 const KnowledgeDetails = () => {
+  const { t } = useTranslation();
   const { id: spaceId } = useParams<{ id: string }>();
   const { setParsers } = useParser();
 
@@ -68,7 +70,7 @@ const KnowledgeDetails = () => {
   const categories = categoriesQuery.data ?? [];
 
   if (spaceQuery.isLoading) {
-    return <div className="p-6 text-[#535353]">Loading…</div>;
+    return <div className="p-6 text-[#535353]">{t("history.loading")}</div>;
   }
 
   return (
@@ -85,7 +87,7 @@ const KnowledgeDetails = () => {
           {space?.icon || "📚"}
         </span>
         <h1 className="text-[24px] font-bold text-[#3C3C3C]">
-          {space?.name ?? "Space"}
+          {space?.name ?? t("knowledge.spaceFallback")}
         </h1>
       </div>
 
@@ -102,7 +104,7 @@ const KnowledgeDetails = () => {
         <ButtonPrimary
           color="white"
           icon={faPlus}
-          text="Add article"
+          text={t("btn.add.article")}
           onClick={() => setIsAddModalOpen(true)}
           className="h-[34px] ml-2"
         />
@@ -119,7 +121,7 @@ const KnowledgeDetails = () => {
                 : "bg-white text-[#535353] shadow-xl hover:bg-[#F0F0F0]"
             }`}
           >
-            All
+            {t("knowledge.all")}
           </button>
           {categories.map((cat) => (
             <button
@@ -140,12 +142,12 @@ const KnowledgeDetails = () => {
       )}
 
       {articlesQuery.isLoading && (
-        <div className="text-[#535353]">Loading articles…</div>
+        <div className="text-[#535353]">{t("knowledge.loadingArticles")}</div>
       )}
 
       {!articlesQuery.isLoading && articles.length === 0 && (
         <div className="rounded-[10px] bg-white p-6 text-center text-[#535353] shadow-xl">
-          No articles yet. Create one to get started.
+          {t("knowledge.empty")}
         </div>
       )}
 

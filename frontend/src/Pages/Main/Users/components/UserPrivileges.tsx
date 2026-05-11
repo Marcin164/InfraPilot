@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import Checkbox from "../../../../Components/Inputs/Checkbox";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
@@ -15,6 +16,7 @@ type Props = {
 };
 
 const UserPrivileges = ({ data }: Props) => {
+  const { t } = useTranslation();
   const params = useParams();
 
   const mutation = useMutation({
@@ -39,7 +41,7 @@ const UserPrivileges = ({ data }: Props) => {
 
   return (
     <div>
-      <CardHeader text="Privileges" icon={faUniversalAccess} />
+      <CardHeader text={t("users.privileges")} icon={faUniversalAccess} />
 
       <form className="flex flex-col gap-2 mt-2">
         <form.Field
@@ -47,7 +49,7 @@ const UserPrivileges = ({ data }: Props) => {
           children={(field) => (
             <Checkbox
               id="isApprover"
-              label="Approver"
+              label={t("users.privileges.approver")}
               name={field.name}
               checked={field.state.value}
               handleChange={handleCheckboxChange(field)}
@@ -60,7 +62,7 @@ const UserPrivileges = ({ data }: Props) => {
           children={(field) => (
             <Checkbox
               id="isAdmin"
-              label="Admin"
+              label={t("users.privileges.admin")}
               name={field.name}
               checked={field.state.value}
               handleChange={handleCheckboxChange(field)}

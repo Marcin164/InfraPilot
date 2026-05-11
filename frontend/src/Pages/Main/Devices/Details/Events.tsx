@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import EventsTable from "../../../../Components/Tables/EventsTable";
 import { useOutletContext } from "react-router";
@@ -7,6 +8,7 @@ import NoData from "../components/NoData";
 type Props = {};
 
 const Events = (props: Props) => {
+  const { t } = useTranslation();
   const device: any = useOutletContext();
 
   if (!device.data.eventLogs) return <NoData />;
@@ -22,15 +24,15 @@ const Events = (props: Props) => {
     <div>
       <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
         <ButtonPrimary
-          text="System"
+          text={t("device.section.eventsSystem")}
           onClick={() => toggleEventType("System")}
         />
         <ButtonPrimary
-          text="Application"
+          text={t("device.section.eventsApplication")}
           onClick={() => toggleEventType("Application")}
         />
         <ButtonPrimary
-          text="Security"
+          text={t("device.section.eventsSecurity")}
           onClick={() => toggleEventType("Security")}
         />
       </div>

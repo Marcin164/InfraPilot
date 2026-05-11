@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 
 type Props = {
@@ -8,10 +9,11 @@ type Props = {
 };
 
 const IPv6 = ({ IPv6Address, IPv6Gateway, IPv6LinkLocal }: Props) => {
+  const { t } = useTranslation();
   if (!IPv6Address) return null;
   return (
     <div>
-      <CardHeader text="IPv6 Config" />
+      <CardHeader text={t("device.section.ipv6")} />
       <div>
         <span className="text-[#3C3C3C] font-light">Address: </span>
         <span className="text-[#3C3C3C] font-semibold">{`${IPv6Address}`}</span>

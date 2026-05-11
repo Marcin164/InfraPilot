@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuthInfo } from "@propelauth/react";
 import moment from "moment";
 import { twMerge } from "tailwind-merge";
@@ -71,13 +72,14 @@ const AttachmentRenderer = ({
   mime: string;
   size?: number;
 }) => {
+  const { t } = useTranslation();
   const { blobUrl, loading } = useAttachmentUrl(id, !!mime);
 
   if (loading || !blobUrl) {
     return (
       <div className="flex items-center gap-2 text-[14px] text-[#7a7a7a] py-2">
         <FontAwesomeIcon icon={faSpinner} spin />
-        <span>Loading attachment...</span>
+        <span>{t("helpdesk.loadingAttachment")}</span>
       </div>
     );
   }

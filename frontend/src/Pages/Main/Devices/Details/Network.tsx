@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import Connections from "../components/Connections";
 import { useOutletContext } from "react-router";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
@@ -19,6 +20,7 @@ import NoData from "../components/NoData";
 type Props = {};
 
 const Network = (props: Props) => {
+  const { t } = useTranslation();
   const device: any = useOutletContext();
   const [networkInfoType, setNetworkInfoType] = useState(1);
 
@@ -114,19 +116,19 @@ const Network = (props: Props) => {
     <div>
       <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
         <ButtonPrimary
-          text="Connections"
+          text={t("device.section.connections")}
           onClick={() => toggleNetworkInfo(1)}
         />
-        <ButtonPrimary text="Adapters" onClick={() => toggleNetworkInfo(2)} />
+        <ButtonPrimary text={t("device.section.adapters")} onClick={() => toggleNetworkInfo(2)} />
         <ButtonPrimary
-          text="Firewall Rules"
+          text={t("device.section.firewallRules")}
           onClick={() => toggleNetworkInfo(3)}
         />
         <ButtonPrimary
-          text="Mapped Drives"
+          text={t("device.section.mappedDrives")}
           onClick={() => toggleNetworkInfo(4)}
         />
-        <ButtonPrimary text="Shares" onClick={() => toggleNetworkInfo(5)} />
+        <ButtonPrimary text={t("device.section.shares")} onClick={() => toggleNetworkInfo(5)} />
       </div>
       <div>{setPanel(networkInfoType)}</div>
     </div>

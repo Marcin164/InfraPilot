@@ -1,6 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import SelectSecondary from "../Inputs/SelectSecondary";
@@ -32,6 +33,7 @@ type EscalationForm = {
 };
 
 const EditEscalationForm = ({ data }: Props) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const definitionsQuery = useQuery({
@@ -44,7 +46,7 @@ const EditEscalationForm = ({ data }: Props) => {
       data ? patchSlaEscalation(values) : postSlaEscalation(values),
 
     onSuccess: async () => {
-      toast.success("Escalation updated");
+      toast.success(t("toast.success.escalationUpdated"));
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["definitions"] }),
@@ -54,7 +56,7 @@ const EditEscalationForm = ({ data }: Props) => {
     },
 
     onError: () => {
-      toast.error("Cannot change escalation");
+      toast.error(t("toast.error.escalationChange"));
     },
   });
 
@@ -84,9 +86,9 @@ const EditEscalationForm = ({ data }: Props) => {
     })) ?? [];
 
   const actionTypeOptions = [
-    { value: "NOTIFY", label: "Notify" },
-    { value: "REASSIGN", label: "Reassign" },
-    { value: "PRIORITY_UP", label: "Priority Up" },
+    { value: "NOTIFY", label: t("form.action.notify") },
+    { value: "REASSIGN", label: t("form.action.reassign") },
+    { value: "PRIORITY_UP", label: t("form.action.priorityUp") },
   ];
 
   return (
@@ -100,7 +102,7 @@ const EditEscalationForm = ({ data }: Props) => {
       <form.Field name="slaDefinitionId">
         {(field) => (
           <SelectSecondary
-            label="Definition"
+            label={t("form.definition")}
             options={definitionOptions}
             value={definitionOptions.find(
               (o: any) => o.value === field.state.value,
@@ -118,7 +120,7 @@ const EditEscalationForm = ({ data }: Props) => {
       >
         {(field) => (
           <Input
-            label="Trigger Percentage"
+            label={t("form.triggerPercentage")}
             suffix="%"
             value={String(field.state.value)}
             onChange={(e: any) => field.handleChange(e.target.value)}
@@ -130,7 +132,7 @@ const EditEscalationForm = ({ data }: Props) => {
       <form.Field name="actionType">
         {(field) => (
           <SelectSecondary
-            label="Action Type"
+            label={t("form.actionType")}
             options={actionTypeOptions}
             value={actionTypeOptions.find((o) => o.value === field.state.value)}
             onSelect={(option: any) => field.handleChange(option.value)}
@@ -148,7 +150,7 @@ const EditEscalationForm = ({ data }: Props) => {
         )}
       </form.Subscribe>
 
-      <ButtonPrimary type="submit" text="Save changes" className="mt-4" />
+      <ButtonPrimary type="submit" text={t("common.save")} className="mt-4" />
     </form>
   );
 };

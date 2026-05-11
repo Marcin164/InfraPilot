@@ -1,4 +1,5 @@
 import { useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import MessagesPanel from "./MessagesPanel";
 import MessageInput from "./MessageInput";
 
@@ -15,6 +16,7 @@ const TicketContentPanel = ({
   allComments,
   onOptimisticComment,
 }: TicketContentPanelProps) => {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,7 +29,7 @@ const TicketContentPanel = ({
   return (
     <div className="flex flex-col w-full mx-4 my-4 h-[calc(100vh-90px)]">
       <div className="bg-white shadow-xl rounded-[10px] p-4 shrink-0">
-        <div className="text-[14px] font-light">Description</div>
+        <div className="text-[14px] font-light">{t("helpdesk.description")}</div>
         <div className="font-bold">{description}</div>
       </div>
 

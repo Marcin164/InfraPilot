@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import UpdatesTable from "../../../../Components/Tables/UpdatesTable";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import { faCloudArrowUp } from "@fortawesome/free-solid-svg-icons";
@@ -6,9 +7,10 @@ import { faCloudArrowUp } from "@fortawesome/free-solid-svg-icons";
 type Props = { updates: any };
 
 const Updates = ({ updates }: Props) => {
+  const { t } = useTranslation();
   return (
     <div className="w-full h-full max-h-[400px] bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <CardHeader text="Updates" icon={faCloudArrowUp} />
+      <CardHeader text={t("device.section.updates")} icon={faCloudArrowUp} />
       <div className="overflow-hidden">
         <UpdatesTable data={updates} />
       </div>

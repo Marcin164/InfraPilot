@@ -1,13 +1,15 @@
+import { useTranslation } from "react-i18next";
 import NavbarLink from "./NavbarLink";
 import { deviceNavbarItems } from "../../Constants/navigation";
 
 const DeviceNavbar = () => {
+  const { t } = useTranslation();
   return (
     <div className="w-full flex bg-[#FFFFFF] shadow-xl rounded-[10px] p-2">
       {deviceNavbarItems.map((navbarItem) => (
         <NavbarLink
           to={navbarItem.to}
-          label={navbarItem.label}
+          label={t(navbarItem.label)}
           icon={navbarItem.icon}
           alignment="vertical"
         />

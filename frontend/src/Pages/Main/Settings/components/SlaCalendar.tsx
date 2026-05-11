@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import CalendarsTable from "../../../../Components/Tables/CalendarsTable";
 import EditCalendarModal from "../../../../Components/Modals/EditCalendarModal";
@@ -10,6 +11,7 @@ type Props = {
 };
 
 const SlaCalendar = ({ slaCalendars }: Props) => {
+  const { t } = useTranslation();
   if (!slaCalendars) return null;
 
   const [isEditCalendarModalOpen, setIsEditCalendarModalOpen] = useState(false);
@@ -33,10 +35,10 @@ const SlaCalendar = ({ slaCalendars }: Props) => {
   return (
     <div className="w-full h-[300px] overflow-y-auto bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
       <div className="flex justify-between items-center mb-4">
-        <CardHeader text="Calendars" />
+        <CardHeader text={t("settings.calendars")} />
         <ButtonPrimary
           icon={faPlus}
-          text="Add calendar"
+          text={t("btn.add.calendar")}
           onClick={openAddCalendarModal}
         />
       </div>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthInfo } from "@propelauth/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -44,6 +45,7 @@ const DEFAULT_THRESHOLDS: LastLogonThreshold[] = [
 /* ───────────────────── Last Logon Section ───────────────────── */
 
 const LastLogonSection = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const settingsQuery = useQuery({
@@ -68,9 +70,9 @@ const LastLogonSection = () => {
     }) => updateUserSettings(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userSettings"] });
-      toast.success("Settings saved");
+      toast.success(t("toast.success.settingsSaved"));
     },
-    onError: () => toast.error("Failed to save settings"),
+    onError: () => toast.error(t("toast.error.settingsSave")),
   });
 
   const save = (next: LastLogonThreshold[], nextDefault: string = defaultColor) => {
@@ -92,15 +94,14 @@ const LastLogonSection = () => {
 
   const getDaysSinceText = (maxDays: number, idx: number) => {
     const prev = idx > 0 ? thresholds[idx - 1].maxDays : 0;
-    return prev === 0 ? `0 – ${maxDays} days` : `${prev} – ${maxDays} days`;
+    return t("settings.admin.colors.range", { from: prev, to: maxDays });
   };
 
   return (
     <div className="bg-white shadow-xl rounded-[10px] p-6">
-      <h2 className="text-[20px] font-bold text-[#3C3C3C] pb-1">Last Logon Colors</h2>
+      <h2 className="text-[20px] font-bold text-[#3C3C3C] pb-1">{t("settings.admin.colors.title")}</h2>
       <p className="text-[14px] text-[#535353] pb-4">
-        Configure how the Last Logon column in the Users table is color-coded based on how many days
-        ago a user last logged in. Thresholds are automatically sorted by number of days.
+        {t("settings.admin.colors.help")}
       </p>
 
       <div className="space-y-2">
@@ -129,11 +130,11 @@ const LastLogonSection = () => {
               onChange={(e) => updateThreshold(idx, "label", e.target.value)}
               onBlur={() => save(thresholds)}
               className="h-[36px] w-[120px] rounded-[8px] border border-[#535353] px-2 text-[14px] font-bold text-[#3C3C3C] outline-none focus:border-[#2B9AE9]"
-              placeholder="Label"
+              placeholder={t("settings.admin.colors.label")}
             />
 
             <div className="flex items-center gap-2">
-              <span className="text-[13px] text-[#535353]">Within</span>
+              <span className="text-[13px] text-[#535353]">{t("settings.admin.colors.within")}</span>
               <input
                 type="number"
                 min={1}
@@ -142,7 +143,7 @@ const LastLogonSection = () => {
                 onBlur={() => save(thresholds)}
                 className="h-[36px] w-[70px] rounded-[8px] border border-[#535353] px-2 text-center text-[14px] font-bold text-[#3C3C3C] outline-none focus:border-[#2B9AE9]"
               />
-              <span className="text-[13px] text-[#535353]">days</span>
+              <span className="text-[13px] text-[#535353]">{t("settings.admin.colors.days")}</span>
             </div>
 
             <span className="text-[12px] text-[#8A8A8A] ml-auto hidden sm:inline">
@@ -166,12 +167,12 @@ const LastLogonSection = () => {
         className="mt-3 flex items-center gap-2 rounded-[10px] border border-dashed border-[#535353] px-4 py-2 text-[14px] font-bold text-[#535353] hover:bg-[#F0F0F0] cursor-pointer transition"
       >
         <FontAwesomeIcon icon={faPlus} />
-        Add threshold
+        {t("settings.admin.colors.addThreshold")}
       </button>
 
       <div className="mt-6 flex items-center gap-3">
         <span className="text-[14px] font-bold text-[#3C3C3C]">
-          Default color (older than all thresholds or never logged in):
+          {t("settings.admin.colors.defaultLabel")}
         </span>
         <div className="relative">
           <div
@@ -187,12 +188,12 @@ const LastLogonSection = () => {
           />
         </div>
         <span className="text-[13px] text-[#8A8A8A]">
-          {`> ${thresholds.length ? thresholds[thresholds.length - 1].maxDays : 0} days / N/A`}
+          {t("settings.admin.colors.defaultRange", { days: thresholds.length ? thresholds[thresholds.length - 1].maxDays : 0 })}
         </span>
       </div>
 
       <div className="mt-6">
-        <h3 className="text-[16px] font-bold text-[#3C3C3C] pb-2">Preview</h3>
+        <h3 className="text-[16px] font-bold text-[#3C3C3C] pb-2">{t("settings.admin.colors.preview")}</h3>
         <div className="flex flex-wrap gap-2">
           {thresholds.map((t, idx) => (
             <div
@@ -207,7 +208,7 @@ const LastLogonSection = () => {
             className="rounded-[10px] px-4 py-2 text-center text-[13px] font-bold text-white"
             style={{ backgroundColor: defaultColor }}
           >
-            Default ({`> ${thresholds.length ? thresholds[thresholds.length - 1].maxDays : 0} days`})
+            {t("settings.admin.colors.default")} ({t("settings.admin.colors.defaultRange", { days: thresholds.length ? thresholds[thresholds.length - 1].maxDays : 0 })})
           </div>
         </div>
       </div>
@@ -218,6 +219,7 @@ const LastLogonSection = () => {
 /* ───────────────── Assignment Groups Section ────────────────── */
 
 const AssignmentGroupsSection = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const authInfo: any = useAuthInfo();
   const currentUserId = authInfo?.user?.metadata?.id;
@@ -265,46 +267,46 @@ const AssignmentGroupsSection = () => {
         description: newDescription.trim() || undefined,
       }),
     onSuccess: () => {
-      toast.success("Assignment group created");
+      toast.success(t("toast.success.assignmentGroupCreated"));
       setNewName("");
       setNewDescription("");
       invalidateGroups();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Failed to create group"),
+      toast.error(err?.response?.data?.message ?? t("settings.admin.groups.createGroupFailed")),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, name, description }: { id: string; name?: string; description?: string }) =>
       updateAssignmentGroup(id, { name, description }),
     onSuccess: () => {
-      toast.success("Group updated");
+      toast.success(t("toast.success.groupUpdated"));
       setEditingId(null);
       invalidateGroups();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Failed to update group"),
+      toast.error(err?.response?.data?.message ?? t("settings.admin.groups.updateGroupFailed")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteAssignmentGroup(id),
     onSuccess: () => {
-      toast.success("Group deleted");
+      toast.success(t("toast.success.groupDeleted"));
       invalidateGroups();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Failed to delete group"),
+      toast.error(err?.response?.data?.message ?? t("settings.admin.groups.deleteGroupFailed")),
   });
 
   const setMembersMutation = useMutation({
     mutationFn: ({ id, userIds }: { id: string; userIds: string[] }) =>
       setAssignmentGroupMembers(id, userIds),
     onSuccess: () => {
-      toast.success("Members updated");
+      toast.success(t("toast.success.membersUpdated"));
       invalidateGroups();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Failed to update members"),
+      toast.error(err?.response?.data?.message ?? t("settings.admin.groups.updateMembersFailed")),
   });
 
   const startEdit = (group: AssignmentGroup) => {
@@ -321,7 +323,7 @@ const AssignmentGroupsSection = () => {
 
   const handleCreate = () => {
     if (!newName.trim()) {
-      toast.error("Name is required");
+      toast.error(t("toast.error.nameRequired"));
       return;
     }
     createMutation.mutate();
@@ -329,7 +331,7 @@ const AssignmentGroupsSection = () => {
 
   const handleSaveEdit = (id: string) => {
     if (!editName.trim()) {
-      toast.error("Name is required");
+      toast.error(t("toast.error.nameRequired"));
       return;
     }
     updateMutation.mutate({ id, name: editName.trim(), description: editDescription.trim() || undefined });
@@ -342,7 +344,7 @@ const AssignmentGroupsSection = () => {
 
   if (currentUserQuery.isLoading || groupsQuery.isLoading) {
     return (
-      <div className="bg-white shadow-xl rounded-[10px] p-4">Loading...</div>
+      <div className="bg-white shadow-xl rounded-[10px] p-4">{t("common.loading2")}</div>
     );
   }
 
@@ -350,7 +352,7 @@ const AssignmentGroupsSection = () => {
     <>
       {isAdmin && (
         <div className="bg-white shadow-xl rounded-[10px] p-4">
-          <CardHeader text="Create Assignment Group" icon={faPlus} />
+          <CardHeader text={t("settings.assignmentGroups.create")} icon={faPlus} />
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input label="Name" value={newName} onChange={(e: any) => setNewName(e.target.value)} />
             <Input
@@ -360,13 +362,13 @@ const AssignmentGroupsSection = () => {
             />
           </div>
           <div className="mt-4">
-            <ButtonPrimary icon={faPlus} text="Create" onClick={handleCreate} disabled={createMutation.isPending} />
+            <ButtonPrimary icon={faPlus} text={t("common.create")} onClick={handleCreate} disabled={createMutation.isPending} />
           </div>
         </div>
       )}
 
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text="Assignment Groups" icon={faUsers} />
+        <CardHeader text={t("settings.assignmentGroups.title")} icon={faUsers} />
 
         {!isAdmin && (
           <p className="text-[14px] text-[#7a7a7a] mt-2">
@@ -419,20 +421,20 @@ const AssignmentGroupsSection = () => {
                         <>
                           <ButtonPrimary
                             icon={faCheck}
-                            text="Save"
+                            text={t("common.save")}
                             onClick={() => handleSaveEdit(group.id)}
                             disabled={updateMutation.isPending}
                           />
-                          <ButtonPrimary icon={faXmark} text="Cancel" onClick={cancelEdit} />
+                          <ButtonPrimary icon={faXmark} text={t("common.cancel")} onClick={cancelEdit} />
                         </>
                       ) : (
                         <>
-                          <ButtonPrimary icon={faPen} text="Edit" onClick={() => startEdit(group)} />
+                          <ButtonPrimary icon={faPen} text={t("common.edit")} onClick={() => startEdit(group)} />
                           <ButtonPrimary
                             icon={faTrash}
-                            text="Delete"
+                            text={t("common.delete")}
                             onClick={() => {
-                              if (window.confirm(`Delete assignment group "${group.name}"?`)) {
+                              if (window.confirm(t("settings.admin.groups.deleteConfirm", { name: group.name }))) {
                                 deleteMutation.mutate(group.id);
                               }
                             }}
@@ -492,13 +494,13 @@ type RoleKey =
   | "isHelpdesk"
   | "isDpo";
 
-const ROLE_DEFS: { key: RoleKey; label: string; color: string; role: string }[] = [
-  { key: "isAdmin", label: "Admin", color: "#F3606E", role: "admin" },
-  { key: "isApprover", label: "Approver", color: "#2B9AE9", role: "approver" },
-  { key: "isAuditor", label: "Auditor", color: "#8E44AD", role: "auditor" },
-  { key: "isCompliance", label: "Compliance", color: "#16A085", role: "compliance" },
-  { key: "isHelpdesk", label: "Helpdesk", color: "#F1C40F", role: "helpdesk" },
-  { key: "isDpo", label: "DPO", color: "#E67E22", role: "dpo" },
+const ROLE_DEFS: { key: RoleKey; labelKey: string; color: string; role: string }[] = [
+  { key: "isAdmin", labelKey: "settings.admin.roles.role.admin", color: "#F3606E", role: "admin" },
+  { key: "isApprover", labelKey: "settings.admin.roles.role.approver", color: "#2B9AE9", role: "approver" },
+  { key: "isAuditor", labelKey: "settings.admin.roles.role.auditor", color: "#8E44AD", role: "auditor" },
+  { key: "isCompliance", labelKey: "settings.admin.roles.role.compliance", color: "#16A085", role: "compliance" },
+  { key: "isHelpdesk", labelKey: "settings.admin.roles.role.helpdesk", color: "#F1C40F", role: "helpdesk" },
+  { key: "isDpo", labelKey: "settings.admin.roles.role.dpo", color: "#E67E22", role: "dpo" },
 ];
 
 const ROLE_BY_NAME: Record<string, RoleKey> = ROLE_DEFS.reduce(
@@ -506,8 +508,10 @@ const ROLE_BY_NAME: Record<string, RoleKey> = ROLE_DEFS.reduce(
   {} as Record<string, RoleKey>,
 );
 
-const roleLabel = (name: string) =>
-  ROLE_DEFS.find((d) => d.role === name)?.label ?? name;
+const makeRoleLabel = (t: (k: string) => string) => (name: string) => {
+  const def = ROLE_DEFS.find((d) => d.role === name);
+  return def ? t(def.labelKey) : name;
+};
 
 /**
  * For each role checkbox on this row, return `{ disabled, reason }`.
@@ -518,7 +522,9 @@ const roleLabel = (name: string) =>
 const computeRowSoD = (
   row: any,
   pairs: SodPair[],
+  t: (k: string, opts?: any) => string,
 ): Record<RoleKey, { disabled: boolean; reason: string | null }> => {
+  const roleLabel = makeRoleLabel(t);
   const result = {} as Record<RoleKey, { disabled: boolean; reason: string | null }>;
   for (const def of ROLE_DEFS) {
     if (row[def.key]) {
@@ -536,7 +542,10 @@ const computeRowSoD = (
       const other = conflict.a === def.role ? conflict.b : conflict.a;
       result[def.key] = {
         disabled: true,
-        reason: `Conflicts with ${roleLabel(other)}: ${conflict.reason}`,
+        reason: t("settings.admin.roles.sodConflict", {
+          other: roleLabel(other),
+          reason: conflict.reason,
+        }),
       };
     } else {
       result[def.key] = { disabled: false, reason: null };
@@ -546,6 +555,8 @@ const computeRowSoD = (
 };
 
 const RolesSection = () => {
+  const { t } = useTranslation();
+  const roleLabel = makeRoleLabel(t);
   const queryClient = useQueryClient();
   const authInfo: any = useAuthInfo();
   const currentUserId = authInfo?.user?.metadata?.id;
@@ -588,7 +599,7 @@ const RolesSection = () => {
     mutationFn: ({ id, patch }: { id: string; patch: Partial<User> }) =>
       updateUser(patch, id),
     onSuccess: () => {
-      toast.success("Roles updated");
+      toast.success(t("toast.success.rolesUpdated"));
       queryClient.invalidateQueries({ queryKey: ["users-roles-table"] });
       queryClient.invalidateQueries({ queryKey: ["current-user"] });
     },
@@ -601,9 +612,9 @@ const RolesSection = () => {
               `${roleLabel(c.a)} ↔ ${roleLabel(c.b)}: ${c.reason}`,
           )
           .join("\n");
-        toast.error(`Segregation of duties violation:\n${lines}`);
+        toast.error(t("settings.admin.roles.sodViolation", { lines }));
       } else {
-        toast.error(data?.message ?? "Failed to update roles");
+        toast.error(data?.message ?? t("settings.admin.roles.updateFailed"));
       }
     },
   });
@@ -612,7 +623,7 @@ const RolesSection = () => {
 
   const userColumn = {
     id: "user",
-    name: "User",
+    name: t("settings.admin.roles.user"),
     cell: (row: any) => (
       <div className="py-1">
         <div className="font-bold text-[#3C3C3C]">
@@ -626,11 +637,11 @@ const RolesSection = () => {
 
   const roleColumns = ROLE_DEFS.map((r) => ({
     id: r.key,
-    name: r.label,
+    name: t(r.labelKey),
     center: true,
     width: "110px",
     cell: (row: any) => {
-      const sod = computeRowSoD(row, sodPairs)[r.key];
+      const sod = computeRowSoD(row, sodPairs, t)[r.key];
       const disabled = updateMutation.isPending || sod.disabled;
       return (
         <div title={sod.reason ?? undefined}>
@@ -654,15 +665,15 @@ const RolesSection = () => {
 
   return (
     <div className="bg-white shadow-xl rounded-[10px] p-4">
-      <CardHeader text="Role assignment" icon={faUserShield} />
+      <CardHeader text={t("settings.admin.roles.title")} icon={faUserShield} />
       <p className="text-[14px] text-[#7a7a7a] mt-2">
-        Grant compliance roles per user. Admins always pass any role check.
+        {t("settings.admin.roles.help")}
       </p>
 
       {sodPairs.length > 0 && (
         <div className="mt-3 rounded-[8px] border border-[#E0E0E0] bg-[#FAFAFA] p-3">
           <div className="text-[13px] font-bold text-[#3C3C3C] mb-1">
-            Segregation of duties
+            {t("settings.admin.roles.sod")}
           </div>
           <div className="flex flex-wrap gap-2">
             {sodPairs.map((p, idx) => (

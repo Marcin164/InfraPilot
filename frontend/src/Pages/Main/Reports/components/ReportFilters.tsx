@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { ReportMeta } from "../../../../Services/reports";
 import { useDebounce } from "../../../../Hooks/useDebounce";
 import ApplicationCombobox from "./ApplicationCombobox";
@@ -20,6 +21,7 @@ const inputCls =
   "border border-gray-200 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300";
 
 const ReportFilters = ({ supports, values, onChange }: Props) => {
+  const { t } = useTranslation();
   // Local state for free-text fields so typing doesn't fire a request per keystroke.
   const [departmentText, setDepartmentText] = useState(values.department ?? "");
   const debouncedDept = useDebounce(departmentText, 400);
@@ -72,7 +74,7 @@ const ReportFilters = ({ supports, values, onChange }: Props) => {
           <input
             type="text"
             className={inputCls}
-            placeholder="e.g. Engineering"
+            placeholder={t("reports.departmentExample")}
             value={departmentText}
             onChange={(e) => setDepartmentText(e.target.value)}
           />

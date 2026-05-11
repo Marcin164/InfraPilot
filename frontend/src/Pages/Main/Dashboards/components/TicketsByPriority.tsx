@@ -1,4 +1,5 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { useTranslation } from "react-i18next";
 import CardWrapper from "./CardWrapper";
 import { useDashboardData } from "../DashboardDataContext";
 
@@ -10,6 +11,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 const TicketsByPriority = () => {
+  const { t } = useTranslation();
   const data = useDashboardData("tickets-by-priority");
 
   const items = data.map((d) => ({
@@ -20,7 +22,7 @@ const TicketsByPriority = () => {
   const total = items.reduce((s, d) => s + d.value, 0);
 
   return (
-    <CardWrapper title="Tickets by Priority" accent="#E74C3C">
+    <CardWrapper title={t("dashboard.widget.ticketsByPriority")} accent="#E74C3C">
       <div className="flex h-full w-full items-center gap-2">
         <div className="relative h-full w-1/2 min-w-0">
           <ResponsiveContainer width="100%" height="100%">

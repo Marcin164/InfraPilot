@@ -1,6 +1,7 @@
 import { faTrash, faWarning, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import Modal from "./AnimatedModal";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 
@@ -19,6 +20,7 @@ const ConfirmationModal = ({
   onDelete,
   message,
 }: Props) => {
+  const { t } = useTranslation();
   return (
     <Modal
       classNames={{
@@ -28,7 +30,7 @@ const ConfirmationModal = ({
       onClose={handleOnClose}
       center
     >
-      <div className="text-center font-bold text-[24px]">Dangerous action!</div>
+      <div className="text-center font-bold text-[24px]">{t("common.dangerous")}</div>
       <div className="text-center py-6">
         <FontAwesomeIcon
           icon={faWarning}
@@ -36,13 +38,13 @@ const ConfirmationModal = ({
         />
       </div>
       <div className="pb-4 font-light text-[20px] text-justify">
-        {message || "Are you sure you want to delete this item? This action is irreversible."}
+        {message || t("common.confirmDelete")}
       </div>
       <div className="flex justify-around">
-        <ButtonPrimary icon={faXmark} text="Cancel" onClick={onCancel} />
+        <ButtonPrimary icon={faXmark} text={t("common.cancel")} onClick={onCancel} />
         <ButtonPrimary
           icon={faTrash}
-          text="Delete"
+          text={t("common.delete")}
           className="bg-[#F3606E]"
           onClick={onDelete}
         />

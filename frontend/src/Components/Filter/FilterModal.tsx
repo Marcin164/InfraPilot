@@ -1,7 +1,33 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBookmark } from "@fortawesome/free-solid-svg-icons";
 import Checkbox from "../Inputs/Checkbox";
+
+const VALUE_KEYS: Record<string, string> = {
+  Incident: "form.ticketType.incident",
+  Service: "form.ticketType.service",
+  Low: "form.priority.low",
+  Medium: "form.priority.medium",
+  High: "form.priority.high",
+  Critical: "form.priority.critical",
+  "Single user": "options.ticket.impact.singleUser",
+  "Multiple users": "options.ticket.impact.multipleUsers",
+  "Whole company": "options.ticket.impact.wholeCompany",
+  New: "options.ticket.state.new",
+  Assigned: "options.ticket.state.assigned",
+  "In progress": "options.ticket.state.inProgress",
+  "Awaiting for user": "options.ticket.state.awaitingForUser",
+  "Awaiting for vendor": "options.ticket.state.awaitingForVendor",
+  Resolved: "options.ticket.state.resolved",
+  Closed: "options.ticket.state.closed",
+  Cancelled: "options.ticket.state.cancelled",
+  Computers: "options.group.computers",
+  Peripherals: "options.group.peripherals",
+  Network: "options.group.network",
+  Components: "options.group.components",
+  Other: "options.group.other",
+};
 
 type Props = {
   filters: Record<string, string[] | undefined>;
@@ -18,7 +44,16 @@ const FilterModal = ({
   filterOptions,
   onSavePreset,
 }: Props) => {
+  const { t } = useTranslation();
   const [presetName, setPresetName] = useState("");
+
+  const labelForGroup = (key: string) =>
+    t(`filter.group.${key}`, { defaultValue: key });
+
+  const labelForValue = (value: string) => {
+    const key = VALUE_KEYS[value];
+    return key ? t(key) : value;
+  };
 
   const toggleValue = (key: string, value: string) => {
     setFilters((prev) => {
@@ -56,14 +91,14 @@ const FilterModal = ({
         {Object.entries(filterOptions).map(([key, options]) => (
           <div key={key}>
             <div className="text-[#3C3C3C] text-[16px] font-bold py-2 capitalize">
-              {key}
+              {labelForGroup(key)}
             </div>
 
             {options.map((option, idx) => (
               <Checkbox
                 key={idx}
                 name={key}
-                label={option}
+                label={labelForValue(option)}
                 value={option}
                 id={`${key}-${idx}`}
                 checked={filters[key]?.includes(option) ?? false}
@@ -77,7 +112,7 @@ const FilterModal = ({
       {onSavePreset && (
         <div className="border-t border-[#E0E0E0] p-2">
           <div className="pb-1 text-[12px] font-bold text-[#535353]">
-            Save current filter
+            {t("filter.saveCurrent")}
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -87,14 +122,14 @@ const FilterModal = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSave();
               }}
-              placeholder="Filter name…"
+              placeholder={t("filter.namePlaceholder")}
               className="h-[32px] flex-1 rounded-[8px] border border-[#535353] px-2 text-[13px] outline-none focus:border-[#2B9AE9]"
             />
             <button
               type="button"
               onClick={handleSave}
               disabled={!hasAnyFilter || !presetName.trim()}
-              title="Save filter"
+              title={t("filter.saveTitle")}
               className="flex h-[32px] w-[32px] items-center justify-center rounded-[8px] bg-[#2B9AE9] text-white transition hover:bg-[#1E86D1] disabled:cursor-not-allowed disabled:bg-[#B8D9EC]"
             >
               <FontAwesomeIcon icon={faBookmark} className="text-[12px]" />

@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import SelectSecondary from "../Inputs/SelectSecondary";
 import { useForm } from "@tanstack/react-form";
@@ -17,6 +18,7 @@ type Props = {
 };
 
 const EditRuleForm = ({ data }: Props) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (values: any) => {
@@ -25,7 +27,7 @@ const EditRuleForm = ({ data }: Props) => {
 
     onSuccess: async () => {
       toast.success(
-        `Rule has been ${data ? "updated" : "created"} successfully`,
+        data ? t("toast.success.ruleUpdated") : t("toast.success.ruleCreated"),
       );
 
       await Promise.all([
@@ -36,7 +38,7 @@ const EditRuleForm = ({ data }: Props) => {
     },
 
     onError: () => {
-      toast.error("Cannot change rule");
+      toast.error(t("toast.error.ruleChange"));
     },
   });
 
@@ -80,12 +82,12 @@ const EditRuleForm = ({ data }: Props) => {
 
           return (
             <SelectSecondary
-              label="Priority"
+              label={t("form.priority")}
               options={[
-                { value: "Low", label: "Low" },
-                { value: "Medium", label: "Medium" },
-                { value: "High", label: "High" },
-                { value: "Critical", label: "Critical" },
+                { value: "Low", label: t("form.priority.low") },
+                { value: "Medium", label: t("form.priority.medium") },
+                { value: "High", label: t("form.priority.high") },
+                { value: "Critical", label: t("form.priority.critical") },
               ]}
               value={value}
               onSelect={(opt: any) => field.handleChange(opt.value)}
@@ -102,11 +104,11 @@ const EditRuleForm = ({ data }: Props) => {
 
           return (
             <SelectSecondary
-              label="Ticket Type"
+              label={t("form.ticketType")}
               options={[
-                { value: null, label: "Any" },
-                { value: "Incident", label: "Incident" },
-                { value: "Service", label: "Service" },
+                { value: null, label: t("form.ticketType.any") },
+                { value: "Incident", label: t("form.ticketType.incident") },
+                { value: "Service", label: t("form.ticketType.service") },
               ]}
               value={value}
               onSelect={(opt: any) => field.handleChange(opt.value)}
@@ -123,7 +125,7 @@ const EditRuleForm = ({ data }: Props) => {
 
           return (
             <SelectSecondary
-              label="Definition"
+              label={t("form.definition")}
               options={definitionOptions}
               value={selectedOption}
               onSelect={(opt: any) => field.handleChange(opt.value)}
@@ -133,7 +135,7 @@ const EditRuleForm = ({ data }: Props) => {
       />
       <ButtonPrimary
         type="submit"
-        text={data ? "Update" : "Create"}
+        text={data ? t("common.update") : t("common.create")}
         className="mt-4"
       />
     </form>

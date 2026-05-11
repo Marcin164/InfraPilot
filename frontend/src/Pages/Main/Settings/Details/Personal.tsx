@@ -13,6 +13,7 @@ import {
   updateUserSettings,
 } from "../../../../Services/settings";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { twMerge } from "tailwind-merge";
 import { toast } from "react-toastify";
 import type {
@@ -23,19 +24,19 @@ import type {
   UserSettings,
 } from "../../../../Types/settings";
 
-const LANG_OPTIONS = [
-  { value: "pl", label: "Polski" },
-  { value: "en", label: "English" },
+const LANG_OPTIONS_KEYS = [
+  { value: "pl", labelKey: "settings.personal.language.pl" },
+  { value: "en", labelKey: "settings.personal.language.en" },
 ];
 
-const START_PAGE_OPTIONS: Array<{ value: StartPage; label: string }> = [
-  { value: "dashboards", label: "Dashboards" },
-  { value: "users", label: "Users" },
-  { value: "devices", label: "Devices" },
-  { value: "helpdesk", label: "Helpdesk" },
-  { value: "knowledge", label: "Knowledge" },
-  { value: "history", label: "History" },
-  { value: "reports", label: "Reports" },
+const START_PAGE_KEYS: Array<{ value: StartPage; labelKey: string }> = [
+  { value: "dashboards", labelKey: "nav.dashboards" },
+  { value: "users", labelKey: "nav.users" },
+  { value: "devices", labelKey: "nav.devices" },
+  { value: "helpdesk", labelKey: "nav.helpdesk" },
+  { value: "knowledge", labelKey: "nav.knowledge" },
+  { value: "history", labelKey: "nav.history" },
+  { value: "reports", labelKey: "nav.reports" },
 ];
 
 const DATE_FORMAT_OPTIONS: Array<{ value: DateFormat; label: string }> = [
@@ -44,17 +45,12 @@ const DATE_FORMAT_OPTIONS: Array<{ value: DateFormat; label: string }> = [
   { value: "YYYY-MM-DD", label: "YYYY-MM-DD (2026-12-31)" },
 ];
 
-const TIME_FORMAT_OPTIONS: Array<{ value: TimeFormat; label: string }> = [
-  { value: "24h", label: "24-hour (14:30)" },
-  { value: "12h", label: "12-hour (2:30 PM)" },
+const TIME_FORMAT_KEYS: Array<{ value: TimeFormat; labelKey: string }> = [
+  { value: "24h", labelKey: "settings.personal.timeFormat.24h" },
+  { value: "12h", labelKey: "settings.personal.timeFormat.12h" },
 ];
 
-const PAGE_SIZE_OPTIONS = [
-  { value: 10, label: "10 rows" },
-  { value: 25, label: "25 rows" },
-  { value: 50, label: "50 rows" },
-  { value: 100, label: "100 rows" },
-];
+const PAGE_SIZE_VALUES = [10, 25, 50, 100];
 
 type ThemeTileProps = {
   label: string;
@@ -122,7 +118,13 @@ const findOption = <T extends string | number>(
 ) => options.find((o) => o.value === value) ?? null;
 
 const Personal = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const LANG_OPTIONS = LANG_OPTIONS_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
+  const START_PAGE_OPTIONS = START_PAGE_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
+  const TIME_FORMAT_OPTIONS = TIME_FORMAT_KEYS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
+  const PAGE_SIZE_OPTIONS = PAGE_SIZE_VALUES.map((v) => ({ value: v, label: t("settings.personal.pageSize.rows", { count: v }) }));
 
   const { data, isLoading } = useQuery({
     queryKey: ["settings"],
@@ -141,10 +143,10 @@ const Personal = () => {
     onSuccess: (updated) => {
       queryClient.setQueryData(["settings"], updated);
       setDraft({});
-      toast.success("Settings saved");
+      toast.success(t("toast.success.settingsSaved"));
     },
     onError: () => {
-      toast.error("Failed to save settings");
+      toast.error(t("toast.error.settingsSave"));
     },
   });
 
@@ -160,7 +162,7 @@ const Personal = () => {
   if (isLoading) {
     return (
       <div className="m-4 rounded-[10px] bg-white p-6 shadow-xl">
-        Loading settings…
+        {t("settings.personal.loading")}
       </div>
     );
   }
@@ -170,24 +172,24 @@ const Personal = () => {
   return (
     <div className="m-4 space-y-6 rounded-[10px] bg-white p-6 shadow-xl">
       <Section
-        title="Theme"
-        description="Choose how LanVentory looks. System follows your OS preference."
+        title={t("settings.personal.theme")}
+        description={t("settings.personal.theme.desc")}
       >
         <div className="flex gap-3">
           <ThemeTile
-            label="Light"
+            label={t("settings.personal.theme.light")}
             icon={faSun}
             active={theme === "light"}
             onClick={() => update("theme", "light")}
           />
           <ThemeTile
-            label="Dark"
+            label={t("settings.personal.theme.dark")}
             icon={faMoon}
             active={theme === "dark"}
             onClick={() => update("theme", "dark")}
           />
           <ThemeTile
-            label="System"
+            label={t("settings.personal.theme.system")}
             icon={faDesktop}
             active={theme === "system"}
             onClick={() => update("theme", "system")}
@@ -196,8 +198,8 @@ const Personal = () => {
       </Section>
 
       <Section
-        title="Language"
-        description="Language used in the interface."
+        title={t("settings.personal.language")}
+        description={t("settings.personal.language.desc")}
       >
         <SelectSecondary
           label=""
@@ -211,8 +213,8 @@ const Personal = () => {
       </Section>
 
       <Section
-        title="Start page"
-        description="The page you land on after signing in."
+        title={t("settings.personal.startPage")}
+        description={t("settings.personal.startPage.desc")}
       >
         <SelectSecondary
           label=""
@@ -226,8 +228,8 @@ const Personal = () => {
       </Section>
 
       <Section
-        title="Date format"
-        description="How dates are shown across the app."
+        title={t("settings.personal.dateFormat")}
+        description={t("settings.personal.dateFormat.desc")}
       >
         <SelectSecondary
           label=""
@@ -241,8 +243,8 @@ const Personal = () => {
       </Section>
 
       <Section
-        title="Time format"
-        description="12-hour or 24-hour clock display."
+        title={t("settings.personal.timeFormat")}
+        description={t("settings.personal.timeFormat.desc")}
       >
         <SelectSecondary
           label=""
@@ -256,8 +258,8 @@ const Personal = () => {
       </Section>
 
       <Section
-        title="Default page size"
-        description="Number of rows shown per page in tables."
+        title={t("settings.personal.pageSize")}
+        description={t("settings.personal.pageSize.desc")}
       >
         <SelectSecondary
           label=""
@@ -271,11 +273,11 @@ const Personal = () => {
       </Section>
 
       <Section
-        title="Density"
-        description="Reduces paddings and font sizes for data-dense screens."
+        title={t("settings.personal.density")}
+        description={t("settings.personal.density.desc")}
       >
         <Checkbox
-          label="Compact mode"
+          label={t("settings.personal.density.compact")}
           checked={!!merged.compactMode}
           onChange={() => update("compactMode", !merged.compactMode)}
         />
@@ -288,7 +290,7 @@ const Personal = () => {
             onClick={() => setDraft({})}
             className="rounded-[10px] px-4 py-2 text-[14px] font-semibold text-[#8A8A8A] hover:text-[#3C3C3C]"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
         )}
         <button
@@ -300,7 +302,7 @@ const Personal = () => {
             "hover:bg-[#3CABFA] disabled:cursor-not-allowed disabled:bg-[#A7CDEE]",
           )}
         >
-          {mutation.isPending ? "Saving…" : "Save changes"}
+          {mutation.isPending ? t("common.saving") : t("common.save")}
         </button>
       </div>
     </div>

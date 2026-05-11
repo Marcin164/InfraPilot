@@ -3,6 +3,7 @@ import {
   faShare,
   faXmarkCircle,
 } from "@fortawesome/free-solid-svg-icons";
+import { useTranslation } from "react-i18next";
 import Badge from "../../../../Components/Badges/Badge";
 import Parameter from "../../../../Components/Lists/Parameter";
 import CardHeader from "../../../../Components/Headers/CardHeader";
@@ -10,9 +11,10 @@ import CardHeader from "../../../../Components/Headers/CardHeader";
 type Props = { printers: any };
 
 const Printers = ({ printers }: Props) => {
+  const { t } = useTranslation();
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <CardHeader text="Printers" icon={faPrint} />
+      <CardHeader text={t("device.section.printers")} icon={faPrint} />
       {printers.map((printer: any) => (
         <div>
           <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">
@@ -29,7 +31,7 @@ const Printers = ({ printers }: Props) => {
           />
           <div className="flex mt-2">
             {!printer.default && (
-              <Badge text="Default" className="bg-[#30A712]" />
+              <Badge text={t("device.section.printers.default")} className="bg-[#30A712]" />
             )}
             <Badge
               icon={printer.shared ? faShare : faXmarkCircle}

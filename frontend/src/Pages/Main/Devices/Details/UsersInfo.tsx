@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import { useOutletContext } from "react-router";
 import LocalUsersTable from "../../../../Components/Tables/LocalUsersTable";
@@ -9,6 +10,7 @@ import NoData from "../components/NoData";
 type Props = {};
 
 const UsersInfo = (props: Props) => {
+  const { t } = useTranslation();
   const device: any = useOutletContext();
 
   if (!device.data.users) return <NoData />;
@@ -25,15 +27,15 @@ const UsersInfo = (props: Props) => {
     <>
       <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
         <ButtonPrimary
-          text="Local Users"
+          text={t("device.section.localUsers")}
           onClick={() => toggleUsersGroupType(1)}
         />
         <ButtonPrimary
-          text="Local Groups"
+          text={t("device.section.localGroups")}
           onClick={() => toggleUsersGroupType(2)}
         />
         <ButtonPrimary
-          text="Users Profiles"
+          text={t("device.section.usersProfiles")}
           onClick={() => toggleUsersGroupType(3)}
         />
       </div>

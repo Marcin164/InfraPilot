@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowRight,
@@ -14,6 +15,7 @@ import { historyTypeAccent, historyTypeLabel } from "../constants";
 type Props = { entry: HistoryEntry };
 
 const HistoryFeedItem = ({ entry }: Props) => {
+  const { t } = useTranslation();
   const accent = historyTypeAccent[entry.type] ?? "#535353";
   const label = historyTypeLabel(entry.type);
 
@@ -46,7 +48,7 @@ const HistoryFeedItem = ({ entry }: Props) => {
               to={`/admin/helpdesk/${entry.ticket}`}
               className="text-[14px] font-bold text-[#2B9AE9] hover:underline"
             >
-              Ticket {entry.ticket}
+              {t("timeline.ticketPrefix", { number: entry.ticket })}
             </Link>
           )}
         </div>
@@ -65,7 +67,7 @@ const HistoryFeedItem = ({ entry }: Props) => {
             <span className="font-semibold">
               {user.distinguishedName ||
                 `${user.name ?? ""} ${user.surname ?? ""}`.trim() ||
-                "Unknown user"}
+                t("history.unknownUser")}
             </span>
           </Link>
         )}
@@ -84,7 +86,7 @@ const HistoryFeedItem = ({ entry }: Props) => {
               {device.assetName ||
                 `${device.manufacturer ?? ""} ${device.model ?? ""}`.trim() ||
                 device.serialNumber ||
-                "Device"}
+                t("history.deviceFallback")}
             </span>
             {device.serialNumber && (
               <span className="text-[12px] font-normal text-[#535353]">
@@ -124,7 +126,7 @@ const HistoryFeedItem = ({ entry }: Props) => {
 
       {entry.details && (
         <div className="mt-3 pl-3">
-          <div className="text-[13px] font-bold text-[#535353]">Details</div>
+          <div className="text-[13px] font-bold text-[#535353]">{t("form.field.details")}</div>
           <div className="text-[14px] italic text-[#3C3C3C]">
             {entry.details}
           </div>
@@ -134,7 +136,7 @@ const HistoryFeedItem = ({ entry }: Props) => {
       {entry.justification && (
         <div className="mt-2 pl-3">
           <div className="text-[13px] font-bold text-[#535353]">
-            Justification
+            {t("form.field.justification")}
           </div>
           <div className="text-[14px] italic text-[#3C3C3C]">
             {entry.justification}
@@ -144,7 +146,7 @@ const HistoryFeedItem = ({ entry }: Props) => {
 
       {entry.approvers && entry.approvers.length > 0 && (
         <div className="mt-2 pl-3">
-          <div className="text-[13px] font-bold text-[#535353]">Approvers</div>
+          <div className="text-[13px] font-bold text-[#535353]">{t("form.field.approvers")}</div>
           <div className="flex flex-wrap gap-x-2 text-[14px] italic text-[#3C3C3C]">
             {entry.approvers.map((approver: any, index: number) => (
               <span key={approver?.user?.id ?? index}>

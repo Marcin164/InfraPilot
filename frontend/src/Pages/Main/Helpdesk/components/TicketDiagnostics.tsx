@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import moment from "moment";
@@ -15,10 +16,10 @@ import {
   AgentTaskType,
 } from "../../../../Services/agentTasks";
 
-const TASK_TYPES: { value: AgentTaskType; label: string }[] = [
-  { value: "scan_now", label: "Scan now" },
-  { value: "collect_event_log", label: "Collect event log" },
-  { value: "inventory_refresh", label: "Inventory refresh" },
+const TASK_TYPE_VALUES: AgentTaskType[] = [
+  "scan_now",
+  "collect_event_log",
+  "inventory_refresh",
 ];
 
 const STATE_COLOR: Record<string, string> = {
@@ -33,8 +34,14 @@ const STATE_COLOR: Record<string, string> = {
 type Props = { ticketId: string; deviceId: string | null | undefined };
 
 const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [type, setType] = useState<AgentTaskType>("scan_now");
+
+  const TASK_TYPES = TASK_TYPE_VALUES.map((v) => ({
+    value: v,
+    label: t(`helpdesk.diag.task.${v}`),
+  }));
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const tasksQuery = useQuery({
@@ -51,13 +58,13 @@ const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
         payload: { ticketId },
       }),
     onSuccess: () => {
-      toast.success("Diagnostic queued — waiting for agent");
+      toast.success(t("toast.success.diagnosticQueued"));
       queryClient.invalidateQueries({
         queryKey: ["ticket-diagnostics", deviceId, ticketId],
       });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Enqueue failed"),
+      toast.error(err?.response?.data?.message ?? t("helpdesk.diag.enqueueFailed")),
   });
 
   const cancelMutation = useMutation({
@@ -79,10 +86,10 @@ const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
       <div className="flex items-center gap-2">
         <FontAwesomeIcon icon={faPlay} className="text-[#2B9AE9]" />
         <span className="text-[13px] font-bold text-[#3C3C3C]">
-          Diagnostics
+          {t("helpdesk.diag.title")}
         </span>
         <span className="text-[11px] text-[#7a7a7a]">
-          Runs on the device via agent
+          {t("helpdesk.diag.subtitle")}
         </span>
       </div>
 
@@ -98,7 +105,7 @@ const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
         </div>
         <ButtonPrimary
           icon={faPlay}
-          text={enqueueMutation.isPending ? "Queuing…" : "Run"}
+          text={enqueueMutation.isPending ? t("helpdesk.diag.queuing") : t("helpdesk.diag.run")}
           onClick={() => enqueueMutation.mutate()}
           disabled={enqueueMutation.isPending}
         />
@@ -116,9 +123,11 @@ const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
                   className="inline-block rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
                   style={{ backgroundColor: STATE_COLOR[task.state] }}
                 >
-                  {task.state}
+                  {t(`helpdesk.diag.state.${task.state}` as any, { defaultValue: task.state })}
                 </span>
-                <span className="font-bold text-[#3C3C3C]">{task.type}</span>
+                <span className="font-bold text-[#3C3C3C]">
+                  {t(`helpdesk.diag.task.${task.type}` as any, { defaultValue: task.type })}
+                </span>
                 <span className="text-[10px] text-[#9a9a9a] ml-auto">
                   {moment(task.createdAt).fromNow()}
                 </span>
@@ -127,7 +136,7 @@ const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
                     type="button"
                     onClick={() => cancelMutation.mutate(task.id)}
                     className="text-[#F3606E] hover:text-[#C0392B] cursor-pointer ml-1"
-                    title="Cancel"
+                    title={t("helpdesk.diag.cancel")}
                   >
                     <FontAwesomeIcon icon={faXmark} />
                   </button>
@@ -143,7 +152,7 @@ const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
                     }
                     className="text-[#2B9AE9] text-[11px] hover:underline cursor-pointer ml-1"
                   >
-                    {expanded[task.id] ? "hide" : "show result"}
+                    {expanded[task.id] ? t("helpdesk.diag.hide") : t("helpdesk.diag.show")}
                   </button>
                 )}
               </div>
@@ -164,13 +173,13 @@ const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
 
       {relevantTasks.length === 0 && (
         <div className="mt-2 text-[11px] text-[#9a9a9a]">
-          No diagnostics yet for this ticket.
+          {t("helpdesk.diag.none")}
         </div>
       )}
 
       <div className="mt-2 flex items-center gap-1 text-[10px] text-[#9a9a9a]">
         <FontAwesomeIcon icon={faRotate} />
-        Auto-refreshes every 10s while open
+        {t("helpdesk.diag.autorefresh")}
       </div>
     </div>
   );

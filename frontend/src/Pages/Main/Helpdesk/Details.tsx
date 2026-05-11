@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import { useAuthInfo } from "@propelauth/react";
@@ -37,6 +38,7 @@ const convertActivitiesToEntries = (activities: any[]) => {
 };
 
 const Details = () => {
+  const { t } = useTranslation();
   const params = useParams();
   const { setParsers } = useParser();
   const { user }: any = useAuthInfo();
@@ -116,7 +118,7 @@ const Details = () => {
     <div className="flex h-[calc(100vh-58px)] relative">
       {otherViewers.length > 0 && (
         <div className="absolute top-2 right-2 z-30 rounded-full bg-[#3C3C3C] text-white px-3 py-1 text-[11px] font-bold shadow">
-          👁 Also viewing: {otherViewers.map((v) => v.label).join(", ")}
+          👁 {t("helpdesk.alsoViewing", { users: otherViewers.map((v) => v.label).join(", ") })}
         </div>
       )}
       <TicketInfoPanel ticket={ticket} />

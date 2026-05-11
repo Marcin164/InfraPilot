@@ -95,54 +95,18 @@ const Index = () => {
   };
 
   const checkboxes = [
-    {
-      name: "number",
-      label: "Number",
-    },
-    {
-      name: "assignee",
-      label: "Assignee",
-    },
-    {
-      name: "requester",
-      label: "Requester",
-    },
-    {
-      name: "assignmentgroup",
-      label: "Assignment Group",
-    },
-    {
-      name: "state",
-      label: "State",
-    },
-    {
-      name: "urgency",
-      label: "Urgency",
-    },
-    {
-      name: "priority",
-      label: "Priority",
-    },
-    {
-      name: "impact",
-      label: "Impact",
-    },
-    {
-      name: "device",
-      label: "Device",
-    },
-    {
-      name: "createdat",
-      label: "Created At",
-    },
-    {
-      name: "sla",
-      label: "SLA",
-    },
-    {
-      name: "approvers",
-      label: "Approvers",
-    },
+    { name: "number", label: t("helpdesk.column.number") },
+    { name: "assignee", label: t("helpdesk.column.assignee") },
+    { name: "requester", label: t("helpdesk.column.requester") },
+    { name: "assignmentgroup", label: t("helpdesk.column.assignmentGroup") },
+    { name: "state", label: t("helpdesk.column.state") },
+    { name: "urgency", label: t("helpdesk.column.urgency") },
+    { name: "priority", label: t("helpdesk.column.priority") },
+    { name: "impact", label: t("helpdesk.column.impact") },
+    { name: "device", label: t("helpdesk.column.device") },
+    { name: "createdat", label: t("helpdesk.column.createdAt") },
+    { name: "sla", label: t("helpdesk.column.sla") },
+    { name: "approvers", label: t("helpdesk.column.approvers") },
   ];
 
   return (
@@ -180,10 +144,10 @@ const Index = () => {
                 : "bg-white text-[#3C3C3C] border border-[#D0D0D0]"
             } disabled:opacity-50 disabled:cursor-not-allowed`}
             title={
-              myId ? "Toggle assignee = me filter" : "Current user unknown"
+              myId ? t("helpdesk.toggleMine") : t("helpdesk.currentUserUnknown")
             }
           >
-            My tickets
+            {t("helpdesk.myTickets")}
           </button>
         </div>
         <FilterPresetsBar

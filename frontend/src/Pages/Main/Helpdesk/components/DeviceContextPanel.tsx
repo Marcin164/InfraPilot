@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import moment from "moment";
 import { toast } from "react-toastify";
@@ -53,6 +54,29 @@ type Props = {
  * policy it violates, and what changed recently.
  */
 const DeviceContextPanel = ({ deviceId, ticketId }: Props) => {
+  const { t } = useTranslation();
+
+  const lifecycleLabel = (state: string): string => {
+    switch (state) {
+      case "procurement":
+        return t("device.lifecycle.procurement");
+      case "active":
+        return t("device.lifecycle.active");
+      case "in_repair":
+        return t("device.lifecycle.repair");
+      case "in_storage":
+        return t("device.lifecycle.storage");
+      case "retired":
+        return t("device.lifecycle.retired");
+      case "disposed":
+        return t("device.lifecycle.disposed");
+      case "lost":
+        return t("device.lifecycle.lost");
+      default:
+        return state.replace("_", " ");
+    }
+  };
+
   const enabled = Boolean(deviceId);
 
   const remoteStatusQuery = useQuery({
@@ -66,14 +90,14 @@ const DeviceContextPanel = ({ deviceId, ticketId }: Props) => {
     onSuccess: (session) => {
       const win = window.open(session.url, "_blank", "noopener,noreferrer");
       if (!win) {
-        toast.error("Popup blocked — allow popups to start a remote session.");
+        toast.error(t("toast.error.popupBlocked"));
       } else {
-        toast.success(`Remote session started (valid ${session.ttlSeconds}s)`);
+        toast.success(t("helpdesk.ctx.remoteStarted", { seconds: session.ttlSeconds }));
       }
     },
     onError: (err: any) =>
       toast.error(
-        err?.response?.data?.message ?? "Failed to start remote session",
+        err?.response?.data?.message ?? t("helpdesk.ctx.remoteFailed"),
       ),
   });
 
@@ -116,7 +140,7 @@ const DeviceContextPanel = ({ deviceId, ticketId }: Props) => {
   if (!deviceId) {
     return (
       <div className="bg-[#FAFAFA] border border-dashed border-[#E0E0E0] rounded-[8px] p-3 mt-3 text-[12px] text-[#7a7a7a]">
-        No device attached to this ticket.
+        {t("helpdesk.ctx.noDevice")}
       </div>
     );
   }
@@ -124,7 +148,7 @@ const DeviceContextPanel = ({ deviceId, ticketId }: Props) => {
   if (deviceQuery.isLoading) {
     return (
       <div className="bg-[#FAFAFA] rounded-[8px] p-3 mt-3 text-[12px] text-[#7a7a7a]">
-        Loading device context…
+        {t("helpdesk.ctx.loading")}
       </div>
     );
   }
@@ -187,7 +211,7 @@ const DeviceContextPanel = ({ deviceId, ticketId }: Props) => {
           style={{ backgroundColor: LIFECYCLE_COLOR[lifecycle] ?? "#8A8A8A" }}
         >
           <FontAwesomeIcon icon={faBoxArchive} className="mr-1" />
-          {lifecycle.replace("_", " ")}
+          {lifecycleLabel(lifecycle)}
         </span>
         <span
           className="rounded-full px-2 py-0.5 text-[10px] font-bold"
@@ -195,8 +219,8 @@ const DeviceContextPanel = ({ deviceId, ticketId }: Props) => {
         >
           <FontAwesomeIcon icon={faClock} className="mr-1" />
           {device.lastScanAt
-            ? `scan ${moment(device.lastScanAt).fromNow()}`
-            : "never scanned"}
+            ? t("helpdesk.ctx.scanAgo", { when: moment(device.lastScanAt).fromNow() })
+            : t("helpdesk.ctx.neverScanned")}
         </span>
         {compliancePct !== null && (
           <Link
@@ -205,12 +229,14 @@ const DeviceContextPanel = ({ deviceId, ticketId }: Props) => {
             style={{ color: pctColor, border: `1px solid ${pctColor}` }}
             title={
               failing.length > 0
-                ? `Failing: ${failing.map((r: any) => r.rule?.name ?? r.ruleKey).join(", ")}`
-                : "All rules passing"
+                ? t("helpdesk.ctx.failingTitle", {
+                    names: failing.map((r: any) => r.rule?.name ?? r.ruleKey).join(", "),
+                  })
+                : t("helpdesk.ctx.allPassing")
             }
           >
             <FontAwesomeIcon icon={faShieldHalved} className="mr-1" />
-            {compliancePct}% compliant
+            {t("helpdesk.ctx.compliantPct", { pct: compliancePct })}
           </Link>
         )}
         {cves.length > 0 && (
@@ -227,7 +253,9 @@ const DeviceContextPanel = ({ deviceId, ticketId }: Props) => {
             }}
           >
             <FontAwesomeIcon icon={faBug} className="mr-1" />
-            {cves.length} CVE{criticalCves > 0 ? ` (${criticalCves} crit)` : ""}
+            {criticalCves > 0
+              ? t("helpdesk.ctx.cveBadgeCrit", { count: cves.length, critical: criticalCves })
+              : t("helpdesk.ctx.cveBadge", { count: cves.length })}
           </Link>
         )}
       </div>
@@ -235,33 +263,33 @@ const DeviceContextPanel = ({ deviceId, ticketId }: Props) => {
       {failing.length > 0 && (
         <div className="rounded-[6px] border border-[#F3D3D7] bg-[#FDF5F6] px-2 py-1 text-[11px]">
           <FontAwesomeIcon icon={faShield} className="text-[#C0392B] mr-1" />
-          <span className="font-bold text-[#C0392B]">Failing:</span>{" "}
+          <span className="font-bold text-[#C0392B]">{t("helpdesk.ctx.failingLabel")}</span>{" "}
           {failing
             .slice(0, 3)
             .map((r: any) => r.rule?.name ?? r.ruleKey)
             .join(" · ")}
-          {failing.length > 3 && ` +${failing.length - 3} more`}
+          {failing.length > 3 && ` ${t("helpdesk.ctx.moreCount", { count: failing.length - 3 })}`}
         </div>
       )}
 
       {diff && diff.changedSections && diff.changedSections.length > 0 && (
         <div className="rounded-[6px] border border-[#E0E0E0] bg-[#FAFAFA] px-2 py-1 text-[11px]">
           <FontAwesomeIcon icon={faPlay} className="text-[#2B9AE9] mr-1" />
-          <span className="font-bold">Recent change</span> (
+          <span className="font-bold">{t("helpdesk.ctx.recentChange")}</span> (
           {moment(diff.to.receivedAt).fromNow()}):{" "}
           {diff.changedSections.join(", ")}
           {diff.software.added.length > 0 && (
-            <> · <span className="text-[#30A712]">+{diff.software.added.length} app</span></>
+            <> · <span className="text-[#30A712]">{t("helpdesk.ctx.appAdded", { count: diff.software.added.length })}</span></>
           )}
           {diff.software.removed.length > 0 && (
-            <> · <span className="text-[#F3606E]">−{diff.software.removed.length} app</span></>
+            <> · <span className="text-[#F3606E]">{t("helpdesk.ctx.appRemoved", { count: diff.software.removed.length })}</span></>
           )}
           {diff.software.versionChanged.length > 0 && (
             <>
               {" "}
               ·{" "}
               <span className="text-[#F1C40F]">
-                ~{diff.software.versionChanged.length} ver
+                {t("helpdesk.ctx.appVer", { count: diff.software.versionChanged.length })}
               </span>
             </>
           )}
@@ -273,7 +301,7 @@ const DeviceContextPanel = ({ deviceId, ticketId }: Props) => {
           to={`/admin/devices/${device.id}/scans`}
           className="block text-[11px] text-[#2B9AE9] hover:underline"
         >
-          View scan history ({scansQuery.data.length} recent) →
+          {t("helpdesk.ctx.viewScans", { count: scansQuery.data.length })}
         </Link>
       )}
 
@@ -283,10 +311,10 @@ const DeviceContextPanel = ({ deviceId, ticketId }: Props) => {
           onClick={() => remoteMutation.mutate()}
           disabled={remoteMutation.isPending}
           className="mt-2 inline-flex items-center gap-2 rounded-[6px] bg-[#3C3C3C] text-white px-3 py-1.5 text-[12px] font-bold cursor-pointer hover:bg-[#535353] disabled:opacity-50"
-          title="Open a remote-assist session for this device"
+          title={t("helpdesk.ctx.startRemoteTitle")}
         >
           <FontAwesomeIcon icon={faDesktop} />
-          {remoteMutation.isPending ? "Starting…" : "Start remote session"}
+          {remoteMutation.isPending ? t("helpdesk.ctx.starting") : t("helpdesk.ctx.startRemote")}
         </button>
       )}
     </div>

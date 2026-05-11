@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import CardWrapper from "./CardWrapper";
 import { getAgentStats } from "../../../../Services/tickets";
 
 const AgentScoreboard = () => {
+  const { t } = useTranslation();
   const { data, isLoading } = useQuery({
     queryKey: ["agent-stats"],
     queryFn: getAgentStats,
@@ -18,8 +20,8 @@ const AgentScoreboard = () => {
 
   return (
     <CardWrapper
-      title="My ticket scoreboard"
-      subtitle="Live agent metrics"
+      title={t("dashboard.widget.agentScoreboard")}
+      subtitle={t("dashboard.widget.agentScoreboard.subtitle")}
       accent="#2B9AE9"
     >
       <div className="grid grid-cols-2 gap-3 w-full">

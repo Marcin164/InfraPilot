@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import {
   Bar,
@@ -33,6 +34,7 @@ type Props = {
 };
 
 const GenericReport = ({ meta, filters: initialFilters }: Props) => {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState<ReportFilterValues>(
     initialFilters ?? {}
   );
@@ -81,21 +83,21 @@ const GenericReport = ({ meta, filters: initialFilters }: Props) => {
           />
         )}
         <div className="flex-1 min-h-0">
-          {isLoading && <div className="text-gray-400">Loading…</div>}
+          {isLoading && <div className="text-gray-400">{t("reports.report.loading")}</div>}
           {error && (
-            <div className="text-red-500">Failed to load report</div>
+            <div className="text-red-500">{t("reports.report.failed")}</div>
           )}
           {!isLoading && !error && rows.length === 0 && (
-            <div className="text-gray-400">No data</div>
+            <div className="text-gray-400">{t("reports.report.noData")}</div>
           )}
-          {!isLoading && rows.length > 0 && renderChart(meta, rows)}
+          {!isLoading && rows.length > 0 && renderChart(meta, rows, t)}
         </div>
       </div>
     </ReportCard>
   );
 };
 
-function renderChart(meta: ReportMeta, rows: any[]) {
+function renderChart(meta: ReportMeta, rows: any[], t: (key: string) => string) {
   const data = rows.map((r) => ({
     label: r.label ?? r.name ?? "",
     value: Number(r.value) || 0,
@@ -152,8 +154,8 @@ function renderChart(meta: ReportMeta, rows: any[]) {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 sticky top-0">
             <tr>
-              <th className="text-left p-2">Label</th>
-              <th className="text-right p-2">Value</th>
+              <th className="text-left p-2">{t("reports.table.label")}</th>
+              <th className="text-right p-2">{t("reports.table.value")}</th>
             </tr>
           </thead>
           <tbody>

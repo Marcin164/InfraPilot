@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock, faDesktop, faUser } from "@fortawesome/free-solid-svg-icons";
@@ -27,6 +28,7 @@ interface TicketInfoPanelProps {
 }
 
 const TicketInfoPanel = ({ ticket }: TicketInfoPanelProps) => {
+  const { t } = useTranslation();
   return (
     <div className="w-[500px] h-fit bg-white shadow-xl rounded-[10px] p-4 my-4 ml-4">
       <CardHeader text={`${ticket.type} ${ticket.number}`} />
@@ -61,7 +63,7 @@ const TicketInfoPanel = ({ ticket }: TicketInfoPanelProps) => {
               {ticket.device.assetName || ticket.device.serialNumber}
             </Link>
           ) : (
-            "N/A"
+            t("common.na")
           )}
         </span>
       </div>

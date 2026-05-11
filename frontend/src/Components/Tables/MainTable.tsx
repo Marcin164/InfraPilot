@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import DataTable from "react-data-table-component";
 
 const MainTable = ({
@@ -16,6 +17,14 @@ const MainTable = ({
   clearSelectedRows,
   noDataComponent,
 }: any) => {
+  const { t } = useTranslation();
+  const paginationComponentOptions = {
+    rowsPerPageText: t("table.pagination.rowsPerPage"),
+    rangeSeparatorText: t("table.pagination.rangeSeparator"),
+  };
+  const defaultNoData = (
+    <div className="py-6 text-[14px] text-[#7a7a7a]">{t("table.noResults")}</div>
+  );
   const customStyles = {
     table: {
       style: {
@@ -81,7 +90,8 @@ const MainTable = ({
           selectableRows={selectableRows}
           onSelectedRowsChange={onSelectedRowsChange}
           clearSelectedRows={clearSelectedRows}
-          noDataComponent={noDataComponent}
+          noDataComponent={noDataComponent ?? defaultNoData}
+          paginationComponentOptions={paginationComponentOptions}
         />
       </motion.div>
     </AnimatePresence>

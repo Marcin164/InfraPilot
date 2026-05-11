@@ -106,7 +106,7 @@ const MainNavbar = () => {
           onClick={() => logout(false)}
         >
           <FontAwesomeIcon icon={faSignOut} />
-          <span className="pl-4">Logout</span>
+          <span className="pl-4">{t("nav.logout")}</span>
         </button>
       </motion.div>
     </div>

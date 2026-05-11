@@ -1,8 +1,10 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
+import { useTranslation } from "react-i18next";
 import CardWrapper from "./CardWrapper";
 import { useDashboardData } from "../DashboardDataContext";
 
 const BitlockerCompliance = () => {
+  const { t } = useTranslation();
   const data = useDashboardData("security-outside-domain");
 
   const joined =
@@ -20,7 +22,7 @@ const BitlockerCompliance = () => {
   ];
 
   return (
-    <CardWrapper title="Bitlocker Compliance" subtitle="Domain join status" accent={color}>
+    <CardWrapper title={t("dashboard.widget.bitlockerCompliance")} subtitle={t("dashboard.widget.bitlockerCompliance.subtitle")} accent={color}>
       <div className="flex flex-col items-center gap-2">
         <div className="relative h-[150px] w-[150px]">
           <ResponsiveContainer width="100%" height="100%">

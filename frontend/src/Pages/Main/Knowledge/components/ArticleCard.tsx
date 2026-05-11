@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { useTranslation } from "react-i18next";
 import type { KnowledgeArticle } from "../../../../Types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye } from "@fortawesome/free-solid-svg-icons";
@@ -26,8 +27,10 @@ const stripHtml = (html: string) =>
   html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
 
 const ArticleCard = ({ article }: Props) => {
+  const { t } = useTranslation();
   const plain = stripHtml(article.content ?? "");
   const preview = plain.slice(0, 120);
+  const statusLabel = t(`knowledge.status.${article.status}`, { defaultValue: article.status });
 
   return (
     <Link
@@ -41,7 +44,7 @@ const ArticleCard = ({ article }: Props) => {
         <span
           className={`shrink-0 rounded-full px-2 py-[2px] text-[11px] font-bold uppercase ${statusColor[article.status] ?? ""}`}
         >
-          {article.status}
+          {statusLabel}
         </span>
       </div>
 

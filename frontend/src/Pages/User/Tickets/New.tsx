@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuthInfo } from "@propelauth/react";
@@ -133,6 +134,7 @@ const DeviceTile = ({
 );
 
 const NewTicket = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const authInfo: any = useAuthInfo();
   const currentUserId = authInfo?.user?.metadata?.id;
@@ -477,7 +479,7 @@ const NewTicket = () => {
                         type="button"
                         onClick={() => removeFile(i)}
                         className="text-[#8A8A8A] hover:text-[#BC0E0E]"
-                        aria-label="Remove file"
+                        aria-label={t("helpdesk.removeFile")}
                       >
                         <FontAwesomeIcon icon={faXmark} />
                       </button>

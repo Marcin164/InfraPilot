@@ -7,10 +7,12 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 import CardWrapper from "./CardWrapper";
 import { useDashboardData } from "../DashboardDataContext";
 
 const TicketsOverTime = () => {
+  const { t } = useTranslation();
   const data = useDashboardData("tickets-over-time");
 
   const items = data.map((d) => ({
@@ -19,7 +21,7 @@ const TicketsOverTime = () => {
   }));
 
   return (
-    <CardWrapper title="Tickets Over Time" subtitle="Trend" accent="#E67E22">
+    <CardWrapper title={t("dashboard.widget.ticketsOverTime")} subtitle={t("dashboard.widget.ticketsOverTime.subtitle")} accent="#E67E22">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={items} margin={{ left: 0, right: 12, top: 8, bottom: 4 }}>
           <defs>

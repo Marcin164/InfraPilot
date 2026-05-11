@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "../../../../Hooks/useDebounce";
 import { searchApplications } from "../../../../Services/applications";
@@ -12,6 +13,7 @@ const inputCls =
   "border border-gray-200 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 w-56";
 
 const ApplicationCombobox = ({ value, onChange }: Props) => {
+  const { t } = useTranslation();
   const [text, setText] = useState(value ?? "");
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -52,7 +54,7 @@ const ApplicationCombobox = ({ value, onChange }: Props) => {
       <input
         type="text"
         className={inputCls}
-        placeholder="Type to search…"
+        placeholder={t("reports.searchTypePlaceholder")}
         value={text}
         onFocus={() => setOpen(true)}
         onChange={(e) => {

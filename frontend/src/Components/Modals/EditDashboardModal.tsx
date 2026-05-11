@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { DASHBOARD_WIDGETS } from "../../Constants/dashboardWidgets";
 
 type Props = {
@@ -12,6 +13,7 @@ const widgetItem = {
 };
 
 const EditDashboardModal = ({ isModalOpen, onWidgetDragStart }: Props) => {
+  const { t } = useTranslation();
   const onDragStart = (e: React.DragEvent, widgetId: string) => {
     e.dataTransfer.setData("widgetId", widgetId);
     onWidgetDragStart?.(widgetId);
@@ -39,7 +41,7 @@ const EditDashboardModal = ({ isModalOpen, onWidgetDragStart }: Props) => {
                   onDragStart={(e) => onDragStart(e, widget.id)}
                   className="w-full border border-dashed py-2 mb-2 rounded text-[13px] text-[#3C3C3C] hover:bg-[#F0F6FF] transition-colors"
                 >
-                  {widget.label}
+                  {t(widget.label)}
                 </button>
               </motion.div>
             ))}

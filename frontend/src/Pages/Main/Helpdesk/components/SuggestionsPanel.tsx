@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { faBookOpen, faLightbulb } from "@fortawesome/free-solid-svg-icons";
@@ -23,6 +24,7 @@ const buildKbQuery = (ticket: any) => {
 };
 
 const SuggestionsPanel = ({ ticket }: Props) => {
+  const { t } = useTranslation();
   const kbQuery = useMemo(() => buildKbQuery(ticket), [ticket]);
 
   const articlesQuery = useQuery({
@@ -49,7 +51,7 @@ const SuggestionsPanel = ({ ticket }: Props) => {
       <div className="flex items-center gap-2 mb-2">
         <FontAwesomeIcon icon={faLightbulb} className="text-[#F1C40F]" />
         <span className="text-[13px] font-bold text-[#3C3C3C]">
-          Suggestions
+          {t("helpdesk.suggestions")}
         </span>
       </div>
 
@@ -57,7 +59,7 @@ const SuggestionsPanel = ({ ticket }: Props) => {
         <div className="mb-2">
           <div className="text-[11px] font-bold text-[#9a9a9a] uppercase mb-1">
             <FontAwesomeIcon icon={faBookOpen} className="mr-1" />
-            Knowledge base
+            {t("helpdesk.knowledgeBase")}
           </div>
           <div className="space-y-1">
             {articles.map((a: any) => (
@@ -81,7 +83,7 @@ const SuggestionsPanel = ({ ticket }: Props) => {
       {similar.length > 0 && (
         <div>
           <div className="text-[11px] font-bold text-[#9a9a9a] uppercase mb-1">
-            Similar resolved tickets
+            {t("helpdesk.similarTickets")}
           </div>
           <div className="space-y-1">
             {similar.map((t: any) => (

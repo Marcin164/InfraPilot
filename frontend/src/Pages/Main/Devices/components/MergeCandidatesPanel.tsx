@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { toast } from "react-toastify";
@@ -23,6 +24,7 @@ type Props = {
 };
 
 const MergeCandidatesPanel = ({ device }: Props) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [manualSource, setManualSource] = useState("");
@@ -75,7 +77,7 @@ const MergeCandidatesPanel = ({ device }: Props) => {
         <ButtonPrimary
           icon={faCodeMerge}
           color="white"
-          text="Open canonical device"
+          text={t("device.merge.openCanonical")}
           className="mt-2"
           onClick={() =>
             navigate(`/admin/devices/${device.mergedIntoId}/system`)
@@ -89,7 +91,7 @@ const MergeCandidatesPanel = ({ device }: Props) => {
 
   return (
     <div className="bg-white shadow-xl rounded-[10px] p-4 mt-4">
-      <CardHeader text="Possible duplicates" icon={faCodeMerge} />
+      <CardHeader text={t("device.merge.duplicates")} icon={faCodeMerge} />
       <p className="text-[12px] text-[#7a7a7a] mt-2">
         Devices whose identity fingerprint (TPM, MAC, CPU id, serial)
         overlaps with this one. Use after a reformat or motherboard swap to
@@ -140,14 +142,14 @@ const MergeCandidatesPanel = ({ device }: Props) => {
               <div className="flex flex-col gap-1 shrink-0">
                 <ButtonPrimary
                   color="white"
-                  text="View"
+                  text={t("device.merge.view")}
                   onClick={() =>
                     navigate(`/admin/devices/${c.device.id}/system`)
                   }
                 />
                 <ButtonPrimary
                   icon={faCodeMerge}
-                  text="Merge into this"
+                  text={t("device.merge.mergeInto")}
                   onClick={() =>
                     confirmMerge(
                       c.device.id,
@@ -177,7 +179,7 @@ const MergeCandidatesPanel = ({ device }: Props) => {
               label="Source device ID"
               value={manualSource}
               handleChange={setManualSource}
-              placeholder="paste device UUID to merge into this one"
+              placeholder={t("device.merge.placeholder")}
             />
             <ButtonPrimary
               icon={faCodeMerge}

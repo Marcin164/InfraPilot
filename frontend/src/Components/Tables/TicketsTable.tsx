@@ -17,6 +17,41 @@ type Props = {
   isLoading?: boolean;
 };
 
+const STATE_KEY: Record<string, string> = {
+  New: "options.ticket.state.new",
+  Assigned: "options.ticket.state.assigned",
+  "In progress": "options.ticket.state.inProgress",
+  "Awaiting for user": "options.ticket.state.awaitingForUser",
+  "Awaiting for vendor": "options.ticket.state.awaitingForVendor",
+  Resolved: "options.ticket.state.resolved",
+  Closed: "options.ticket.state.closed",
+  Cancelled: "options.ticket.state.cancelled",
+};
+
+const PRIORITY_KEY: Record<string, string> = {
+  Low: "form.priority.low",
+  Medium: "form.priority.medium",
+  High: "form.priority.high",
+  Critical: "form.priority.critical",
+};
+
+const IMPACT_KEY: Record<string, string> = {
+  "Single user": "options.ticket.impact.singleUser",
+  "Multiple users": "options.ticket.impact.multipleUsers",
+  "Whole company": "options.ticket.impact.wholeCompany",
+};
+
+const URGENCY_KEY: Record<string, string> = {
+  Low: "options.ticket.urgency.low",
+  Medium: "options.ticket.urgency.medium",
+  High: "options.ticket.urgency.high",
+};
+
+const TYPE_KEY: Record<string, string> = {
+  Incident: "form.ticketType.incident",
+  Service: "form.ticketType.service",
+};
+
 const TicketsTable = ({
   data,
   total,
@@ -24,6 +59,7 @@ const TicketsTable = ({
   onRowsPerPageChange,
   isLoading,
 }: Props) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const userSettings = useQuery({
     queryKey: ["userSettings"],
@@ -31,8 +67,26 @@ const TicketsTable = ({
   });
 
   if (!userSettings.data || userSettings.isLoading) {
-    return <div>Loading...</div>;
+    return <div>{t("common.loading2")}</div>;
   }
+
+  const na = t("common.na");
+  const tr = (map: Record<string, string>, value?: string | null) => {
+    if (!value) return na;
+    const key = map[value];
+    return key ? t(key) : value;
+  };
+
+  const slaLabel = (ms: number, hrs: number) => {
+    if (hrs < 1) {
+      const minutes = Math.max(0, Math.round(ms / 60000));
+      return t("helpdesk.sla.in", { time: t("helpdesk.sla.minutes", { count: minutes }) });
+    }
+    if (hrs < 48) {
+      return t("helpdesk.sla.in", { time: t("helpdesk.sla.hours", { count: Math.round(hrs) }) });
+    }
+    return t("helpdesk.sla.in", { time: t("helpdesk.sla.days", { count: Math.round(hrs / 24) }) });
+  };
 
   const iconColumn = {
     id: "icon",
@@ -44,17 +98,17 @@ const TicketsTable = ({
     iconColumn,
     {
       id: "number",
-      name: "Number",
-      selector: (row: any) => `${row.type} ${row.number}`,
+      name: t("helpdesk.column.number"),
+      selector: (row: any) => `${tr(TYPE_KEY, row.type)} ${row.number}`,
     },
     {
       id: "assignee",
-      name: "Assignee",
-      selector: (row: any) => row.assignee || "N/A",
+      name: t("helpdesk.column.assignee"),
+      selector: (row: any) => row.assignee || na,
     },
     {
       id: "requester",
-      name: "Requester",
+      name: t("helpdesk.column.requester"),
       cell: (row: any) =>
         row.requester ? (
           <Link
@@ -65,63 +119,63 @@ const TicketsTable = ({
             {row.requester.distinguishedName}
           </Link>
         ) : (
-          "N/A"
+          na
         ),
-      selector: (row: any) => row.requester?.distinguishedName || "N/A",
+      selector: (row: any) => row.requester?.distinguishedName || na,
     },
     {
       id: "assignmentgroup",
-      name: "Assignment group",
-      selector: (row: any) => row.assignmentGroup || "N/A",
+      name: t("helpdesk.column.assignmentGroup"),
+      selector: (row: any) => row.assignmentGroup || na,
     },
     {
       id: "state",
-      name: "State",
-      selector: (row: any) => row.state || "N/A",
+      name: t("helpdesk.column.state"),
+      selector: (row: any) => tr(STATE_KEY, row.state),
     },
     {
       id: "urgency",
-      name: "Urgency",
-      selector: (row: any) => row.urgency || "N/A",
+      name: t("helpdesk.column.urgency"),
+      selector: (row: any) => tr(URGENCY_KEY, row.urgency),
     },
     {
       id: "priority",
-      name: "Priority",
-      selector: (row: any) => row.priority || "N/A",
+      name: t("helpdesk.column.priority"),
+      selector: (row: any) => tr(PRIORITY_KEY, row.priority),
     },
     {
       id: "impact",
-      name: "Impact",
-      selector: (row: any) => row.impact || "N/A",
+      name: t("helpdesk.column.impact"),
+      selector: (row: any) => tr(IMPACT_KEY, row.impact),
     },
     {
       id: "device",
-      name: "Device",
-      selector: (row: any) => row.device || "N/A",
+      name: t("helpdesk.column.device"),
+      selector: (row: any) => row.device || na,
     },
     {
       id: "createdat",
-      name: "Created at",
+      name: t("helpdesk.column.createdAt"),
       selector: (row: any) =>
-        row.createdAt ? new Date(row.createdAt).toLocaleString() : "N/A",
+        row.createdAt ? new Date(row.createdAt).toLocaleString() : na,
     },
     {
       id: "sla",
-      name: "SLA",
+      name: t("helpdesk.column.sla"),
       cell: (row: any) => {
         const sla = row.sla;
         if (!sla) return <span className="text-[#9a9a9a]">—</span>;
         if (sla.breached) {
           return (
             <span className="rounded-full px-2 py-0.5 text-[11px] font-bold text-white bg-[#C0392B]">
-              breached
+              {t("helpdesk.sla.breached")}
             </span>
           );
         }
         if (sla.paused) {
           return (
             <span className="rounded-full px-2 py-0.5 text-[11px] font-bold text-[#8A8A8A] border border-[#D0D0D0]">
-              paused
+              {t("helpdesk.sla.paused")}
             </span>
           );
         }
@@ -129,19 +183,13 @@ const TicketsTable = ({
         const hrs = ms / 3600000;
         const color =
           hrs < 1 ? "#C0392B" : hrs < 4 ? "#F3606E" : hrs < 24 ? "#F1C40F" : "#30A712";
-        const label =
-          hrs < 1
-            ? `${Math.max(0, Math.round(ms / 60000))}m`
-            : hrs < 48
-              ? `${Math.round(hrs)}h`
-              : `${Math.round(hrs / 24)}d`;
         return (
           <span
             className="rounded-full px-2 py-0.5 text-[11px] font-bold"
             style={{ color, border: `1px solid ${color}` }}
-            title={`Breaches at ${new Date(sla.dueAt).toLocaleString()}`}
+            title={t("helpdesk.sla.breachesAt", { date: new Date(sla.dueAt).toLocaleString() })}
           >
-            in {label}
+            {slaLabel(ms, hrs)}
           </span>
         );
       },
@@ -149,11 +197,11 @@ const TicketsTable = ({
     },
     {
       id: "approvers",
-      name: "Approvers",
+      name: t("helpdesk.column.approvers"),
       selector: (row: any) =>
         Array.isArray(row.approvers)
           ? row.approvers.join(", ")
-          : row.approvers || "N/A",
+          : row.approvers || na,
     },
   ];
 

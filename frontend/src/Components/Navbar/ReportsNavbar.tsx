@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import NavbarLink from "./NavbarLink";
 import {
@@ -10,6 +11,7 @@ import { listReports } from "../../Services/reports";
 type Props = {};
 
 const ReportsNavbar = (props: Props) => {
+  const { t } = useTranslation();
   const { data } = useQuery({
     queryKey: ["reports", "list"],
     queryFn: listReports,
@@ -29,7 +31,7 @@ const ReportsNavbar = (props: Props) => {
         <NavbarLink
           key={navbarItem.to}
           to={navbarItem.to}
-          label={navbarItem.label}
+          label={t(navbarItem.label)}
           icon={navbarItem.icon}
           alignment="vertical"
         />

@@ -1,13 +1,15 @@
 import { faUserGroup } from "@fortawesome/free-solid-svg-icons";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 
 type Props = { memberOf: any };
 
 const UserGroups = ({ memberOf }: Props) => {
+  const { t } = useTranslation();
   return (
     <div>
-      <CardHeader text="Groups" icon={faUserGroup} />
+      <CardHeader text={t("users.groups")} icon={faUserGroup} />
       <div className="flex flex-wrap">
         {memberOf && typeof memberOf !== "string" ? (
           memberOf.map((group: any) => (
@@ -16,7 +18,7 @@ const UserGroups = ({ memberOf }: Props) => {
             </div>
           ))
         ) : (
-          <div>No groups</div>
+          <div>{t("users.groups.empty")}</div>
         )}
       </div>
     </div>

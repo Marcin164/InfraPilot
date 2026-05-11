@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import SLaDefinitionsTable from "../../../../Components/Tables/SLaDefinitionsTable";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
@@ -10,6 +11,7 @@ type Props = {
 };
 
 const SlaDefinitions = ({ slaDefinitions }: Props) => {
+  const { t } = useTranslation();
   if (!slaDefinitions) return null;
   const [isEditDefinitionModalOpen, setIsEditDefinitionModalOpen] =
     useState(false);
@@ -35,10 +37,10 @@ const SlaDefinitions = ({ slaDefinitions }: Props) => {
   return (
     <div className="w-full h-[300px] overflow-y-auto bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
       <div className="flex justify-between items-center mb-4">
-        <CardHeader text="Definitions" />
+        <CardHeader text={t("settings.definitions")} />
         <ButtonPrimary
           icon={faPlus}
-          text="Add definition"
+          text={t("btn.add.definition")}
           onClick={openAddDefinitionModal}
         />
       </div>

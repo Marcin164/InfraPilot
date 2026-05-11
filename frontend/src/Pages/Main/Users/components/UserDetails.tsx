@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   faCheckCircle,
   faUserDoctor,
@@ -22,6 +23,7 @@ type Props = {
 };
 
 const UserDetails = ({ data }: Props) => {
+  const { t } = useTranslation();
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const authInfo: any = useAuthInfo();
   const currentUserId = authInfo?.user?.metadata?.id;
@@ -57,7 +59,7 @@ const UserDetails = ({ data }: Props) => {
                 icon={data.enabled ? faCheckCircle : faXmarkCircle}
               />
               <span className="px-2">
-                {data.enabled ? "Enabled" : "Disabled"}
+                {data.enabled ? t("users.details.enabled") : t("users.details.disabled")}
               </span>
             </div>
           </div>
@@ -75,7 +77,7 @@ const UserDetails = ({ data }: Props) => {
         {canViewAsDpo && (
           <ButtonPrimary
             icon={faUserShield}
-            text="View as DPO"
+            text={t("users.details.viewAsDpo")}
             onClick={() => setPrivacyOpen(true)}
             className="ml-auto text-[13px] py-0.5"
           />
@@ -90,16 +92,16 @@ const UserDetails = ({ data }: Props) => {
         />
       )}
       <div>
-        {data.manager && <Parameter name="manager" value={data.manager} />}
-        {data.email && <Parameter name="email" value={data.email} />}
-        {data.phone && <Parameter name="phone" value={data.phone} />}
+        {data.manager && <Parameter name={t("user.manager")} value={data.manager} />}
+        {data.email && <Parameter name={t("user.email")} value={data.email} />}
+        {data.phone && <Parameter name={t("user.phone")} value={data.phone} />}
         {data.streetAddress && data.postalCode && data.city && (
           <Parameter
-            name="address"
+            name={t("user.address")}
             value={`${data.streetAddress}, ${data.postalCode} ${data.city}`}
           />
         )}
-        {data.company && <Parameter name="company" value={data.company} />}
+        {data.company && <Parameter name={t("user.company")} value={data.company} />}
       </div>
 
       {(currentUserQuery.data?.isAdmin || canViewAsDpo) && (

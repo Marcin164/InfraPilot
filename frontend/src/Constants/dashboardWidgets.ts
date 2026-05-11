@@ -14,7 +14,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   // --- KPI cards ---
   {
     id: "733b7571-b65d-4e63-bbf3-d2deea569b0b",
-    label: "Active users",
+    label: "widget.activeUsers",
     component: "ActiveUsers",
     w: 3,
     h: 2,
@@ -25,7 +25,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "e6c96c89-75be-4bc8-8f3c-1db36214a4ad",
-    label: "Active devices",
+    label: "widget.activeDevices",
     component: "ActiveDevices",
     w: 3,
     h: 2,
@@ -36,7 +36,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "a1b2c3d4-1111-4000-8000-000000000001",
-    label: "Total Users",
+    label: "widget.totalUsers",
     component: "TotalUsers",
     w: 3,
     h: 2,
@@ -47,7 +47,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "a1b2c3d4-1111-4000-8000-000000000002",
-    label: "Total Devices",
+    label: "widget.totalDevices",
     component: "TotalDevices",
     w: 3,
     h: 2,
@@ -58,7 +58,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "a1b2c3d4-1111-4000-8000-000000000003",
-    label: "Open Tickets",
+    label: "widget.openTickets",
     component: "OpenTickets",
     w: 3,
     h: 2,
@@ -69,7 +69,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "a1b2c3d4-1111-4000-8000-000000000004",
-    label: "Online Devices",
+    label: "widget.onlineDevices",
     component: "OnlineDevices",
     w: 3,
     h: 2,
@@ -81,7 +81,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   // --- Chart cards ---
   {
     id: "b66b5c95-181b-4412-9ba9-dbd716d93cbb",
-    label: "Bitlocker compliance",
+    label: "widget.bitlockerCompliance",
     component: "BitlockerCompliance",
     w: 4,
     h: 5,
@@ -92,7 +92,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "a1b2c3d4-2222-4000-8000-000000000001",
-    label: "Devices by OS",
+    label: "widget.devicesByOS",
     component: "DevicesByOS",
     w: 4,
     h: 5,
@@ -103,7 +103,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "a1b2c3d4-2222-4000-8000-000000000002",
-    label: "Tickets by Priority",
+    label: "widget.ticketsByPriority",
     component: "TicketsByPriority",
     w: 4,
     h: 5,
@@ -114,7 +114,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "a1b2c3d4-2222-4000-8000-000000000006",
-    label: "Tickets by State",
+    label: "widget.ticketsByState",
     component: "TicketsByState",
     w: 5,
     h: 5,
@@ -125,7 +125,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "a1b2c3d4-2222-4000-8000-000000000007",
-    label: "Security Compliance",
+    label: "widget.securityCompliance",
     component: "SecurityCompliance",
     w: 4,
     h: 5,
@@ -136,7 +136,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "a1b2c3d4-2222-4000-8000-000000000003",
-    label: "Users by Department",
+    label: "widget.usersByDepartment",
     component: "UsersByDepartment",
     w: 5,
     h: 5,
@@ -147,7 +147,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "a1b2c3d4-2222-4000-8000-000000000005",
-    label: "Devices by Manufacturer",
+    label: "widget.devicesByManufacturer",
     component: "DevicesByManufacturer",
     w: 5,
     h: 5,
@@ -158,7 +158,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "a1b2c3d4-2222-4000-8000-000000000008",
-    label: "Top Applications",
+    label: "widget.topApplications",
     component: "TopApplications",
     w: 5,
     h: 5,
@@ -169,7 +169,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "c4e5a0d0-2222-4000-8000-0000000000c1",
-    label: "Compliance baseline",
+    label: "widget.complianceBaseline",
     component: "ComplianceBaseline",
     w: 4,
     h: 5,
@@ -180,7 +180,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "c4e5a0d0-2222-4000-8000-0000000000c2",
-    label: "CVE summary",
+    label: "widget.cveSummary",
     component: "CveSummary",
     w: 4,
     h: 5,
@@ -191,7 +191,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "c4e5a0d0-2222-4000-8000-0000000000a1",
-    label: "My ticket scoreboard",
+    label: "widget.agentScoreboard",
     component: "AgentScoreboard",
     w: 4,
     h: 4,
@@ -202,7 +202,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "c4e5a0d0-2222-4000-8000-0000000000a2",
-    label: "My SLA compliance",
+    label: "widget.agentSlaQuality",
     component: "AgentSlaQuality",
     w: 4,
     h: 5,
@@ -214,7 +214,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   // --- Large cards ---
   {
     id: "f65f5dd1-f822-470a-99aa-023d070ba5c3",
-    label: "Last scan",
+    label: "widget.lastScan",
     component: "LastScan",
     w: 6,
     h: 5,
@@ -225,7 +225,7 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
   },
   {
     id: "a1b2c3d4-2222-4000-8000-000000000004",
-    label: "Tickets Over Time",
+    label: "widget.ticketsOverTime",
     component: "TicketsOverTime",
     w: 6,
     h: 5,

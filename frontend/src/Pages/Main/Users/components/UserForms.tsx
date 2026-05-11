@@ -6,6 +6,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 import { toast } from "react-toastify";
 import {
@@ -18,6 +19,7 @@ import {
 type Props = {};
 
 const UserForms = (_props: Props) => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const queryClient = useQueryClient();
 
@@ -30,7 +32,7 @@ const UserForms = (_props: Props) => {
   const deleteMutation = useMutation({
     mutationFn: (formId: string) => deleteForm(formId),
     onSuccess: () => {
-      toast.success("Formularz został usunięty!");
+      toast.success(t("toast.success.formRemoved"));
       queryClient.invalidateQueries({ queryKey: ["forms", id] });
     },
   });
@@ -42,7 +44,7 @@ const UserForms = (_props: Props) => {
       window.open(url, "_blank");
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch {
-      toast.error("Nie udało się pobrać pliku");
+      toast.error(t("toast.error.fileDownload"));
     }
   };
 
@@ -58,17 +60,17 @@ const UserForms = (_props: Props) => {
 
   return (
     <div>
-      <div className="text-[30px] font-semibold text-[#3C3C3C] pt-2">Forms</div>
+      <div className="text-[30px] font-semibold text-[#3C3C3C] pt-2">{t("users.forms")}</div>
       <div className="flex flex-wrap gap-4">
         {forms.length === 0 && (
-          <div className="text-sm text-zinc-500 py-4">Brak formularzy</div>
+          <div className="text-sm text-zinc-500 py-4">{t("users.forms.empty")}</div>
         )}
         {forms.map((form) => (
           <div key={form.id} className="w-[120px] relative group">
             <button
               onClick={() => handleOpen(form)}
               className="bg-[#2B9AE9] text-[#FFFFFF] w-[100px] h-[100px] mx-auto rounded-full flex justify-center items-center text-[50px] cursor-pointer hover:opacity-90"
-              title="Otwórz"
+              title={t("users.forms.open")}
             >
               <FontAwesomeIcon icon={iconFor(form.mimetype)} />
             </button>
@@ -78,7 +80,7 @@ const UserForms = (_props: Props) => {
             <button
               onClick={() => deleteMutation.mutate(form.id)}
               className="absolute top-0 right-0 text-red-500 opacity-0 group-hover:opacity-100 p-1"
-              title="Usuń"
+              title={t("users.forms.delete")}
             >
               <FontAwesomeIcon icon={faTrash} />
             </button>

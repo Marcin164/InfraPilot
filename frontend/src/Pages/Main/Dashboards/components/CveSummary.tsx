@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import CardWrapper from "./CardWrapper";
 import { cveSummary, CveSeverity } from "../../../../Services/cve";
 
@@ -13,6 +14,7 @@ const COLOR: Record<CveSeverity, string> = {
 };
 
 const CveSummary = () => {
+  const { t } = useTranslation();
   const { data } = useQuery({
     queryKey: ["cve-summary"],
     queryFn: cveSummary,
@@ -40,8 +42,8 @@ const CveSummary = () => {
 
   return (
     <CardWrapper
-      title="Known vulnerabilities"
-      subtitle="Distinct CVE × device pairs (OSV.dev)"
+      title={t("dashboard.widget.cveSummary")}
+      subtitle={t("dashboard.widget.cveSummary.subtitle")}
       accent={headlineColor}
     >
       <div className="flex flex-col items-center gap-3 w-full">

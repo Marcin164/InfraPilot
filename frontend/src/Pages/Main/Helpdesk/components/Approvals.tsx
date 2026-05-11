@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
@@ -18,6 +19,7 @@ type Props = {
 };
 
 const Approvals = ({ requesterId, approvals }: Props) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const params = useParams();
   const [approverId, setApproverId] = useState<string | null>(null);
@@ -33,10 +35,10 @@ const Approvals = ({ requesterId, approvals }: Props) => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ticket", params.id] });
-      toast.success("Approval request sent");
+      toast.success(t("toast.success.approvalSent"));
     },
     onError: () => {
-      toast.error("Failed to send approval request");
+      toast.error(t("toast.error.approvalSend"));
     },
   });
 
@@ -73,23 +75,23 @@ const Approvals = ({ requesterId, approvals }: Props) => {
   };
 
   const decisionLabel = (decision?: string | null) => {
-    if (decision === "approved") return "Approved";
-    if (decision === "rejected") return "Rejected";
-    return "Pending";
+    if (decision === "approved") return t("helpdesk.decision.approved");
+    if (decision === "rejected") return t("helpdesk.decision.rejected");
+    return t("helpdesk.decision.pending");
   };
 
   const hasPending = approvals.some((a) => !a.decision);
 
   return (
     <div>
-      <CardHeader text="Approvals" />
+      <CardHeader text={t("helpdesk.approvals")} />
       <SelectSecondary
-        label="Approver"
+        label={t("helpdesk.approver")}
         onSelect={handleApproverSelect}
         options={createApproversOptions() ?? []}
       />
       <ButtonPrimary
-        text={hasPending ? "Approval pending" : "Send approval"}
+        text={hasPending ? t("helpdesk.approvalPending") : t("helpdesk.sendApproval")}
         className="mt-4"
         onClick={addApproval}
         disabled={hasPending || !approverId || mutation.isPending}
@@ -113,8 +115,8 @@ const Approvals = ({ requesterId, approvals }: Props) => {
             </div>
             <div className="text-[12px]">
               {approval?.decidedAt
-                ? `Decided: ${moment(approval.decidedAt).format("DD/MM/YYYY, HH:mm")}`
-                : `Requested: ${moment(approval?.createdAt).format("DD/MM/YYYY, HH:mm")}`}
+                ? t("helpdesk.decided", { date: moment(approval.decidedAt).format("DD/MM/YYYY, HH:mm") })
+                : t("helpdesk.requested", { date: moment(approval?.createdAt).format("DD/MM/YYYY, HH:mm") })}
             </div>
           </div>
         ))}

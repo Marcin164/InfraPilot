@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import {
   faCheckCircle,
@@ -26,6 +27,7 @@ const ApprovalDecision = ({
   createdAt,
   decidedAt,
 }: Props) => {
+  const { t } = useTranslation();
   const params = useParams();
   const queryClient = useQueryClient();
   const mutation = useMutation({
@@ -35,12 +37,12 @@ const ApprovalDecision = ({
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ticket", params.id] });
-      toast.success("Approval decision saved");
+      toast.success(t("toast.success.approvalSaved"));
     },
     onError: (err: any) => {
       const message =
         err?.response?.data?.message ||
-        "Only the assigned approver can decide on this approval";
+        t("helpdesk.onlyAssignedApprover");
       toast.error(message);
     },
   });
@@ -58,33 +60,28 @@ const ApprovalDecision = ({
     >
       <div className="text-[14px] font-light">
         {!decision ? (
-          `${author} is requesting your approval`
+          t("helpdesk.requestingApproval", { author })
         ) : (
-          <>
-            {author} has{" "}
-            <span
-              className={twMerge(
-                "font-bold uppercase",
-                decision === "approved" ? "text-[#30A712]" : "text-[#F3606E]",
-              )}
-            >
-              {decision}
-            </span>{" "}
-            your request
-          </>
+          t("helpdesk.hasDecided", {
+            author,
+            decision:
+              decision === "approved"
+                ? t("helpdesk.decision.approved")
+                : t("helpdesk.decision.rejected"),
+          })
         )}
       </div>
-      <div className="font-bold">Please approve replacing user's computer</div>
+      <div className="font-bold">{t("helpdesk.approveReplacement")}</div>
       {!decision && (
         <div className="pt-2">
           <ButtonPrimary
-            text="Approve"
+            text={t("helpdesk.approve")}
             icon={faCheckCircle}
             className="bg-[#30A712] hover:bg-[#108500]"
             onClick={() => handleDecision("approved")}
           />
           <ButtonPrimary
-            text="Reject"
+            text={t("helpdesk.reject")}
             icon={faXmarkCircle}
             className="bg-[#F3606E] hover:bg-[#D1404C] ml-2"
             onClick={() => handleDecision("rejected")}
@@ -92,11 +89,11 @@ const ApprovalDecision = ({
         </div>
       )}
       <div className="text-[12px] font-light">
-        Requested: {moment(createdAt).format("DD/MM/YYYY, HH:mm")}
+        {t("helpdesk.requested", { date: moment(createdAt).format("DD/MM/YYYY, HH:mm") })}
       </div>
       {decidedAt && (
         <div className="text-[12px] font-light">
-          Decided: {moment(decidedAt).format("DD/MM/YYYY, HH:mm")}
+          {t("helpdesk.decided", { date: moment(decidedAt).format("DD/MM/YYYY, HH:mm") })}
         </div>
       )}
     </div>

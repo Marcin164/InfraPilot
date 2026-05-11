@@ -51,7 +51,7 @@ export const navbarItems: NavbarItem[] = [
   },
   {
     to: "/admin/fleet",
-    label: "Fleet health",
+    label: "nav.fleet.title",
     icon: faGaugeHigh,
   },
   {
@@ -114,155 +114,44 @@ export const userNavbarPaths = new Set([
 ]);
 
 export const deviceNavbarItems = [
-  {
-    to: "system",
-    label: "System",
-    icon: faAddressBook,
-  },
-  {
-    to: "hardware",
-    label: "Hardware",
-    icon: faHardDrive,
-  },
-  {
-    to: "software",
-    label: "Software",
-    icon: faCode,
-  },
-  {
-    to: "network",
-    label: "Network",
-    icon: faNetworkWired,
-  },
-  {
-    to: "security",
-    label: "Security",
-    icon: faShield,
-  },
-  {
-    to: "events",
-    label: "Events",
-    icon: faCalendar,
-  },
-  {
-    to: "users",
-    label: "Users",
-    icon: faUsers,
-  },
-  {
-    to: "peripherals",
-    label: "Peripherals",
-    icon: faComputerMouse,
-  },
-  {
-    to: "history",
-    label: "History",
-    icon: faHistory,
-  },
-  {
-    to: "compliance",
-    label: "Compliance",
-    icon: faShieldHalved,
-  },
-  {
-    to: "cves",
-    label: "CVEs",
-    icon: faBug,
-  },
-  {
-    to: "lifecycle",
-    label: "Lifecycle",
-    icon: faBoxArchive,
-  },
-  {
-    to: "tasks",
-    label: "Tasks",
-    icon: faPlay,
-  },
-  {
-    to: "scans",
-    label: "Scans",
-    icon: faClockRotateLeft,
-  },
+  { to: "system", label: "device.tab.system", icon: faAddressBook },
+  { to: "hardware", label: "device.tab.hardware", icon: faHardDrive },
+  { to: "software", label: "device.tab.software", icon: faCode },
+  { to: "network", label: "device.tab.network", icon: faNetworkWired },
+  { to: "security", label: "device.tab.security", icon: faShield },
+  { to: "events", label: "device.tab.events", icon: faCalendar },
+  { to: "users", label: "device.tab.users", icon: faUsers },
+  { to: "peripherals", label: "device.tab.peripherals", icon: faComputerMouse },
+  { to: "history", label: "device.tab.history", icon: faHistory },
+  { to: "compliance", label: "device.tab.compliance", icon: faShieldHalved },
+  { to: "cves", label: "device.tab.cves", icon: faBug },
+  { to: "lifecycle", label: "device.tab.lifecycle", icon: faBoxArchive },
+  { to: "tasks", label: "device.tab.tasks", icon: faPlay },
+  { to: "scans", label: "device.tab.scans", icon: faClockRotateLeft },
 ];
 
 export const settingsNavbarItems = [
-  {
-    to: "personal",
-    label: "Personal",
-    icon: faAddressBook,
-  },
-  {
-    to: "active-directory",
-    label: "Active Directory",
-    icon: faNetworkWired,
-  },
-  {
-    to: "sla",
-    label: "SLA",
-    icon: faCalendar,
-  },
-  {
-    to: "workflows",
-    label: "Workflows",
-    icon: faBolt,
-  },
-  {
-    to: "notifications",
-    label: "Notifications",
-    icon: faBell,
-  },
-  {
-    to: "admin",
-    label: "Admin",
-    icon: faShield,
-    requires: "admin" as NavbarRequirement,
-  },
-  {
-    to: "audit",
-    label: "Audit log",
-    icon: faBookAtlas,
-    requires: "auditorOrAdmin" as NavbarRequirement,
-  },
-  {
-    to: "retention",
-    label: "Retention",
-    icon: faShield,
-    requires: "complianceOrAdmin" as NavbarRequirement,
-  },
-  {
-    to: "privacy",
-    label: "Privacy",
-    icon: faUser,
-    requires: "dpoOrAdmin" as NavbarRequirement,
-  },
-  {
-    to: "tags",
-    label: "Device tags",
-    icon: faTag,
-    requires: "admin" as NavbarRequirement,
-  },
-  {
-    to: "compliance-rules",
-    label: "Compliance rules",
-    icon: faShieldHalved,
-    requires: "complianceOrAdmin" as NavbarRequirement,
-  },
-  {
-    to: "ticket-templates",
-    label: "Ticket templates",
-    icon: faPaste,
-    requires: "helpdeskOrAdmin" as NavbarRequirement,
-  },
+  { to: "personal", label: "settings.tab.personal", icon: faAddressBook },
+  { to: "active-directory", label: "settings.tab.activeDirectory", icon: faNetworkWired },
+  { to: "sla", label: "settings.tab.sla", icon: faCalendar },
+  { to: "workflows", label: "settings.tab.workflows", icon: faBolt },
+  { to: "notifications", label: "settings.tab.notifications", icon: faBell },
+  { to: "admin", label: "settings.tab.admin", icon: faShield, requires: "admin" as NavbarRequirement },
+  { to: "audit", label: "settings.tab.audit", icon: faBookAtlas, requires: "auditorOrAdmin" as NavbarRequirement },
+  { to: "retention", label: "settings.tab.retention", icon: faShield, requires: "complianceOrAdmin" as NavbarRequirement },
+  { to: "privacy", label: "settings.tab.privacy", icon: faUser, requires: "dpoOrAdmin" as NavbarRequirement },
+  { to: "tags", label: "settings.tab.tags", icon: faTag, requires: "admin" as NavbarRequirement },
+  { to: "compliance-rules", label: "settings.tab.complianceRules", icon: faShieldHalved, requires: "complianceOrAdmin" as NavbarRequirement },
+  { to: "ticket-templates", label: "settings.tab.ticketTemplates", icon: faPaste, requires: "helpdeskOrAdmin" as NavbarRequirement },
 ];
 
 import type { ReportCategory } from "../Services/reports";
 
 export const reportsNavbarItems = [
-  { to: "users", label: "Users", icon: faUsers },
-  { to: "devices", label: "Devices", icon: faComputerMouse },
-  { to: "tickets", label: "Tickets", icon: faTicket },
-  { to: "security", label: "Security", icon: faShield },
+  { to: "users", label: "reports.tab.users", icon: faUsers },
+  { to: "devices", label: "reports.tab.devices", icon: faComputerMouse },
+  { to: "tickets", label: "reports.tab.tickets", icon: faTicket },
+  { to: "security", label: "reports.tab.security", icon: faShield },
 ];
 
 // Single source of truth mapping each Reports page route to the report

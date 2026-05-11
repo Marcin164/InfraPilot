@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { faPlay, faTag, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
@@ -35,6 +36,7 @@ type Props = {
 };
 
 const MassActionBar = ({ selectedIds, onCleared }: Props) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<null | "tag" | "lifecycle" | "task">(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
@@ -61,33 +63,33 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
         action,
       }),
     onSuccess: ({ affected }) => {
-      toast.success(`${affected} tag assignment(s) updated`);
+      toast.success(t("device.massAction.tagsUpdated", { count: affected }));
       clear();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Bulk tag failed"),
+      toast.error(err?.response?.data?.message ?? t("device.massAction.tagsFailed")),
   });
 
   const lifecycleMutation = useMutation({
     mutationFn: () =>
       bulkLifecycleDevices({ deviceIds: selectedIds, lifecycle }),
     onSuccess: ({ affected }) => {
-      toast.success(`${affected} device(s) updated`);
+      toast.success(t("device.massAction.devicesUpdated", { count: affected }));
       clear();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Bulk lifecycle failed"),
+      toast.error(err?.response?.data?.message ?? t("device.massAction.lifecycleFailed")),
   });
 
   const taskMutation = useMutation({
     mutationFn: () =>
       enqueueBulkTasks({ deviceIds: selectedIds, type: taskType }),
     onSuccess: ({ created }) => {
-      toast.success(`${created} task(s) queued`);
+      toast.success(t("device.massAction.tagsUpdated", { count: created }));
       clear();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Bulk enqueue failed"),
+      toast.error(err?.response?.data?.message ?? t("device.massAction.queueFailed")),
   });
 
   if (selectedIds.length === 0) return null;
@@ -95,32 +97,32 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
   return (
     <div className="sticky top-0 z-[60] bg-[#3C3C3C] text-white rounded-[10px] shadow-lg px-4 py-2 mb-3 flex flex-wrap items-center gap-3">
       <span className="text-[14px] font-bold">
-        {selectedIds.length} selected
+        {t("device.massAction.selected", { count: selectedIds.length })}
       </span>
       <button
         type="button"
         onClick={clear}
         className="text-[12px] text-[#B0B0B0] hover:text-white cursor-pointer"
       >
-        clear
+        {t("device.massAction.clear")}
       </button>
 
       <div className="flex gap-2 ml-auto items-center">
         <ButtonPrimary
           icon={faTag}
-          text="Tags"
+          text={t("device.massAction.tags")}
           onClick={() => setMode(mode === "tag" ? null : "tag")}
         />
         <ButtonPrimary
           icon={faBoxArchive}
-          text="Lifecycle"
+          text={t("device.massAction.lifecycle")}
           onClick={() =>
             setMode(mode === "lifecycle" ? null : "lifecycle")
           }
         />
         <ButtonPrimary
           icon={faPlay}
-          text="Run task"
+          text={t("device.massAction.runTask")}
           onClick={() => setMode(mode === "task" ? null : "task")}
         />
       </div>
@@ -128,7 +130,7 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
       {mode === "tag" && (
         <div className="w-full mt-2 bg-white text-[#3C3C3C] rounded-[8px] p-3">
           <div className="text-[12px] mb-2">
-            Pick tags, then choose attach or detach:
+            {t("device.massAction.pickTags")}
           </div>
           <div className="flex flex-wrap gap-2 mb-3">
             {(tagsQuery.data ?? []).map((tag: DeviceTag) => {
@@ -155,20 +157,20 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
             })}
             {tagsQuery.data?.length === 0 && (
               <span className="text-[12px] text-[#7a7a7a]">
-                No tags defined yet — create one in Settings → Tags.
+                {t("device.massAction.noTags")}
               </span>
             )}
           </div>
           <div className="flex gap-2">
             <ButtonPrimary
-              text={tagMutation.isPending ? "Attaching…" : "Attach"}
+              text={tagMutation.isPending ? t("device.massAction.attaching") : t("device.massAction.attach")}
               onClick={() => tagMutation.mutate("attach")}
               disabled={
                 tagMutation.isPending || selectedTagIds.length === 0
               }
             />
             <ButtonPrimary
-              text={tagMutation.isPending ? "Detaching…" : "Detach"}
+              text={tagMutation.isPending ? t("device.massAction.detaching") : t("device.massAction.detach")}
               onClick={() => tagMutation.mutate("detach")}
               disabled={
                 tagMutation.isPending || selectedTagIds.length === 0
@@ -180,7 +182,7 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
 
       {mode === "lifecycle" && (
         <div className="w-full mt-2 bg-white text-[#3C3C3C] rounded-[8px] p-3 flex items-center gap-2">
-          <span className="text-[13px] shrink-0">Set lifecycle to</span>
+          <span className="text-[13px] shrink-0">{t("device.massAction.setLifecycleTo")}</span>
           <div className="min-w-[200px]">
             <SelectSecondary
               options={LIFECYCLES.map((l) => ({
@@ -192,7 +194,7 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
             />
           </div>
           <ButtonPrimary
-            text={lifecycleMutation.isPending ? "Applying…" : "Apply"}
+            text={lifecycleMutation.isPending ? t("common.applying") : t("common.apply")}
             onClick={() => lifecycleMutation.mutate()}
             disabled={lifecycleMutation.isPending}
           />
@@ -201,7 +203,7 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
 
       {mode === "task" && (
         <div className="w-full mt-2 bg-white text-[#3C3C3C] rounded-[8px] p-3 flex items-center gap-2">
-          <span className="text-[13px] shrink-0">Queue task</span>
+          <span className="text-[13px] shrink-0">{t("device.massAction.queueTask")}</span>
           <div className="min-w-[200px]">
             <SelectSecondary
               options={TASK_TYPES}
@@ -213,7 +215,7 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
           </div>
           <ButtonPrimary
             icon={faPlay}
-            text={taskMutation.isPending ? "Queuing…" : "Queue"}
+            text={taskMutation.isPending ? t("device.massAction.queuing") : t("device.massAction.queue")}
             onClick={() => taskMutation.mutate()}
             disabled={taskMutation.isPending}
           />
@@ -222,8 +224,7 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
 
       {mode === "task" && (
         <div className="w-full text-[11px] text-[#B0B0B0]">
-          <FontAwesomeIcon icon={faPlay} /> Tasks are picked up by the agent on
-          next poll. Inspect the device detail for status.
+          <FontAwesomeIcon icon={faPlay} /> {t("device.massAction.taskInfo")}
         </div>
       )}
     </div>

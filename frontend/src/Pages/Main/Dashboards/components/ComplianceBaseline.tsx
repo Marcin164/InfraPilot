@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import CardWrapper from "./CardWrapper";
 import { complianceSummary } from "../../../../Services/compliance";
 
 const ComplianceBaseline = () => {
+  const { t } = useTranslation();
   const { data, isLoading } = useQuery({
     queryKey: ["compliance-summary"],
     queryFn: complianceSummary,
@@ -29,8 +31,8 @@ const ComplianceBaseline = () => {
 
   return (
     <CardWrapper
-      title="Compliance baseline"
-      subtitle="Devices passing every enabled rule"
+      title={t("dashboard.widget.complianceBaseline")}
+      subtitle={t("dashboard.widget.complianceBaseline.subtitle")}
       accent={color}
     >
       <div className="flex flex-col items-center gap-2">

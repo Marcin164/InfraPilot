@@ -80,12 +80,12 @@ const Index = () => {
   });
 
   const deviceCheckboxes = [
-    { name: "device", label: "Device" },
-    { name: "user", label: "User" },
-    { name: "state", label: "State" },
-    { name: "assetname", label: "Asset name" },
-    { name: "serialnumber", label: "Serial number" },
-    { name: "warranty", label: "Warranty" },
+    { name: "device", label: t("table.device.column.device") },
+    { name: "user", label: t("table.device.column.user") },
+    { name: "state", label: t("table.device.column.state") },
+    { name: "assetname", label: t("table.device.column.assetname") },
+    { name: "serialnumber", label: t("table.device.column.serialnumber") },
+    { name: "warranty", label: t("table.device.column.warranty") },
   ];
 
   useEffect(() => {

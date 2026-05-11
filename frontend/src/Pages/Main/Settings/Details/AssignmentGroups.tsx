@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthInfo } from "@propelauth/react";
 import { toast } from "react-toastify";
@@ -29,6 +30,7 @@ import { getUser, getUsers } from "../../../../Services/users";
 import type { User } from "../../../../Types";
 
 const AssignmentGroups = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const authInfo: any = useAuthInfo();
   const currentUserId = authInfo?.user?.metadata?.id;
@@ -76,13 +78,13 @@ const AssignmentGroups = () => {
         description: newDescription.trim() || undefined,
       }),
     onSuccess: () => {
-      toast.success("Assignment group created");
+      toast.success(t("toast.success.assignmentGroupCreated"));
       setNewName("");
       setNewDescription("");
       invalidateGroups();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Failed to create group");
+      toast.error(err?.response?.data?.message ?? t("toast.error.assignmentGroupCreate", "Failed to create group"));
     },
   });
 
@@ -97,23 +99,23 @@ const AssignmentGroups = () => {
       description?: string;
     }) => updateAssignmentGroup(id, { name, description }),
     onSuccess: () => {
-      toast.success("Group updated");
+      toast.success(t("toast.success.groupUpdated"));
       setEditingId(null);
       invalidateGroups();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Failed to update group");
+      toast.error(err?.response?.data?.message ?? t("toast.error.groupUpdate", "Failed to update group"));
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteAssignmentGroup(id),
     onSuccess: () => {
-      toast.success("Group deleted");
+      toast.success(t("toast.success.groupDeleted"));
       invalidateGroups();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Failed to delete group");
+      toast.error(err?.response?.data?.message ?? t("toast.error.groupDelete", "Failed to delete group"));
     },
   });
 
@@ -121,11 +123,11 @@ const AssignmentGroups = () => {
     mutationFn: ({ id, userIds }: { id: string; userIds: string[] }) =>
       setAssignmentGroupMembers(id, userIds),
     onSuccess: () => {
-      toast.success("Members updated");
+      toast.success(t("toast.success.membersUpdated"));
       invalidateGroups();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Failed to update members");
+      toast.error(err?.response?.data?.message ?? t("toast.error.membersUpdate", "Failed to update members"));
     },
   });
 
@@ -143,7 +145,7 @@ const AssignmentGroups = () => {
 
   const handleCreate = () => {
     if (!newName.trim()) {
-      toast.error("Name is required");
+      toast.error(t("toast.error.nameRequired"));
       return;
     }
     createMutation.mutate();
@@ -151,7 +153,7 @@ const AssignmentGroups = () => {
 
   const handleSaveEdit = (id: string) => {
     if (!editName.trim()) {
-      toast.error("Name is required");
+      toast.error(t("toast.error.nameRequired"));
       return;
     }
     updateMutation.mutate({
@@ -169,7 +171,7 @@ const AssignmentGroups = () => {
   if (currentUserQuery.isLoading || groupsQuery.isLoading) {
     return (
       <div className="bg-white shadow-xl rounded-[10px] p-4 m-4">
-        Loading...
+        {t("common.loading2")}
       </div>
     );
   }
@@ -178,15 +180,15 @@ const AssignmentGroups = () => {
     <div className="space-y-4 m-4">
       {isAdmin && (
         <div className="bg-white shadow-xl rounded-[10px] p-4">
-          <CardHeader text="Create Assignment Group" icon={faPlus} />
+          <CardHeader text={t("settings.assignmentGroups.create")} icon={faPlus} />
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Name"
+              label={t("form.name")}
               value={newName}
               onChange={(e: any) => setNewName(e.target.value)}
             />
             <Input
-              label="Description"
+              label={t("common.description")}
               value={newDescription}
               onChange={(e: any) => setNewDescription(e.target.value)}
             />
@@ -194,7 +196,7 @@ const AssignmentGroups = () => {
           <div className="mt-4">
             <ButtonPrimary
               icon={faPlus}
-              text="Create"
+              text={t("common.create")}
               onClick={handleCreate}
               disabled={createMutation.isPending}
             />
@@ -203,18 +205,18 @@ const AssignmentGroups = () => {
       )}
 
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text="Assignment Groups" icon={faUsers} />
+        <CardHeader text={t("settings.assignmentGroups.title")} icon={faUsers} />
 
         {!isAdmin && (
           <p className="text-[14px] text-[#7a7a7a] mt-2">
-            Read-only view. Only administrators can manage assignment groups.
+            {t("settings.assignmentGroups.readonlyHelp", "Read-only view. Only administrators can manage assignment groups.")}
           </p>
         )}
 
         <div className="mt-4 space-y-4">
           {(groupsQuery.data ?? []).length === 0 && (
             <div className="text-[14px] text-[#7a7a7a]">
-              No assignment groups yet.
+              {t("settings.assignmentGroups.empty", "No assignment groups yet.")}
             </div>
           )}
 
@@ -236,12 +238,12 @@ const AssignmentGroups = () => {
                     {isEditing ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input
-                          label="Name"
+                          label={t("form.name")}
                           value={editName}
                           onChange={(e: any) => setEditName(e.target.value)}
                         />
                         <Input
-                          label="Description"
+                          label={t("common.description")}
                           value={editDescription}
                           onChange={(e: any) =>
                             setEditDescription(e.target.value)
@@ -272,13 +274,13 @@ const AssignmentGroups = () => {
                         <>
                           <ButtonPrimary
                             icon={faCheck}
-                            text="Save"
+                            text={t("common.save")}
                             onClick={() => handleSaveEdit(group.id)}
                             disabled={updateMutation.isPending}
                           />
                           <ButtonPrimary
                             icon={faXmark}
-                            text="Cancel"
+                            text={t("common.cancel")}
                             onClick={cancelEdit}
                           />
                         </>
@@ -286,12 +288,12 @@ const AssignmentGroups = () => {
                         <>
                           <ButtonPrimary
                             icon={faPen}
-                            text="Edit"
+                            text={t("common.edit")}
                             onClick={() => startEdit(group)}
                           />
                           <ButtonPrimary
                             icon={faTrash}
-                            text="Delete"
+                            text={t("common.delete")}
                             onClick={() => {
                               if (
                                 window.confirm(
@@ -311,7 +313,7 @@ const AssignmentGroups = () => {
                 <div className="mt-4">
                   {isAdmin ? (
                     <SelectSecondary
-                      label="Members"
+                      label={t("settings.assignmentGroups.members", "Members")}
                       options={userOptions}
                       value={memberValues}
                       isMulti
@@ -323,12 +325,12 @@ const AssignmentGroups = () => {
                   ) : (
                     <div>
                       <div className="font-bold text-[#3C3C3C] mb-1">
-                        Members
+                        {t("settings.assignmentGroups.members", "Members")}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {(group.members ?? []).length === 0 && (
                           <span className="text-[14px] text-[#9a9a9a]">
-                            No members
+                            {t("settings.assignmentGroups.noMembers", "No members")}
                           </span>
                         )}
                         {(group.members ?? []).map((m) => (

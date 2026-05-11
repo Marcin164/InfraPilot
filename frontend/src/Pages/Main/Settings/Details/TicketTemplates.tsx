@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { faPaste, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
@@ -22,6 +23,7 @@ const emptyDraft = () => ({
 });
 
 const TicketTemplates = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(emptyDraft());
 
@@ -36,12 +38,12 @@ const TicketTemplates = () => {
   const createMutation = useMutation({
     mutationFn: () => createTicketTemplate(draft),
     onSuccess: () => {
-      toast.success("Template created");
+      toast.success(t("toast.success.templateCreated"));
       setDraft(emptyDraft());
       invalidate();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Create failed"),
+      toast.error(err?.response?.data?.message ?? t("settings.templates.createFailed")),
   });
 
   const toggleSharedMutation = useMutation({
@@ -49,17 +51,17 @@ const TicketTemplates = () => {
       updateTicketTemplate(tpl.id, { shared: !tpl.shared }),
     onSuccess: () => invalidate(),
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Update failed"),
+      toast.error(err?.response?.data?.message ?? t("settings.templates.updateFailed")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteTicketTemplate(id),
     onSuccess: () => {
-      toast.success("Template deleted");
+      toast.success(t("toast.success.templateDeleted"));
       invalidate();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Delete failed"),
+      toast.error(err?.response?.data?.message ?? t("settings.templates.deleteFailed")),
   });
 
   const templates = templatesQuery.data ?? [];
@@ -67,9 +69,9 @@ const TicketTemplates = () => {
   return (
     <div className="space-y-4 m-4">
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text="New template" icon={faPlus} />
+        <CardHeader text={t("settings.templates.new")} icon={faPlus} />
         <p className="text-[12px] text-[#7a7a7a] mt-2">
-          Placeholders resolved at paste time:{" "}
+          {t("settings.templates.help")}{" "}
           <code>{"{requester.firstName}"}</code>,{" "}
           <code>{"{requester.fullName}"}</code>,{" "}
           <code>{"{device.assetName}"}</code>,{" "}
@@ -80,20 +82,20 @@ const TicketTemplates = () => {
           <input
             value={draft.name}
             onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-            placeholder="Name (e.g. Ask for screenshot)"
+            placeholder={t("settings.templates.namePlaceholder")}
             className="md:col-span-2 h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
           />
           <input
             value={draft.category}
             onChange={(e) => setDraft({ ...draft, category: e.target.value })}
-            placeholder="Category"
+            placeholder={t("settings.templates.categoryPlaceholder")}
             className="h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
           />
         </div>
         <textarea
           value={draft.body}
           onChange={(e) => setDraft({ ...draft, body: e.target.value })}
-          placeholder="Hi {requester.firstName}, could you please…"
+          placeholder={t("settings.templates.bodyPlaceholder")}
           rows={5}
           className="mt-2 w-full rounded-[6px] border border-[#D0D0D0] px-3 py-2 text-[13px]"
         />
@@ -106,14 +108,14 @@ const TicketTemplates = () => {
                 setDraft({ ...draft, shared: e.target.checked })
               }
             />
-            Shared with team
+            {t("settings.templates.shared")}
           </label>
           <ButtonPrimary
             icon={faPlus}
-            text={createMutation.isPending ? "Saving…" : "Create"}
+            text={createMutation.isPending ? t("settings.templates.saving") : t("common.create")}
             onClick={() => {
               if (!draft.name.trim() || !draft.body.trim()) {
-                toast.error("Name and body are required");
+                toast.error(t("toast.error.bodyRequired"));
                 return;
               }
               createMutation.mutate();
@@ -124,48 +126,48 @@ const TicketTemplates = () => {
       </div>
 
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text="Existing templates" icon={faPaste} />
+        <CardHeader text={t("settings.templates.existing")} icon={faPaste} />
         {templates.length === 0 ? (
           <div className="mt-3 text-[13px] text-[#7a7a7a]">
-            No templates yet.
+            {t("settings.templates.empty")}
           </div>
         ) : (
           <div className="mt-3 space-y-2">
-            {templates.map((t) => (
+            {templates.map((tpl) => (
               <div
-                key={t.id}
+                key={tpl.id}
                 className="flex items-start gap-3 rounded-[8px] border border-[#E0E0E0] px-3 py-2"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-[13px] text-[#3C3C3C]">
-                      {t.name}
+                      {tpl.name}
                     </span>
                     <span className="text-[11px] text-[#9a9a9a]">
-                      {t.category}
+                      {tpl.category}
                     </span>
-                    {!t.shared && (
+                    {!tpl.shared && (
                       <span className="text-[10px] font-bold rounded px-1.5 py-0.5 bg-[#FFF0D8] text-[#C07C0F]">
-                        private
+                        {t("settings.templates.private")}
                       </span>
                     )}
                   </div>
                   <pre className="text-[12px] text-[#535353] mt-1 whitespace-pre-wrap break-words">
-                    {t.body}
+                    {tpl.body}
                   </pre>
                 </div>
                 <button
                   type="button"
-                  onClick={() => toggleSharedMutation.mutate(t)}
+                  onClick={() => toggleSharedMutation.mutate(tpl)}
                   className="text-[12px] text-[#2B9AE9] hover:underline cursor-pointer"
                 >
-                  {t.shared ? "make private" : "share"}
+                  {tpl.shared ? t("settings.templates.makePrivate") : t("settings.templates.share")}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    if (window.confirm(`Delete "${t.name}"?`))
-                      deleteMutation.mutate(t.id);
+                    if (window.confirm(t("settings.templates.confirmDelete", { name: tpl.name })))
+                      deleteMutation.mutate(tpl.id);
                   }}
                   className="text-[#F3606E] hover:text-[#C0392B] cursor-pointer"
                 >

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { useOutletContext } from "react-router";
 import { toast } from "react-toastify";
 import moment from "moment";
@@ -26,6 +27,7 @@ const SEVERITY_COLOR: Record<string, string> = {
 };
 
 const Compliance = () => {
+  const { t } = useTranslation();
   const device: any = useOutletContext();
   const deviceId = device?.data?.id;
   const queryClient = useQueryClient();
@@ -40,7 +42,7 @@ const Compliance = () => {
     mutationFn: () => evaluateDevice(deviceId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["compliance-device", deviceId] });
-      toast.success("Compliance re-evaluated");
+      toast.success(t("toast.success.complianceReevaluated"));
     },
     onError: (err: any) =>
       toast.error(err?.response?.data?.message ?? "Re-evaluation failed"),
@@ -57,7 +59,7 @@ const Compliance = () => {
   return (
     <div className="bg-white shadow-xl rounded-[10px] p-4">
       <div className="flex items-start justify-between">
-        <CardHeader text="Compliance baseline" icon={faShield} />
+        <CardHeader text={t("device.section.compliance")} icon={faShield} />
         <ButtonPrimary
           icon={faRotate}
           text={reeval.isPending ? "Evaluating…" : "Re-evaluate"}

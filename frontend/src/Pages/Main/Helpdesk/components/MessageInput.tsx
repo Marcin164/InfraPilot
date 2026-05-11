@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import {
   faFile,
@@ -42,6 +43,7 @@ const ACCEPTED_MIMES = new Set([
 ]);
 
 const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
+  const { t } = useTranslation();
   const { user }: any = useAuthInfo();
   const ticketQuery = useQuery({
     queryKey: ["ticket", ticketId],
@@ -79,7 +81,7 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
       setMessage("");
     },
     onError: () => {
-      toast.error("Failed to send message");
+      toast.error(t("helpdesk.sendMessageFailed"));
     },
   });
 
@@ -109,7 +111,7 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
       clearRecording();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Failed to send attachment");
+      toast.error(err?.response?.data?.message ?? t("helpdesk.sendAttachmentFailed"));
     },
   });
 
@@ -137,9 +139,7 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
     if (!file) return;
 
     if (!ACCEPTED_MIMES.has(file.type)) {
-      toast.error(
-        "Unsupported file type. Allowed: mp3, mp4, png, jpg, pdf, wav",
-      );
+      toast.error(t("helpdesk.unsupportedFile"));
       e.target.value = "";
       return;
     }
@@ -179,7 +179,7 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
       mediaRecorderRef.current = recorder;
       setIsRecording(true);
     } catch (err) {
-      toast.error("Microphone permission denied or unavailable");
+      toast.error(t("toast.error.micPermission"));
     }
   };
 
@@ -254,7 +254,7 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
               clearRecording();
             }}
             className="ml-auto text-[#7a7a7a] hover:text-[#BC0E0E] cursor-pointer"
-            aria-label="Remove attachment"
+            aria-label={t("helpdesk.removeAttachment")}
           >
             <FontAwesomeIcon icon={faXmark} />
           </button>

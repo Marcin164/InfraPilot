@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -15,13 +16,13 @@ type Props = {
   createdAt: string;
 };
 
-const FIELD_LABELS: Record<string, string> = {
-  state: "State",
-  priority: "Priority",
-  impact: "Impact",
-  urgency: "Urgency",
-  assignee: "Assignee",
-  assignmentGroup: "Assignment Group",
+const FIELD_LABEL_KEYS: Record<string, string> = {
+  state: "helpdesk.field.state",
+  priority: "helpdesk.field.priority",
+  impact: "helpdesk.field.impact",
+  urgency: "helpdesk.field.urgency",
+  assignee: "helpdesk.field.assignee",
+  assignmentGroup: "helpdesk.field.assignmentGroup",
 };
 
 const ActivityEntry = ({
@@ -32,7 +33,8 @@ const ActivityEntry = ({
   user,
   createdAt,
 }: Props) => {
-  const label = FIELD_LABELS[field] || field;
+  const { t } = useTranslation();
+  const label = FIELD_LABEL_KEYS[field] ? t(FIELD_LABEL_KEYS[field]) : field;
   const userName = user?.distinguishedName ?? "System";
 
   return (
@@ -47,7 +49,7 @@ const ActivityEntry = ({
         />
         <span>
           <span className="font-semibold text-[#3C3C3C]">{userName}</span>
-          {" changed "}
+          {t("helpdesk.changed")}
           <span className="font-semibold">{label}</span>
         </span>
       </div>

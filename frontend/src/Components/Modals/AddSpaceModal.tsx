@@ -2,6 +2,7 @@ import Modal from "./AnimatedModal";
 import Input from "../Inputs/Input";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { createSpace } from "../../Services/knowledge";
 import { useState } from "react";
 
@@ -16,6 +17,7 @@ const AddSpaceModal: React.FC<AddSpaceModalProps> = ({
   isModalOpen,
   onCloseModal,
 }) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -53,10 +55,10 @@ const AddSpaceModal: React.FC<AddSpaceModalProps> = ({
       onClose={handleOnClose}
       center
     >
-      <div className="text-gray-800 font-bold text-2xl mb-4">Add Space</div>
+      <div className="text-gray-800 font-bold text-2xl mb-4">{t("modal.addSpace")}</div>
 
       <Input
-        label="Name"
+        label={t("form.name")}
         value={name}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
           setName(e.target.value)
@@ -64,7 +66,7 @@ const AddSpaceModal: React.FC<AddSpaceModalProps> = ({
       />
 
       <div className="pt-2">
-        <label className="font-bold text-[#3C3C3C]">Description</label>
+        <label className="font-bold text-[#3C3C3C]">{t("common.description")}</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -74,7 +76,7 @@ const AddSpaceModal: React.FC<AddSpaceModalProps> = ({
       </div>
 
       <div className="pt-2">
-        <label className="font-bold text-[#3C3C3C]">Icon</label>
+        <label className="font-bold text-[#3C3C3C]">{t("modal.icon")}</label>
         <div className="flex flex-wrap gap-2 mt-[6px]">
           {EMOJI_OPTIONS.map((emoji) => (
             <button
@@ -95,7 +97,7 @@ const AddSpaceModal: React.FC<AddSpaceModalProps> = ({
 
       <div className="flex justify-end mt-6">
         <ButtonPrimary
-          text={mutation.isPending ? "Creating..." : "Create"}
+          text={mutation.isPending ? t("common.creating") : t("common.create")}
           onClick={handleCreate}
         />
       </div>

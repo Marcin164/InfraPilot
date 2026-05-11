@@ -1,4 +1,5 @@
 import CreatableSelect from "react-select/creatable";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   value: string;
@@ -20,6 +21,7 @@ const selectStyles: any = {
 };
 
 const CategorySelect = ({ value, onChange, categories }: Props) => {
+  const { t } = useTranslation();
   const options = categories.map((c) => ({
     value: c.category,
     label: `${c.category} (${c.count})`,
@@ -36,7 +38,7 @@ const CategorySelect = ({ value, onChange, categories }: Props) => {
       value={selected}
       onChange={(opt: any) => onChange(opt?.value ?? "")}
       onCreateOption={(input: string) => onChange(input)}
-      placeholder="Select or type new category…"
+      placeholder={t("knowledge.selectCategory")}
       formatCreateLabel={(input: string) => `Create "${input}"`}
       styles={selectStyles}
     />

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { faPlus, faTag, faTrash } from "@fortawesome/free-solid-svg-icons";
@@ -13,6 +14,7 @@ import {
 } from "../../../../Services/deviceTags";
 
 const Tags = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [key, setKey] = useState("");
   const [label, setLabel] = useState("");
@@ -36,7 +38,7 @@ const Tags = () => {
         description: description.trim() || undefined,
       }),
     onSuccess: () => {
-      toast.success("Tag created");
+      toast.success(t("settings.tags.created"));
       setKey("");
       setLabel("");
       setColor("#2B9AE9");
@@ -44,34 +46,34 @@ const Tags = () => {
       invalidate();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Create failed"),
+      toast.error(err?.response?.data?.message ?? t("settings.tags.createFailed")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteDeviceTag(id),
     onSuccess: () => {
-      toast.success("Tag deleted");
+      toast.success(t("settings.tags.deleted"));
       invalidate();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Delete failed"),
+      toast.error(err?.response?.data?.message ?? t("settings.tags.deleteFailed")),
   });
 
   return (
     <div className="space-y-4 m-4">
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text="Create device tag" icon={faPlus} />
+        <CardHeader text={t("settings.tags.create")} icon={faPlus} />
         <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
           <input
             value={key}
             onChange={(e) => setKey(e.target.value)}
-            placeholder="Key (e.g. executive-laptop)"
+            placeholder={t("settings.tags.keyPlaceholder")}
             className="h-[36px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
           />
           <input
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            placeholder="Label (shown in chips)"
+            placeholder={t("settings.tags.labelPlaceholder")}
             className="h-[36px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
           />
           <input
@@ -83,14 +85,14 @@ const Tags = () => {
           <input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Description (optional)"
+            placeholder={t("settings.tags.descriptionPlaceholder")}
             className="h-[36px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
           />
         </div>
         <div className="mt-3">
           <ButtonPrimary
             icon={faPlus}
-            text={createMutation.isPending ? "Creating…" : "Create tag"}
+            text={createMutation.isPending ? t("common.creating", "Creating…") : t("settings.tags.createBtn")}
             onClick={() => {
               if (!key.trim() || !label.trim()) {
                 toast.error("Key and label are required");
@@ -104,13 +106,12 @@ const Tags = () => {
       </div>
 
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text="Existing tags" icon={faTag} />
+        <CardHeader text={t("settings.tags.existing")} icon={faTag} />
         {tagsQuery.isLoading ? (
-          <div className="mt-3 text-[13px] text-[#7a7a7a]">Loading…</div>
+          <div className="mt-3 text-[13px] text-[#7a7a7a]">{t("settings.tags.loading")}</div>
         ) : (tagsQuery.data ?? []).length === 0 ? (
           <div className="mt-3 text-[13px] text-[#7a7a7a]">
-            No tags yet. Tags appear as chips in the devices list and unlock
-            mass actions.
+            {t("settings.tags.empty")}
           </div>
         ) : (
           <div className="mt-3 space-y-2">
@@ -142,7 +143,7 @@ const Tags = () => {
                       deleteMutation.mutate(tag.id);
                   }}
                   className="text-[#F3606E] hover:text-[#C0392B] cursor-pointer"
-                  title="Delete"
+                  title={t("settings.tags.delete")}
                 >
                   <FontAwesomeIcon icon={faTrash} />
                 </button>

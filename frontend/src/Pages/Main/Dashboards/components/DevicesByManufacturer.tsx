@@ -7,11 +7,13 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 import CardWrapper from "./CardWrapper";
 import { CHART_COLORS } from "../helpers";
 import { useDashboardData } from "../DashboardDataContext";
 
 const DevicesByManufacturer = () => {
+  const { t } = useTranslation();
   const data = useDashboardData("devices-by-manufacturer");
 
   const items = [...data]
@@ -19,7 +21,7 @@ const DevicesByManufacturer = () => {
     .slice(0, 8);
 
   return (
-    <CardWrapper title="Devices by Manufacturer" accent="#1ABC9C">
+    <CardWrapper title={t("dashboard.widget.devicesByManufacturer")} accent="#1ABC9C">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={items} margin={{ left: 0, right: 12, top: 4, bottom: 4 }}>
           <XAxis

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import ReactSelect from "react-select";
 import Input from "../../../../Components/Inputs/Input";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
@@ -75,6 +76,7 @@ const HistoryFilters = ({
   onExport,
   exporting,
 }: Props) => {
+  const { t } = useTranslation();
   const [searchDraft, setSearchDraft] = useState(value.q);
 
   useEffect(() => {
@@ -90,7 +92,11 @@ const HistoryFilters = ({
     return () => clearTimeout(handle);
   }, [searchDraft]);
 
-  const selectedTypeOptions = historyFeedTypeOptions.filter((opt) =>
+  const translatedTypeOptions = historyFeedTypeOptions.map((opt) => ({
+    ...opt,
+    label: t(opt.label),
+  }));
+  const selectedTypeOptions = translatedTypeOptions.filter((opt) =>
     value.types.includes(opt.value),
   );
 
@@ -99,14 +105,14 @@ const HistoryFilters = ({
       <Input
         value={searchDraft}
         onChange={(e: any) => setSearchDraft(e.target.value)}
-        placeholder="Ticket, serial, user, details..."
+        placeholder={t("history.searchPlaceholder")}
       />
 
       <div>
         <div className="mt-2">
           <ReactSelect
             isMulti
-            options={historyFeedTypeOptions}
+            options={translatedTypeOptions}
             value={selectedTypeOptions}
             onChange={(selected: any) =>
               onChange({
@@ -114,7 +120,7 @@ const HistoryFilters = ({
                 types: (selected ?? []).map((s: any) => s.value),
               })
             }
-            placeholder="All types"
+            placeholder={t("history.allTypes")}
             styles={selectStyles}
           />
         </div>
@@ -139,14 +145,14 @@ const HistoryFilters = ({
       <ButtonPrimary
         color="white"
         icon={faXmark}
-        text="Reset"
+        text={t("common.reset")}
         onClick={onReset}
       />
 
       <ButtonPrimary
         color="blue"
         icon={faDownload}
-        text={exporting ? "Exporting…" : "Export CSV"}
+        text={exporting ? t("common.exporting") : t("reports.exportCsv")}
         onClick={onExport}
         disabled={exporting}
       />

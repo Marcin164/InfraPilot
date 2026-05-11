@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import {
   getCalendar,
@@ -21,6 +22,7 @@ type Props = {
 };
 
 const EditDefinitionForm = ({ data }: Props) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (values: any) => {
@@ -29,7 +31,7 @@ const EditDefinitionForm = ({ data }: Props) => {
 
     onSuccess: async () => {
       toast.success(
-        `Definition has been ${data ? "updated" : "created"} successfully`,
+        data ? t("toast.success.definitionUpdated") : t("toast.success.definitionCreated"),
       );
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["definitions"] }),
@@ -39,7 +41,7 @@ const EditDefinitionForm = ({ data }: Props) => {
     },
 
     onError: () => {
-      toast.error("Cannot change definition");
+      toast.error(t("toast.error.definitionChange"));
     },
   });
 
@@ -67,8 +69,8 @@ const EditDefinitionForm = ({ data }: Props) => {
   });
 
   const slaTypeOptions = [
-    { value: "RESPONSE", label: "Response" },
-    { value: "RESOLUTION", label: "Resolution" },
+    { value: "RESPONSE", label: t("form.type.response") },
+    { value: "RESOLUTION", label: t("form.type.resolution") },
   ];
 
   return (
@@ -87,7 +89,7 @@ const EditDefinitionForm = ({ data }: Props) => {
           <Input
             {...field}
             value={field?.state?.value}
-            label="Name"
+            label={t("form.name")}
             errors={field.state.meta.errors?.join(", ")}
           />
         )}
@@ -101,7 +103,7 @@ const EditDefinitionForm = ({ data }: Props) => {
           <Input
             {...field}
             value={field?.state?.value}
-            label="Target Minutes"
+            label={t("form.targetMinutes")}
             type="number"
             errors={field.state.meta.errors?.join(", ")}
           />
@@ -111,7 +113,7 @@ const EditDefinitionForm = ({ data }: Props) => {
         name="type"
         children={(field) => (
           <SelectSecondary
-            label="Type"
+            label={t("form.type")}
             options={slaTypeOptions}
             value={slaTypeOptions.find(
               (option: any) => option.value === data?.type,
@@ -140,7 +142,7 @@ const EditDefinitionForm = ({ data }: Props) => {
       />
       <ButtonPrimary
         type="submit"
-        text={data ? "Update" : "Create"}
+        text={data ? t("common.update") : t("common.create")}
         className="mt-4"
       />
     </form>

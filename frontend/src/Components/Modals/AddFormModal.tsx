@@ -166,7 +166,7 @@ const AddFormModal = ({ isModalOpen, onCloseModal, onSubmit }: Props) => {
               <button
                 onClick={reset}
                 className="rounded-full px-2 py-1 text-zinc-500 hover:bg-zinc-100"
-                title="Usuń"
+                title={t("users.forms.delete")}
               >
                 <FontAwesomeIcon icon={faXmark} />
               </button>
@@ -193,7 +193,7 @@ const AddFormModal = ({ isModalOpen, onCloseModal, onSubmit }: Props) => {
 
             {isDocx && (
               <p className="mt-2 text-xs text-zinc-500">
-                Podgląd DOCX dostępny po wgraniu pliku na serwer.
+                {t("modal.docxPreviewHint", "Podgląd DOCX dostępny po wgraniu pliku na serwer.")}
               </p>
             )}
 

@@ -13,7 +13,7 @@ export const assignDeviceFormFields = (
   return [
     {
       name: "userId",
-      label: "User",
+      label: "form.field.user",
       required: true,
       Component: SelectSecondary,
       showIf: ({ isDeviceContext }: any) => isDeviceContext,
@@ -26,7 +26,7 @@ export const assignDeviceFormFields = (
     },
     {
       name: "deviceId",
-      label: "Device",
+      label: "form.field.device",
       required: true,
       Component: SelectSecondary,
       showIf: ({ isUserContext }: any) => isUserContext,
@@ -39,7 +39,7 @@ export const assignDeviceFormFields = (
     },
     {
       name: "ticket",
-      label: "Ticket",
+      label: "form.field.ticket",
       Component: TicketSelect,
       props: {
         onChange: (value: string, field: any) => field.handleChange(value),
@@ -47,17 +47,17 @@ export const assignDeviceFormFields = (
     },
     {
       name: "justification",
-      label: "Justification",
+      label: "form.field.justification",
       Component: Input,
     },
     {
       name: "details",
-      label: "Details",
+      label: "form.field.details",
       Component: Input,
     },
     {
       name: "approvers",
-      label: "Approvers",
+      label: "form.field.approvers",
       Component: SelectSecondary,
       props: {
         options: userOptions,
@@ -68,7 +68,7 @@ export const assignDeviceFormFields = (
     },
     {
       name: "date",
-      label: "Date",
+      label: "form.field.date",
       Component: Input,
       props: {
         type: "date",
@@ -85,7 +85,7 @@ export const addEquipmentFormFields = (
   return [
     {
       name: "group",
-      label: "Group",
+      label: "form.field.group",
       required: true,
       Component: SelectSecondary,
       props: {
@@ -97,7 +97,7 @@ export const addEquipmentFormFields = (
     },
     {
       name: "subgroup",
-      label: "Subgroup",
+      label: "form.field.subgroup",
       required: true,
       Component: SelectSecondary,
       props: {
@@ -109,41 +109,41 @@ export const addEquipmentFormFields = (
     },
     {
       name: "assetName",
-      label: "Asset Name",
+      label: "form.field.assetName",
       Component: Input,
     },
     {
       name: "model",
-      label: "Model",
+      label: "form.field.model",
       required: true,
       Component: Input,
     },
     {
       name: "manufacturer",
-      label: "Manufacturer",
+      label: "form.field.manufacturer",
       required: true,
       Component: Input,
     },
     {
       name: "serialNumber",
-      label: "Serial Number",
+      label: "form.field.serialNumber",
       required: true,
       Component: Input,
     },
     {
       name: "location",
-      label: "Location",
+      label: "form.field.location",
       Component: Input,
     },
   ];
 };
 
 export const WEEK_DAYS = [
-  { label: "Monday", value: 1 },
-  { label: "Tuesday", value: 2 },
-  { label: "Wednesday", value: 3 },
-  { label: "Thursday", value: 4 },
-  { label: "Friday", value: 5 },
-  { label: "Saturday", value: 6 },
-  { label: "Sunday", value: 7 },
+  { label: "weekday.monday", value: 1 },
+  { label: "weekday.tuesday", value: 2 },
+  { label: "weekday.wednesday", value: 3 },
+  { label: "weekday.thursday", value: 4 },
+  { label: "weekday.friday", value: 5 },
+  { label: "weekday.saturday", value: 6 },
+  { label: "weekday.sunday", value: 7 },
 ];

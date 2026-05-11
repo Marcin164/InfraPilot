@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import CardWrapper from "./CardWrapper";
 import { getAgentStats } from "../../../../Services/tickets";
 
 const AgentSlaQuality = () => {
+  const { t } = useTranslation();
   const { data } = useQuery({
     queryKey: ["agent-stats"],
     queryFn: getAgentStats,
@@ -39,8 +41,8 @@ const AgentSlaQuality = () => {
 
   return (
     <CardWrapper
-      title="My SLA compliance"
-      subtitle="Last 30 days resolved tickets"
+      title={t("dashboard.widget.agentSlaQuality")}
+      subtitle={t("dashboard.widget.agentSlaQuality.subtitle")}
       accent={color}
     >
       <div className="flex flex-col items-center gap-2">

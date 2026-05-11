@@ -85,14 +85,14 @@ const UsersPage = () => {
   };
 
   const checkboxes = [
-    { name: "name", label: "Name" },
-    { name: "username", label: "Username" },
-    { name: "currentdevice", label: "Current device" },
-    { name: "lastLogon", label: "Last logon" },
-    { name: "department", label: "Department" },
-    { name: "office", label: "Office" },
-    { name: "streetaddress", label: "Street address" },
-    { name: "country", label: "Country" },
+    { name: "name", label: t("user.name") },
+    { name: "username", label: t("user.username") },
+    { name: "currentdevice", label: t("user.currentdevice") },
+    { name: "lastLogon", label: t("user.lastlogon") },
+    { name: "department", label: t("user.department") },
+    { name: "office", label: t("user.office") },
+    { name: "streetaddress", label: t("user.street") },
+    { name: "country", label: t("user.country") },
   ];
 
   return (

@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PageContainer from "./PageContainer";
 import GenericReport from "./GenericReport";
@@ -14,6 +15,7 @@ type Props = {
 };
 
 const CategoryReports = ({ categories }: Props) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
@@ -43,10 +45,10 @@ const CategoryReports = ({ categories }: Props) => {
     }
   }, [batchData, queryClient]);
 
-  if (isLoading) return <PageContainer>Loading reports…</PageContainer>;
+  if (isLoading) return <PageContainer>{t("reports.loading")}</PageContainer>;
   if (error || !data)
-    return <PageContainer>Failed to load reports list</PageContainer>;
-  if (isBatchLoading) return <PageContainer>Loading reports…</PageContainer>;
+    return <PageContainer>{t("reports.loadingFailed")}</PageContainer>;
+  if (isBatchLoading) return <PageContainer>{t("reports.loading")}</PageContainer>;
 
   return (
     <PageContainer>

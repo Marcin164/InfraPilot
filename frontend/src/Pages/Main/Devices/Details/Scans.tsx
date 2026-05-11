@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { useOutletContext } from "react-router";
 import moment from "moment";
@@ -34,6 +35,7 @@ const truncate = (v: any, n = 80) => {
 };
 
 const Scans = () => {
+  const { t } = useTranslation();
   const device: any = useOutletContext();
   const deviceId = device?.data?.id;
 
@@ -79,7 +81,7 @@ const Scans = () => {
   return (
     <div className="space-y-4">
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text="Scan history" icon={faClockRotateLeft} />
+        <CardHeader text={t("device.section.scanHistory")} icon={faClockRotateLeft} />
         <p className="text-[12px] text-[#7a7a7a] mt-2">
           Every agent scan produces an immutable snapshot. Pick any two to
           compare — the most recent pair is selected by default.
@@ -142,7 +144,7 @@ const Scans = () => {
 
       {diff && (
         <div className="bg-white shadow-xl rounded-[10px] p-4">
-          <CardHeader text="Diff" icon={faRotate} />
+          <CardHeader text={t("device.section.diff")} icon={faRotate} />
           <div className="mt-2 text-[12px] text-[#7a7a7a]">
             {moment(diff.from.receivedAt).format("DD.MM.YYYY HH:mm:ss")} →{" "}
             {moment(diff.to.receivedAt).format("DD.MM.YYYY HH:mm:ss")}

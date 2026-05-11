@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext } from "react-router";
 import { toast } from "react-toastify";
@@ -35,6 +36,7 @@ const STATE_COLOR: Record<string, string> = {
 };
 
 const Tasks = () => {
+  const { t: tr } = useTranslation();
   const device: any = useOutletContext();
   const deviceId = device?.data?.id;
   const queryClient = useQueryClient();
@@ -67,7 +69,7 @@ const Tasks = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["device-tasks", deviceId] });
       setPayload("");
-      toast.success("Task queued");
+      toast.success(tr("toast.success.taskQueued"));
     },
     onError: (err: any) =>
       toast.error(err?.message ?? err?.response?.data?.message ?? "Enqueue failed"),
@@ -77,7 +79,7 @@ const Tasks = () => {
     mutationFn: (taskId: string) => cancelDeviceTask(taskId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["device-tasks", deviceId] });
-      toast.success("Task cancelled");
+      toast.success(tr("toast.success.taskCancelled"));
     },
     onError: (err: any) =>
       toast.error(err?.response?.data?.message ?? "Cancel failed"),
@@ -94,7 +96,7 @@ const Tasks = () => {
   return (
     <div className="space-y-4">
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text="Enqueue task" icon={faPlay} />
+        <CardHeader text={tr("device.section.tasksEnqueue")} icon={faPlay} />
         <p className="text-[12px] text-[#7a7a7a] mt-2">
           Queued tasks are picked up by the agent on its next HMAC-authenticated
           poll. Lease window is 15 minutes; expired leases auto-requeue up to 3
@@ -130,7 +132,7 @@ const Tasks = () => {
 
       <div className="bg-white shadow-xl rounded-[10px] p-4">
         <div className="flex items-center justify-between">
-          <CardHeader text="Active" icon={faRotate} />
+          <CardHeader text={tr("device.section.tasksActive")} icon={faRotate} />
           <span className="text-[12px] text-[#7a7a7a]">
             auto-refresh 15s
           </span>
@@ -154,7 +156,7 @@ const Tasks = () => {
 
       {finished.length > 0 && (
         <div className="bg-white shadow-xl rounded-[10px] p-4">
-          <CardHeader text="History" icon={faRotate} />
+          <CardHeader text={tr("device.section.tasksHistory")} icon={faRotate} />
           <div className="mt-3 space-y-2">
             {finished.slice(0, 50).map((t) => (
               <TaskRow key={t.id} task={t} onCancel={null} />

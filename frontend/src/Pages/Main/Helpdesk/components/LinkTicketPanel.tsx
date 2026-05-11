@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { toast } from "react-toastify";
@@ -14,13 +15,14 @@ type Props = {
 };
 
 const LinkTicketPanel = ({ ticket }: Props) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState("");
 
   const mutation = useMutation({
     mutationFn: (parentId: string | null) => linkTicket(ticket.id, parentId),
     onSuccess: () => {
-      toast.success("Linked");
+      toast.success(t("toast.success.linked"));
       setDraft("");
       queryClient.invalidateQueries({ queryKey: ["ticket", ticket.id] });
     },
@@ -86,11 +88,11 @@ const LinkTicketPanel = ({ ticket }: Props) => {
             className="flex-1 pt-0"
             value={draft}
             handleChange={setDraft}
-            placeholder="Parent ticket UUID (paste from URL)"
+            placeholder={t("helpdesk.parentTicketUuid")}
           />
           <ButtonPrimary
             icon={faLink}
-            text="Link as duplicate"
+            text={t("helpdesk.linkAsDuplicate")}
             onClick={submit}
             disabled={mutation.isPending || !draft.trim()}
           />

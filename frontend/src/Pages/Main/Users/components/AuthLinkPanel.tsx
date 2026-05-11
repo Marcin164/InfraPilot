@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import {
@@ -24,6 +25,7 @@ type Props = {
 };
 
 const AuthLinkPanel = ({ user }: Props) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [draftId, setDraftId] = useState(user.authUserId ?? "");
@@ -43,51 +45,51 @@ const AuthLinkPanel = ({ user }: Props) => {
   const linkMutation = useMutation({
     mutationFn: () => linkUserAuth(user.id),
     onSuccess: (res) => {
-      if (res.linked) toast.success("Linked to PropelAuth");
-      else toast.error(res.reason ?? "No PropelAuth user found by email");
+      if (res.linked) toast.success(t("toast.success.linkedToPropelAuth"));
+      else toast.error(res.reason ?? t("users.auth.noUserFound"));
       invalidate();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Link failed"),
+      toast.error(err?.response?.data?.message ?? t("users.auth.linkFailed")),
   });
 
   const provisionMutation = useMutation({
     mutationFn: () => provisionUserAuth(user.id),
     onSuccess: (res) => {
       toast.success(
-        res.created ? "PropelAuth user created" : "Linked to existing user",
+        res.created ? t("users.auth.userCreated") : t("users.auth.linkedExisting"),
       );
       invalidate();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Provision failed"),
+      toast.error(err?.response?.data?.message ?? t("users.auth.provisionFailed")),
   });
 
   const manualSave = useMutation({
     mutationFn: () =>
       updateUser({ authUserId: draftId.trim() || null } as any, user.id),
     onSuccess: () => {
-      toast.success("authUserId saved");
+      toast.success(t("toast.success.authUserIdSaved"));
       setEditing(false);
       invalidate();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Save failed"),
+      toast.error(err?.response?.data?.message ?? t("users.auth.saveFailed")),
   });
 
   const linked = Boolean(user.authUserId);
   const valid = verifyQuery.data?.valid;
   const status = !linked
-    ? { color: "#F1C40F", label: "Not linked" }
+    ? { color: "#F1C40F", label: t("users.auth.notLinked") }
     : valid === false
-      ? { color: "#F3606E", label: "Broken link" }
+      ? { color: "#F3606E", label: t("users.auth.broken") }
       : valid === true
-        ? { color: "#30A712", label: "Linked" }
-        : { color: "#8A8A8A", label: "Verifying…" };
+        ? { color: "#30A712", label: t("users.auth.linked") }
+        : { color: "#8A8A8A", label: t("users.auth.verifying") };
 
   return (
     <div className="pt-4">
-      <CardHeader text="PropelAuth identity" icon={faKey} />
+      <CardHeader text={t("users.auth.title")} icon={faKey} />
 
       <div className="mt-2 flex items-center gap-2">
         <span
@@ -112,7 +114,7 @@ const AuthLinkPanel = ({ user }: Props) => {
         {!linked && user.email && (
           <ButtonPrimary
             icon={faLink}
-            text={linkMutation.isPending ? "Linking…" : "Link by email"}
+            text={linkMutation.isPending ? t("users.auth.linking") : t("users.auth.linkByEmail")}
             onClick={() => linkMutation.mutate()}
             disabled={linkMutation.isPending}
           />
@@ -123,8 +125,8 @@ const AuthLinkPanel = ({ user }: Props) => {
             color="green"
             text={
               provisionMutation.isPending
-                ? "Provisioning…"
-                : "Provision in PropelAuth"
+                ? t("users.auth.provisioning")
+                : t("users.auth.provision")
             }
             onClick={() => provisionMutation.mutate()}
             disabled={provisionMutation.isPending}
@@ -133,7 +135,7 @@ const AuthLinkPanel = ({ user }: Props) => {
         <ButtonPrimary
           icon={faPen}
           color="white"
-          text={editing ? "Cancel" : "Edit ID manually"}
+          text={editing ? t("common.cancel") : t("users.auth.editId")}
           onClick={() => {
             setEditing((v) => !v);
             setDraftId(user.authUserId ?? "");
@@ -145,14 +147,14 @@ const AuthLinkPanel = ({ user }: Props) => {
         <div className="mt-3 flex items-end gap-2">
           <Input
             className="flex-1 pt-0"
-            label="PropelAuth user ID"
+            label={t("users.auth.userId")}
             value={draftId}
             handleChange={setDraftId}
-            placeholder="paste from PropelAuth admin panel"
+            placeholder={t("users.auth.idPlaceholder")}
           />
           <ButtonPrimary
             icon={faCheck}
-            text={manualSave.isPending ? "Saving…" : "Save"}
+            text={manualSave.isPending ? t("common.saving") : t("common.save")}
             onClick={() => manualSave.mutate()}
             disabled={manualSave.isPending}
           />
@@ -161,8 +163,7 @@ const AuthLinkPanel = ({ user }: Props) => {
 
       {!user.email && !linked && (
         <div className="mt-3 text-[12px] text-[#F1C40F]">
-          <FontAwesomeIcon icon={faKey} /> User has no email — set it first to
-          enable auto-link or provision.
+          <FontAwesomeIcon icon={faKey} /> {t("users.auth.noEmailHelp")}
         </div>
       )}
     </div>

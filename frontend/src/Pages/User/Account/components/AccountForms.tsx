@@ -4,6 +4,7 @@ import {
   faFileWord,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { getForm, type FormItem } from "../../../../Services/forms";
 
@@ -22,6 +23,7 @@ const iconFor = (mime?: string) => {
 };
 
 const AccountForms = ({ forms }: Props) => {
+  const { t } = useTranslation();
   const handleOpen = async (form: FormItem) => {
     try {
       const blob = await getForm(form.id);
@@ -29,23 +31,23 @@ const AccountForms = ({ forms }: Props) => {
       window.open(url, "_blank");
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch {
-      toast.error("Nie udało się pobrać pliku");
+      toast.error(t("toast.error.fileDownload"));
     }
   };
 
   return (
     <div className="rounded-[10px] bg-white p-4 shadow-xl">
-      <div className="pt-2 text-[30px] font-semibold text-[#3C3C3C]">Forms</div>
+      <div className="pt-2 text-[30px] font-semibold text-[#3C3C3C]">{t("account.forms")}</div>
       <div className="flex flex-wrap gap-4">
         {forms.length === 0 && (
-          <div className="py-4 text-sm text-[#8A8A8A]">No forms</div>
+          <div className="py-4 text-sm text-[#8A8A8A]">{t("account.forms.empty")}</div>
         )}
         {forms.map((form) => (
           <div key={form.id} className="w-[120px]">
             <button
               onClick={() => handleOpen(form)}
               className="mx-auto flex h-[100px] w-[100px] cursor-pointer items-center justify-center rounded-full bg-[#2B9AE9] text-[50px] text-white hover:opacity-90"
-              title="Open"
+              title={t("account.forms.open")}
             >
               <FontAwesomeIcon icon={iconFor(form.mimetype)} />
             </button>

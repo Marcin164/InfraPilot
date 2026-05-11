@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 
 type Props = {
@@ -8,9 +9,10 @@ type Props = {
 };
 
 const IPv4 = ({ IPv4Address, NetMask, IPv4Gateway }: Props) => {
+  const { t } = useTranslation();
   return (
     <div>
-      <CardHeader text="IPv4 Config" />
+      <CardHeader text={t("device.section.ipv4")} />
       <div>
         <span className="text-[#3C3C3C] font-light">Address: </span>
         <span className="text-[#3C3C3C] font-semibold">{`${IPv4Address} | ${NetMask}`}</span>

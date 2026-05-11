@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import SoftwareTable from "../../../../Components/Tables/SoftwareTable";
 import { useOutletContext } from "react-router";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
@@ -9,6 +10,7 @@ import NoData from "../components/NoData";
 type Props = {};
 
 const Software = (props: Props) => {
+  const { t } = useTranslation();
   const device: any = useOutletContext();
   const [softwareInfoType, setSoftwareInfoType] = useState(1);
 
@@ -44,11 +46,11 @@ const Software = (props: Props) => {
     <div className="w-full ">
       <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
         <ButtonPrimary
-          text="Applications"
+          text={t("device.section.applications")}
           onClick={() => toggleSoftwareInfo(1)}
         />
-        <ButtonPrimary text="APPX" onClick={() => toggleSoftwareInfo(2)} />
-        <ButtonPrimary text="Features" onClick={() => toggleSoftwareInfo(3)} />
+        <ButtonPrimary text={t("device.section.appx")} onClick={() => toggleSoftwareInfo(2)} />
+        <ButtonPrimary text={t("device.section.features")} onClick={() => toggleSoftwareInfo(3)} />
       </div>
       {setPanel(softwareInfoType)}
     </div>

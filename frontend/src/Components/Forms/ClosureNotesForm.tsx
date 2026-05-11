@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import SelectSecondary from "../Inputs/SelectSecondary";
 import { useForm } from "@tanstack/react-form";
 import Input from "../Inputs/Input";
@@ -17,14 +18,16 @@ type Props = {
 };
 
 const ClosureNotesForm = ({ closureCode, closureNotes }: Props) => {
+  const { t } = useTranslation();
   const params = useParams();
+  const trClosure = closureCodesOptions.map((o) => ({ ...o, label: t(o.label) }));
   const mutation = useMutation({
     mutationFn: async (values: UpdateTicketData) => {
       return updateTicket(params.id!, values);
     },
 
     onSuccess: () => {
-      toast.success("Ticket updated!");
+      toast.success(t("toast.success.ticketUpdated"));
     },
   });
 
@@ -49,9 +52,9 @@ const ClosureNotesForm = ({ closureCode, closureNotes }: Props) => {
         name="closureCode"
         children={(field) => (
           <SelectSecondary
-            label="Code"
-            options={closureCodesOptions}
-            value={closureCodesOptions.find((opt) => opt.value === closureCode)}
+            label={t("form.field.closureCode")}
+            options={trClosure}
+            value={trClosure.find((opt) => opt.value === closureCode)}
             onSelect={(opt: any) => handleSelect(opt, field)}
           />
         )}
@@ -59,10 +62,10 @@ const ClosureNotesForm = ({ closureCode, closureNotes }: Props) => {
       <form.Field
         name="closureNotes"
         children={(field) => (
-          <Input {...field} label="Notes" defaultValue={closureNotes} />
+          <Input {...field} label={t("form.field.closureNotes")} defaultValue={closureNotes} />
         )}
       />
-      <ButtonPrimary type="submit" text="Add notes" className="mt-4 mb-2" />
+      <ButtonPrimary type="submit" text={t("common.save")} className="mt-4 mb-2" />
     </form>
   );
 };

@@ -1,5 +1,6 @@
 import Modal from "../../../../Components/Modals/AnimatedModal";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
@@ -16,6 +17,7 @@ type Props = {
 };
 
 const AddArticleModal = ({ spaceId, isModalOpen, onCloseModal }: Props) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
@@ -41,11 +43,11 @@ const AddArticleModal = ({ spaceId, isModalOpen, onCloseModal }: Props) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["knowledge-articles", spaceId] });
       queryClient.invalidateQueries({ queryKey: ["knowledge-categories", spaceId] });
-      toast.success("Article created");
+      toast.success(t("toast.success.article"));
       handleClose();
     },
     onError: () => {
-      toast.error("Failed to create article");
+      toast.error(t("toast.error.article"));
     },
   });
 
@@ -63,16 +65,16 @@ const AddArticleModal = ({ spaceId, isModalOpen, onCloseModal }: Props) => {
       onClose={handleClose}
       center
     >
-      <div className="text-[#3C3C3C] font-bold text-2xl mb-4">New Article</div>
+      <div className="text-[#3C3C3C] font-bold text-2xl mb-4">{t("knowledge.newArticle")}</div>
 
       <Input
-        label="Title"
+        label={t("knowledge.title")}
         value={title}
         onChange={(e: any) => setTitle(e.target.value)}
       />
 
       <div className="pt-2">
-        <label className="font-bold text-[#3C3C3C]">Category</label>
+        <label className="font-bold text-[#3C3C3C]">{t("knowledge.category")}</label>
         <div className="mt-[6px]">
           <CategorySelect
             value={category}
@@ -83,7 +85,7 @@ const AddArticleModal = ({ spaceId, isModalOpen, onCloseModal }: Props) => {
       </div>
 
       <div className="pt-2">
-        <label className="font-bold text-[#3C3C3C]">Status</label>
+        <label className="font-bold text-[#3C3C3C]">{t("knowledge.status")}</label>
         <div className="mt-[6px] flex gap-2">
           {(["draft", "published"] as ArticleStatus[]).map((s) => (
             <button
@@ -96,7 +98,7 @@ const AddArticleModal = ({ spaceId, isModalOpen, onCloseModal }: Props) => {
                   : "border border-[#535353] bg-white text-[#535353]"
               }`}
             >
-              {s}
+              {t(`knowledge.status.${s}`)}
             </button>
           ))}
         </div>
@@ -104,7 +106,7 @@ const AddArticleModal = ({ spaceId, isModalOpen, onCloseModal }: Props) => {
 
       <div className="flex justify-end mt-6">
         <ButtonPrimary
-          text={mutation.isPending ? "Creating…" : "Create"}
+          text={mutation.isPending ? t("common.creating", "Creating…") : t("common.create")}
           onClick={() => {
             if (!title.trim()) return;
             mutation.mutate();

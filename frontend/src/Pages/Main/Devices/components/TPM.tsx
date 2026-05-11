@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import Parameter from "../../../../Components/Lists/Parameter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { twMerge } from "tailwind-merge";
@@ -26,9 +27,10 @@ const TPM = ({
   IsEnabled_InitialValue,
   IsActivated_InitialValue,
 }: Props) => {
+  const { t } = useTranslation();
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
-      <CardHeader text="TPM" icon={faHandshake} />
+      <CardHeader text={t("device.section.tpm")} icon={faHandshake} />
       <Parameter name="Spec Version" value={SpecVersion} />
       <Parameter
         name="Manufacturer"

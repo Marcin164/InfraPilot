@@ -1,5 +1,6 @@
 import { useForm, useStore } from "@tanstack/react-form";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { updateTicketDefaultValues } from "../../Constants/defaultValues";
 import SelectSecondary from "../Inputs/SelectSecondary";
 import {
@@ -45,13 +46,23 @@ const UpdateTicketForm = ({
   impact,
   urgency,
 }: Props) => {
+  const { t } = useTranslation();
+  const trOpts = useMemo(
+    () => ({
+      states: ticketStateOptions.map((o) => ({ ...o, label: t(o.label) })),
+      priorities: ticketPriorityOptions.map((o) => ({ ...o, label: t(o.label) })),
+      impacts: ticketImpactOptions.map((o) => ({ ...o, label: t(o.label) })),
+      urgencies: ticketUrgencyOptions.map((o) => ({ ...o, label: t(o.label) })),
+    }),
+    [t],
+  );
   const mutation = useMutation({
     mutationFn: async (values: UpdateTicketData) => {
       return updateTicket(id, values);
     },
 
     onSuccess: () => {
-      toast.success("Ticket updated!");
+      toast.success(t("toast.success.ticketUpdated"));
     },
   });
 
@@ -139,7 +150,7 @@ const UpdateTicketForm = ({
         name="assignee"
         children={(field) => (
           <SelectSecondary
-            label="Assignee"
+            label={t("form.field.assignee", "Assignee")}
             options={assigneeOptions}
             value={
               assigneeOptions.find((o) => o.value === selectedAssignee) ?? null
@@ -152,9 +163,9 @@ const UpdateTicketForm = ({
         name="state"
         children={(field) => (
           <SelectSecondary
-            label="State"
-            options={ticketStateOptions}
-            value={ticketStateOptions.find((option) => option.value === state)}
+            label={t("device.state")}
+            options={trOpts.states}
+            value={trOpts.states.find((option) => option.value === state)}
             onSelect={(opt: any) => handleSelect(opt, field)}
           />
         )}
@@ -163,9 +174,9 @@ const UpdateTicketForm = ({
         name="priority"
         children={(field) => (
           <SelectSecondary
-            label="Priority"
-            options={ticketPriorityOptions}
-            value={ticketPriorityOptions.find(
+            label={t("form.priority")}
+            options={trOpts.priorities}
+            value={trOpts.priorities.find(
               (option) => option.value === priority
             )}
             onSelect={(opt: any) => handleSelect(opt, field)}
@@ -176,9 +187,9 @@ const UpdateTicketForm = ({
         name="impact"
         children={(field) => (
           <SelectSecondary
-            label="Impact"
-            options={ticketImpactOptions}
-            value={ticketImpactOptions.find(
+            label={t("form.field.impact", "Impact")}
+            options={trOpts.impacts}
+            value={trOpts.impacts.find(
               (option) => option.value === impact
             )}
             onSelect={(opt: any) => handleSelect(opt, field)}
@@ -189,9 +200,9 @@ const UpdateTicketForm = ({
         name="urgency"
         children={(field) => (
           <SelectSecondary
-            label="Urgency"
-            options={ticketUrgencyOptions}
-            value={ticketUrgencyOptions.find(
+            label={t("form.field.urgency", "Urgency")}
+            options={trOpts.urgencies}
+            value={trOpts.urgencies.find(
               (option) => option.value === urgency
             )}
             onSelect={(opt: any) => handleSelect(opt, field)}
@@ -201,7 +212,7 @@ const UpdateTicketForm = ({
       <ButtonPrimary
         className="mt-4"
         icon={faPen}
-        text="Update"
+        text={t("common.update")}
         type="submit"
       />
     </form>

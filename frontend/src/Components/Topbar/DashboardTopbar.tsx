@@ -1,5 +1,6 @@
 import { faPencil, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import AddDashboardModal from "../Modals/AddDashboardModal";
 import EditDashboardModal from "../Modals/EditDashboardModal";
 import Select from "../Inputs/Select";
@@ -18,6 +19,7 @@ const DashboardTopbar = ({
   currentDashboard,
   onWidgetDragStart,
 }: Props) => {
+  const { t } = useTranslation();
   const [isOpenAddDashboardModal, setIsOpenAddDashboardModal] = useState(false);
   const [isOpenEditDashboardModal, setIsOpenEditDashboardModal] =
     useState(false);
@@ -49,7 +51,7 @@ const DashboardTopbar = ({
         />
         <ButtonPrimary
           icon={faPlus}
-          text="Add Dashboard"
+          text={t("btn.add.dashboard")}
           onClick={onOpenAddDashboardModal}
         />
       </div>

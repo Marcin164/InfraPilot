@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -29,10 +30,11 @@ import Checkbox from "../../../../Components/Inputs/Checkbox";
 import MainTable from "../../../../Components/Tables/MainTable";
 
 const ACTIONS: RetentionAction[] = ["purge", "archive"];
-const ACTION_OPTIONS = ACTIONS.map((a) => ({ value: a, label: a }));
 
 const RetentionPoliciesSection = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const ACTION_OPTIONS = ACTIONS.map((a) => ({ value: a, label: t(`settings.retention.action.${a}`) }));
   const [entityType, setEntityType] = useState("");
   const [days, setDays] = useState(365);
   const [action, setAction] = useState<RetentionAction>("purge");
@@ -62,7 +64,7 @@ const RetentionPoliciesSection = () => {
     mutationFn: () =>
       createRetentionPolicy({ entityType, retentionDays: days, action }),
     onSuccess: () => {
-      toast.success("Policy created");
+      toast.success(t("toast.success.policyCreated"));
       setEntityType("");
       setDays(365);
       invalidate();
@@ -75,7 +77,7 @@ const RetentionPoliciesSection = () => {
     mutationFn: ({ id, patch }: { id: string; patch: Partial<RetentionPolicy> }) =>
       updateRetentionPolicy(id, patch),
     onSuccess: () => {
-      toast.success("Policy updated");
+      toast.success(t("toast.success.policyUpdated"));
       invalidate();
     },
     onError: (err: any) =>
@@ -85,7 +87,7 @@ const RetentionPoliciesSection = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteRetentionPolicy(id),
     onSuccess: () => {
-      toast.success("Policy deleted");
+      toast.success(t("toast.success.policyDeleted"));
       invalidate();
     },
   });
@@ -93,17 +95,17 @@ const RetentionPoliciesSection = () => {
   const runMutation = useMutation({
     mutationFn: (id: string) => runRetentionPolicy(id),
     onSuccess: ({ affected }) => {
-      toast.success(`Removed ${affected} record(s)`);
+      toast.success(t("settings.retention.removed", { count: affected }));
       invalidate();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Run failed"),
+      toast.error(err?.response?.data?.message ?? t("settings.retention.runFailed")),
   });
 
   const policyColumns = [
     {
       id: "entity",
-      name: "Entity",
+      name: t("settings.retention.column.entity"),
       selector: (p: RetentionPolicy) => p.entityType,
       cell: (p: RetentionPolicy) => (
         <span className="font-bold text-[#3C3C3C]">{p.entityType}</span>
@@ -112,7 +114,7 @@ const RetentionPoliciesSection = () => {
     },
     {
       id: "days",
-      name: "Days",
+      name: t("settings.retention.column.days"),
       width: "110px",
       cell: (p: RetentionPolicy) => (
         <input
@@ -133,7 +135,7 @@ const RetentionPoliciesSection = () => {
     },
     {
       id: "action",
-      name: "Action",
+      name: t("settings.retention.column.action"),
       width: "130px",
       cell: (p: RetentionPolicy) => (
         <select
@@ -156,7 +158,7 @@ const RetentionPoliciesSection = () => {
     },
     {
       id: "enabled",
-      name: "Enabled",
+      name: t("settings.retention.column.enabled"),
       width: "100px",
       center: true,
       cell: (p: RetentionPolicy) => (
@@ -175,7 +177,7 @@ const RetentionPoliciesSection = () => {
     },
     {
       id: "lastRun",
-      name: "Last run",
+      name: t("settings.retention.column.lastRun"),
       width: "180px",
       cell: (p: RetentionPolicy) => (
         <span className="text-[12px] text-[#7a7a7a]">
@@ -185,7 +187,7 @@ const RetentionPoliciesSection = () => {
     },
     {
       id: "affected",
-      name: "Affected",
+      name: t("settings.retention.column.affected"),
       width: "100px",
       selector: (p: RetentionPolicy) => p.lastRunAffected,
     },
@@ -199,7 +201,7 @@ const RetentionPoliciesSection = () => {
           <button
             type="button"
             onClick={() => runMutation.mutate(p.id)}
-            title="Run now"
+            title={t("settings.retention.runNow")}
             className="text-[#2B9AE9] cursor-pointer"
             disabled={runMutation.isPending}
           >
@@ -208,7 +210,7 @@ const RetentionPoliciesSection = () => {
           <button
             type="button"
             onClick={() => {
-              if (window.confirm(`Delete policy for ${p.entityType}?`)) {
+              if (window.confirm(t("settings.retention.deleteConfirm", { entity: p.entityType }))) {
                 deleteMutation.mutate(p.id);
               }
             }}
@@ -223,51 +225,51 @@ const RetentionPoliciesSection = () => {
 
   return (
     <div className="bg-white shadow-xl rounded-[10px] p-4">
-      <CardHeader text="Retention policies" icon={faShield} />
+      <CardHeader text={t("settings.retention.title")} icon={faShield} />
       <p className="text-[14px] text-[#7a7a7a] mt-2">
-        Purge or archive records older than N days. <strong>SystemAuditLog</strong> is append-only and cannot be configured.
+        {t("settings.retention.help")}
       </p>
 
       {supportedError && (
         <div className="mt-3 rounded-[8px] bg-[#FDE2E4] text-[#9B1C1C] text-[13px] px-3 py-2">
-          Couldn't load entity list
+          {t("settings.retention.loadEntitiesFailed")}
           {supportedStatus ? ` (HTTP ${supportedStatus})` : ""}:{" "}
           {supportedStatus === 403
-            ? "your account lacks the Admin or Compliance role required to manage retention."
-            : supportedMessage ?? "unknown error"}
+            ? t("settings.retention.forbidden")
+            : supportedMessage ?? t("settings.retention.unknownError")}
         </div>
       )}
       {!supportedError && !supportedQuery.isLoading && supportedItems.length === 0 && (
         <div className="mt-3 rounded-[8px] bg-[#FFF4D6] text-[#8A6500] text-[13px] px-3 py-2">
-          Backend returned no supported entity types. Check the retention service whitelist.
+          {t("settings.retention.noEntities")}
         </div>
       )}
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
         <SelectSecondary
-          label="Entity"
+          label={t("settings.retention.column.entity")}
           options={entityOptions}
           value={entityOptions.find((o) => o.value === entityType) ?? null}
           onSelect={(opt: any) => setEntityType(opt?.value ?? "")}
           isClearable
         />
         <Input
-          label="Days"
+          label={t("settings.retention.column.days")}
           type="number"
           value={String(days)}
           onChange={(e: any) => setDays(parseInt(e.target.value) || 1)}
         />
         <SelectSecondary
-          label="Action"
+          label={t("settings.retention.column.action")}
           options={ACTION_OPTIONS}
           value={ACTION_OPTIONS.find((o) => o.value === action) ?? null}
           onSelect={(opt: any) => setAction((opt?.value ?? "purge") as RetentionAction)}
         />
         <ButtonPrimary
           icon={faPlus}
-          text="Add policy"
+          text={t("common.add")}
           onClick={() => {
-            if (!entityType) return toast.error("Pick an entity type");
+            if (!entityType) return toast.error(t("toast.error.entityType"));
             createMutation.mutate();
           }}
           disabled={createMutation.isPending}
@@ -286,6 +288,7 @@ const RetentionPoliciesSection = () => {
 };
 
 const EvidencePackSection = () => {
+  const { t } = useTranslation();
   const today = new Date().toISOString().slice(0, 10);
   const [from, setFrom] = useState(
     new Date(Date.now() - 30 * 86400_000).toISOString().slice(0, 10),
@@ -304,9 +307,9 @@ const EvidencePackSection = () => {
         to: new Date(to + "T23:59:59").toISOString(),
         include: includeArr,
       }),
-    onSuccess: () => toast.success("Evidence pack downloaded"),
+    onSuccess: () => toast.success(t("toast.success.cveExportDownloaded")),
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Failed to build pack"),
+      toast.error(err?.response?.data?.message ?? t("settings.retention.evidence.failed")),
   });
 
   const toggle = (key: EvidenceInclude) => {
@@ -320,32 +323,32 @@ const EvidencePackSection = () => {
 
   return (
     <div className="bg-white shadow-xl rounded-[10px] p-4">
-      <CardHeader text="Evidence pack" icon={faFileZipper} />
+      <CardHeader text={t("settings.retention.evidence.title")} icon={faFileZipper} />
       <p className="text-[14px] text-[#7a7a7a] mt-2">
-        Bundle audit log, reports (CSV + PDF) and tickets activity into a signed ZIP for an auditor.
+        {t("settings.retention.evidence.help")}
       </p>
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
         <Input
-          label="From"
+          label={t("settings.retention.evidence.from")}
           type="date"
           value={from}
           onChange={(e: any) => setFrom(e.target.value)}
         />
         <Input
-          label="To"
+          label={t("settings.retention.evidence.to")}
           type="date"
           value={to}
           onChange={(e: any) => setTo(e.target.value)}
         />
         <div>
-          <label className="font-bold text-[#3C3C3C] block mb-2">Include</label>
+          <label className="font-bold text-[#3C3C3C] block mb-2">{t("settings.retention.evidence.include")}</label>
           <div className="flex gap-4 items-center h-[42px]">
             {(["audit", "reports", "tickets"] as EvidenceInclude[]).map((k) => (
               <Checkbox
                 key={k}
                 id={`include-${k}`}
-                label={k}
+                label={t(`settings.retention.evidence.include${k.charAt(0).toUpperCase() + k.slice(1)}` as any)}
                 checked={include.has(k)}
                 handleChange={() => toggle(k)}
               />
@@ -357,7 +360,7 @@ const EvidencePackSection = () => {
       <div className="mt-4">
         <ButtonPrimary
           icon={faFileZipper}
-          text={buildMutation.isPending ? "Building…" : "Generate pack"}
+          text={buildMutation.isPending ? t("settings.retention.evidence.building") : t("settings.retention.evidence.generate")}
           onClick={() => buildMutation.mutate()}
           disabled={buildMutation.isPending || includeArr.length === 0}
         />

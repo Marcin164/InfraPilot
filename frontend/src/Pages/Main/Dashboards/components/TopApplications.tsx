@@ -7,11 +7,13 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 import CardWrapper from "./CardWrapper";
 import { CHART_COLORS } from "../helpers";
 import { useDashboardData } from "../DashboardDataContext";
 
 const TopApplications = () => {
+  const { t } = useTranslation();
   const data = useDashboardData("applications-top-installed");
 
   const items = [...data]
@@ -19,7 +21,7 @@ const TopApplications = () => {
     .slice(0, 10);
 
   return (
-    <CardWrapper title="Top Applications" subtitle="Most installed" accent="#6C5CE7">
+    <CardWrapper title={t("dashboard.widget.topApplications")} subtitle={t("dashboard.widget.topApplications.subtitle")} accent="#6C5CE7">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={items} layout="vertical" margin={{ left: 4, right: 16, top: 4, bottom: 4 }}>
           <XAxis type="number" hide />

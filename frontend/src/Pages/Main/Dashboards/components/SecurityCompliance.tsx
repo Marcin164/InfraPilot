@@ -1,8 +1,10 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
+import { useTranslation } from "react-i18next";
 import CardWrapper from "./CardWrapper";
 import { useDashboardData } from "../DashboardDataContext";
 
 const SecurityCompliance = () => {
+  const { t } = useTranslation();
   const data = useDashboardData("security-patch-compliance");
 
   const compliant = data.find((d) => d.label.toLowerCase().includes("compliant") && !d.label.toLowerCase().includes("non"))?.value ?? 0;
@@ -18,7 +20,7 @@ const SecurityCompliance = () => {
   ];
 
   return (
-    <CardWrapper title="Security Compliance" subtitle="Patch status" accent={color}>
+    <CardWrapper title={t("dashboard.widget.securityCompliance")} subtitle={t("dashboard.widget.securityCompliance.subtitle")} accent={color}>
       <div className="flex flex-col items-center gap-2">
         <div className="relative h-[150px] w-[150px]">
           <ResponsiveContainer width="100%" height="100%">

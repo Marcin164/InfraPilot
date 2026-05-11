@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
@@ -10,6 +11,7 @@ type Props = {
 };
 
 const Escalations = ({ escalations }: Props) => {
+  const { t } = useTranslation();
   const [isEditDefinitionModalOpen, setIsEditDefinitionModalOpen] =
     useState(false);
   const [selectedDefinition, setSelectedDefinition] = useState<any | null>(
@@ -33,10 +35,10 @@ const Escalations = ({ escalations }: Props) => {
   return (
     <div className="w-full h-[300px] overflow-y-auto bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
       <div className="flex justify-between items-center mb-4">
-        <CardHeader text="Escalations" />
+        <CardHeader text={t("settings.escalations")} />
         <ButtonPrimary
           icon={faPlus}
-          text="Add escalation"
+          text={t("btn.add.escalation")}
           onClick={openAddDefinitionModal}
         />
       </div>

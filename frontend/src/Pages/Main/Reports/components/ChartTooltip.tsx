@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import type { ReportMeta } from "../../../../Services/reports";
 
 // Recharts passes `active`, `payload`, and (for cartesian charts) `label`.
@@ -17,6 +18,7 @@ type Props = RechartsTooltipProps & {
 };
 
 const ChartTooltip = ({ active, payload, label, meta, total }: Props) => {
+  const { t } = useTranslation();
   if (!active || !payload || payload.length === 0) return null;
 
   const entry = payload[0];
@@ -36,12 +38,12 @@ const ChartTooltip = ({ active, payload, label, meta, total }: Props) => {
         {String(rowLabel) || "—"}
       </div>
       <div className="mt-1 flex items-center justify-between gap-3">
-        <span className="text-gray-500">{valueLabel(meta)}</span>
+        <span className="text-gray-500">{valueLabel(meta, t)}</span>
         <span className="font-semibold text-gray-900">{formatted}</span>
       </div>
       {pct && (
         <div className="mt-0.5 flex items-center justify-between gap-3">
-          <span className="text-gray-500">Share</span>
+          <span className="text-gray-500">{t("reports.tooltip.share")}</span>
           <span className="text-gray-700">{pct}</span>
         </div>
       )}
@@ -80,13 +82,12 @@ function isBytes(meta: ReportMeta): boolean {
   return meta.key === "applications-license-exposure";
 }
 
-function valueLabel(meta: ReportMeta): string {
-  if (isPercentage(meta)) return "Compliance";
-  if (isHours(meta)) return "Avg hours";
-  if (isDays(meta)) return "Avg days";
-  if (isBytes(meta)) return "Total size";
-  if (meta.chart === "line") return "Count";
-  return "Count";
+function valueLabel(meta: ReportMeta, t: (k: string) => string): string {
+  if (isPercentage(meta)) return t("reports.tooltip.compliance");
+  if (isHours(meta)) return t("reports.tooltip.avgHours");
+  if (isDays(meta)) return t("reports.tooltip.avgDays");
+  if (isBytes(meta)) return t("reports.tooltip.totalSize");
+  return t("reports.tooltip.count");
 }
 
 function formatValue(value: number, meta: ReportMeta): string {

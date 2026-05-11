@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { useAuthInfo } from "@propelauth/react";
 import { toast } from "react-toastify";
 import {
@@ -26,6 +27,7 @@ const TERMINAL_STATES = new Set(["Resolved", "Closed", "Cancelled"]);
 const AWAITING_STATES = new Set(["Awaiting for user", "Awaiting for vendor"]);
 
 const QuickActions = ({ ticket }: Props) => {
+  const { t } = useTranslation();
   const { user }: any = useAuthInfo();
   const myId = user?.metadata?.id ?? user?.userId ?? null;
   const myName =
@@ -43,12 +45,12 @@ const QuickActions = ({ ticket }: Props) => {
       queryClient.invalidateQueries({ queryKey: ["helpdesk"] });
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Update failed"),
+      toast.error(err?.response?.data?.message ?? t("device.lifecycle.updateFailed")),
   });
 
   const pickUp = () => {
     if (!myId) {
-      toast.error("Current user not resolved");
+      toast.error(t("toast.error.userNotResolved"));
       return;
     }
     patch.mutate(
@@ -57,7 +59,7 @@ const QuickActions = ({ ticket }: Props) => {
         state: ticket.state === "New" ? "In progress" : ticket.state,
       },
       {
-        onSuccess: () => toast.success(`Picked up as ${myName}`),
+        onSuccess: () => toast.success(t("helpdesk.pickedUp", { name: myName })),
       },
     );
   };
@@ -67,17 +69,17 @@ const QuickActions = ({ ticket }: Props) => {
       { state: "Awaiting for user" },
       {
         onSuccess: () =>
-          toast.success("Awaiting user — SLA clock should pause"),
+          toast.success(t("toast.success.slaPaused")),
       },
     );
 
   const resolve = () => {
     const code = window.prompt(
-      "Closure code (e.g. fixed, duplicate, wont-fix):",
+      t("helpdesk.prompt.closureCode"),
       "fixed",
     );
     if (!code) return;
-    const notes = window.prompt("Closure notes (optional):", "") ?? "";
+    const notes = window.prompt(t("helpdesk.prompt.closureNotes"), "") ?? "";
     patch.mutate(
       {
         state: "Resolved",
@@ -85,7 +87,7 @@ const QuickActions = ({ ticket }: Props) => {
         closureNotes: notes,
       },
       {
-        onSuccess: () => toast.success("Ticket resolved"),
+        onSuccess: () => toast.success(t("toast.success.ticketResolved")),
       },
     );
   };
@@ -94,7 +96,7 @@ const QuickActions = ({ ticket }: Props) => {
     patch.mutate(
       { state: "In progress", closureCode: null, closureNotes: null },
       {
-        onSuccess: () => toast.success("Reopened"),
+        onSuccess: () => toast.success(t("toast.success.ticketReopened")),
       },
     );
 
@@ -111,12 +113,12 @@ const QuickActions = ({ ticket }: Props) => {
         disabled={patch.isPending || (isMine && !isTerminal)}
         title={
           isMine
-            ? "Already assigned to you"
-            : "Assign to me and move to In progress"
+            ? t("helpdesk.action.alreadyAssigned")
+            : t("helpdesk.action.pickupTitle")
         }
       >
         <FontAwesomeIcon icon={faHandRock} />
-        {isMine ? "Mine" : "Pick up"}
+        {isMine ? t("helpdesk.action.mine") : t("helpdesk.action.pickup")}
       </button>
 
       {!isTerminal && !isAwaiting && (
@@ -125,10 +127,10 @@ const QuickActions = ({ ticket }: Props) => {
           className={BTN}
           onClick={sendToUser}
           disabled={patch.isPending}
-          title="Set state to Awaiting for user"
+          title={t("helpdesk.action.awaitUserTitle")}
         >
           <FontAwesomeIcon icon={faHourglassHalf} />
-          Await user
+          {t("helpdesk.action.awaitUser")}
         </button>
       )}
 
@@ -138,10 +140,10 @@ const QuickActions = ({ ticket }: Props) => {
           className={BTN}
           onClick={resolve}
           disabled={patch.isPending}
-          title="Prompt for closure code + resolve"
+          title={t("helpdesk.action.resolveTitle")}
         >
           <FontAwesomeIcon icon={faCheckCircle} />
-          Resolve
+          {t("helpdesk.action.resolve")}
         </button>
       )}
 
@@ -151,10 +153,10 @@ const QuickActions = ({ ticket }: Props) => {
           className={BTN}
           onClick={reopen}
           disabled={patch.isPending}
-          title="Reopen and clear closure"
+          title={t("helpdesk.action.reopenTitle")}
         >
           <FontAwesomeIcon icon={faRotateLeft} />
-          Reopen
+          {t("helpdesk.action.reopen")}
         </button>
       )}
     </div>

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 import { faFilePdf } from "@fortawesome/free-solid-svg-icons";
 import DeviceNavbar from "../../../Components/Navbar/DeviceNavbar";
 import { Outlet, useParams, useNavigate, useLocation } from "react-router";
@@ -16,6 +17,7 @@ import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
 type Props = {};
 
 const Details = () => {
+  const { t } = useTranslation();
   const params = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -46,9 +48,9 @@ const Details = () => {
         d.assetName?.replace(/[^a-z0-9]+/gi, "-").toLowerCase() || d.id;
       return downloadDeviceReportPdf(d.id, `lanventory-${slug}.pdf`);
     },
-    onSuccess: () => toast.success("PDF downloaded"),
+    onSuccess: () => toast.success(t("device.export.success")),
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "PDF export failed"),
+      toast.error(err?.response?.data?.message ?? t("device.export.error")),
   });
 
   if (deviceQuery.isLoading) return <DataLoader />;
@@ -59,7 +61,7 @@ const Details = () => {
         <DeviceNavbar />
         <ButtonPrimary
           icon={faFilePdf}
-          text={pdfMutation.isPending ? "Exporting…" : "Export PDF"}
+          text={pdfMutation.isPending ? t("device.export.exporting") : t("device.export.pdf")}
           onClick={() => pdfMutation.mutate()}
           disabled={pdfMutation.isPending || !deviceQuery.data}
         />

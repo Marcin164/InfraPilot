@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { useOutletContext } from "react-router";
 import moment from "moment";
 import { faBug } from "@fortawesome/free-solid-svg-icons";
@@ -17,6 +18,7 @@ const SEVERITY_COLOR: Record<string, string> = {
 const SEVERITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"];
 
 const Cves = () => {
+  const { t } = useTranslation();
   const device: any = useOutletContext();
   const deviceId = device?.data?.id;
 
@@ -42,7 +44,7 @@ const Cves = () => {
 
   return (
     <div className="bg-white shadow-xl rounded-[10px] p-4">
-      <CardHeader text="Known vulnerabilities (OSV.dev)" icon={faBug} />
+      <CardHeader text={t("device.section.cves")} icon={faBug} />
 
       <p className="text-[12px] text-[#7a7a7a] mt-2">
         Matched from installed software catalog against OSV.dev. Matches
