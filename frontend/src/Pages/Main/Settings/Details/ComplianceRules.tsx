@@ -226,66 +226,70 @@ const ComplianceRules = () => {
             {rules.map((rule) => (
               <div
                 key={rule.key}
-                className={`flex items-start gap-3 rounded-[8px] border px-3 py-2 ${
+                className={`flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 rounded-[8px] border px-3 py-2 ${
                   rule.enabled
                     ? "border-[#E0E0E0]"
                     : "border-[#E0E0E0] bg-[#FAFAFA] opacity-70"
                 }`}
               >
-                <span
-                  className="rounded-full px-2 py-0.5 text-[11px] font-bold text-white"
-                  style={{ backgroundColor: SEVERITY_COLOR[rule.severity] }}
-                >
-                  {rule.severity}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-[13px] text-[#3C3C3C]">
-                      {rule.name}
-                    </span>
-                    {rule.builtin && (
-                      <span className="text-[10px] font-bold rounded px-1.5 py-0.5 bg-[#E5F1FB] text-[#2B9AE9]">
-                        {t("settings.compliance.builtin")}
+                <div className="flex items-start gap-2 flex-1 min-w-0">
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[11px] font-bold text-white shrink-0"
+                    style={{ backgroundColor: SEVERITY_COLOR[rule.severity] }}
+                  >
+                    {rule.severity}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-bold text-[13px] text-[#3C3C3C]">
+                        {rule.name}
                       </span>
-                    )}
-                    <span className="text-[11px] text-[#9a9a9a]">
-                      {rule.category}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-[#9a9a9a] mt-0.5">
-                    <code>{rule.jsonPath}</code> {rule.operator}{" "}
-                    {rule.expected !== null && rule.expected !== undefined ? (
-                      <code>{JSON.stringify(rule.expected)}</code>
-                    ) : (
-                      "—"
-                    )}
-                  </div>
-                  {rule.description && (
-                    <div className="text-[12px] text-[#535353] mt-0.5">
-                      {rule.description}
+                      {rule.builtin && (
+                        <span className="text-[10px] font-bold rounded px-1.5 py-0.5 bg-[#E5F1FB] text-[#2B9AE9]">
+                          {t("settings.compliance.builtin")}
+                        </span>
+                      )}
+                      <span className="text-[11px] text-[#9a9a9a]">
+                        {rule.category}
+                      </span>
                     </div>
-                  )}
+                    <div className="text-[11px] text-[#9a9a9a] mt-0.5">
+                      <code>{rule.jsonPath}</code> {rule.operator}{" "}
+                      {rule.expected !== null && rule.expected !== undefined ? (
+                        <code>{JSON.stringify(rule.expected)}</code>
+                      ) : (
+                        "—"
+                      )}
+                    </div>
+                    {rule.description && (
+                      <div className="text-[12px] text-[#535353] mt-0.5">
+                        {rule.description}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => toggleMutation.mutate(rule)}
-                  className="text-[12px] text-[#2B9AE9] hover:underline cursor-pointer"
-                >
-                  {rule.enabled ? t("settings.compliance.disable") : t("settings.compliance.enable")}
-                </button>
-                {!rule.builtin && (
+                <div className="flex items-center justify-end gap-2 shrink-0">
                   <button
                     type="button"
-                    onClick={() => {
-                      if (window.confirm(t("settings.compliance.confirmDelete", { name: rule.name })))
-                        deleteMutation.mutate(rule.key);
-                    }}
-                    className="text-[#F3606E] hover:text-[#C0392B] cursor-pointer"
-                    title={t("common.delete")}
+                    onClick={() => toggleMutation.mutate(rule)}
+                    className="text-[12px] text-[#2B9AE9] hover:underline cursor-pointer"
                   >
-                    <FontAwesomeIcon icon={faTrash} />
+                    {rule.enabled ? t("settings.compliance.disable") : t("settings.compliance.enable")}
                   </button>
-                )}
+                  {!rule.builtin && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(t("settings.compliance.confirmDelete", { name: rule.name })))
+                          deleteMutation.mutate(rule.key);
+                      }}
+                      className="text-[#F3606E] hover:text-[#C0392B] cursor-pointer"
+                      title={t("common.delete")}
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

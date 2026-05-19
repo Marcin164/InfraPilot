@@ -38,6 +38,7 @@ import ComplianceRules from "./Pages/Main/Settings/Details/ComplianceRules";
 import TicketTemplates from "./Pages/Main/Settings/Details/TicketTemplates";
 import NotificationPreferences from "./Pages/Main/Settings/Details/NotificationPreferences";
 import Workflows from "./Pages/Main/Settings/Details/Workflows";
+import WindowsAgent from "./Pages/Main/Settings/Details/WindowsAgent";
 import UsersReports from "./Pages/Main/Reports/Details/UsersReports";
 import DevicesReports from "./Pages/Main/Reports/Details/DevicesReports";
 import TicketsReports from "./Pages/Main/Reports/Details/TicketsReports";
@@ -144,6 +145,7 @@ function App() {
                     path="ticket-templates"
                     element={<TicketTemplates />}
                   />
+                  <Route path="windows-agent" element={<WindowsAgent />} />
                 </Route>
               </Route>
             </Routes>

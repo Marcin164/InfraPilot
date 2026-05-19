@@ -89,7 +89,7 @@ const AuditLog = () => {
 
   return (
     <div className="p-6">
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <CardHeader text={t("settings.audit.title")} />
         <button
           type="button"

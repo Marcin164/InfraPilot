@@ -6,10 +6,16 @@ import {
   faUser,
   faTicket,
   faGear,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
 import NavbarLink from "../../../Components/Navbar/NavbarLink";
 import Logo from "../../../assets/Logo.png";
+
+type Props = {
+  isOpen: boolean;
+  onClose: () => void;
+};
 
 const items = [
   { to: "/user/account", label: "nav.user", icon: faUser },
@@ -22,20 +28,37 @@ const navItem = {
   show: { opacity: 1, x: 0 },
 };
 
-const UserNavbar = () => {
+const UserNavbar = ({ isOpen, onClose }: Props) => {
   const logout = useLogoutFunction();
   const { t } = useTranslation();
 
   return (
-    <div className="w-[240px] h-screen bg-[#FFFFFF] px-2 flex flex-col justify-between">
-      <div>
-        <motion.img
-          src={Logo}
-          className="p-2 rounded"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-        />
+    <div
+      className={[
+        "fixed left-0 top-0 h-screen w-[240px] z-40",
+        "bg-[#FFFFFF] px-2 flex flex-col justify-between",
+        "transition-transform duration-300 ease-in-out",
+        "lg:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full",
+      ].join(" ")}
+    >
+      <div className="overflow-y-auto flex-1 flex flex-col">
+        <div className="flex items-center justify-between">
+          <motion.img
+            src={Logo}
+            className="p-2 rounded flex-1"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          />
+          <button
+            className="lg:hidden text-[#535353] p-2 mr-1 flex-shrink-0"
+            onClick={onClose}
+            aria-label="Close menu"
+          >
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        </div>
         <motion.div
           initial="hidden"
           animate="show"
@@ -51,6 +74,7 @@ const UserNavbar = () => {
                 to={item.to}
                 label={t(item.label)}
                 icon={item.icon}
+                onNavigate={onClose}
               />
             </motion.div>
           ))}

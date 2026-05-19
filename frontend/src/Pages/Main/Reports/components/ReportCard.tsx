@@ -26,7 +26,7 @@ const ReportCard = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="w-full bg-white rounded-2xl shadow-lg p-8"
+      className="w-full bg-white rounded-2xl shadow-lg p-4 sm:p-8"
     >
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -46,7 +46,7 @@ const ReportCard = ({
         )}
       </div>
 
-      <div className="w-full h-[420px]">{children}</div>
+      <div className="w-full h-[300px] sm:h-[420px]">{children}</div>
 
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">

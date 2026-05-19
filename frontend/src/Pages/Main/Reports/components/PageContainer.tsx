@@ -51,7 +51,7 @@ const PageContainer = ({ children }: Props) => {
 
   return (
     <div className="mx-auto space-y-4">
-      <div className="flex gap-2 justify-end h-[40px]">
+      <div className="hidden sm:flex gap-2 justify-end h-[40px]">
         <ButtonPrimary
           color="white"
           icon={faSquare}

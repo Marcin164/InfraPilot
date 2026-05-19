@@ -92,14 +92,28 @@ body {
 #pagination-next-page,
 #pagination-last-page {
   background: white !important;
-  margin-right: 10px;
-  -webkit-box-shadow: 8px 8px 24px 0px rgba(66, 68, 90, 1);
-  -moz-box-shadow: 8px 8px 24px 0px rgba(66, 68, 90, 1);
-  box-shadow: 8px 8px 24px 0px rgba(66, 68, 90, 1);
+  margin-right: 4px;
+  box-shadow: 0px 2px 6px 0px rgba(66, 68, 90, 0.18);
 }
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* ── Responsive table wrapper ── */
+.rdt_TableWrapper {
+  overflow-x: auto;
+}
+
+/* ── TV / large-screen scaling (≥ 1920px) ── */
+@media (min-width: 1920px) {
+  body {
+    font-size: 17px;
+  }
+  .rdtTable,
+  .fycQKg {
+    height: calc(100vh - 200px) !important;
+  }
 }
 
 @layer utilities {
@@ -158,6 +172,7 @@ html.dark .bg-\[\#FFFFFF\] {
 }
 html.dark .bg-\[\#F0F0F0\],
 html.dark .bg-\[\#F5F5F5\],
+html.dark .bg-\[\#F6F6F6\],
 html.dark .bg-\[\#F7F7F7\],
 html.dark .bg-\[\#FAFAFA\] {
   background-color: #111418 !important;

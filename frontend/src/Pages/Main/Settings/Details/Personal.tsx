@@ -175,7 +175,7 @@ const Personal = () => {
         title={t("settings.personal.theme")}
         description={t("settings.personal.theme.desc")}
       >
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <ThemeTile
             label={t("settings.personal.theme.light")}
             icon={faSun}
@@ -208,7 +208,7 @@ const Personal = () => {
           onSelect={(opt: { value: string }) =>
             update("language", opt?.value ?? "en")
           }
-          className="w-[300px]"
+          className="w-full sm:w-[300px]"
         />
       </Section>
 
@@ -223,7 +223,7 @@ const Personal = () => {
           onSelect={(opt: { value: StartPage }) =>
             update("startPage", opt?.value ?? "dashboards")
           }
-          className="w-[300px]"
+          className="w-full sm:w-[300px]"
         />
       </Section>
 
@@ -238,7 +238,7 @@ const Personal = () => {
           onSelect={(opt: { value: DateFormat }) =>
             update("dateFormat", opt?.value ?? "DD/MM/YYYY")
           }
-          className="w-[300px]"
+          className="w-full sm:w-[300px]"
         />
       </Section>
 
@@ -253,7 +253,7 @@ const Personal = () => {
           onSelect={(opt: { value: TimeFormat }) =>
             update("timeFormat", opt?.value ?? "24h")
           }
-          className="w-[300px]"
+          className="w-full sm:w-[300px]"
         />
       </Section>
 
@@ -268,7 +268,7 @@ const Personal = () => {
           onSelect={(opt: { value: number }) =>
             update("defaultPageSize", opt?.value ?? 25)
           }
-          className="w-[300px]"
+          className="w-full sm:w-[300px]"
         />
       </Section>
 

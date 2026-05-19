@@ -43,7 +43,10 @@
       "Bash(sed -i 's|from \"\"../../Constants/|from \"\"../../../../Constants/|g' *.tsx)",
       "Bash(grep \"from.*ReportCard\" *.tsx)",
       "Bash(npx tsc:*)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(Get-ChildItem -Path \"d:\\\\Projects\\\\WebDev\\\\LanVentory\\\\frontend\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)"
     ]
   }
 }

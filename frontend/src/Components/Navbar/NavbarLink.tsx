@@ -7,9 +7,10 @@ type Props = {
   label: string;
   icon?: any;
   alignment?: string;
+  onNavigate?: () => void;
 };
 
-const NavbarLink = ({ to, label, icon, alignment = "horizontal" }: Props) => {
+const NavbarLink = ({ to, label, icon, alignment = "horizontal", onNavigate }: Props) => {
   return (
     <NavLink
       className={({ isActive }) =>
@@ -18,12 +19,13 @@ const NavbarLink = ({ to, label, icon, alignment = "horizontal" }: Props) => {
           : "text-[#535353] text-[16px] px-2 py-[1px] block"
       }
       to={to}
+      onClick={onNavigate}
     >
-      <div className={`${alignment == "horizontal" ? "my-2" : "mx-1"}`}>
+      <div className={`${alignment === "horizontal" ? "my-2" : "mx-1"} whitespace-nowrap`}>
         {icon && (
           <FontAwesomeIcon
             icon={icon}
-            className={`${alignment == "horizontal" && "w-[20px]"}`}
+            className={`${alignment === "horizontal" ? "w-[20px]" : ""}`}
           />
         )}
         <span className="pl-4">{label}</span>

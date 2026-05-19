@@ -4,9 +4,7 @@ import TimelineLine from "../../../../Components/Timeline/TimelineLine";
 import { getUsersDevices } from "../../../../Services/histories";
 import { useParams } from "react-router";
 
-type Props = {};
-
-const EquipmentHistory = (props: Props) => {
+const EquipmentHistory = () => {
   const { t } = useTranslation();
   const params = useParams();
   const historyQuery = useQuery({
@@ -20,26 +18,28 @@ const EquipmentHistory = (props: Props) => {
     if (!historyQuery?.data) return null;
     return historyQuery.data
       .filter((history) => history.type === 0)
-      .map((history) => {
-        return {
-          ...history,
-          device:
-            `${history?.device?.manufacturer} ${history?.device?.model} (${history?.device?.serialNumber})` ||
-            "",
-        };
-      });
+      .map((history) => ({
+        ...history,
+        device:
+          `${history?.device?.manufacturer} ${history?.device?.model} (${history?.device?.serialNumber})` ||
+          "",
+      }));
   };
 
+  const items = convertToTimeline();
+
   return (
-    <div className="bg-[#FFFFFF] shadow-xl rounded-[10px] row-span-3 p-4">
-      <div className="text-[30px] font-semibold text-[#3C3C3C]">
+    <div className="bg-[#FFFFFF] shadow-xl rounded-[10px] p-4">
+      <div className="text-[24px] sm:text-[28px] font-semibold text-[#3C3C3C] mb-2">
         {t("users.equipment.history")}
       </div>
-      <div>
-        {(convertToTimeline()?.length ?? 0) > 0 ? (
-          <TimelineLine items={convertToTimeline()} />
+      <div className="overflow-y-auto max-h-[480px]">
+        {(items?.length ?? 0) > 0 ? (
+          <TimelineLine items={items} />
         ) : (
-          <div>{t("users.equipment.noHistory")}</div>
+          <div className="text-[#8A8A8A] text-[13px] py-1">
+            {t("users.equipment.noHistory")}
+          </div>
         )}
       </div>
     </div>

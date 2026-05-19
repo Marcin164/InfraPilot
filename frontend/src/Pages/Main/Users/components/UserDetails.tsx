@@ -37,36 +37,49 @@ const UserDetails = ({ data }: Props) => {
   const canViewAsDpo = Boolean(
     currentUserQuery.data?.isDpo || currentUserQuery.data?.isAdmin,
   );
+
+  const initials =
+    `${data.name?.[0] ?? ""}${data.surname?.[0] ?? ""}`.toUpperCase() || "?";
+
   return (
     <div>
-      <div className="flex justify-between">
-        <div className="flex items-center">
-          <img src="#" className="w-[85px] h-[85px]" />
-          <div className="px-4">
-            <div className="font-extrabold text-[#3C3C3C] text-[20px]">
-              {`${data.name} ${data.surname}`}
+      {/* ── Avatar + name row ── */}
+      <div className="flex items-start gap-3">
+        <div className="w-[60px] h-[60px] sm:w-[72px] sm:h-[72px] rounded-full bg-[#2B9AE9] flex items-center justify-center flex-shrink-0 text-white font-bold text-[20px] sm:text-[24px] select-none">
+          {initials}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="font-extrabold text-[#3C3C3C] text-[17px] sm:text-[20px] leading-tight">
+                {`${data.name} ${data.surname}`}
+              </div>
+              <div className="text-[#3C3C3C] font-light text-[13px] sm:text-[15px] pb-1">
+                {data.title}
+              </div>
+              <div
+                className={twMerge(
+                  "text-[14px] sm:text-[16px]",
+                  data.enabled ? "text-[#30A712]" : "text-[#BC0E0E]",
+                )}
+              >
+                <FontAwesomeIcon
+                  icon={data.enabled ? faCheckCircle : faXmarkCircle}
+                />
+                <span className="px-2">
+                  {data.enabled
+                    ? t("users.details.enabled")
+                    : t("users.details.disabled")}
+                </span>
+              </div>
             </div>
-            <div className="text-[#3C3C3C] font-light text-[15px] pb-2">
-              {data.title}
-            </div>
-            <div
-              className={twMerge(
-                "text-[18px]",
-                data.enabled ? "text-[#30A712]" : "text-[#BC0E0E]",
-              )}
-            >
-              <FontAwesomeIcon
-                icon={data.enabled ? faCheckCircle : faXmarkCircle}
-              />
-              <span className="px-2">
-                {data.enabled ? t("users.details.enabled") : t("users.details.disabled")}
-              </span>
-            </div>
+            <UserDetailsDropdown data={data} />
           </div>
         </div>
-        <UserDetailsDropdown data={data} />
       </div>
-      <div className="flex py-3 items-center gap-2">
+
+      {/* ── Department badge + DPO button ── */}
+      <div className="flex flex-wrap py-3 items-center gap-2">
         {data.department && (
           <Badge
             className="bg-[#2B9AE9]"
@@ -83,6 +96,7 @@ const UserDetails = ({ data }: Props) => {
           />
         )}
       </div>
+
       {canViewAsDpo && (
         <PrivacyDialog
           isOpen={privacyOpen}
@@ -91,17 +105,27 @@ const UserDetails = ({ data }: Props) => {
           userLabel={`${data.name ?? ""} ${data.surname ?? ""}`.trim()}
         />
       )}
+
+      {/* ── Parameters ── */}
       <div>
-        {data.manager && <Parameter name={t("user.manager")} value={data.manager} />}
-        {data.email && <Parameter name={t("user.email")} value={data.email} />}
-        {data.phone && <Parameter name={t("user.phone")} value={data.phone} />}
+        {data.manager && (
+          <Parameter name={t("user.manager")} value={data.manager} />
+        )}
+        {data.email && (
+          <Parameter name={t("user.email")} value={data.email} />
+        )}
+        {data.phone && (
+          <Parameter name={t("user.phone")} value={data.phone} />
+        )}
         {data.streetAddress && data.postalCode && data.city && (
           <Parameter
             name={t("user.address")}
             value={`${data.streetAddress}, ${data.postalCode} ${data.city}`}
           />
         )}
-        {data.company && <Parameter name={t("user.company")} value={data.company} />}
+        {data.company && (
+          <Parameter name={t("user.company")} value={data.company} />
+        )}
       </div>
 
       {(currentUserQuery.data?.isAdmin || canViewAsDpo) && (

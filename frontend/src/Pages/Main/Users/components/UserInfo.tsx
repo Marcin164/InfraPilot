@@ -8,9 +8,8 @@ type Props = {
 };
 
 const UserInfo = ({ data }: Props) => {
-  console.log(data);
   return (
-    <div className="w-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
+    <div className="w-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4">
       <UserDetails data={data} />
       <UserPrivileges
         data={{ isApprover: data?.isApprover, isAdmin: data?.isAdmin }}

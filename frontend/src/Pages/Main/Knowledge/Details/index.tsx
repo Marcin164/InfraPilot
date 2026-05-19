@@ -75,7 +75,7 @@ const KnowledgeDetails = () => {
 
   return (
     <PageMotion>
-    <div className="h-[calc(100vh-58px)] w-full px-4">
+    <div className="w-full px-4 pb-4">
       <div className="flex items-center gap-3 pt-4 pb-2">
         <Link
           to="/admin/knowledge"
@@ -97,16 +97,17 @@ const KnowledgeDetails = () => {
         </p>
       )}
 
-      <div className="flex items-center gap-2 pb-4">
+      <div className="flex flex-wrap items-center gap-2 pb-4">
         <Search
           onChange={(e: any) => setSearchValue(e.target.value)}
+          className="w-auto flex-1 min-w-[180px] max-w-[400px]"
         />
         <ButtonPrimary
           color="white"
           icon={faPlus}
           text={t("btn.add.article")}
           onClick={() => setIsAddModalOpen(true)}
-          className="h-[34px] ml-2"
+          className="ml-auto"
         />
       </div>
 

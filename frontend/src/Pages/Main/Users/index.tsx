@@ -98,7 +98,8 @@ const UsersPage = () => {
   return (
     <PageMotion>
       <div className="h-[calc(100vh-58px)] w-full px-4">
-        <div className="flex gap-2 py-4">
+        {/* ── Toolbar ── */}
+        <div className="flex flex-wrap items-center gap-2 py-4">
           <Filter
             filters={filters}
             setFilters={(next: any) => {
@@ -113,19 +114,24 @@ const UsersPage = () => {
             setIsOpen={setIsOpen}
             onSavePreset={presets.savePreset}
           />
-          <Search onChange={handleSearchChange} />
-          <TableSettings
-            settings={userSettings?.data}
-            checkboxes={checkboxes}
-            settingsKey="usersTableColumnOrder"
+          <Search
+            onChange={handleSearchChange}
+            className="w-auto flex-1 min-w-[180px] max-w-[400px]"
           />
-          <ButtonPrimary
-            color="white"
-            icon={faPlus}
-            text={t("btn.add.user")}
-            onClick={() => setIsAddUserModalOpen(true)}
-            className="h-[34px] ml-2"
-          />
+          <div className="flex items-center gap-2 ml-auto">
+            <TableSettings
+              settings={userSettings?.data}
+              checkboxes={checkboxes}
+              settingsKey="usersTableColumnOrder"
+            />
+            <ButtonPrimary
+              color="white"
+              icon={faPlus}
+              text={t("btn.add.user")}
+              onClick={() => setIsAddUserModalOpen(true)}
+              className="h-[34px]"
+            />
+          </div>
           <AddUserModal
             isModalOpen={isAddUserModalOpen}
             onCloseModal={() => setIsAddUserModalOpen(false)}

@@ -12,10 +12,10 @@ type Props = {
 
 const SlaCalendar = ({ slaCalendars }: Props) => {
   const { t } = useTranslation();
-  if (!slaCalendars) return null;
-
   const [isEditCalendarModalOpen, setIsEditCalendarModalOpen] = useState(false);
   const [selectedCalendar, setSelectedCalendar] = useState<any | null>(null);
+
+  if (!slaCalendars) return null;
 
   const openAddCalendarModal = () => {
     setSelectedCalendar(null);
@@ -40,6 +40,7 @@ const SlaCalendar = ({ slaCalendars }: Props) => {
           icon={faPlus}
           text={t("btn.add.calendar")}
           onClick={openAddCalendarModal}
+          className="max-[320px]:[&>span]:hidden"
         />
       </div>
       <CalendarsTable data={slaCalendars} onEdit={openEditCalendarModal} />

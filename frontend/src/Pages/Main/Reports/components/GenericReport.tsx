@@ -113,11 +113,18 @@ function renderChart(meta: ReportMeta, rows: any[], t: (key: string) => string) 
 
   if (meta.chart === "pie") {
     return (
-      <ResponsiveContainer>
+      <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           {tooltip}
-          <Legend />
-          <Pie data={data} dataKey="value" nameKey="label" outerRadius={160}>
+          <Legend verticalAlign="bottom" height={36} />
+          <Pie
+            data={data}
+            dataKey="value"
+            nameKey="label"
+            cx="50%"
+            cy="45%"
+            outerRadius="55%"
+          >
             {data.map((_, i) => (
               <Cell key={i} fill={pieColors[i % pieColors.length]} />
             ))}
@@ -129,11 +136,11 @@ function renderChart(meta: ReportMeta, rows: any[], t: (key: string) => string) 
 
   if (meta.chart === "line") {
     return (
-      <ResponsiveContainer>
+      <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="label" />
-          <YAxis />
+          <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+          <YAxis tick={{ fontSize: 11 }} width={32} />
           {tooltip}
           <Line
             type="monotone"
@@ -172,11 +179,11 @@ function renderChart(meta: ReportMeta, rows: any[], t: (key: string) => string) 
   }
 
   return (
-    <ResponsiveContainer>
+    <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="label" />
-        <YAxis />
+        <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+        <YAxis tick={{ fontSize: 11 }} width={32} />
         {tooltip}
         <Bar dataKey="value" fill={pieColors[0]} radius={[4, 4, 0, 0]} />
       </BarChart>

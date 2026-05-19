@@ -5,9 +5,10 @@ import { deviceNavbarItems } from "../../Constants/navigation";
 const DeviceNavbar = () => {
   const { t } = useTranslation();
   return (
-    <div className="w-full flex bg-[#FFFFFF] shadow-xl rounded-[10px] p-2">
+    <div className="w-full flex flex-nowrap bg-[#FFFFFF] shadow-xl rounded-[10px] p-2 overflow-x-auto scrollbar-hide">
       {deviceNavbarItems.map((navbarItem) => (
         <NavbarLink
+          key={navbarItem.to}
           to={navbarItem.to}
           label={t(navbarItem.label)}
           icon={navbarItem.icon}

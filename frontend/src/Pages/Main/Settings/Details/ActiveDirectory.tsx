@@ -148,7 +148,7 @@ const ActiveDirectory = () => {
         </div>
 
         {isConnected && status && (
-          <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-[14px] text-[#3C3C3C]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-[14px] text-[#3C3C3C]">
             <div>
               <span className="font-semibold">Serwer LDAP:</span>{" "}
               <span className="text-[#535353]">{status.url}</span>
@@ -195,7 +195,7 @@ const ActiveDirectory = () => {
           </span>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <input
             ref={certInputRef}
             type="file"
@@ -351,7 +351,7 @@ const ActiveDirectory = () => {
             Połącz z Active Directory
           </h3>
 
-          <div className="grid grid-cols-2 gap-x-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
             <Input
               label="Adres serwera LDAP"
               name="url"

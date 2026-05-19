@@ -40,14 +40,17 @@ const index = (props: Props) => {
   return (
     <PageMotion>
     <div className="w-full h-[calc(100vh-58px)] px-4">
-      <div className="flex gap-2 py-4">
-        <Search onChange={handleSearchChange} />
+      <div className="flex flex-wrap items-center gap-2 py-4">
+        <Search
+          onChange={handleSearchChange}
+          className="w-auto flex-1 min-w-[180px] max-w-[400px]"
+        />
         <ButtonPrimary
           color="white"
           icon={faPlus}
           text={t("btn.add.space")}
           onClick={() => setIsAddSpaceModalOpen(true)}
-          className="h-[34px] ml-2"
+          className="ml-auto"
         />
       </div>
       <SpacesTable data={filteredSpaces} isLoading={isLoading} />

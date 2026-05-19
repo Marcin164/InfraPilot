@@ -104,7 +104,8 @@ const Index = () => {
   return (
     <PageMotion>
       <div className="w-full h-[calc(100vh-58px)] px-4">
-        <div className="flex gap-2 py-4">
+        {/* ── Toolbar ── */}
+        <div className="flex flex-wrap items-center gap-2 py-4">
           <Filter
             filters={filters as any}
             setFilters={(next: any) => {
@@ -119,18 +120,23 @@ const Index = () => {
             setIsOpen={setIsOpen}
             onSavePreset={presets.savePreset}
           />
-          <Search onChange={handleSearchChange} />
-          <TableSettings
-            settings={userSettings?.data}
-            checkboxes={deviceCheckboxes}
-            settingsKey="devicesTableColumnOrder"
+          <Search
+            onChange={handleSearchChange}
+            className="w-auto flex-1 min-w-[180px] max-w-[400px]"
           />
-          <ButtonPrimary
-            color="white"
-            icon={faPlus}
-            text={t("btn.add.device")}
-            onClick={toggleModal}
-          />
+          <div className="flex items-center gap-2 ml-auto">
+            <TableSettings
+              settings={userSettings?.data}
+              checkboxes={deviceCheckboxes}
+              settingsKey="devicesTableColumnOrder"
+            />
+            <ButtonPrimary
+              color="white"
+              icon={faPlus}
+              text={t("btn.add.device")}
+              onClick={toggleModal}
+            />
+          </div>
           <AddDeviceModal isModalOpen={addEQModal} onCloseModal={toggleModal} />
         </div>
         <FilterPresetsBar

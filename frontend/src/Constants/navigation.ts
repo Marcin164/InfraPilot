@@ -26,6 +26,7 @@ import {
   faTicket,
   faUser,
   faUsers,
+  faWindowMaximize,
 } from "@fortawesome/free-solid-svg-icons";
 
 export type NavbarRequirement =
@@ -143,6 +144,7 @@ export const settingsNavbarItems = [
   { to: "tags", label: "settings.tab.tags", icon: faTag, requires: "admin" as NavbarRequirement },
   { to: "compliance-rules", label: "settings.tab.complianceRules", icon: faShieldHalved, requires: "complianceOrAdmin" as NavbarRequirement },
   { to: "ticket-templates", label: "settings.tab.ticketTemplates", icon: faPaste, requires: "helpdeskOrAdmin" as NavbarRequirement },
+  { to: "windows-agent", label: "settings.tab.windowsAgent", icon: faWindowMaximize, requires: "admin" as NavbarRequirement },
 ];
 
 import type { ReportCategory } from "../Services/reports";

@@ -40,7 +40,7 @@ const ActivityEntry = ({
   return (
     <div
       key={id}
-      className="w-[60%] ml-[20%] my-2 px-4 py-2 bg-[#F6F6F6] rounded-[10px] border border-[#E0E0E0] text-[13px]"
+      className="w-full min-[425px]:w-[60%] min-[425px]:ml-[20%] my-2 px-4 py-2 bg-[#F6F6F6] rounded-[10px] border border-[#E0E0E0] text-[13px]"
     >
       <div className="flex items-center gap-2 text-[#5A5A5A]">
         <FontAwesomeIcon

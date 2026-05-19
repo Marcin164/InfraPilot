@@ -1,0 +1,104 @@
+name: Windows Agent
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'windowsApp/**'
+      - '.github/workflows/windows-agent.yml'
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches: [master, main]
+    paths:
+      - 'windowsApp/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write  # needed to attach the installer to a GitHub Release.
+
+jobs:
+  build:
+    name: Build agent + GUI + installer
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windowsApp
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: windowsApp/requirements.txt
+
+      # CMake + MSBuild come pre-installed on windows-latest. Inno Setup
+      # doesn't -- pull it from Chocolatey so iscc.exe lands at the path
+      # build.ps1 expects.
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+        shell: pwsh
+
+      - name: Build (agent + GUIs + generic installer)
+        run: .\scripts\build.ps1 -Clean
+        shell: pwsh
+        # No LV_* secrets: this is a generic, no-secrets-baked installer.
+        # Each LanVentory backend deployment serves this same .exe and
+        # operators install with /BACKENDURL=... /TOKEN=... arguments
+        # copied from their tenant's Settings > Windows Agent page.
+
+      - name: Compute installer path
+        id: artefact
+        run: |
+          $exe = Get-ChildItem installer\Output\LanVentoryAgentSetup-*.exe | Select-Object -First 1
+          if (-not $exe) { throw "Installer not produced." }
+          "path=$($exe.FullName)"        | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "name=$($exe.Name)"            | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "size=$([math]::Round($exe.Length / 1MB, 2)) MB" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        shell: pwsh
+
+      # Always upload as a workflow artifact -- accessible from the
+      # Actions UI for any branch / PR / manual run, including pushes
+      # that don't carry a tag.
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LanVentoryAgentSetup
+          path: windowsApp/installer/Output/LanVentoryAgentSetup-*.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload raw agent binary (for debugging)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lanventory-agent-binary
+          path: windowsApp/dist/lanventory-agent.exe
+          if-no-files-found: warn
+          retention-days: 14
+
+      # Tag pushes (v*.*.*) get a public Release entry with the
+      # installer attached. The Release page gives operators a stable
+      # https URL they can download from without a GitHub account.
+      - name: Create / update GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: windowsApp/installer/Output/LanVentoryAgentSetup-*.exe
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          body: |
+            ## LanVentory Windows Agent ${{ github.ref_name }}
+
+            Installer (${{ steps.artefact.outputs.size }}): **${{ steps.artefact.outputs.name }}**
+
+            ### Install
+            1. Download the `.exe` below.
+            2. Right-click -> Run (UAC prompt).
+            3. After Finish, the configurator opens: enter Backend URL +
+               Enrollment Token, click *Save & enroll*.
+
+            See [windowsApp/README.md](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/windowsApp/README.md)
+            for backend setup (`AGENT_ENROLLMENT_TOKEN`) and the CLI flags.

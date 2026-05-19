@@ -101,29 +101,28 @@ const HistoryFilters = ({
   );
 
   return (
-    <div className="flex px-2 gap-3 md:items-end">
+    <div className="flex flex-wrap items-end gap-2 px-2">
       <Input
         value={searchDraft}
         onChange={(e: any) => setSearchDraft(e.target.value)}
         placeholder={t("history.searchPlaceholder")}
+        className="w-auto flex-1 min-w-[180px] max-w-[300px] pt-0"
       />
 
-      <div>
-        <div className="mt-2">
-          <ReactSelect
-            isMulti
-            options={translatedTypeOptions}
-            value={selectedTypeOptions}
-            onChange={(selected: any) =>
-              onChange({
-                ...value,
-                types: (selected ?? []).map((s: any) => s.value),
-              })
-            }
-            placeholder={t("history.allTypes")}
-            styles={selectStyles}
-          />
-        </div>
+      <div className="flex-1 min-w-[180px] max-w-[280px]">
+        <ReactSelect
+          isMulti
+          options={translatedTypeOptions}
+          value={selectedTypeOptions}
+          onChange={(selected: any) =>
+            onChange({
+              ...value,
+              types: (selected ?? []).map((s: any) => s.value),
+            })
+          }
+          placeholder={t("history.allTypes")}
+          styles={selectStyles}
+        />
       </div>
 
       <Input
@@ -142,20 +141,21 @@ const HistoryFilters = ({
         className="pt-0"
       />
 
-      <ButtonPrimary
-        color="white"
-        icon={faXmark}
-        text={t("common.reset")}
-        onClick={onReset}
-      />
-
-      <ButtonPrimary
-        color="blue"
-        icon={faDownload}
-        text={exporting ? t("common.exporting") : t("reports.exportCsv")}
-        onClick={onExport}
-        disabled={exporting}
-      />
+      <div className="flex items-center gap-2 ml-auto">
+        <ButtonPrimary
+          color="white"
+          icon={faXmark}
+          text={t("common.reset")}
+          onClick={onReset}
+        />
+        <ButtonPrimary
+          color="blue"
+          icon={faDownload}
+          text={exporting ? t("common.exporting") : t("reports.exportCsv")}
+          onClick={onExport}
+          disabled={exporting}
+        />
+      </div>
     </div>
   );
 };

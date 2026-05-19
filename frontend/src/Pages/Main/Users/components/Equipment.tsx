@@ -23,28 +23,46 @@ const Equipment = ({ devices }: Props) => {
   );
 
   return (
-    <div className="bg-[#FFFFFF] shadow-xl rounded-[10px] row-span-3 p-4">
-      <div className="text-[30px] font-semibold text-[#3C3C3C]">{t("users.equipment")}</div>
-      <div className="h-[calc(100%-100px)]">
-        <div className="py-2 font-bold">{t("users.equipment.computersOwned")}</div>
+    <div className="bg-[#FFFFFF] shadow-xl rounded-[10px] p-4">
+      <div className="text-[24px] sm:text-[28px] font-semibold text-[#3C3C3C] mb-2">
+        {t("users.equipment")}
+      </div>
+      <div className="overflow-y-auto max-h-[480px]">
+        <div className="py-1 font-bold text-[14px] text-[#535353] uppercase tracking-wide">
+          {t("users.equipment.computersOwned")}
+        </div>
         {mainDevices?.length > 0 ? (
-          mainDevices.map((device: any) => <EquipmentItem {...device} />)
+          mainDevices.map((device: any) => (
+            <EquipmentItem key={device.id} {...device} />
+          ))
         ) : (
-          <div>{t("users.equipment.noDevice")}</div>
+          <div className="text-[#8A8A8A] text-[13px] py-1">
+            {t("users.equipment.noDevice")}
+          </div>
         )}
-        <div className="py-2 font-bold">{t("users.equipment.computersSignedIn")}</div>
+
+        <div className="py-1 mt-3 font-bold text-[14px] text-[#535353] uppercase tracking-wide">
+          {t("users.equipment.computersSignedIn")}
+        </div>
         {loggedDevice ? (
           <EquipmentItem {...loggedDevice} />
         ) : (
-          <div>{t("users.equipment.noDevices")}</div>
+          <div className="text-[#8A8A8A] text-[13px] py-1">
+            {t("users.equipment.noDevices")}
+          </div>
         )}
-        <div className="py-2 font-bold">{t("users.equipment.peripherals")}</div>
+
+        <div className="py-1 mt-3 font-bold text-[14px] text-[#535353] uppercase tracking-wide">
+          {t("users.equipment.peripherals")}
+        </div>
         {peripherals.length > 0 ? (
           peripherals.map((peripheral: any) => (
-            <EquipmentItem {...peripheral} />
+            <EquipmentItem key={peripheral.id} {...peripheral} />
           ))
         ) : (
-          <div>{t("users.equipment.noDevices")}</div>
+          <div className="text-[#8A8A8A] text-[13px] py-1">
+            {t("users.equipment.noDevices")}
+          </div>
         )}
       </div>
     </div>

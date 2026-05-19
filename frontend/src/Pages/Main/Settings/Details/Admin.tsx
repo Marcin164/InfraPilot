@@ -108,7 +108,7 @@ const LastLogonSection = () => {
         {thresholds.map((threshold, idx) => (
           <div
             key={idx}
-            className="flex items-center gap-3 rounded-[10px] border border-[#E0E0E0] bg-[#FAFAFA] px-4 py-3"
+            className="flex flex-wrap items-center gap-3 rounded-[10px] border border-[#E0E0E0] bg-[#FAFAFA] px-4 py-3"
           >
             <div className="relative">
               <div
@@ -390,8 +390,8 @@ const AssignmentGroupsSection = () => {
 
             return (
               <div key={group.id} className="border border-[#E6E6E6] rounded-[10px] p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-start gap-3">
+                  <div className="flex-1 min-w-[140px]">
                     {isEditing ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input label="Name" value={editName} onChange={(e: any) => setEditName(e.target.value)} />

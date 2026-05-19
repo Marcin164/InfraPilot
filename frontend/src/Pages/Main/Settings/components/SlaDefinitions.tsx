@@ -12,12 +12,13 @@ type Props = {
 
 const SlaDefinitions = ({ slaDefinitions }: Props) => {
   const { t } = useTranslation();
-  if (!slaDefinitions) return null;
   const [isEditDefinitionModalOpen, setIsEditDefinitionModalOpen] =
     useState(false);
   const [selectedDefinition, setSelectedDefinition] = useState<any | null>(
     null,
   );
+
+  if (!slaDefinitions) return null;
 
   const openAddDefinitionModal = () => {
     setSelectedDefinition(null);

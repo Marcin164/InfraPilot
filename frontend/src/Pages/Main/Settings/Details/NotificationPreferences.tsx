@@ -96,6 +96,7 @@ const NotificationPreferences = () => {
       {prefsQuery.isLoading ? (
         <div className="mt-4 text-[13px] text-[#7a7a7a]">{t("common.loading")}</div>
       ) : (
+        <div className="overflow-x-auto">
         <table className="mt-4 w-full text-[13px]">
           <thead>
             <tr className="text-left text-[11px] uppercase text-[#9a9a9a]">
@@ -136,6 +137,7 @@ const NotificationPreferences = () => {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       <div className="mt-4">

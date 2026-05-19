@@ -224,3 +224,18 @@ export const revokeAgentSecret = async (deviceId: string): Promise<{ ok: boolean
   const { data } = await api.post(`/devices/${deviceId}/agent/secret/revoke`);
   return data;
 };
+
+export type AgentSetupInfo =
+  | {
+      configured: true;
+      backendUrl: string;
+      enrollmentToken: string;
+      installerUrl: string;
+      powershellSnippet: string;
+    }
+  | { configured: false; message: string };
+
+export const getAgentSetupInfo = async (): Promise<AgentSetupInfo> => {
+  const { data } = await api.get("/devices/agent/setup-info");
+  return data;
+};

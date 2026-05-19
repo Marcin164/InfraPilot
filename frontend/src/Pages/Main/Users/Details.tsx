@@ -35,10 +35,14 @@ const Details = () => {
   if (!userQuery?.data) return null;
   return (
     <PageMotion>
-      <div className="grid grid-cols-3 gap-x-4 p-4">
+      {/* 1 col mobile → 2 cols tablet → 3 cols desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-4 items-start">
         <UserInfo data={userQuery.data} />
         <Equipment devices={userDevices.data} />
-        <EquipmentHistory />
+        {/* span 2 cols on tablet so it fills the row; reset to 1 on xl */}
+        <div className="md:col-span-2 xl:col-span-1">
+          <EquipmentHistory />
+        </div>
       </div>
     </PageMotion>
   );

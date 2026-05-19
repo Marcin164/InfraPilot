@@ -36,7 +36,7 @@ const Index = () => {
   const [onlyMine, setOnlyMine] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearch = useDebounce(searchValue, 500);
-  console.log(authInfo?.accessToken);
+
   const presets = useFilterPresets("tickets", filters, (next) => {
     setFilters(next as TicketFilters);
     setPage(1);
@@ -81,13 +81,9 @@ const Index = () => {
     placeholderData: (prev) => prev,
   });
 
-  console.log(helpdeskQuery);
-
   const userSettings = useQuery({
     queryKey: ["userSettings"],
-    queryFn: () => {
-      return getUserSettings();
-    },
+    queryFn: () => getUserSettings(),
   });
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,7 +108,8 @@ const Index = () => {
   return (
     <PageMotion>
       <div className="w-full h-[calc(100vh-58px)] px-4">
-        <div className="pt-4 pb-4 flex gap-2 items-center">
+        {/* ── Toolbar ── */}
+        <div className="flex flex-wrap items-center gap-2 py-4">
           <Filter
             filters={filters}
             setFilters={(next: any) => {
@@ -125,30 +122,37 @@ const Index = () => {
             setIsOpen={setIsOpen}
             onSavePreset={presets.savePreset}
           />
-          <Search onChange={handleSearchChange} />
-          <TableSettings
-            settings={userSettings?.data}
-            checkboxes={checkboxes}
-            settingsKey="ticketsTableColumnOrder"
+          <Search
+            onChange={handleSearchChange}
+            className="w-auto flex-1 min-w-[180px] max-w-[400px]"
           />
-          <button
-            type="button"
-            onClick={() => {
-              setOnlyMine((v) => !v);
-              setPage(1);
-            }}
-            disabled={!myId}
-            className={`h-[36px] rounded-[6px] px-3 text-[13px] font-bold cursor-pointer transition-colors ${
-              onlyMine
-                ? "bg-[#2B9AE9] text-white"
-                : "bg-white text-[#3C3C3C] border border-[#D0D0D0]"
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-            title={
-              myId ? t("helpdesk.toggleMine") : t("helpdesk.currentUserUnknown")
-            }
-          >
-            {t("helpdesk.myTickets")}
-          </button>
+          <div className="flex items-center gap-2 ml-auto">
+            <TableSettings
+              settings={userSettings?.data}
+              checkboxes={checkboxes}
+              settingsKey="ticketsTableColumnOrder"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setOnlyMine((v) => !v);
+                setPage(1);
+              }}
+              disabled={!myId}
+              className={`h-[36px] rounded-[6px] px-3 text-[13px] font-bold cursor-pointer transition-colors whitespace-nowrap ${
+                onlyMine
+                  ? "bg-[#2B9AE9] text-white"
+                  : "bg-white text-[#3C3C3C] border border-[#D0D0D0]"
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              title={
+                myId
+                  ? t("helpdesk.toggleMine")
+                  : t("helpdesk.currentUserUnknown")
+              }
+            >
+              {t("helpdesk.myTickets")}
+            </button>
+          </div>
         </div>
         <FilterPresetsBar
           presets={presets.presets}

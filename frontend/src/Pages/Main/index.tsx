@@ -1,17 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
 import MainNavbar from "../../Components/Navbar/MainNavbar";
 import Topbar from "../../Components/Topbar";
 import { Outlet } from "react-router";
 
-type Props = {};
+const MainLayout = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-const index = (props: Props) => {
   return (
-    <div className="flex">
-      <MainNavbar />
-      <div className="w-full bg-[#F6F6F6]">
-        <Topbar />
-        <div className="h-[calc(100vh-58px)]">
+    <div className="min-h-screen bg-[#F6F6F6]">
+      <MainNavbar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      <div className="lg:ml-[240px]">
+        <Topbar onMenuToggle={() => setSidebarOpen((o) => !o)} />
+        <div className="h-[calc(100vh-58px)] overflow-y-auto">
           <Outlet />
         </div>
       </div>
@@ -19,4 +25,4 @@ const index = (props: Props) => {
   );
 };
 
-export default index;
+export default MainLayout;

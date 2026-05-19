@@ -50,6 +50,12 @@ const Details = () => {
     user?.email ||
     myId;
 
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [sideOpen, setSideOpen] = useState(false);
+
+  const openInfo = () => { setInfoOpen(true); setSideOpen(false); };
+  const openSide = () => { setSideOpen(true); setInfoOpen(false); };
+
   const ticketQuery = useQuery({
     queryKey: ["ticket", params.id],
     queryFn: () => getTicket(params.id!),
@@ -115,13 +121,21 @@ const Details = () => {
   const otherViewers = viewers.filter((v) => v.userId !== myId);
 
   return (
-    <div className="flex h-[calc(100vh-58px)] relative">
+    <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-58px)] relative">
       {otherViewers.length > 0 && (
         <div className="absolute top-2 right-2 z-30 rounded-full bg-[#3C3C3C] text-white px-3 py-1 text-[11px] font-bold shadow">
           👁 {t("helpdesk.alsoViewing", { users: otherViewers.map((v) => v.label).join(", ") })}
         </div>
       )}
-      <TicketInfoPanel ticket={ticket} />
+
+      {(infoOpen || sideOpen) && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          onClick={() => { setInfoOpen(false); setSideOpen(false); }}
+        />
+      )}
+
+      <TicketInfoPanel ticket={ticket} isOpen={infoOpen} onClose={() => setInfoOpen(false)} />
 
       <TicketContentPanel
         ticketId={ticket.id}
@@ -130,6 +144,8 @@ const Details = () => {
         onOptimisticComment={(comment: any) =>
           setComments((prev) => [...prev, comment])
         }
+        onInfoToggle={openInfo}
+        onSideToggle={openSide}
       />
 
       <TicketSidePanel
@@ -137,6 +153,8 @@ const Details = () => {
         closureNotes={ticket.closureNotes}
         requesterId={ticket.requester.id}
         approvals={ticket.approvals}
+        isOpen={sideOpen}
+        onClose={() => setSideOpen(false)}
       />
     </div>
   );

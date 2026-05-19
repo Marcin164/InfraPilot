@@ -14,8 +14,6 @@ import { useParser } from "../../../Hooks/useParser";
 import DataLoader from "../../../Components/Loaders/DataLoader";
 import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
 
-type Props = {};
-
 const Details = () => {
   const { t } = useTranslation();
   const params = useParams();
@@ -57,13 +55,17 @@ const Details = () => {
 
   return (
     <div className="w-full p-4">
-      <div className="flex items-center justify-between gap-2">
-        <DeviceNavbar />
+      {/* ── Navbar + PDF button: side by side on sm+, stacked on mobile ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+        <div className="flex-1 min-w-0">
+          <DeviceNavbar />
+        </div>
         <ButtonPrimary
           icon={faFilePdf}
           text={pdfMutation.isPending ? t("device.export.exporting") : t("device.export.pdf")}
           onClick={() => pdfMutation.mutate()}
           disabled={pdfMutation.isPending || !deviceQuery.data}
+          className="flex-shrink-0 self-end sm:self-auto"
         />
       </div>
       <div className="py-4 w-full">

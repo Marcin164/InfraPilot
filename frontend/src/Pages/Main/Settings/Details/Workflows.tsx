@@ -364,27 +364,53 @@ const CategoriesPanel = ({
           return (
             <div
               key={c.id}
-              className="flex items-center gap-2 rounded-[6px] border border-[#E8E8E8] px-2 py-1.5"
+              className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-[6px] border border-[#E8E8E8] px-2 py-2"
             >
-              <span
-                className="w-[10px] h-[10px] rounded-full shrink-0"
-                style={{ backgroundColor: c.color }}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-bold text-[#3C3C3C] truncate">
-                  {c.name}
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <span
+                  className="w-[10px] h-[10px] rounded-full shrink-0"
+                  style={{ backgroundColor: c.color }}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-bold text-[#3C3C3C] truncate">
+                    {c.name}
+                  </div>
+                  <div className="text-[11px] text-[#9a9a9a]">
+                    {c.ticketType ?? t("settings.workflow.categories.any")}
+                    {wf && (
+                      <>
+                        {" · "}
+                        <span className="text-[#2B9AE9]">↳ {wf.name}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div className="text-[11px] text-[#9a9a9a]">
-                  {c.ticketType ?? t("settings.workflow.categories.any")}
-                  {wf && (
-                    <>
-                      {" · "}
-                      <span className="text-[#2B9AE9]">↳ {wf.name}</span>
-                    </>
-                  )}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingId(c.id);
+                    setName(c.name);
+                    setColor(c.color);
+                    setTicketType(c.ticketType ?? "");
+                  }}
+                  className="text-[#2B9AE9] cursor-pointer"
+                  title={t("common.edit")}
+                >
+                  <FontAwesomeIcon icon={faPen} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm(t("settings.workflow.categories.confirmDelete", { name: c.name })))
+                      deleteMutation.mutate(c.id);
+                  }}
+                  className="text-[#F3606E] cursor-pointer"
+                  title={t("common.delete")}
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                </button>
               </div>
-              <div className="min-w-[160px]">
+              <div className="w-full sm:w-auto sm:min-w-[160px]">
                 <SelectSecondary
                   options={[
                     { value: "", label: t("settings.workflow.categories.noWorkflow") },
@@ -408,30 +434,6 @@ const CategoriesPanel = ({
                   }
                 />
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingId(c.id);
-                  setName(c.name);
-                  setColor(c.color);
-                  setTicketType(c.ticketType ?? "");
-                }}
-                className="text-[#2B9AE9] cursor-pointer"
-                title={t("common.edit")}
-              >
-                <FontAwesomeIcon icon={faPen} />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (window.confirm(t("settings.workflow.categories.confirmDelete", { name: c.name })))
-                    deleteMutation.mutate(c.id);
-                }}
-                className="text-[#F3606E] cursor-pointer"
-                title={t("common.delete")}
-              >
-                <FontAwesomeIcon icon={faTrash} />
-              </button>
             </div>
           );
         })}
@@ -495,8 +497,8 @@ const WorkflowEditor = ({
 
   return (
     <div className="bg-white shadow-xl rounded-[10px] p-4 space-y-4">
-      <div className="flex items-end justify-between gap-3">
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex-1 min-w-[200px] grid grid-cols-1 md:grid-cols-2 gap-3">
           <Input
             label={t("settings.workflow.editor.name")}
             value={workflow.name}
@@ -521,7 +523,7 @@ const WorkflowEditor = ({
         />
       </div>
 
-      <div className="flex items-center gap-2 text-[12px] text-[#7a7a7a]">
+      <div className="flex flex-wrap items-center gap-2 text-[12px] text-[#7a7a7a]">
         <span>{t("settings.workflow.editor.trigger")}</span>
         <div className="min-w-[200px]">
           <SelectSecondary

@@ -8,9 +8,7 @@ import {
 } from "../../Constants/navigation";
 import { listReports } from "../../Services/reports";
 
-type Props = {};
-
-const ReportsNavbar = (props: Props) => {
+const ReportsNavbar = () => {
   const { t } = useTranslation();
   const { data } = useQuery({
     queryKey: ["reports", "list"],
@@ -18,7 +16,6 @@ const ReportsNavbar = (props: Props) => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Hide a navbar entry if the backend exposes 0 reports for any of its categories.
   const visible = reportsNavbarItems.filter((item) => {
     if (!data) return true;
     const categories = reportPageCategories[item.to] ?? [];
@@ -26,7 +23,7 @@ const ReportsNavbar = (props: Props) => {
   });
 
   return (
-    <div className="w-full flex bg-[#FFFFFF] shadow-xl rounded-[10px] p-2">
+    <div className="w-full flex flex-nowrap bg-[#FFFFFF] shadow-xl rounded-[10px] p-2 overflow-x-auto scrollbar-hide">
       {visible.map((navbarItem) => (
         <NavbarLink
           key={navbarItem.to}

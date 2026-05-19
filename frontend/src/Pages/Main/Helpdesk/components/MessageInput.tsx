@@ -4,6 +4,7 @@ import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import {
   faFile,
   faMicrophone,
+  faPlus,
   faShare,
   faStop,
   faXmark,
@@ -56,6 +57,8 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
   const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(
     null,
   );
+  const [attachOpen, setAttachOpen] = useState(false);
+  const attachRef = useRef<HTMLDivElement>(null);
 
   // Recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -71,6 +74,14 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
       if (recordedUrl) URL.revokeObjectURL(recordedUrl);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (!attachRef.current?.contains(e.target as Node)) setAttachOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
   const textMutation = useMutation({
@@ -269,25 +280,44 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
           onChange={handleFileChange}
           className="hidden"
         />
-        <ButtonPrimary
-          icon={faFile}
-          className="shrink-0"
-          onClick={handleFilePick}
-          disabled={isPending || isRecording}
-        />
-        <ButtonPrimary
-          icon={isRecording ? faStop : faMicrophone}
-          className={`shrink-0 ${isRecording ? "text-[#BC0E0E]" : ""}`}
-          onClick={isRecording ? stopRecording : startRecording}
-          disabled={isPending}
-        />
-        <TemplatePicker
-          ticket={ticketQuery.data}
-          disabled={isPending || isRecording}
-          onPick={(text) =>
-            setMessage((prev) => (prev ? `${prev}\n\n${text}` : text))
-          }
-        />
+        <div className="relative shrink-0" ref={attachRef}>
+          <div className="relative">
+            <ButtonPrimary
+              icon={faPlus}
+              onClick={() => setAttachOpen((v) => !v)}
+              disabled={isPending}
+              className="shrink-0"
+            />
+            {isRecording && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#E74C3C] rounded-full animate-pulse pointer-events-none" />
+            )}
+          </div>
+          {attachOpen && (
+            <div className="absolute bottom-[52px] left-0 z-50 flex flex-col gap-1 p-2 bg-white rounded-[10px] shadow-xl border border-[#E0E0E0]">
+              <ButtonPrimary
+                icon={faFile}
+                onClick={() => { handleFilePick(); setAttachOpen(false); }}
+                disabled={isPending || isRecording}
+                title={t("helpdesk.attachFile")}
+              />
+              <ButtonPrimary
+                icon={isRecording ? faStop : faMicrophone}
+                color={isRecording ? "red" : "blue"}
+                onClick={isRecording ? () => { stopRecording(); setAttachOpen(false); } : () => { startRecording(); setAttachOpen(false); }}
+                disabled={isPending}
+                title={isRecording ? t("helpdesk.stopRecording") : t("helpdesk.startRecording")}
+              />
+              <TemplatePicker
+                ticket={ticketQuery.data}
+                disabled={isPending || isRecording}
+                onPick={(text) => {
+                  setMessage((prev) => (prev ? `${prev}\n\n${text}` : text));
+                  setAttachOpen(false);
+                }}
+              />
+            </div>
+          )}
+        </div>
 
         <textarea
           value={message}

@@ -92,9 +92,10 @@ const LinkTicketPanel = ({ ticket }: Props) => {
           />
           <ButtonPrimary
             icon={faLink}
-            text={t("helpdesk.linkAsDuplicate")}
             onClick={submit}
             disabled={mutation.isPending || !draft.trim()}
+            className="px-3 py-2 flex-shrink-0"
+            title={t("helpdesk.linkAsDuplicate")}
           />
         </div>
       )}

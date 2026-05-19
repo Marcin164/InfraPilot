@@ -170,7 +170,7 @@ const ArticlePage = () => {
   return (
     <div className="mx-auto max-w-[900px] px-4 py-4">
       {/* Top bar */}
-      <div className="flex items-center justify-between gap-3 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-4">
         <Link
           to={`/admin/knowledge/${spaceId}`}
           className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-white text-[#535353] shadow-xl hover:bg-[#F0F0F0]"
