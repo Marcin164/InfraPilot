@@ -100,6 +100,24 @@ body {
   display: none;
 }
 
+.scrollbar-nav::-webkit-scrollbar {
+  height: 3px;
+}
+.scrollbar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-nav::-webkit-scrollbar-thumb {
+  background: #D0D5DD;
+  border-radius: 3px;
+}
+.scrollbar-nav::-webkit-scrollbar-thumb:hover {
+  background: #2B9AE9;
+}
+.scrollbar-nav {
+  scrollbar-width: thin;
+  scrollbar-color: #D0D5DD transparent;
+}
+
 /* ── Responsive table wrapper ── */
 .rdt_TableWrapper {
   overflow-x: auto;

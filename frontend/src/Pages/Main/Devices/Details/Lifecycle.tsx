@@ -35,6 +35,7 @@ const FIELDS: { key: keyof DeviceLifecyclePatch; label: string; type: string }[]
   { key: "purchaseCurrency", label: "Currency", type: "text" },
   { key: "vendor", label: "Vendor", type: "text" },
   { key: "purchaseOrder", label: "Purchase order", type: "text" },
+  { key: "depreciationYears", label: "Useful life (years)", type: "number" },
   { key: "warrantyStart", label: "Warranty start", type: "date" },
   { key: "warrantyEnd", label: "Warranty end", type: "date" },
   { key: "retiredAt", label: "Retired at", type: "date" },
@@ -87,6 +88,8 @@ const Lifecycle = () => {
         return t("device.lifecycle.vendor");
       case "purchaseOrder":
         return t("device.lifecycle.purchaseOrder");
+      case "depreciationYears":
+        return t("device.lifecycle.depreciationYears");
       case "warrantyStart":
         return t("device.lifecycle.warrantyStart");
       case "warrantyEnd":
@@ -114,6 +117,7 @@ const Lifecycle = () => {
       purchaseCurrency: data.purchaseCurrency ?? "",
       vendor: data.vendor ?? "",
       purchaseOrder: data.purchaseOrder ?? "",
+      depreciationYears: data.depreciationYears ?? "",
       warrantyStart: toInputValue(data.warrantyStart),
       warrantyEnd: toInputValue(data.warrantyEnd),
       retiredAt: toInputValue(data.retiredAt),
@@ -143,6 +147,18 @@ const Lifecycle = () => {
           (1000 * 60 * 60 * 24),
       )
     : null;
+
+  const currentBookValue: number | null = (() => {
+    if (!data.purchasePrice || !data.purchaseDate || !data.depreciationYears) return null;
+    const price = parseFloat(data.purchasePrice);
+    const years = parseInt(data.depreciationYears, 10);
+    if (!price || !years || years <= 0) return null;
+    const ageYears =
+      (Date.now() - new Date(data.purchaseDate).getTime()) /
+      (1000 * 60 * 60 * 24 * 365.25);
+    const remaining = price - (price / years) * ageYears;
+    return Math.max(0, Math.round(remaining * 100) / 100);
+  })();
 
   return (
     <div>
@@ -206,6 +222,15 @@ const Lifecycle = () => {
             {warrantyDaysLeft > 0
               ? t("device.lifecycle.warrantyDaysLeft", { days: warrantyDaysLeft })
               : t("device.lifecycle.warrantyExpired", { days: -warrantyDaysLeft })}
+          </span>
+        )}
+        {currentBookValue !== null && (
+          <span className="text-[13px] text-[#3C3C3C]">
+            <span className="text-[#9a9a9a] mr-1">{t("device.lifecycle.bookValue")}:</span>
+            <span className="font-bold">
+              {currentBookValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {data.purchaseCurrency ? ` ${data.purchaseCurrency}` : ""}
+            </span>
           </span>
         )}
       </div>

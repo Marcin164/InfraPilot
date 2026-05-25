@@ -23,7 +23,7 @@ const ReportsNavbar = () => {
   });
 
   return (
-    <div className="w-full flex flex-nowrap bg-[#FFFFFF] shadow-xl rounded-[10px] p-2 overflow-x-auto scrollbar-hide">
+    <div className="w-full flex flex-nowrap bg-[#FFFFFF] shadow-xl rounded-[10px] p-2 overflow-x-auto scrollbar-nav">
       {visible.map((navbarItem) => (
         <NavbarLink
           key={navbarItem.to}

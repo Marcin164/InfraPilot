@@ -45,6 +45,7 @@ import TicketsReports from "./Pages/Main/Reports/Details/TicketsReports";
 import SecurityReports from "./Pages/Main/Reports/Details/SecurityReports";
 import Knowledge from "./Pages/Main/Knowledge";
 import KnowledgeDetails from "./Pages/Main/Knowledge/Details";
+import Licenses from "./Pages/Main/Licenses";
 import ArticlePage from "./Pages/Main/Knowledge/Details/ArticlePage";
 import History from "./Pages/Main/History";
 import UserLayout from "./Pages/User/index";
@@ -105,6 +106,7 @@ function App() {
                   <Route path="tasks" element={<Tasks />} />
                   <Route path="scans" element={<Scans />} />
                 </Route>
+                <Route path="licenses" element={<Licenses />} />
                 <Route path="helpdesk" element={<Helpdesk />} />
                 <Route path="helpdesk/:id" element={<HelpdeskDetails />} />
                 <Route path="knowledge" element={<Knowledge />} />

@@ -46,6 +46,7 @@ export type DeviceLifecyclePatch = {
   purchaseCurrency?: string;
   vendor?: string;
   purchaseOrder?: string;
+  depreciationYears?: string | number;
   warrantyStart?: string;
   warrantyEnd?: string;
   retiredAt?: string;

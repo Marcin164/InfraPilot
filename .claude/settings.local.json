@@ -46,7 +46,15 @@
       "Bash(npx vite:*)",
       "Bash(Get-ChildItem -Path \"d:\\\\Projects\\\\WebDev\\\\LanVentory\\\\frontend\" -Recurse -Directory)",
       "Bash(Select-Object -ExpandProperty FullName)",
-      "Bash(Sort-Object)"
+      "Bash(Sort-Object)",
+      "Bash(npx jest *)",
+      "Bash(cd \"/d/Projects/WebDev/LanVentory/backend\" && grep -n \"NotificationType\\\\|enum\\\\|INFO\\\\|type\" src/entities/notification.entity.ts | head -20)",
+      "Read(//d/d/Projects/WebDev/LanVentory/backend/src/entities/**)",
+      "Bash(cd \"/d/Projects/WebDev/LanVentory/backend/src/services\" && ls *.ts | grep -v spec | sort)",
+      "Read(//d/d/Projects/WebDev/LanVentory/backend/src/**)",
+      "Bash(git stash *)",
+      "Bash(Get-ChildItem -Path \"d:\\\\Projects\\\\WebDev\\\\LanVentory\" -Force)",
+      "Bash(Select-Object Name, Mode)"
     ]
   }
 }

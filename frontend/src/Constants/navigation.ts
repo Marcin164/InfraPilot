@@ -16,6 +16,7 @@ import {
   faGear,
   faHardDrive,
   faHistory,
+  faKey,
   faNetworkWired,
   faPaste,
   faPlay,
@@ -64,6 +65,12 @@ export const navbarItems: NavbarItem[] = [
     to: "/admin/devices",
     label: "nav.devices",
     icon: faComputer,
+  },
+  {
+    to: "/admin/licenses",
+    label: "nav.licenses",
+    icon: faKey,
+    requires: "admin" as NavbarRequirement,
   },
   {
     to: "/admin/helpdesk",
