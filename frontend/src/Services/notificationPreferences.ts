@@ -34,6 +34,19 @@ export const updateNotificationPreferences = async (
   return data;
 };
 
+export type TestResult = {
+  inapp: boolean;
+  email: boolean;
+  emailAddress: string | null;
+  sms: boolean;
+  phone: string | null;
+};
+
+export const testNotification = async (): Promise<TestResult> => {
+  const { data } = await api.post("/notification-preferences/test");
+  return data;
+};
+
 export const EVENT_LABELS: Record<NotificationEvent, string> = {
   ticket_assigned: "Ticket assigned to me",
   ticket_state_changed: "Ticket state changed",

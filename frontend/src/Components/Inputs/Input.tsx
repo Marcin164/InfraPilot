@@ -43,8 +43,8 @@ const Input = ({
         <input
           id={name}
           name={name}
-          defaultValue={defaultValue || null}
-          value={value || null}
+          defaultValue={defaultValue ?? undefined}
+          value={value ?? ""}
           placeholder={placeholder}
           type={type}
           className={twMerge(

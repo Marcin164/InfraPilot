@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -54,7 +54,8 @@
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.3.1",
     "tailwind-scrollbar-hide": "^4.0.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "@cypress/react": "^9.0.2",

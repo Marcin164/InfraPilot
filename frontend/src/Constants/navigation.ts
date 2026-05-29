@@ -5,12 +5,14 @@ import {
   faBolt,
   faBoxArchive,
   faBug,
+  faBuilding,
   faCalendar,
   faChartBar,
   faClockRotateLeft,
   faChartPie,
   faCode,
   faComputer,
+  faEnvelope,
   faGaugeHigh,
   faComputerMouse,
   faGear,
@@ -20,14 +22,17 @@ import {
   faNetworkWired,
   faPaste,
   faPlay,
+  faQrcode,
   faRobot,
   faShield,
   faShieldHalved,
+  faShoppingCart,
   faTag,
   faTicket,
   faUser,
   faUsers,
   faWindowMaximize,
+  faWrench,
 } from "@fortawesome/free-solid-svg-icons";
 
 export type NavbarRequirement =
@@ -70,6 +75,12 @@ export const navbarItems: NavbarItem[] = [
     to: "/admin/licenses",
     label: "nav.licenses",
     icon: faKey,
+    requires: "admin" as NavbarRequirement,
+  },
+  {
+    to: "/admin/procurement",
+    label: "nav.procurement",
+    icon: faShoppingCart,
     requires: "admin" as NavbarRequirement,
   },
   {
@@ -136,6 +147,8 @@ export const deviceNavbarItems = [
   { to: "lifecycle", label: "device.tab.lifecycle", icon: faBoxArchive },
   { to: "tasks", label: "device.tab.tasks", icon: faPlay },
   { to: "scans", label: "device.tab.scans", icon: faClockRotateLeft },
+  { to: "label", label: "device.tab.label", icon: faQrcode },
+  { to: "maintenance", label: "device.tab.maintenance", icon: faWrench },
 ];
 
 export const settingsNavbarItems = [
@@ -152,6 +165,8 @@ export const settingsNavbarItems = [
   { to: "compliance-rules", label: "settings.tab.complianceRules", icon: faShieldHalved, requires: "complianceOrAdmin" as NavbarRequirement },
   { to: "ticket-templates", label: "settings.tab.ticketTemplates", icon: faPaste, requires: "helpdeskOrAdmin" as NavbarRequirement },
   { to: "windows-agent", label: "settings.tab.windowsAgent", icon: faWindowMaximize, requires: "admin" as NavbarRequirement },
+  { to: "locations", label: "settings.tab.locations", icon: faBuilding, requires: "admin" as NavbarRequirement },
+  { to: "smtp", label: "settings.tab.smtp", icon: faEnvelope, requires: "admin" as NavbarRequirement },
 ];
 
 import type { ReportCategory } from "../Services/reports";

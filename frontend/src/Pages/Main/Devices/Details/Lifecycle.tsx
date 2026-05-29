@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useOutletContext } from "react-router";
+import { getLocations } from "../../../../Services/locations";
 import { toast } from "react-toastify";
 import {
   faCheck,
@@ -13,6 +14,7 @@ import {
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
+import Input from "../../../../Components/Inputs/Input";
 import MergeCandidatesPanel from "../components/MergeCandidatesPanel";
 import {
   DeviceLifecyclePatch,
@@ -108,6 +110,8 @@ const Lifecycle = () => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<DeviceLifecyclePatch>({});
 
+  const locationsQuery = useQuery({ queryKey: ["locations"], queryFn: getLocations });
+
   useEffect(() => {
     setDraft({
       lifecycle: data.lifecycle ?? "active",
@@ -123,6 +127,7 @@ const Lifecycle = () => {
       retiredAt: toInputValue(data.retiredAt),
       disposedAt: toInputValue(data.disposedAt),
       disposalMethod: data.disposalMethod ?? "",
+      locationId: data.locationId ?? "",
     });
   }, [data]);
 
@@ -236,6 +241,31 @@ const Lifecycle = () => {
       </div>
 
       <div className="mt-4">
+        <div className="text-[12px] text-[#9a9a9a] mb-1">{t("device.location")}</div>
+        {editing ? (
+          (() => {
+            const locs = locationsQuery.data ?? [];
+            const opts = [{ value: "", label: "—" }, ...locs.map((l) => ({ value: l.id, label: l.name }))];
+            return (
+              <div className="max-w-[300px]">
+                <SelectSecondary
+                  options={opts}
+                  value={opts.find((o) => o.value === (draft.locationId ?? ""))}
+                  onSelect={(opt: any) => setDraft({ ...draft, locationId: opt?.value ?? "" })}
+                />
+              </div>
+            );
+          })()
+        ) : (
+          <div className="font-bold text-[#3C3C3C]">
+            {(locationsQuery.data ?? []).find((l) => l.id === data.locationId)?.name
+              ?? data.location
+              ?? "—"}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4">
         <div className="text-[12px] text-[#9a9a9a]">{t("device.lifecycle.note")}</div>
         {editing ? (
           <textarea
@@ -244,7 +274,7 @@ const Lifecycle = () => {
               setDraft({ ...draft, lifecycleNote: e.target.value })
             }
             rows={2}
-            className="w-full rounded-[6px] border border-[#D0D0D0] px-3 py-2 text-[13px]"
+            className="w-full mt-[6px] rounded-[10px] border border-[#535353] bg-white font-bold px-3 py-2 text-[16px] block"
           />
         ) : (
           <div className="text-[14px] text-[#3C3C3C]">
@@ -255,24 +285,22 @@ const Lifecycle = () => {
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
         {FIELDS.map((f) => (
-          <div
-            key={f.key as string}
-            className="border border-[#F0F0F0] rounded-[6px] px-3 py-2"
-          >
-            <div className="text-[11px] text-[#9a9a9a]">{fieldLabel(f.key as string)}</div>
+          <div key={f.key as string} className="border border-[#F0F0F0] rounded-[6px] px-3 py-2">
             {editing ? (
-              <input
-                type={f.type}
+              <Input
+                label={fieldLabel(f.key as string)}
+                type={f.type as "text" | "number" | "date"}
                 value={(draft[f.key] as any) ?? ""}
-                onChange={(e) =>
-                  setDraft({ ...draft, [f.key]: e.target.value })
-                }
-                className="w-full mt-1 h-[30px] rounded-[4px] border border-[#D0D0D0] px-2 text-[13px]"
+                handleChange={(v: string) => setDraft({ ...draft, [f.key]: v })}
+                className="pt-0"
               />
             ) : (
-              <div className="font-bold text-[#3C3C3C] break-all">
-                {toInputValue(data[f.key]) || "—"}
-              </div>
+              <>
+                <div className="text-[11px] text-[#9a9a9a]">{fieldLabel(f.key as string)}</div>
+                <div className="font-bold text-[#3C3C3C] break-all">
+                  {toInputValue(data[f.key]) || "—"}
+                </div>
+              </>
             )}
           </div>
         ))}

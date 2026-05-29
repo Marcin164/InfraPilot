@@ -52,6 +52,7 @@ export type DeviceLifecyclePatch = {
   retiredAt?: string;
   disposedAt?: string;
   disposalMethod?: string;
+  locationId?: string;
 };
 
 export const updateDeviceLifecycle = async (
@@ -238,5 +239,10 @@ export type AgentSetupInfo =
 
 export const getAgentSetupInfo = async (): Promise<AgentSetupInfo> => {
   const { data } = await api.get("/devices/agent/setup-info");
+  return data;
+};
+
+export const rotateAgentToken = async (): Promise<{ success: boolean; token: string }> => {
+  const { data } = await api.post("/devices/agent/token/rotate");
   return data;
 };

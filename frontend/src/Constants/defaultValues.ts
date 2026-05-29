@@ -24,6 +24,7 @@ export const addDeviceDefaultValues = {
   model: "",
   manufacturer: "",
   location: "",
+  locationId: "",
 };
 
 export const applyChangeDefaultValues = {

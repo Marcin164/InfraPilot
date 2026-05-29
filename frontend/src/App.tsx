@@ -39,6 +39,7 @@ import TicketTemplates from "./Pages/Main/Settings/Details/TicketTemplates";
 import NotificationPreferences from "./Pages/Main/Settings/Details/NotificationPreferences";
 import Workflows from "./Pages/Main/Settings/Details/Workflows";
 import WindowsAgent from "./Pages/Main/Settings/Details/WindowsAgent";
+import SmtpSettings from "./Pages/Main/Settings/Details/Smtp";
 import UsersReports from "./Pages/Main/Reports/Details/UsersReports";
 import DevicesReports from "./Pages/Main/Reports/Details/DevicesReports";
 import TicketsReports from "./Pages/Main/Reports/Details/TicketsReports";
@@ -46,8 +47,12 @@ import SecurityReports from "./Pages/Main/Reports/Details/SecurityReports";
 import Knowledge from "./Pages/Main/Knowledge";
 import KnowledgeDetails from "./Pages/Main/Knowledge/Details";
 import Licenses from "./Pages/Main/Licenses";
+import Locations from "./Pages/Main/Settings/Details/Locations";
+import Label from "./Pages/Main/Devices/Details/Label";
+import MaintenanceTab from "./Pages/Main/Devices/Details/MaintenanceTab";
 import ArticlePage from "./Pages/Main/Knowledge/Details/ArticlePage";
 import History from "./Pages/Main/History";
+import Procurement from "./Pages/Main/Procurement";
 import UserLayout from "./Pages/User/index";
 import UserAccount from "./Pages/User/Account";
 import UserTickets from "./Pages/User/Tickets";
@@ -105,8 +110,11 @@ function App() {
                   <Route path="lifecycle" element={<Lifecycle />} />
                   <Route path="tasks" element={<Tasks />} />
                   <Route path="scans" element={<Scans />} />
+                  <Route path="label" element={<Label />} />
+                  <Route path="maintenance" element={<MaintenanceTab />} />
                 </Route>
                 <Route path="licenses" element={<Licenses />} />
+                <Route path="procurement" element={<Procurement />} />
                 <Route path="helpdesk" element={<Helpdesk />} />
                 <Route path="helpdesk/:id" element={<HelpdeskDetails />} />
                 <Route path="knowledge" element={<Knowledge />} />
@@ -148,6 +156,8 @@ function App() {
                     element={<TicketTemplates />}
                   />
                   <Route path="windows-agent" element={<WindowsAgent />} />
+                  <Route path="locations" element={<Locations />} />
+                  <Route path="smtp" element={<SmtpSettings />} />
                 </Route>
               </Route>
             </Routes>

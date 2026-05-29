@@ -1,14 +1,16 @@
+import { useTranslation } from "react-i18next";
 import {
   faFile,
   faFilePdf,
   faFileWord,
   faTrash,
+  faArrowUpRightFromSquare,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 import { toast } from "react-toastify";
+import CardHeader from "../../../../Components/Headers/CardHeader";
 import {
   deleteForm,
   getForm,
@@ -16,9 +18,7 @@ import {
   type FormItem,
 } from "../../../../Services/forms";
 
-type Props = {};
-
-const UserForms = (_props: Props) => {
+const UserForms = () => {
   const { t } = useTranslation();
   const { id } = useParams();
   const queryClient = useQueryClient();
@@ -50,43 +50,56 @@ const UserForms = (_props: Props) => {
 
   const iconFor = (mime?: string) => {
     if (mime === "application/pdf") return faFilePdf;
-    if (
-      mime ===
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    )
+    if (mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
       return faFileWord;
     return faFile;
   };
 
+  const iconColor = (mime?: string) => {
+    if (mime === "application/pdf") return "text-[#F3606E]";
+    if (mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+      return "text-[#2B9AE9]";
+    return "text-[#9a9a9a]";
+  };
+
   return (
-    <div>
-      <div className="text-[30px] font-semibold text-[#3C3C3C] pt-2">{t("users.forms")}</div>
-      <div className="flex flex-wrap gap-4">
-        {forms.length === 0 && (
-          <div className="text-sm text-zinc-500 py-4">{t("users.forms.empty")}</div>
-        )}
-        {forms.map((form) => (
-          <div key={form.id} className="w-[120px] relative group">
-            <button
-              onClick={() => handleOpen(form)}
-              className="bg-[#2B9AE9] text-[#FFFFFF] w-[100px] h-[100px] mx-auto rounded-full flex justify-center items-center text-[50px] cursor-pointer hover:opacity-90"
-              title={t("users.forms.open")}
-            >
-              <FontAwesomeIcon icon={iconFor(form.mimetype)} />
-            </button>
-            <div className="text-[14px] font-bold break-all py-2 text-center">
-              {form.name}
+    <div className="bg-white shadow-xl rounded-[10px] p-4">
+      <CardHeader text={t("users.forms")} icon={faFile} />
+      {forms.length === 0 ? (
+        <div className="mt-3 text-[13px] text-[#9a9a9a]">{t("users.forms.empty")}</div>
+      ) : (
+        <div className="mt-3 divide-y divide-[#F0F0F0]">
+          {forms.map((form) => (
+            <div key={form.id} className="flex items-center justify-between gap-3 py-2 group">
+              <div className="flex items-center gap-3 min-w-0">
+                <FontAwesomeIcon
+                  icon={iconFor(form.mimetype)}
+                  className={`text-[18px] shrink-0 ${iconColor(form.mimetype)}`}
+                />
+                <span className="text-[13px] font-semibold text-[#3C3C3C] truncate">
+                  {form.name}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => handleOpen(form)}
+                  className="text-[#2B9AE9] hover:text-[#1a7abf] text-[13px]"
+                  title={t("users.forms.open")}
+                >
+                  <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
+                </button>
+                <button
+                  onClick={() => deleteMutation.mutate(form.id)}
+                  className="text-[#F3606E] hover:text-[#d94055] text-[13px] opacity-0 group-hover:opacity-100 transition-opacity"
+                  title={t("users.forms.delete")}
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                </button>
+              </div>
             </div>
-            <button
-              onClick={() => deleteMutation.mutate(form.id)}
-              className="absolute top-0 right-0 text-red-500 opacity-0 group-hover:opacity-100 p-1"
-              title={t("users.forms.delete")}
-            >
-              <FontAwesomeIcon icon={faTrash} />
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

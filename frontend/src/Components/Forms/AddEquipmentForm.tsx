@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { addDevice } from "../../Services/devices";
 import {
   computersTypeOptions,
@@ -16,6 +16,7 @@ import SelectSecondary from "../Inputs/SelectSecondary";
 import { toast } from "react-toastify";
 import { CreateDeviceData } from "../../Types";
 import { useTranslation } from "react-i18next";
+import { getLocations } from "../../Services/locations";
 
 type Option = { label: string; value: string };
 
@@ -25,6 +26,11 @@ const AddEquipmentForm: React.FC = () => {
 
   const [subgroupOptions, setSubgroupOptions] =
     useState<Option[]>(computersTypeOptions);
+
+  const locationsQuery = useQuery({
+    queryKey: ["locations"],
+    queryFn: getLocations,
+  });
 
   const mutation = useMutation({
     mutationFn: async (values: CreateDeviceData) => {
@@ -154,14 +160,26 @@ const AddEquipmentForm: React.FC = () => {
       />
 
       <form.Field
-        name="location"
-        children={(field) => (
-          <Input
-            {...field}
-            value={field.state.value}
-            label={t("device.location")}
-          />
-        )}
+        name="locationId"
+        children={(field) => {
+          const locations = locationsQuery.data ?? [];
+          const locationOptions = [
+            { value: "", label: t("device.location.none") },
+            ...locations.map((l) => ({ value: l.id, label: l.name })),
+          ];
+          return (
+            <SelectSecondary
+              label={t("device.location")}
+              options={locationOptions}
+              value={locationOptions.find((o) => o.value === field.state.value)}
+              onSelect={(opt: Option) => {
+                const loc = locations.find((l) => l.id === opt.value);
+                field.handleChange(opt.value);
+                form.setFieldValue("location", loc?.name ?? "");
+              }}
+            />
+          );
+        }}
       />
       <div className="pt-4">
         <ButtonPrimary

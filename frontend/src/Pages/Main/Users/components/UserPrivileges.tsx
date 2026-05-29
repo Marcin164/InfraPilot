@@ -1,12 +1,11 @@
-import React from "react";
 import { useTranslation } from "react-i18next";
-import Checkbox from "../../../../Components/Inputs/Checkbox";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
-import { updateUser } from "../../../../Services/users";
 import { useParams } from "react-router";
-import CardHeader from "../../../../Components/Headers/CardHeader";
 import { faUniversalAccess } from "@fortawesome/free-solid-svg-icons";
+import CardHeader from "../../../../Components/Headers/CardHeader";
+import Checkbox from "../../../../Components/Inputs/Checkbox";
+import { updateUser } from "../../../../Services/users";
 
 type Props = {
   data: {
@@ -24,14 +23,8 @@ const UserPrivileges = ({ data }: Props) => {
   });
 
   const form = useForm({
-    defaultValues: data ?? {
-      isApprover: false,
-      isAdmin: false,
-    },
-
-    onSubmit: ({ value }) => {
-      mutation.mutate(value);
-    },
+    defaultValues: data ?? { isApprover: false, isAdmin: false },
+    onSubmit: ({ value }) => mutation.mutate(value),
   });
 
   const handleCheckboxChange = (field: any) => (checked: boolean) => {
@@ -40,10 +33,9 @@ const UserPrivileges = ({ data }: Props) => {
   };
 
   return (
-    <div>
+    <div className="bg-white shadow-xl rounded-[10px] p-4">
       <CardHeader text={t("users.privileges")} icon={faUniversalAccess} />
-
-      <form className="flex flex-col gap-2 mt-2">
+      <form className="flex flex-col gap-2 mt-3">
         <form.Field
           name="isApprover"
           children={(field) => (
@@ -56,7 +48,6 @@ const UserPrivileges = ({ data }: Props) => {
             />
           )}
         />
-
         <form.Field
           name="isAdmin"
           children={(field) => (

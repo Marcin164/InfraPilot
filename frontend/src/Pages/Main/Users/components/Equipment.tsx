@@ -1,10 +1,10 @@
 import { useTranslation } from "react-i18next";
-import EquipmentItem from "../../../../Components/Lists/EquipmentItem";
 import { useParams } from "react-router";
+import { faComputer } from "@fortawesome/free-solid-svg-icons";
+import CardHeader from "../../../../Components/Headers/CardHeader";
+import EquipmentItem from "../../../../Components/Lists/EquipmentItem";
 
-type Props = {
-  devices: any;
-};
+type Props = { devices: any };
 
 const Equipment = ({ devices }: Props) => {
   const { t } = useTranslation();
@@ -16,55 +16,32 @@ const Equipment = ({ devices }: Props) => {
     (device: any) => device.userId === id && device.group === "Computers",
   );
 
-  const loggedDevice: any = null;
-
   const peripherals = devices.filter(
     (device: any) => device.userId === id && device.group === "Peripherals",
   );
 
-  return (
-    <div className="bg-[#FFFFFF] shadow-xl rounded-[10px] p-4">
-      <div className="text-[24px] sm:text-[28px] font-semibold text-[#3C3C3C] mb-2">
-        {t("users.equipment")}
+  const Section = ({ label, items }: { label: string; items: any[] }) => (
+    <div className="mt-3">
+      <div className="text-[11px] font-bold text-[#9a9a9a] uppercase tracking-widest mb-2">
+        {label}
       </div>
-      <div className="overflow-y-auto max-h-[480px]">
-        <div className="py-1 font-bold text-[14px] text-[#535353] uppercase tracking-wide">
-          {t("users.equipment.computersOwned")}
-        </div>
-        {mainDevices?.length > 0 ? (
-          mainDevices.map((device: any) => (
+      {items.length > 0 ? (
+        <div className="divide-y divide-[#F5F5F5]">
+          {items.map((device: any) => (
             <EquipmentItem key={device.id} {...device} />
-          ))
-        ) : (
-          <div className="text-[#8A8A8A] text-[13px] py-1">
-            {t("users.equipment.noDevice")}
-          </div>
-        )}
-
-        <div className="py-1 mt-3 font-bold text-[14px] text-[#535353] uppercase tracking-wide">
-          {t("users.equipment.computersSignedIn")}
+          ))}
         </div>
-        {loggedDevice ? (
-          <EquipmentItem {...loggedDevice} />
-        ) : (
-          <div className="text-[#8A8A8A] text-[13px] py-1">
-            {t("users.equipment.noDevices")}
-          </div>
-        )}
+      ) : (
+        <div className="text-[13px] text-[#9a9a9a]">{t("users.equipment.noDevices")}</div>
+      )}
+    </div>
+  );
 
-        <div className="py-1 mt-3 font-bold text-[14px] text-[#535353] uppercase tracking-wide">
-          {t("users.equipment.peripherals")}
-        </div>
-        {peripherals.length > 0 ? (
-          peripherals.map((peripheral: any) => (
-            <EquipmentItem key={peripheral.id} {...peripheral} />
-          ))
-        ) : (
-          <div className="text-[#8A8A8A] text-[13px] py-1">
-            {t("users.equipment.noDevices")}
-          </div>
-        )}
-      </div>
+  return (
+    <div className="bg-white shadow-xl rounded-[10px] p-4">
+      <CardHeader text={t("users.equipment")} icon={faComputer} />
+      <Section label={t("users.equipment.computersOwned")} items={mainDevices} />
+      <Section label={t("users.equipment.peripherals")} items={peripherals} />
     </div>
   );
 };
