@@ -70,7 +70,8 @@
       "Bash(cd \"/d/Projects/WebDev/LanVentory/frontend/src\" && grep -n \"settings.locations\" i18n/locales/en/translations.json | head -20)",
       "Read(//d/d/Projects/WebDev/LanVentory/frontend/src/i18n/locales/en/**)",
       "Bash(cd \"/d/Projects/WebDev/LanVentory/frontend/src\" && grep -n \"settings.locations.noParent\" i18n/locales/pl/translations.json)",
-      "Read(//d/d/Projects/WebDev/LanVentory/frontend/src/i18n/locales/pl/**)"
+      "Read(//d/d/Projects/WebDev/LanVentory/frontend/src/i18n/locales/pl/**)",
+      "Bash(Remove-Item \"d:\\\\Projects\\\\WebDev\\\\LanVentory\\\\.env.example\")"
     ]
   }
 }
