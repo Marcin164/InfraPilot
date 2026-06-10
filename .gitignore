@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Environment files
+.env
+.env.*.local
+.env.local
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Certificates
+*.cer
+*.crt
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Uploads & temp
+backend/uploads/
+*.tmp
+.tmp/
+
+# Claude memory
+.claude/

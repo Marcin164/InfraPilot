@@ -71,7 +71,13 @@
       "Read(//d/d/Projects/WebDev/InfraPilot/frontend/src/i18n/locales/en/**)",
       "Bash(cd \"/d/Projects/WebDev/InfraPilot/frontend/src\" && grep -n \"settings.locations.noParent\" i18n/locales/pl/translations.json)",
       "Read(//d/d/Projects/WebDev/InfraPilot/frontend/src/i18n/locales/pl/**)",
-      "Bash(Remove-Item \"d:\\\\Projects\\\\WebDev\\\\InfraPilot\\\\.env.example\")"
+      "Bash(Remove-Item \"d:\\\\Projects\\\\WebDev\\\\InfraPilot\\\\.env.example\")",
+      "Bash(rm -rf \"d:/Projects/WebDev/LanVentory/backend/.git\")",
+      "Bash(rm -rf \"d:/Projects/WebDev/LanVentory/windowsApp/.git\")",
+      "Bash(mv \"d:/Projects/WebDev/LanVentory/windowsApp/lanventory-agent.spec\" \"d:/Projects/WebDev/LanVentory/windowsApp/infrapilot-agent.spec\" && echo \"OK\")"
+    ],
+    "additionalDirectories": [
+      "d:\\Projects\\WebDev\\LanVentory\\windowsApp"
     ]
   }
 }
