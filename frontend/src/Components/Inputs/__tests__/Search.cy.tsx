@@ -55,6 +55,6 @@ describe("Search component", () => {
   it("allows typing text", () => {
     mountWithI18n(<Search onChange={() => {}} />);
 
-    cy.get("input").type("Lanventory").should("have.value", "Lanventory");
+    cy.get("input").type("Infrapilot").should("have.value", "Infrapilot");
   });
 });

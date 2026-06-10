@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 #
-# LanVentory scheduled backup.
+# InfraPilot scheduled backup.
 #
 # Produces one encrypted bundle per run:
-#   <BACKUP_DIR>/lanventory-<env>-<UTC>.tar.gpg
-#   <BACKUP_DIR>/lanventory-<env>-<UTC>.tar.gpg.sha256
+#   <BACKUP_DIR>/infrapilot-<env>-<UTC>.tar.gpg
+#   <BACKUP_DIR>/infrapilot-<env>-<UTC>.tar.gpg.sha256
 #
 # Fans out to off-host destinations (S3, SSH) when configured.
 # Prunes local bundles older than BACKUP_RETENTION_DAYS.
@@ -31,7 +31,7 @@ UPLOADS_DIR="${UPLOADS_DIR:-}"
 
 # Optional off-host destinations.
 BACKUP_S3_BUCKET="${BACKUP_S3_BUCKET:-}"
-BACKUP_S3_PREFIX="${BACKUP_S3_PREFIX:-lanventory}"
+BACKUP_S3_PREFIX="${BACKUP_S3_PREFIX:-infrapilot}"
 BACKUP_SSH_TARGET="${BACKUP_SSH_TARGET:-}"
 
 # ---------- helpers ----------
@@ -52,7 +52,7 @@ require sha256sum
 # ---------- run ----------
 
 TS="$(timestamp)"
-NAME="lanventory-${BACKUP_ENV}-${TS}"
+NAME="infrapilot-${BACKUP_ENV}-${TS}"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
@@ -139,7 +139,7 @@ PRUNED=0
 while IFS= read -r -d '' old; do
   rm -f -- "$old" "${old}.sha256"
   PRUNED=$((PRUNED + 1))
-done < <(find "$BACKUP_DIR" -maxdepth 1 -type f -name 'lanventory-*.tar.gpg' \
+done < <(find "$BACKUP_DIR" -maxdepth 1 -type f -name 'infrapilot-*.tar.gpg' \
               -mtime "+${BACKUP_RETENTION_DAYS}" -print0)
 log "Pruned ${PRUNED} old bundle(s)"
 

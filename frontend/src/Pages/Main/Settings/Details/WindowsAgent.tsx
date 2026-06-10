@@ -85,7 +85,7 @@ const WindowsAgent = () => {
       <div className="bg-white rounded-[10px] shadow-xl p-4">
         <CardHeader text="Windows Agent setup" icon={faWindowsBrand} />
         <p className="text-[14px] text-[#535353] mt-2">
-          Install the LanVentory agent on a Windows host to start collecting
+          Install the InfraPilot agent on a Windows host to start collecting
           inventory. The agent self-enrolls against this backend — no manual
           device creation needed. Each scan signs its request with a per-host
           HMAC-SHA256 secret.

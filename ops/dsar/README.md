@@ -1,4 +1,4 @@
-# LanVentory — DSAR procedure (GDPR Art. 15 / 17)
+# InfraPilot — DSAR procedure (GDPR Art. 15 / 17)
 
 This document is the operational handbook for Data Subject Access Requests.
 It sits next to the UI the DPO uses: the procedure here tells the auditor

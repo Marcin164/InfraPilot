@@ -46,14 +46,14 @@ jobs:
         run: .\scripts\build.ps1 -Clean
         shell: pwsh
         # No LV_* secrets: this is a generic, no-secrets-baked installer.
-        # Each LanVentory backend deployment serves this same .exe and
+        # Each InfraPilot backend deployment serves this same .exe and
         # operators install with /BACKENDURL=... /TOKEN=... arguments
         # copied from their tenant's Settings > Windows Agent page.
 
       - name: Compute installer path
         id: artefact
         run: |
-          $exe = Get-ChildItem installer\Output\LanVentoryAgentSetup-*.exe | Select-Object -First 1
+          $exe = Get-ChildItem installer\Output\InfraPilotAgentSetup-*.exe | Select-Object -First 1
           if (-not $exe) { throw "Installer not produced." }
           "path=$($exe.FullName)"        | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "name=$($exe.Name)"            | Out-File -FilePath $env:GITHUB_OUTPUT -Append
@@ -66,16 +66,16 @@ jobs:
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LanVentoryAgentSetup
-          path: windowsApp/installer/Output/LanVentoryAgentSetup-*.exe
+          name: InfraPilotAgentSetup
+          path: windowsApp/installer/Output/InfraPilotAgentSetup-*.exe
           if-no-files-found: error
           retention-days: 30
 
       - name: Upload raw agent binary (for debugging)
         uses: actions/upload-artifact@v4
         with:
-          name: lanventory-agent-binary
-          path: windowsApp/dist/lanventory-agent.exe
+          name: infrapilot-agent-binary
+          path: windowsApp/dist/infrapilot-agent.exe
           if-no-files-found: warn
           retention-days: 14
 
@@ -86,11 +86,11 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: windowsApp/installer/Output/LanVentoryAgentSetup-*.exe
+          files: windowsApp/installer/Output/InfraPilotAgentSetup-*.exe
           generate_release_notes: true
           fail_on_unmatched_files: true
           body: |
-            ## LanVentory Windows Agent ${{ github.ref_name }}
+            ## InfraPilot Windows Agent ${{ github.ref_name }}
 
             Installer (${{ steps.artefact.outputs.size }}): **${{ steps.artefact.outputs.name }}**
 

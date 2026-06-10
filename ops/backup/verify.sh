@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# LanVentory weekly DR drill.
+# InfraPilot weekly DR drill.
 #
 # Takes the most recent encrypted bundle (or a specified one), restores it
 # to a throw-away database, recomputes the audit hash chain, runs sanity
@@ -32,14 +32,14 @@ die() { log "ERROR: $*"; exit 1; }
 
 # Pick newest bundle if not specified.
 if [[ -z "$BUNDLE" ]]; then
-  BUNDLE="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name 'lanventory-*.tar.gpg' \
+  BUNDLE="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name 'infrapilot-*.tar.gpg' \
               -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -n1 | awk '{print $2}')"
   [[ -n "$BUNDLE" ]] || die "no bundles found in $BACKUP_DIR"
 fi
 
 log "Verifying bundle: $BUNDLE"
 
-SCRATCH_DB="lanventory_drill_$(date -u +%Y%m%d%H%M%S)"
+SCRATCH_DB="infrapilot_drill_$(date -u +%Y%m%d%H%M%S)"
 export SKIP_CONFIRM=1
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

@@ -70,7 +70,7 @@ const LabelCard = ({ device }: { device: any }) => {
         >
           {id}
         </div>
-        <div className="text-[8px] text-[#aaa] mt-0.5">LanVentory</div>
+        <div className="text-[8px] text-[#aaa] mt-0.5">InfraPilot</div>
       </div>
     </div>
   );

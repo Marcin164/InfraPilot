@@ -44,7 +44,7 @@ const Details = () => {
       if (!d?.id) throw new Error("Device not loaded");
       const slug =
         d.assetName?.replace(/[^a-z0-9]+/gi, "-").toLowerCase() || d.id;
-      return downloadDeviceReportPdf(d.id, `lanventory-${slug}.pdf`);
+      return downloadDeviceReportPdf(d.id, `infrapilot-${slug}.pdf`);
     },
     onSuccess: () => toast.success(t("device.export.success")),
     onError: (err: any) =>

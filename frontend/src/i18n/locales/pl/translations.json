@@ -1144,7 +1144,7 @@
   "account.forms.open": "Otwórz",
 
   "settings.personal.theme": "Motyw",
-  "settings.personal.theme.desc": "Wybierz wygląd LanVentory. Systemowy podąża za ustawieniami OS.",
+  "settings.personal.theme.desc": "Wybierz wygląd InfraPilot. Systemowy podąża za ustawieniami OS.",
   "settings.personal.theme.light": "Jasny",
   "settings.personal.theme.dark": "Ciemny",
   "settings.personal.theme.system": "Systemowy",

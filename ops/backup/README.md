@@ -1,6 +1,6 @@
-# LanVentory — Backup & Disaster Recovery
+# InfraPilot — Backup & Disaster Recovery
 
-This document is the authoritative backup and DR plan for LanVentory. It
+This document is the authoritative backup and DR plan for InfraPilot. It
 answers the questions an auditor will ask:
 
 - Where do database snapshots go?
@@ -51,8 +51,8 @@ confirm these targets are acceptable for the regulatory framework in play
 A single encrypted bundle per run, produced by `backup.sh`:
 
 ```
-lanventory-<env>-<UTC-timestamp>.tar.gpg      # encrypted archive
-lanventory-<env>-<UTC-timestamp>.tar.gpg.sha256   # integrity sidecar
+infrapilot-<env>-<UTC-timestamp>.tar.gpg      # encrypted archive
+infrapilot-<env>-<UTC-timestamp>.tar.gpg.sha256   # integrity sidecar
 ```
 
 Archive contents (before encryption):
@@ -112,7 +112,7 @@ two-person.
 
 | Action                          | Who                                      | How it is logged                      |
 |---------------------------------|------------------------------------------|---------------------------------------|
-| Run scheduled backup            | `lanventory-backup` service account      | `backup.sh` writes to `system_audit_log` via `audit.log('Backup', id, 'created', …)` on completion |
+| Run scheduled backup            | `infrapilot-backup` service account      | `backup.sh` writes to `system_audit_log` via `audit.log('Backup', id, 'created', …)` on completion |
 | Inspect backup bundle metadata  | Admin, Auditor                           | Read-only S3 role                     |
 | Decrypt passphrase              | Ops on-call + one Compliance officer     | Vault audit log (PropelAuth / secrets manager) |
 | Execute `restore.sh`            | Ops on-call, with Compliance approval    | `restore.sh` logs to `system_audit_log` (`action='restored'`) and records approver in metadata |
@@ -121,7 +121,7 @@ two-person.
 
 Segregation of duties: the service account that produces backups must not
 be the same identity that can delete them from S3 (bucket policy denies
-`DeleteObject` for `lanventory-backup`). Object Lock / versioning should
+`DeleteObject` for `infrapilot-backup`). Object Lock / versioning should
 be enabled on the S3 bucket for the 7-year tier.
 
 ## 8. Schedule
@@ -173,7 +173,7 @@ available (e.g. restoring to a greenfield environment).
 Runs weekly in CI against the most recent bundle:
 
 1. Decrypt → extract → restore into a scratch database named
-   `lanventory_drill_<timestamp>`.
+   `infrapilot_drill_<timestamp>`.
 2. Recomputes the audit hash chain end-to-end and rejects on any
    mismatch.
 3. Runs lightweight sanity queries (row counts on core tables).
@@ -203,7 +203,7 @@ chain alongside normal business events:
 > appear in the chain.
 >
 > Until then, the backup cron log itself is the evidence of record.
-> Archive `/var/log/lanventory-backup.log` alongside the bundles.
+> Archive `/var/log/infrapilot-backup.log` alongside the bundles.
 
 This pattern matches the "who/when/what" evidence an auditor expects
 during ISO 27001 A.12.3 and SOC 2 CC7.2 interviews.

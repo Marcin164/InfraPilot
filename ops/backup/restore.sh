@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# LanVentory restore runbook.
+# InfraPilot restore runbook.
 #
 # Two-person-rule script. Will DROP the target database on --clean.
 # Never run from cron. Operator must provide an approver name that is
@@ -8,7 +8,7 @@
 #
 # Usage:
 #   ./restore.sh \
-#     --bundle /path/to/lanventory-prod-<ts>.tar.gpg \
+#     --bundle /path/to/infrapilot-prod-<ts>.tar.gpg \
 #     --target-db AssetManager \
 #     --approver "Jane Doe (Compliance)"
 #
@@ -81,7 +81,7 @@ if [[ "${SKIP_CONFIRM:-0}" != "1" ]]; then
   cat <<EOF
 
 ================================================================
-LanVentory restore — this will DROP and RECREATE database '${TARGET_DB}'
+InfraPilot restore — this will DROP and RECREATE database '${TARGET_DB}'
 on ${PGHOST}:${PGPORT} as user ${PGUSER}.
 
 Bundle:   $BUNDLE

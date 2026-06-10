@@ -67,7 +67,7 @@ function downloadTemplate(entity: EntityType) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `lanventory-${entity}-template.csv`;
+  a.download = `infrapilot-${entity}-template.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
