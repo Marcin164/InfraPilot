@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import moment from "moment";
-import { faPlay, faRotate, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faPlay, faRotate, faXmark, faMagnifyingGlass, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
@@ -15,6 +15,7 @@ import {
   AgentTask,
   AgentTaskType,
 } from "../../../../Services/agentTasks";
+import { analyzeLogs, type LogAnalysisResult } from "../../../../Services/ai";
 
 const TASK_TYPE_VALUES: AgentTaskType[] = [
   "scan_now",
@@ -43,6 +44,20 @@ const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
     label: t(`helpdesk.diag.task.${v}`),
   }));
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [logAnalysis, setLogAnalysis] = useState<Record<string, LogAnalysisResult>>({});
+  const [analyzingTask, setAnalyzingTask] = useState<string | null>(null);
+
+  const handleAnalyzeLogs = async (task: AgentTask) => {
+    setAnalyzingTask(task.id);
+    try {
+      const result = await analyzeLogs({ logs: task.result });
+      setLogAnalysis((prev) => ({ ...prev, [task.id]: result }));
+    } catch {
+      toast.error(t("ai.error"));
+    } finally {
+      setAnalyzingTask(null);
+    }
+  };
 
   const tasksQuery = useQuery({
     queryKey: ["ticket-diagnostics", deviceId, ticketId],
@@ -142,18 +157,36 @@ const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
                   </button>
                 )}
                 {task.state === "completed" && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setExpanded((prev) => ({
-                        ...prev,
-                        [task.id]: !prev[task.id],
-                      }))
-                    }
-                    className="text-[#2B9AE9] text-[11px] hover:underline cursor-pointer ml-1"
-                  >
-                    {expanded[task.id] ? t("helpdesk.diag.hide") : t("helpdesk.diag.show")}
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpanded((prev) => ({
+                          ...prev,
+                          [task.id]: !prev[task.id],
+                        }))
+                      }
+                      className="text-[#2B9AE9] text-[11px] hover:underline cursor-pointer ml-1"
+                    >
+                      {expanded[task.id] ? t("helpdesk.diag.hide") : t("helpdesk.diag.show")}
+                    </button>
+                    {task.type === "collect_event_log" && (
+                      <button
+                        type="button"
+                        onClick={() => handleAnalyzeLogs(task)}
+                        disabled={analyzingTask === task.id}
+                        className="text-[#8E44AD] text-[11px] hover:underline cursor-pointer ml-1 flex items-center gap-1 disabled:opacity-50"
+                        title={t("ai.analyzeLogs")}
+                      >
+                        {analyzingTask === task.id ? (
+                          <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                        ) : (
+                          <FontAwesomeIcon icon={faMagnifyingGlass} />
+                        )}
+                        {t("ai.analyzeLogs")}
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
               {task.lastError && (
@@ -165,6 +198,32 @@ const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
                 <pre className="mt-1 rounded bg-[#FAFAFA] p-2 text-[10px] overflow-x-auto max-h-[240px]">
                   {JSON.stringify(task.result, null, 2)}
                 </pre>
+              )}
+              {logAnalysis[task.id] && (
+                <div className="mt-2 rounded bg-[#F5EEF8] border border-[#D7BDE2] p-2 text-[11px] space-y-1">
+                  <p className="font-bold text-[#6C3483]">{t("ai.logSummary")}</p>
+                  <p className="text-[#535353]">{logAnalysis[task.id].summary}</p>
+                  {logAnalysis[task.id].issues.length > 0 && (
+                    <div>
+                      <p className="font-bold text-[#922B21] mt-1">{t("ai.logIssues")}</p>
+                      <ul className="list-disc list-inside space-y-0.5">
+                        {logAnalysis[task.id].issues.map((issue, i) => (
+                          <li key={i} className="text-[#535353]">{issue}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {logAnalysis[task.id].recommendations.length > 0 && (
+                    <div>
+                      <p className="font-bold text-[#1A5276] mt-1">{t("ai.logRecommendations")}</p>
+                      <ul className="list-disc list-inside space-y-0.5">
+                        {logAnalysis[task.id].recommendations.map((rec, i) => (
+                          <li key={i} className="text-[#535353]">{rec}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           ))}

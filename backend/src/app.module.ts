@@ -84,6 +84,7 @@ import { Maintenance } from './entities/maintenance.entity';
 import { MaintenanceModule } from './modules/maintenance.module';
 import { PurchaseOrder } from './entities/purchaseOrder.entity';
 import { PurchaseOrderModule } from './modules/purchaseOrder.module';
+import { AiModule } from './modules/ai.module';
 
 @Module({
   imports: [
@@ -218,6 +219,7 @@ import { PurchaseOrderModule } from './modules/purchaseOrder.module';
     LocationModule,
     MaintenanceModule,
     PurchaseOrderModule,
+    AiModule,
   ],
   controllers: [HealthController],
   providers: [

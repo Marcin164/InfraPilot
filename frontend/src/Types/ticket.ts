@@ -23,6 +23,7 @@ export interface Ticket {
   priority: TicketPriority;
   impact: TicketImpact;
   urgency: TicketUrgency;
+  title?: string;
   description: string;
   createdAt: string;
   assignee?: string;
@@ -63,4 +64,6 @@ export interface UpdateTicketData {
   priority?: TicketPriority;
   impact?: TicketImpact;
   urgency?: TicketUrgency;
+  title?: string;
+  description?: string;
 }

@@ -91,6 +91,14 @@ export class UpdateTicketDto {
 
   @IsOptional()
   resolvedAt?: Date;
+
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 }
 
 export class CreateTicketDto {

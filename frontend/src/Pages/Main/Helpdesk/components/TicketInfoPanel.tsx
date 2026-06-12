@@ -12,6 +12,7 @@ import TicketDiagnostics from "./TicketDiagnostics";
 import PreviousTicketsPanel from "./PreviousTicketsPanel";
 import LinkTicketPanel from "./LinkTicketPanel";
 import SuggestionsPanel from "./SuggestionsPanel";
+import AIAssistPanel from "./AIAssistPanel";
 
 interface TicketInfoPanelProps {
   ticket: {
@@ -98,6 +99,8 @@ const TicketInfoPanel = ({ ticket, isOpen = false, onClose }: TicketInfoPanelPro
       <LinkTicketPanel ticket={ticket} />
 
       <SuggestionsPanel ticket={ticket} />
+
+      <AIAssistPanel ticket={ticket} />
 
       <div className="py-1 mt-3">
         <FontAwesomeIcon icon={faClock} className="w-[20px]" />

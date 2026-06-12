@@ -121,6 +121,9 @@ export class Tickets {
   @JoinColumn({ name: 'deviceId' })
   device: Devices;
 
+  @Column({ nullable: true })
+  title: string;
+
   @Column({ type: 'text', nullable: true })
   description: string;
 

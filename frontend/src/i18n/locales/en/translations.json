@@ -1296,5 +1296,21 @@
 
   "device.label.title": "Device label",
   "device.label.print": "Print label",
-  "device.label.hint": "Opens a print dialog optimised for 90×45 mm label paper."
+  "device.label.hint": "Opens a print dialog optimised for 90×45 mm label paper.",
+
+  "ai.title": "AI Assistant",
+  "ai.analyze": "Analyze",
+  "ai.analyzing": "Analyzing…",
+  "ai.reanalyze": "Re-analyze",
+  "ai.apply": "Apply",
+  "ai.applied": "Applied successfully",
+  "ai.applyError": "Failed to apply",
+  "ai.error": "AI analysis failed",
+  "ai.suggestedTitle": "Suggested title",
+  "ai.improvedDescription": "Improved description",
+  "ai.solutions": "Suggested solutions (0-Line Support)",
+  "ai.analyzeLogs": "Analyze logs",
+  "ai.logSummary": "Log analysis summary",
+  "ai.logIssues": "Identified issues",
+  "ai.logRecommendations": "Recommendations"
 }

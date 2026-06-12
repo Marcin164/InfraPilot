@@ -1296,5 +1296,21 @@
 
   "device.label.title": "Etykieta urządzenia",
   "device.label.print": "Drukuj etykietę",
-  "device.label.hint": "Otwiera okno drukowania zoptymalizowane dla papieru etykiet 90×45 mm."
+  "device.label.hint": "Otwiera okno drukowania zoptymalizowane dla papieru etykiet 90×45 mm.",
+
+  "ai.title": "Asystent AI",
+  "ai.analyze": "Analizuj",
+  "ai.analyzing": "Analizuję…",
+  "ai.reanalyze": "Analizuj ponownie",
+  "ai.apply": "Zastosuj",
+  "ai.applied": "Zastosowano",
+  "ai.applyError": "Nie udało się zastosować",
+  "ai.error": "Analiza AI nie powiodła się",
+  "ai.suggestedTitle": "Proponowany tytuł",
+  "ai.improvedDescription": "Ulepszona treść zgłoszenia",
+  "ai.solutions": "Proponowane rozwiązania (0-Line Support)",
+  "ai.analyzeLogs": "Analizuj logi",
+  "ai.logSummary": "Podsumowanie analizy logów",
+  "ai.logIssues": "Wykryte problemy",
+  "ai.logRecommendations": "Rekomendacje"
 }
