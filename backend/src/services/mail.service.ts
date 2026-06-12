@@ -19,7 +19,11 @@ export class MailService implements OnModuleInit {
   constructor(private readonly smtpSettings: SmtpSettingsService) {}
 
   async onModuleInit() {
-    await this.reinit();
+    try {
+      await this.reinit();
+    } catch (err) {
+      this.logger.warn(`SMTP init failed, running in stub mode: ${(err as Error).message}`);
+    }
   }
 
   async reinit(): Promise<void> {
