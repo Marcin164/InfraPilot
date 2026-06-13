@@ -42,10 +42,10 @@ export class UserSettings {
   })
   usersTableColumnOrder: string[];
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: 'jsonb', nullable: true, default: null })
   devicesTableColumnOrder: string[];
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: 'jsonb', nullable: true, default: null })
   ticketsTableColumnOrder: string[];
 
   @Column({ default: 'small' })
