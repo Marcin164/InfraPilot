@@ -85,6 +85,7 @@ import { MaintenanceModule } from './modules/maintenance.module';
 import { PurchaseOrder } from './entities/purchaseOrder.entity';
 import { PurchaseOrderModule } from './modules/purchaseOrder.module';
 import { AiModule } from './modules/ai.module';
+import { BootstrapService } from './services/bootstrap.service';
 
 @Module({
   imports: [
@@ -225,6 +226,7 @@ import { AiModule } from './modules/ai.module';
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: RequestLoggingInterceptor },
+    BootstrapService,
   ],
 })
 export class AppModule {

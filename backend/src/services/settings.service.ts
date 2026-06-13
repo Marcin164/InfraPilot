@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserSettings } from 'src/entities/userSettings.entity';
+import { uuidv4 } from 'src/helpers/uuidv4';
 
 @Injectable()
 export class SettingsService {
@@ -25,6 +26,7 @@ export class SettingsService {
     if (!settings) {
       // jeśli brak rekordu → tworzymy nowy
       settings = this.settingsRepository.create({
+        id: uuidv4(),
         userId,
         ...newSettings,
       });
