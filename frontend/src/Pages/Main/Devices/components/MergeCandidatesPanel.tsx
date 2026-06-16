@@ -13,6 +13,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
+import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
 import {
   getMergeCandidates,
   mergeDevicesApi,
@@ -29,6 +30,8 @@ const MergeCandidatesPanel = ({ device }: Props) => {
   const navigate = useNavigate();
   const [manualSource, setManualSource] = useState("");
   const [showManual, setShowManual] = useState(false);
+  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
+  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
   const candidatesQuery = useQuery({
     queryKey: ["merge-candidates", device?.id],
@@ -56,13 +59,10 @@ const MergeCandidatesPanel = ({ device }: Props) => {
   });
 
   const confirmMerge = (sourceId: string, label: string) => {
-    if (
-      !window.confirm(
-        `Merge "${label}" into this device?\n\nAll tickets, scans, software installs, tasks, compliance and tags from "${label}" will be repointed to this device. The source row stays as a tombstone with mergedIntoId set, but its agent secret is cleared.`,
-      )
-    )
-      return;
-    mergeMutation.mutate(sourceId);
+    askConfirm(
+      () => mergeMutation.mutate(sourceId),
+      `Merge "${label}" into this device?\n\nAll tickets, scans, software installs, tasks, compliance and tags from "${label}" will be repointed to this device. The source row stays as a tombstone with mergedIntoId set, but its agent secret is cleared.`,
+    );
   };
 
   if (device?.mergedIntoId) {
@@ -194,6 +194,13 @@ const MergeCandidatesPanel = ({ device }: Props) => {
           </div>
         )}
       </div>
+      <ConfirmationModal
+        isModalOpen={confirmState.open}
+        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
+        message={confirmState.message}
+      />
     </div>
   );
 };

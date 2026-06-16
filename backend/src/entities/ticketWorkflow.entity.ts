@@ -6,7 +6,12 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-export type WorkflowTrigger = 'on_create' | 'on_state_change';
+export type WorkflowTrigger =
+  | 'on_create'
+  | 'on_state_change'
+  | 'on_assign'
+  | 'on_priority_change'
+  | 'on_close';
 
 export type WorkflowStepType =
   | 'request_approval'

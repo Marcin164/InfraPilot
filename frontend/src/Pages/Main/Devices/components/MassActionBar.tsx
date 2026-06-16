@@ -95,14 +95,14 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
   if (selectedIds.length === 0) return null;
 
   return (
-    <div className="sticky top-0 z-[60] bg-[#3C3C3C] text-white rounded-[10px] shadow-lg px-4 py-2 mb-3 flex flex-wrap items-center gap-3">
+    <div className="sticky top-0 z-[60] bg-white text-[#3C3C3C] rounded-[10px] shadow-lg border border-[#E0E0E0] px-4 py-2 mb-3 flex flex-wrap items-center gap-3">
       <span className="text-[14px] font-bold">
         {t("device.massAction.selected", { count: selectedIds.length })}
       </span>
       <button
         type="button"
         onClick={clear}
-        className="text-[12px] text-[#B0B0B0] hover:text-white cursor-pointer"
+        className="text-[12px] text-[#9a9a9a] hover:text-[#3C3C3C] cursor-pointer"
       >
         {t("device.massAction.clear")}
       </button>
@@ -223,7 +223,7 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
       )}
 
       {mode === "task" && (
-        <div className="w-full text-[11px] text-[#B0B0B0]">
+        <div className="w-full text-[11px] text-[#9a9a9a]">
           <FontAwesomeIcon icon={faPlay} /> {t("device.massAction.taskInfo")}
         </div>
       )}

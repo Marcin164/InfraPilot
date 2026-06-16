@@ -8,8 +8,8 @@ export class SystemAuditLog {
   @Column()
   entityType: string;
 
-  @Column({ type: 'uuid' })
-  entityId: string;
+  @Column({ type: 'uuid', nullable: true, default: null })
+  entityId: string | null;
 
   @Column()
   action: string;

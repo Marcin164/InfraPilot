@@ -85,6 +85,7 @@ import { MaintenanceModule } from './modules/maintenance.module';
 import { PurchaseOrder } from './entities/purchaseOrder.entity';
 import { PurchaseOrderModule } from './modules/purchaseOrder.module';
 import { AiModule } from './modules/ai.module';
+import { M365Module } from './modules/m365.module';
 import { BootstrapService } from './services/bootstrap.service';
 
 @Module({
@@ -221,6 +222,7 @@ import { BootstrapService } from './services/bootstrap.service';
     MaintenanceModule,
     PurchaseOrderModule,
     AiModule,
+    M365Module,
   ],
   controllers: [HealthController],
   providers: [

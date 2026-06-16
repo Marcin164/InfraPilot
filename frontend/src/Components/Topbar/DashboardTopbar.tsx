@@ -1,4 +1,4 @@
-import { faPencil, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faPencil, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import AddDashboardModal from "../Modals/AddDashboardModal";
@@ -11,6 +11,7 @@ type Props = {
   selectDashboard: any;
   currentDashboard: any;
   onWidgetDragStart?: (widgetId: string) => void;
+  onDeleteDashboard?: () => void;
 };
 
 const DashboardTopbar = ({
@@ -18,6 +19,7 @@ const DashboardTopbar = ({
   selectDashboard,
   currentDashboard,
   onWidgetDragStart,
+  onDeleteDashboard,
 }: Props) => {
   const { t } = useTranslation();
   const [isOpenAddDashboardModal, setIsOpenAddDashboardModal] = useState(false);
@@ -47,6 +49,13 @@ const DashboardTopbar = ({
         <ButtonPrimary
           icon={faPencil}
           onClick={onOpenEditDashboardModal}
+          className="mr-2"
+        />
+        <ButtonPrimary
+          icon={faTrash}
+          onClick={onDeleteDashboard}
+          disabled={selectOptions.length <= 1}
+          color="red"
           className="mr-2"
         />
         <ButtonPrimary

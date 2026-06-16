@@ -1,11 +1,10 @@
 import { useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
 import { faFilePdf } from "@fortawesome/free-solid-svg-icons";
 import DeviceNavbar from "../../../Components/Navbar/DeviceNavbar";
 import { Outlet, useParams, useNavigate, useLocation } from "react-router";
-import { useQuery } from "@tanstack/react-query";
 import {
   downloadDeviceReportPdf,
   getDevice,

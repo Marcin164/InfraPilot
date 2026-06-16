@@ -25,4 +25,8 @@ export class DashboardsService {
 
     return this.dashboardsRepository.save(newDashboard);
   }
+
+  async deleteDashboard(id: string): Promise<void> {
+    await this.dashboardsRepository.delete(id);
+  }
 }

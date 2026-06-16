@@ -28,6 +28,7 @@ import Input from "../../../../Components/Inputs/Input";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import Checkbox from "../../../../Components/Inputs/Checkbox";
 import MainTable from "../../../../Components/Tables/MainTable";
+import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
 
 const ACTIONS: RetentionAction[] = ["purge", "archive"];
 
@@ -38,6 +39,8 @@ const RetentionPoliciesSection = () => {
   const [entityType, setEntityType] = useState("");
   const [days, setDays] = useState(365);
   const [action, setAction] = useState<RetentionAction>("purge");
+  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
+  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
   const policiesQuery = useQuery({
     queryKey: ["retention-policies"],
@@ -209,11 +212,7 @@ const RetentionPoliciesSection = () => {
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (window.confirm(t("settings.retention.deleteConfirm", { entity: p.entityType }))) {
-                deleteMutation.mutate(p.id);
-              }
-            }}
+            onClick={() => askConfirm(() => deleteMutation.mutate(p.id), t("settings.retention.deleteConfirm", { entity: p.entityType }))}
             className="text-[#F3606E] cursor-pointer"
           >
             <FontAwesomeIcon icon={faTrash} />
@@ -283,6 +282,13 @@ const RetentionPoliciesSection = () => {
           progressPending={policiesQuery.isFetching}
         />
       </div>
+      <ConfirmationModal
+        isModalOpen={confirmState.open}
+        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
+        message={confirmState.message}
+      />
     </div>
   );
 };

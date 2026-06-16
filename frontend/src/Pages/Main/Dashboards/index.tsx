@@ -22,16 +22,18 @@ import ComplianceBaseline from "./components/ComplianceBaseline";
 import CveSummary from "./components/CveSummary";
 import AgentScoreboard from "./components/AgentScoreboard";
 import AgentSlaQuality from "./components/AgentSlaQuality";
-import { useQuery } from "@tanstack/react-query";
-import { getDashboards } from "../../../Services/dashboards";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { createDashboard, deleteDashboard, getDashboards } from "../../../Services/dashboards";
 import type { Dashboard } from "../../../Types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import DataLoader from "../../../Components/Loaders/DataLoader";
 import { DASHBOARD_WIDGETS } from "../../../Constants/dashboardWidgets";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faChartBar, faXmark } from "@fortawesome/free-solid-svg-icons";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
 import { DashboardDataProvider } from "./DashboardDataContext";
+import ConfirmationModal from "../../../Components/Modals/ConfirmationModal";
+import { useAuthInfo } from "@propelauth/react";
 
 const ReactGridLayout = WidthProvider(RGL);
 
@@ -59,6 +61,8 @@ const componentMap: any = {
 };
 
 const Index = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuthInfo();
   const dashboardsQuery = useQuery({
     queryKey: ["dashboards"],
     queryFn: () => getDashboards(),
@@ -74,6 +78,24 @@ const Index = () => {
   });
 
   const pendingWidgetRef = useRef<string | null>(null);
+  const autoCreatedRef = useRef(false);
+  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
+  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
+
+  useEffect(() => {
+    if (
+      !autoCreatedRef.current &&
+      dashboardsQuery.isSuccess &&
+      dashboardsQuery.data.length === 0 &&
+      user?.userId
+    ) {
+      autoCreatedRef.current = true;
+      createDashboard({ name: "main", userId: user.userId }).then((newDashboard) => {
+        queryClient.invalidateQueries({ queryKey: ["dashboards"] });
+        setCurrentDashboard(newDashboard);
+      });
+    }
+  }, [dashboardsQuery.isSuccess, dashboardsQuery.data?.length, user?.userId]);
 
   useEffect(() => {
     if (
@@ -161,6 +183,17 @@ const Index = () => {
     setLayout((prev) => prev.filter((item) => item.i !== id));
   };
 
+  const handleDeleteDashboard = () => {
+    if (!currentDashboard) return;
+    askConfirm(async () => {
+      await deleteDashboard(currentDashboard.id);
+      await queryClient.invalidateQueries({ queryKey: ["dashboards"] });
+
+      const remaining = dashboardsQuery.data.filter((d: Dashboard) => d.id !== currentDashboard.id);
+      setCurrentDashboard(remaining[0] ?? null);
+    }, `Czy na pewno chcesz usunąć dashboard "${currentDashboard.name}"?`);
+  };
+
   return (
     <PageMotion>
     <DashboardDataProvider>
@@ -170,8 +203,9 @@ const Index = () => {
         selectDashboard={handleSetCurrentDashobard}
         currentDashboard={currentDashboard}
         onWidgetDragStart={handleWidgetDragStart}
+        onDeleteDashboard={handleDeleteDashboard}
       />
-      <div className="h-[calc(100vh-160px)] overflow-y-auto p-2">
+      <div className="h-[calc(100vh-160px)] overflow-y-auto p-2 relative">
         <ReactGridLayout
           layout={layout}
           cols={12}
@@ -208,9 +242,23 @@ const Index = () => {
             );
           })}
         </ReactGridLayout>
+        {layout.length === 0 && (
+          <div className="absolute inset-2 flex flex-col items-center justify-center pointer-events-none select-none">
+            <FontAwesomeIcon icon={faChartBar} className="text-5xl text-gray-300 mb-3" />
+            <p className="text-gray-400 text-base font-medium">Brak widgetów</p>
+            <p className="text-gray-400 text-sm mt-1">Kliknij ikonę ołówka, aby dodać widgety do dashboardu</p>
+          </div>
+        )}
       </div>
     </div>
     </DashboardDataProvider>
+      <ConfirmationModal
+        isModalOpen={confirmState.open}
+        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
+        message={confirmState.message}
+      />
     </PageMotion>
   );
 };

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tickets } from 'src/entities/tickets.entity';
+import { Users } from 'src/entities/users.entity';
 import {
   CreateTicketDto,
   GetTicketsQueryDto,
@@ -14,6 +15,7 @@ import { SlaEngineService } from './slaEngine.service';
 import { TicketActivity } from 'src/entities/ticketActivity.entity';
 import { AdminSettings } from 'src/entities/adminSettings.entity';
 import { SlaInstance } from 'src/entities/slaInstance.entity';
+import { TicketCategory } from 'src/entities/ticketCategory.entity';
 import { TicketAutoTagService } from './ticketAutoTag.service';
 import { TicketWorkflowService } from './ticketWorkflow.service';
 import { NotificationService } from './notification.service';
@@ -77,6 +79,9 @@ export class TicketsService {
 
     @InjectRepository(SlaInstance)
     private slaInstanceRepository: Repository<SlaInstance>,
+
+    @InjectRepository(TicketCategory)
+    private ticketCategoryRepository: Repository<TicketCategory>,
 
     private readonly ticketsGateway: TicketsGateway,
     private readonly slaEngine: SlaEngineService,
@@ -282,6 +287,26 @@ export class TicketsService {
         );
       }
 
+      // Fire event-driven workflows. Best-effort — never block the update.
+      try {
+        if (dto.state && dto.state !== previousState) {
+          await this.workflows.runForTicket(updated, 'on_state_change');
+          if (dto.state === 'Resolved' || dto.state === 'Closed') {
+            await this.workflows.runForTicket(updated, 'on_close');
+          }
+        }
+        if (dto.assignee && dto.assignee !== previousAssignee) {
+          await this.workflows.runForTicket(updated, 'on_assign');
+        }
+        if (dto.priority && dto.priority !== previousPriority) {
+          await this.workflows.runForTicket(updated, 'on_priority_change');
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Workflow post-update failed for ticket ${updated.id}: ${(err as Error).message}`,
+        );
+      }
+
       return updated;
     });
   }
@@ -313,7 +338,9 @@ export class TicketsService {
     console.log('Dziala?');
     const qb = this.ticketsRepository
       .createQueryBuilder('ticket')
-      .leftJoinAndSelect('ticket.requester', 'requester');
+      .leftJoinAndSelect('ticket.requester', 'requester')
+      .leftJoinAndMapOne('ticket.assigneeUser', Users, 'assigneeUser', 'assigneeUser.authUserId = ticket.assignee')
+      .where('ticket.requesterId IS NOT NULL');
 
     if (
       current === 'true' ||
@@ -822,61 +849,34 @@ export class TicketsService {
 
   /*
    * ======================
-   * TICKET CATEGORIES (managed via AdminSettings)
+   * TICKET CATEGORIES (managed via Workflows → Categories)
    * ======================
    */
-  private readonly CATEGORY_KEY = 'ticket_categories';
 
-  private defaultCategories(): {
-    Incident: string[];
-    Service: string[];
-  } {
+  async getTicketCategories(): Promise<{
+    Incident: { name: string; color: string }[];
+    Service: { name: string; color: string }[];
+  }> {
+    const all = await this.ticketCategoryRepository.find({
+      where: { enabled: true },
+      order: { name: 'ASC' as any },
+    });
+
+    const toItem = (c: TicketCategory) => ({ name: c.name, color: c.color });
     return {
-      Incident: [
-        'Hardware issue',
-        'Software issue',
-        'Network issue',
-        'Account / Access',
-        'Security incident',
-        'Other',
-      ],
-      Service: [
-        'New equipment',
-        'Software installation',
-        'Account request',
-        'Access request',
-        'General question',
-        'Other',
-      ],
+      Incident: all
+        .filter((c) => !c.ticketType || c.ticketType === 'Incident')
+        .map(toItem),
+      Service: all
+        .filter((c) => !c.ticketType || c.ticketType === 'Service')
+        .map(toItem),
     };
   }
 
-  async getTicketCategories() {
-    const row = await this.adminSettingsRepository.findOne({
-      where: { key: this.CATEGORY_KEY },
-    });
-    if (!row) return this.defaultCategories();
-    return row.value ?? this.defaultCategories();
-  }
-
-  async updateTicketCategories(value: {
-    Incident: string[];
-    Service: string[];
-  }) {
-    let row = await this.adminSettingsRepository.findOne({
-      where: { key: this.CATEGORY_KEY },
-    });
-    if (!row) {
-      row = this.adminSettingsRepository.create({
-        id: nodeRandomUUID(),
-        key: this.CATEGORY_KEY,
-        value,
-      });
-    } else {
-      row.value = value;
-    }
-    await this.adminSettingsRepository.save(row);
-    return row.value;
+  async updateTicketCategories(_value: unknown) {
+    // Categories are now managed via the Workflows → Categories panel.
+    // This endpoint is kept for backward compatibility but is a no-op.
+    return this.getTicketCategories();
   }
 
   async updateApproval(id: any, dto: any, currentUserId?: string) {

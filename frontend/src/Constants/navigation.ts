@@ -10,6 +10,7 @@ import {
   faChartBar,
   faClockRotateLeft,
   faChartPie,
+  faCloud,
   faCode,
   faComputer,
   faEnvelope,
@@ -167,6 +168,7 @@ export const settingsNavbarItems = [
   { to: "windows-agent", label: "settings.tab.windowsAgent", icon: faWindowMaximize, requires: "admin" as NavbarRequirement },
   { to: "locations", label: "settings.tab.locations", icon: faBuilding, requires: "admin" as NavbarRequirement },
   { to: "smtp", label: "settings.tab.smtp", icon: faEnvelope, requires: "admin" as NavbarRequirement },
+  { to: "m365", label: "settings.tab.m365", icon: faCloud, requires: "admin" as NavbarRequirement },
 ];
 
 import type { ReportCategory } from "../Services/reports";

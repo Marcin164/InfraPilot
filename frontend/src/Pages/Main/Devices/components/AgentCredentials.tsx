@@ -16,6 +16,7 @@ import {
 import moment from "moment";
 
 import CardHeader from "../../../../Components/Headers/CardHeader";
+import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
 import {
   rotateAgentSecret,
   revokeAgentSecret,
@@ -40,6 +41,8 @@ const AgentCredentials = ({
   const authInfo: any = useAuthInfo();
   const currentUserId = authInfo?.user?.metadata?.id;
   const [generatedSecret, setGeneratedSecret] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
+  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
   const currentUserQuery = useQuery({
     queryKey: ["current-user", currentUserId],
@@ -154,15 +157,7 @@ const AgentCredentials = ({
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => {
-            if (
-              window.confirm(
-                "Generate a new agent secret? The previous one stays valid for 24h to allow a smooth rollout.",
-              )
-            ) {
-              rotateMutation.mutate();
-            }
-          }}
+          onClick={() => askConfirm(() => rotateMutation.mutate(), "Generate a new agent secret? The previous one stays valid for 24h to allow a smooth rollout.")}
           disabled={rotateMutation.isPending}
           className="bg-[#2B9AE9] text-white text-[13px] rounded-[8px] px-3 py-2 cursor-pointer flex items-center gap-2 disabled:opacity-60"
         >
@@ -171,15 +166,7 @@ const AgentCredentials = ({
         </button>
         <button
           type="button"
-          onClick={() => {
-            if (
-              window.confirm(
-                "Revoke the agent secret immediately? The agent will be unable to send scans until a new secret is generated and configured.",
-              )
-            ) {
-              revokeMutation.mutate();
-            }
-          }}
+          onClick={() => askConfirm(() => revokeMutation.mutate(), "Revoke the agent secret immediately? The agent will be unable to send scans until a new secret is generated and configured.")}
           disabled={revokeMutation.isPending}
           className="bg-[#F3606E] text-white text-[13px] rounded-[8px] px-3 py-2 cursor-pointer flex items-center gap-2 disabled:opacity-60"
         >
@@ -187,6 +174,13 @@ const AgentCredentials = ({
           {revokeMutation.isPending ? "Revoking…" : "Revoke"}
         </button>
       </div>
+      <ConfirmationModal
+        isModalOpen={confirmState.open}
+        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
+        message={confirmState.message}
+      />
     </div>
   );
 };

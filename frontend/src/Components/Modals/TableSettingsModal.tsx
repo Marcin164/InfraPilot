@@ -11,7 +11,11 @@ import type { UserSettings } from "../../Types";
 
 type SettingsKey = keyof Pick<
   UserSettings,
-  "usersTableColumnOrder" | "ticketsTableColumnOrder" | "devicesTableColumnOrder"
+  | "usersTableColumnOrder"
+  | "ticketsTableColumnOrder"
+  | "devicesTableColumnOrder"
+  | "licensesTableColumnOrder"
+  | "procurementTableColumnOrder"
 >;
 
 type Props = {

@@ -19,6 +19,7 @@ import {
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
 import Modal from "../../../../Components/Modals/AnimatedModal";
+import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getAdStatus,
@@ -35,6 +36,7 @@ const ActiveDirectory = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const certInputRef = useRef<HTMLInputElement>(null);
+  const [certDeleteConfirm, setCertDeleteConfirm] = useState(false);
 
   const [form, setForm] = useState<AdConfig>({
     url: "",
@@ -219,11 +221,18 @@ const ActiveDirectory = () => {
             <ButtonPrimary
               text={t("settings.removeCertificate")}
               icon={faTrash}
-              onClick={() => certDeleteMutation.mutate()}
+              onClick={() => setCertDeleteConfirm(true)}
               disabled={certDeleteMutation.isPending}
             />
           )}
         </div>
+
+        <ConfirmationModal
+          isModalOpen={certDeleteConfirm}
+          handleOnClose={() => setCertDeleteConfirm(false)}
+          onCancel={() => setCertDeleteConfirm(false)}
+          onDelete={() => { certDeleteMutation.mutate(); setCertDeleteConfirm(false); }}
+        />
 
         {(certUploadMutation.data || certDeleteMutation.data) && (
           <div

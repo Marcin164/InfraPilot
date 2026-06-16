@@ -5,6 +5,7 @@ import {
   Param,
   UseGuards,
   Post,
+  Delete,
   Body,
 } from '@nestjs/common';
 import { Request } from '@nestjs/common';
@@ -26,5 +27,11 @@ export class DashboardsController {
   @Post()
   create(@Body() body: { name: string; userId: string }) {
     return this.dashboardsService.createDashboard(body.name, body.userId);
+  }
+
+  @Roles(Role.Admin)
+  @Delete(':id')
+  delete(@Param('id') id: string) {
+    return this.dashboardsService.deleteDashboard(id);
   }
 }

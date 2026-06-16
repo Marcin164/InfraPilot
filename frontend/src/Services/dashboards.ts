@@ -10,3 +10,7 @@ export const createDashboard = async (body: { name: string; userId: string; card
   const { data } = await api.post("/dashboards", body);
   return data;
 };
+
+export const deleteDashboard = async (id: string): Promise<void> => {
+  await api.delete(`/dashboards/${id}`);
+};

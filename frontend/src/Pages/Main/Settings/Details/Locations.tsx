@@ -16,6 +16,7 @@ import CardHeader from "../../../../Components/Headers/CardHeader";
 import Input from "../../../../Components/Inputs/Input";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
 import {
   getLocations,
   createLocation,
@@ -64,6 +65,8 @@ const LocationRow = ({
   const [type, setType] = useState<LocationType>(loc.type);
   const [parentId, setParentId] = useState<string>(loc.parentId ?? "");
   const [description, setDescription] = useState(loc.description ?? "");
+  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
+  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
   const updateMutation = useMutation({
     mutationFn: () =>
@@ -169,16 +172,20 @@ const LocationRow = ({
             <FontAwesomeIcon icon={faPen} className="text-[12px]" />
           </button>
           <button
-            onClick={() => {
-              if (window.confirm(`${t("settings.locations.confirmDelete")} "${loc.name}"?`))
-                deleteMutation.mutate();
-            }}
+            onClick={() => askConfirm(() => deleteMutation.mutate(), `${t("settings.locations.confirmDelete")} "${loc.name}"?`)}
             className="text-[#F3606E] hover:text-[#C0392B]"
           >
             <FontAwesomeIcon icon={faTrash} className="text-[12px]" />
           </button>
         </>
       )}
+      <ConfirmationModal
+        isModalOpen={confirmState.open}
+        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
+        message={confirmState.message}
+      />
     </div>
   );
 };

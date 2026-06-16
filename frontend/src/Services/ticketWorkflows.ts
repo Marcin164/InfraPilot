@@ -19,7 +19,7 @@ export type TicketWorkflow = {
   id: string;
   name: string;
   description: string | null;
-  trigger: "on_create" | "on_state_change";
+  trigger: "on_create" | "on_state_change" | "on_assign" | "on_priority_change" | "on_close";
   enabled: boolean;
   steps: WorkflowStep[];
   createdBy: string | null;

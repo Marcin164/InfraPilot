@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router";
 import MainTable from "./MainTable";
 import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser } from "@fortawesome/free-solid-svg-icons";
+import { faUser, faShieldHalved } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { getUserSettings } from "../../Services/settings";
@@ -127,6 +127,18 @@ const UsersTable = ({
       id: "country",
       name: t("user.country"),
       selector: (row: any) => row.country || "N/A",
+    },
+    {
+      id: "mfa",
+      name: t("user.mfa"),
+      cell: (row: any) => {
+        if (row.entraMfaEnabled === true)
+          return <FontAwesomeIcon icon={faShieldHalved} className="text-green-500" title="MFA włączone" />;
+        if (row.entraMfaEnabled === false)
+          return <FontAwesomeIcon icon={faShieldHalved} className="text-red-400" title="MFA wyłączone" />;
+        return <FontAwesomeIcon icon={faShieldHalved} className="text-gray-300" title="Brak danych MFA" />;
+      },
+      width: "80px",
     },
   ];
 

@@ -6,9 +6,11 @@ export const getTickets = async (query: string): Promise<{ data: Ticket[]; total
   return data;
 };
 
+export type TicketCategoryItem = { name: string; color: string };
+
 export type TicketCategoryMap = {
-  Incident: string[];
-  Service: string[];
+  Incident: TicketCategoryItem[];
+  Service: TicketCategoryItem[];
 };
 
 export const getMyTickets = async (

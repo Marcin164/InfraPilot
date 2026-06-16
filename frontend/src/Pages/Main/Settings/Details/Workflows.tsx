@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ColorPicker from "../../../../Components/Inputs/ColorPicker";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -25,6 +26,7 @@ import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
 import Checkbox from "../../../../Components/Inputs/Checkbox";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
+import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
 import {
   TicketCategory,
   TicketWorkflow,
@@ -38,40 +40,54 @@ import {
   deleteWorkflow,
 } from "../../../../Services/ticketWorkflows";
 
+const TRIGGER_OPTIONS: { value: TicketWorkflow["trigger"]; labelKey: string }[] = [
+  { value: "on_create", labelKey: "settings.workflow.editor.triggerCreate" },
+  { value: "on_state_change", labelKey: "settings.workflow.editor.triggerStateChange" },
+  { value: "on_assign", labelKey: "settings.workflow.editor.triggerAssign" },
+  { value: "on_priority_change", labelKey: "settings.workflow.editor.triggerPriorityChange" },
+  { value: "on_close", labelKey: "settings.workflow.editor.triggerClose" },
+];
+
 const STEP_DEFS: {
   type: WorkflowStepType;
   labelKey: string;
   icon: any;
+  color: string;
   defaultConfig: Record<string, any>;
 }[] = [
   {
     type: "request_approval",
     labelKey: "settings.workflow.step.request_approval",
     icon: faCircleCheck,
+    color: "#30A712",
     defaultConfig: { approverIds: [], message: "" },
   },
   {
     type: "notify",
     labelKey: "settings.workflow.step.notify",
     icon: faPaperPlane,
+    color: "#2B9AE9",
     defaultConfig: { recipientType: "requester", title: "", body: "" },
   },
   {
     type: "set_field",
     labelKey: "settings.workflow.step.set_field",
     icon: faGears,
+    color: "#9B59B6",
     defaultConfig: { field: "priority", value: "Medium" },
   },
   {
     type: "assign_to",
     labelKey: "settings.workflow.step.assign_to",
     icon: faUser,
+    color: "#FF6B35",
     defaultConfig: { userId: "" },
   },
   {
     type: "create_comment",
     labelKey: "settings.workflow.step.create_comment",
     icon: faCommentDots,
+    color: "#6B7280",
     defaultConfig: { content: "", type: "Worknotes" },
   },
 ];
@@ -89,6 +105,8 @@ const newStep = (type: WorkflowStepType, order: number): WorkflowStep => ({
 const Workflows = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
+  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
   const workflowsQuery = useQuery({
     queryKey: ["ticket-workflows"],
@@ -212,8 +230,7 @@ const Workflows = () => {
                 setEditing(null);
                 return;
               }
-              if (window.confirm(t("settings.workflow.confirmDelete", { name: editing.name })))
-                deleteMutation.mutate(editing.id);
+              askConfirm(() => deleteMutation.mutate(editing.id), t("settings.workflow.confirmDelete", { name: editing.name }));
             }}
             saving={saveMutation.isPending}
           />
@@ -229,6 +246,13 @@ const Workflows = () => {
           </div>
         )}
       </div>
+      <ConfirmationModal
+        isModalOpen={confirmState.open}
+        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
+        message={confirmState.message}
+      />
     </div>
   );
 };
@@ -251,6 +275,8 @@ const CategoriesPanel = ({
     "",
   );
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
+  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
   const upsertMutation = useMutation({
     mutationFn: (c: Partial<TicketCategory> & { name: string }) =>
@@ -305,13 +331,9 @@ const CategoriesPanel = ({
           handleChange={setName}
           placeholder={t("settings.workflow.categories.namePlaceholder")}
         />
-        <input
-          type="color"
-          value={color}
-          onChange={(e) => setColor(e.target.value)}
-          className="h-[44px] rounded-[10px] border border-[#535353] cursor-pointer"
-          aria-label={t("settings.workflows.categoryColor")}
-        />
+        <div className="flex items-end pb-[5px]">
+          <ColorPicker value={color} onChange={setColor} />
+        </div>
       </div>
       <div className="mt-2 flex items-center gap-2 flex-wrap">
         <div className="min-w-[180px]">
@@ -355,7 +377,7 @@ const CategoriesPanel = ({
         )}
       </div>
 
-      <div className="mt-3 space-y-1">
+      <div className="mt-3 space-y-1 max-h-[320px] overflow-y-auto pr-1">
         {categories.length === 0 && (
           <div className="text-[13px] text-[#7a7a7a]">{t("settings.workflow.categories.empty")}</div>
         )}
@@ -400,10 +422,7 @@ const CategoriesPanel = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (window.confirm(t("settings.workflow.categories.confirmDelete", { name: c.name })))
-                      deleteMutation.mutate(c.id);
-                  }}
+                  onClick={() => askConfirm(() => deleteMutation.mutate(c.id), t("settings.workflow.categories.confirmDelete", { name: c.name }))}
                   className="text-[#F3606E] cursor-pointer"
                   title={t("common.delete")}
                 >
@@ -438,6 +457,13 @@ const CategoriesPanel = ({
           );
         })}
       </div>
+      <ConfirmationModal
+        isModalOpen={confirmState.open}
+        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
+        message={confirmState.message}
+      />
     </div>
   );
 };
@@ -525,20 +551,15 @@ const WorkflowEditor = ({
 
       <div className="flex flex-wrap items-center gap-2 text-[12px] text-[#7a7a7a]">
         <span>{t("settings.workflow.editor.trigger")}</span>
-        <div className="min-w-[200px]">
+        <div className="min-w-[240px]">
           <SelectSecondary
-            options={[
-              { value: "on_create", label: t("settings.workflow.editor.triggerCreate") },
-            ]}
-            value={{ value: workflow.trigger, label: t("settings.workflow.editor.triggerCreate") }}
+            options={TRIGGER_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }))}
+            value={{ value: workflow.trigger, label: t(TRIGGER_OPTIONS.find((o) => o.value === workflow.trigger)?.labelKey ?? TRIGGER_OPTIONS[0].labelKey) }}
             onSelect={(opt: any) =>
               opt?.value && setField("trigger", opt.value as any)
             }
           />
         </div>
-        <span className="text-[10px] text-[#9a9a9a]">
-          {t("settings.workflow.editor.moreTriggers")}
-        </span>
       </div>
 
       <div>
@@ -550,10 +571,11 @@ const WorkflowEditor = ({
                 key={d.type}
                 type="button"
                 onClick={() => addStep(d.type)}
-                className="rounded-[6px] border border-[#D0D0D0] px-2 py-1 text-[11px] hover:bg-[#F5F5F5] cursor-pointer"
+                className="flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[12px] font-semibold cursor-pointer transition-opacity hover:opacity-80"
+                style={{ backgroundColor: d.color + "20", color: d.color, border: `1px solid ${d.color}50` }}
                 title={t(d.labelKey)}
               >
-                <FontAwesomeIcon icon={d.icon} className="mr-1" />
+                <FontAwesomeIcon icon={d.icon} className="text-[11px]" />
                 {t(d.labelKey)}
               </button>
             ))}
@@ -577,7 +599,7 @@ const WorkflowEditor = ({
                   </span>
                   <FontAwesomeIcon
                     icon={stepDef(step.type).icon}
-                    className="text-[#2B9AE9]"
+                    style={{ color: stepDef(step.type).color }}
                   />
                   <span className="font-bold text-[13px]">
                     {t(stepDef(step.type).labelKey)}

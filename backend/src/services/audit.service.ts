@@ -41,7 +41,7 @@ const canonicalJson = (value: unknown): string => {
 
 const computeHash = (row: {
   entityType: string;
-  entityId: string;
+  entityId: string | null;
   action: string;
   metadata: Record<string, any> | null;
   createdAt: Date;
@@ -76,7 +76,7 @@ export class AuditService {
    */
   async log(
     entityType: string,
-    entityId: string,
+    entityId: string | null,
     action: string,
     metadata?: Record<string, any>,
     manager?: EntityManager,

@@ -20,6 +20,7 @@ import {
   createCommentWithAttachment,
   createTicket,
   getTicketCategories,
+  type TicketCategoryItem,
 } from "../../../Services/tickets";
 import { getDevicesByOwner } from "../../../Services/devices";
 import type { Device, TicketType } from "../../../Types";
@@ -159,7 +160,7 @@ const NewTicket = () => {
     enabled: Boolean(currentUserId),
   });
 
-  const categories = useMemo(() => {
+  const categories: TicketCategoryItem[] = useMemo(() => {
     if (!type || !categoriesQuery.data) return [];
     return categoriesQuery.data[type] ?? [];
   }, [type, categoriesQuery.data]);
@@ -321,21 +322,24 @@ const NewTicket = () => {
               </div>
             )}
             <div className="flex flex-wrap gap-2">
-              {categories.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCategory(c)}
-                  className={twMerge(
-                    "cursor-pointer rounded-[10px] border px-4 py-2 text-[14px] font-semibold transition",
-                    category === c
-                      ? "border-[#2B9AE9] bg-[#EBF5FE] text-[#2B9AE9]"
-                      : "border-[#E0E0E0] bg-white text-[#535353] hover:border-[#B5D9F5]",
-                  )}
-                >
-                  {c}
-                </button>
-              ))}
+              {categories.map((c) => {
+                const selected = category === c.name;
+                return (
+                  <button
+                    key={c.name}
+                    type="button"
+                    onClick={() => setCategory(c.name)}
+                    className="flex cursor-pointer items-center gap-2 rounded-[10px] border px-4 py-2 text-[14px] font-semibold transition-all"
+                    style={
+                      selected
+                        ? { backgroundColor: c.color, borderColor: c.color, color: "#fff" }
+                        : { backgroundColor: c.color + "18", borderColor: c.color + "60", color: c.color }
+                    }
+                  >
+                    {c.name}
+                  </button>
+                );
+              })}
             </div>
             <div className="flex justify-between pt-6">
               <button

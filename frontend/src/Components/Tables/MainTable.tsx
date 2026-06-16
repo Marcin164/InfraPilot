@@ -1,6 +1,34 @@
+import { forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import DataTable from "react-data-table-component";
+
+const TableCheckbox = forwardRef<HTMLInputElement, { indeterminate?: boolean; checked?: boolean; [key: string]: any }>(
+  ({ indeterminate, checked, ...rest }, ref) => {
+    const active = checked || indeterminate;
+    return (
+      <label className="inline-flex items-center cursor-pointer">
+        <input type="checkbox" ref={ref} checked={checked} {...rest} className="sr-only" />
+        <span
+          className={`w-[20px] h-[20px] flex items-center justify-center rounded-[5px] transition-colors ${
+            active ? "bg-blue-600" : "bg-gray-200"
+          }`}
+          aria-hidden="true"
+        >
+          {indeterminate ? (
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12h14" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+          ) : checked ? (
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12.5L9.5 17L19 7" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ) : null}
+        </span>
+      </label>
+    );
+  }
+);
 
 const MainTable = ({
   columns,
@@ -88,6 +116,7 @@ const MainTable = ({
           onChangeRowsPerPage={onChangeRowsPerPage}
           progressPending={progressPending}
           selectableRows={selectableRows}
+          selectableRowsComponent={TableCheckbox}
           onSelectedRowsChange={onSelectedRowsChange}
           clearSelectedRows={clearSelectedRows}
           noDataComponent={noDataComponent ?? defaultNoData}

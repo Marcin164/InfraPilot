@@ -123,9 +123,14 @@ export class DevicesService {
   }
 
   async findDevice(deviceId: any): Promise<any> {
-    return await this.devicesRepository.findOneBy({
-      id: deviceId,
-    });
+    const device = await this.devicesRepository.findOneBy({ id: deviceId });
+    if (!device) return null;
+    const rows = await this.devicesRepository.manager.query(
+      `SELECT "tagId" FROM device_tag_map WHERE "deviceId" = $1`,
+      [deviceId],
+    );
+    (device as any).tagIds = rows.map((r: any) => r.tagId);
+    return device;
   }
 
   async rotateAgentSecret(deviceId: string): Promise<{ secret: string }> {

@@ -61,11 +61,19 @@ import { Logger, OnModuleInit } from '@nestjs/common';
 })
 export class TicketsModule implements OnModuleInit {
   private readonly logger = new Logger(TicketsModule.name);
-  constructor(private readonly autoTag: TicketAutoTagService) {}
+  constructor(
+    private readonly autoTag: TicketAutoTagService,
+    private readonly workflows: TicketWorkflowService,
+  ) {}
   async onModuleInit() {
-    const inserted = await this.autoTag.seedDefaults();
-    if (inserted > 0) {
-      this.logger.log(`Seeded ${inserted} default ticket auto-tag rule(s)`);
+    const autoTagCount = await this.autoTag.seedDefaults();
+    if (autoTagCount > 0) {
+      this.logger.log(`Seeded ${autoTagCount} default ticket auto-tag rule(s)`);
+    }
+
+    const catCount = await this.workflows.seedDefaultCategories();
+    if (catCount > 0) {
+      this.logger.log(`Seeded ${catCount} default ticket categories`);
     }
   }
 }

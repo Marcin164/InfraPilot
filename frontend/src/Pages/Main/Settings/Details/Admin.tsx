@@ -32,6 +32,8 @@ import Checkbox from "../../../../Components/Inputs/Checkbox";
 import Search from "../../../../Components/Inputs/Search";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import MainTable from "../../../../Components/Tables/MainTable";
+import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
+import ColorPicker from "../../../../Components/Inputs/ColorPicker";
 import { buildQuery } from "../../../../Helpers/queries";
 import { useDebounce } from "../../../../Hooks/useDebounce";
 import type { LastLogonThreshold, User } from "../../../../Types";
@@ -110,19 +112,12 @@ const LastLogonSection = () => {
             key={idx}
             className="flex flex-wrap items-center gap-3 rounded-[10px] border border-[#E0E0E0] bg-[#FAFAFA] px-4 py-3"
           >
-            <div className="relative">
-              <div
-                className="h-[36px] w-[36px] rounded-[8px] border border-[#E0E0E0] cursor-pointer"
-                style={{ backgroundColor: threshold.color }}
-              />
-              <input
-                type="color"
-                value={threshold.color}
-                onChange={(e) => updateThreshold(idx, "color", e.target.value)}
-                onBlur={() => save(thresholds)}
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-              />
-            </div>
+            <ColorPicker
+              value={threshold.color}
+              onChange={(c) => updateThreshold(idx, "color", c)}
+              onBlur={() => save(thresholds)}
+              size={36}
+            />
 
             <input
               type="text"
@@ -174,19 +169,12 @@ const LastLogonSection = () => {
         <span className="text-[14px] font-bold text-[#3C3C3C]">
           {t("settings.admin.colors.defaultLabel")}
         </span>
-        <div className="relative">
-          <div
-            className="h-[36px] w-[36px] rounded-[8px] border border-[#E0E0E0] cursor-pointer"
-            style={{ backgroundColor: defaultColor }}
-          />
-          <input
-            type="color"
-            value={defaultColor}
-            onChange={(e) => setDefaultColor(e.target.value)}
-            onBlur={() => save(thresholds, defaultColor)}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-          />
-        </div>
+        <ColorPicker
+          value={defaultColor}
+          onChange={setDefaultColor}
+          onBlur={() => save(thresholds, defaultColor)}
+          size={36}
+        />
         <span className="text-[13px] text-[#8A8A8A]">
           {t("settings.admin.colors.defaultRange", { days: thresholds.length ? thresholds[thresholds.length - 1].maxDays : 0 })}
         </span>
@@ -229,6 +217,8 @@ const AssignmentGroupsSection = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
+  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
   const currentUserQuery = useQuery({
     queryKey: ["current-user", currentUserId],
@@ -433,11 +423,7 @@ const AssignmentGroupsSection = () => {
                           <ButtonPrimary
                             icon={faTrash}
                             text={t("common.delete")}
-                            onClick={() => {
-                              if (window.confirm(t("settings.admin.groups.deleteConfirm", { name: group.name }))) {
-                                deleteMutation.mutate(group.id);
-                              }
-                            }}
+                            onClick={() => askConfirm(() => deleteMutation.mutate(group.id), t("settings.admin.groups.deleteConfirm", { name: group.name }))}
                           />
                         </>
                       )}
@@ -480,6 +466,13 @@ const AssignmentGroupsSection = () => {
           })}
         </div>
       </div>
+      <ConfirmationModal
+        isModalOpen={confirmState.open}
+        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
+        message={confirmState.message}
+      />
     </>
   );
 };

@@ -70,8 +70,8 @@ const GenericReport = ({ meta, filters: initialFilters }: Props) => {
 
   return (
     <ReportCard
-      title={meta.title}
-      description={meta.description}
+      title={t(`reports.meta.${meta.key}.title`, { defaultValue: meta.title })}
+      description={t(`reports.meta.${meta.key}.description`, { defaultValue: meta.description })}
       onExport={handleExport}
     >
       <div className="flex flex-col h-full">

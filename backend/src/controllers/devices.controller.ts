@@ -58,7 +58,7 @@ export class DevicesController {
   ) {
     const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id;
     const result = await this.devicesService.bulkImport(body.rows ?? []);
-    await this.auditService.log('Device', 'bulk', 'bulk_import', {
+    await this.auditService.log('Device', null, 'bulk_import', {
       actor,
       created: result.created,
       skipped: result.skipped,
@@ -95,6 +95,30 @@ export class DevicesController {
   @Get('/filters')
   async getFilters() {
     return this.devicesService.getFilterOptions();
+  }
+
+  // ---- Tags (must be before /:deviceId to avoid route shadowing) ----
+
+  @UseGuards(AuthGuard)
+  @Roles(Role.Admin, Role.Auditor, Role.Helpdesk)
+  @Get('/tags')
+  listTags() {
+    return this.tagsService.listTags();
+  }
+
+  @UseGuards(AuthGuard)
+  @Roles(Role.Admin)
+  @Post('/tags')
+  createTag(@Body() body: any) {
+    return this.tagsService.createTag(body);
+  }
+
+  @UseGuards(AuthGuard)
+  @Roles(Role.Admin)
+  @Post('/tags/:id/delete')
+  async deleteTag(@Param('id') id: string) {
+    await this.tagsService.deleteTag(id);
+    return { ok: true };
   }
 
   @UseGuards(AuthGuard)
@@ -412,30 +436,6 @@ export class DevicesController {
     return updated;
   }
 
-  // ---- Tags ----
-
-  @UseGuards(AuthGuard)
-  @Roles(Role.Admin, Role.Auditor, Role.Helpdesk)
-  @Get('/tags')
-  listTags() {
-    return this.tagsService.listTags();
-  }
-
-  @UseGuards(AuthGuard)
-  @Roles(Role.Admin)
-  @Post('/tags')
-  createTag(@Body() body: any) {
-    return this.tagsService.createTag(body);
-  }
-
-  @UseGuards(AuthGuard)
-  @Roles(Role.Admin)
-  @Post('/tags/:id/delete')
-  async deleteTag(@Param('id') id: string) {
-    await this.tagsService.deleteTag(id);
-    return { ok: true };
-  }
-
   @UseGuards(AuthGuard)
   @Get('/:deviceId/tags')
   tagsForDevice(@Param('deviceId') deviceId: string) {
@@ -456,9 +456,10 @@ export class DevicesController {
       body.action === 'detach'
         ? await this.tagsService.detach(body.deviceIds, body.tagIds)
         : await this.tagsService.attach(body.deviceIds, body.tagIds, actor);
-    await this.auditService.log('Device', 'bulk', `tag_${body.action}`, {
+    await this.auditService.log('Device', null, `tag_${body.action}`, {
       actor,
       deviceCount: body.deviceIds.length,
+      deviceIds: body.deviceIds,
       tagIds: body.tagIds,
       affected: count,
     });
@@ -477,7 +478,7 @@ export class DevicesController {
       body.deviceIds,
       body.userId,
     );
-    await this.auditService.log('Device', 'bulk', 'assigned', {
+    await this.auditService.log('Device', null, 'assigned', {
       actor,
       deviceCount: body.deviceIds.length,
       userId: body.userId,
@@ -500,7 +501,7 @@ export class DevicesController {
       body.lifecycle,
       body.note ?? null,
     );
-    await this.auditService.log('Device', 'bulk', 'lifecycle_updated', {
+    await this.auditService.log('Device', null, 'lifecycle_updated', {
       actor,
       deviceCount: body.deviceIds.length,
       lifecycle: body.lifecycle,
@@ -510,6 +511,29 @@ export class DevicesController {
   }
 
   // ---- Agent task queue ----
+
+  @UseGuards(AuthGuard)
+  @Roles(Role.Admin, Role.Helpdesk)
+  @Post('/bulk/tasks')
+  async enqueueBulkTasks(
+    @Body()
+    body: {
+      deviceIds: string[];
+      type: AgentTaskType;
+      payload?: Record<string, any>;
+    },
+    @Req() req: any,
+  ) {
+    const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id ?? null;
+    const count = await this.agentTasks.enqueueBulk({ ...body, requestedBy: actor });
+    await this.auditService.log('AgentTask', null, 'enqueued', {
+      actor,
+      deviceCount: body.deviceIds.length,
+      type: body.type,
+      created: count,
+    });
+    return { created: count };
+  }
 
   @UseGuards(AuthGuard)
   @Roles(Role.Admin, Role.Auditor, Role.Helpdesk)
@@ -539,29 +563,6 @@ export class DevicesController {
       type: body.type,
     });
     return task;
-  }
-
-  @UseGuards(AuthGuard)
-  @Roles(Role.Admin, Role.Helpdesk)
-  @Post('/bulk/tasks')
-  async enqueueBulkTasks(
-    @Body()
-    body: {
-      deviceIds: string[];
-      type: AgentTaskType;
-      payload?: Record<string, any>;
-    },
-    @Req() req: any,
-  ) {
-    const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id ?? null;
-    const count = await this.agentTasks.enqueueBulk({ ...body, requestedBy: actor });
-    await this.auditService.log('AgentTask', 'bulk', 'enqueued', {
-      actor,
-      deviceCount: body.deviceIds.length,
-      type: body.type,
-      created: count,
-    });
-    return { created: count };
   }
 
   @UseGuards(AuthGuard)

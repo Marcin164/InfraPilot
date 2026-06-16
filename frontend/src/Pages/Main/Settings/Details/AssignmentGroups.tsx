@@ -17,6 +17,7 @@ import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
+import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
 
 import {
   AssignmentGroup,
@@ -40,6 +41,8 @@ const AssignmentGroups = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
+  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
   const currentUserQuery = useQuery({
     queryKey: ["current-user", currentUserId],
@@ -294,15 +297,7 @@ const AssignmentGroups = () => {
                           <ButtonPrimary
                             icon={faTrash}
                             text={t("common.delete")}
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  `Delete assignment group "${group.name}"?`,
-                                )
-                              ) {
-                                deleteMutation.mutate(group.id);
-                              }
-                            }}
+                            onClick={() => askConfirm(() => deleteMutation.mutate(group.id), `Delete assignment group "${group.name}"?`)}
                           />
                         </>
                       )}
@@ -351,6 +346,13 @@ const AssignmentGroups = () => {
           })}
         </div>
       </div>
+      <ConfirmationModal
+        isModalOpen={confirmState.open}
+        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
+        message={confirmState.message}
+      />
     </div>
   );
 };

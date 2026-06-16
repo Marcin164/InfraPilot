@@ -63,7 +63,7 @@ const AuditLog = () => {
         <div>
           <span className="font-semibold">{row.entityType}</span>
           <span className="ml-1 text-[12px] text-[#8A8A8A]">
-            {row.entityId.slice(0, 8)}…
+            {row.entityId ? row.entityId.slice(0, 8) + "…" : "—"}
           </span>
         </div>
       ),

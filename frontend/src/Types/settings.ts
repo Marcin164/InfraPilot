@@ -28,6 +28,8 @@ export interface UserSettings {
   usersTableColumnOrder?: string[];
   ticketsTableColumnOrder?: string[];
   devicesTableColumnOrder?: string[];
+  licensesTableColumnOrder?: string[];
+  procurementTableColumnOrder?: string[];
   reportsLayout?: "small" | "medium" | "large";
   filterPresets?: Record<string, FilterPreset[]>;
   lastLogonThresholds?: LastLogonThreshold[];

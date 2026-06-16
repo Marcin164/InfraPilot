@@ -48,6 +48,12 @@ export class UserSettings {
   @Column({ type: 'jsonb', nullable: true, default: null })
   ticketsTableColumnOrder: string[];
 
+  @Column({ type: 'jsonb', nullable: true, default: null })
+  licensesTableColumnOrder: string[];
+
+  @Column({ type: 'jsonb', nullable: true, default: null })
+  procurementTableColumnOrder: string[];
+
   @Column({ default: 'small' })
   reportsLayout: string;
 

@@ -7,6 +7,7 @@ import moment from "moment";
 import Modal from "./AnimatedModal";
 import CardHeader from "../Headers/CardHeader";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
+import ConfirmationModal from "./ConfirmationModal";
 import MainTable from "../Tables/MainTable";
 import {
   getPersonalData,
@@ -110,6 +111,8 @@ const PrivacyDialog = ({ isOpen, onClose, userId, userLabel }: Props) => {
   const [holdReason, setHoldReason] = useState("");
   const [holdBasis, setHoldBasis] = useState("");
   const [holdRetainUntil, setHoldRetainUntil] = useState("");
+  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
+  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
   const accessLogQuery = useQuery({
     queryKey: ["privacy-access-log", userId],
@@ -229,13 +232,10 @@ const PrivacyDialog = ({ isOpen, onClose, userId, userLabel }: Props) => {
       toast.error("Reason is required for erasure");
       return;
     }
-    if (
-      !window.confirm(
-        `Erase (anonymize) personal data for ${userLabel ?? userId}?\n\nThis is irreversible. Audit trail will be preserved.`,
-      )
-    )
-      return;
-    eraseMutation.mutate();
+    askConfirm(
+      () => eraseMutation.mutate(),
+      `Erase (anonymize) personal data for ${userLabel ?? userId}?\n\nThis is irreversible. Audit trail will be preserved.`,
+    );
   };
 
   return (
@@ -414,6 +414,13 @@ const PrivacyDialog = ({ isOpen, onClose, userId, userLabel }: Props) => {
           progressPending={accessLogQuery.isFetching}
         />
       </div>
+      <ConfirmationModal
+        isModalOpen={confirmState.open}
+        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
+        message={confirmState.message}
+      />
     </Modal>
   );
 };

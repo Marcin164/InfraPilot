@@ -104,24 +104,37 @@ const TicketsTable = ({
     {
       id: "assignee",
       name: t("helpdesk.column.assignee"),
-      selector: (row: any) => row.assignee || na,
+      selector: (row: any) => {
+        if (row.assigneeUser) {
+          return `${row.assigneeUser.name ?? ""} ${row.assigneeUser.surname ?? ""}`.trim() || na;
+        }
+        if (row.assignee) return t("common.deletedUser");
+        return na;
+      },
     },
     {
       id: "requester",
       name: t("helpdesk.column.requester"),
-      cell: (row: any) =>
-        row.requester ? (
-          <Link
-            to={`${row.requester.id}`}
-            className="text-[#2B9AE9] hover:underline"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {row.requester.distinguishedName}
-          </Link>
-        ) : (
-          na
-        ),
-      selector: (row: any) => row.requester?.distinguishedName || na,
+      cell: (row: any) => {
+        if (row.requester) {
+          return (
+            <Link
+              to={`${row.requester.id}`}
+              className="text-[#2B9AE9] hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {row.requester.distinguishedName}
+            </Link>
+          );
+        }
+        if (row.requesterId) return <span className="text-[#9a9a9a] italic">{t("common.deletedUser")}</span>;
+        return na;
+      },
+      selector: (row: any) => {
+        if (row.requester?.distinguishedName) return row.requester.distinguishedName;
+        if (row.requesterId) return t("common.deletedUser");
+        return na;
+      },
     },
     {
       id: "assignmentgroup",

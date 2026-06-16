@@ -6,7 +6,10 @@ import { faPlus, faTag, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import CardHeader from "../../../../Components/Headers/CardHeader";
+import ColorPicker from "../../../../Components/Inputs/ColorPicker";
+import Input from "../../../../Components/Inputs/Input";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
 import {
   listDeviceTags,
   createDeviceTag,
@@ -20,6 +23,8 @@ const Tags = () => {
   const [label, setLabel] = useState("");
   const [color, setColor] = useState("#2B9AE9");
   const [description, setDescription] = useState("");
+  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
+  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
   const tagsQuery = useQuery({
     queryKey: ["device-tags"],
@@ -63,30 +68,25 @@ const Tags = () => {
     <div className="space-y-4 m-4">
       <div className="bg-white shadow-xl rounded-[10px] p-4">
         <CardHeader text={t("settings.tags.create")} icon={faPlus} />
-        <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
-          <input
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Input
             value={key}
-            onChange={(e) => setKey(e.target.value)}
+            handleChange={setKey}
             placeholder={t("settings.tags.keyPlaceholder")}
-            className="h-[36px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
+            className="flex-1 min-w-[140px]"
           />
-          <input
+          <Input
             value={label}
-            onChange={(e) => setLabel(e.target.value)}
+            handleChange={setLabel}
             placeholder={t("settings.tags.labelPlaceholder")}
-            className="h-[36px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
+            className="flex-1 min-w-[140px]"
           />
-          <input
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            className="h-[36px] w-full rounded-[6px] border border-[#D0D0D0] cursor-pointer"
-          />
-          <input
+          <ColorPicker value={color} onChange={setColor} size={36} />
+          <Input
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            handleChange={setDescription}
             placeholder={t("settings.tags.descriptionPlaceholder")}
-            className="h-[36px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
+            className="flex-1 min-w-[140px]"
           />
         </div>
         <div className="mt-3">
@@ -138,10 +138,7 @@ const Tags = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (window.confirm(`Delete tag "${tag.label}"?`))
-                      deleteMutation.mutate(tag.id);
-                  }}
+                  onClick={() => askConfirm(() => deleteMutation.mutate(tag.id), `Delete tag "${tag.label}"?`)}
                   className="text-[#F3606E] hover:text-[#C0392B] cursor-pointer"
                   title={t("settings.tags.delete")}
                 >
@@ -152,6 +149,13 @@ const Tags = () => {
           </div>
         )}
       </div>
+      <ConfirmationModal
+        isModalOpen={confirmState.open}
+        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
+        message={confirmState.message}
+      />
     </div>
   );
 };

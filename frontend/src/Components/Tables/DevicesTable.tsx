@@ -83,7 +83,7 @@ const DevicesTable = ({
     },
     {
       id: "user",
-      name: t("device.device"),
+      name: t("device.assignee"),
       selector: (row: any) =>
         row?.user ? (
           <Link

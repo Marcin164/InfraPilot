@@ -104,6 +104,7 @@
   "user.country": "Country",
   "user.title": "Job title",
   "user.manager": "Manager",
+  "user.mfa": "MFA",
   "timeline.ticketPrefix": "Ticket {{number}}",
 
   "filter.group.type": "Type",
@@ -615,6 +616,7 @@
   "settings.tab.windowsAgent": "Windows Agent",
   "settings.tab.locations": "Locations",
   "settings.tab.smtp": "Mail (SMTP)",
+  "settings.tab.m365": "Microsoft 365",
 
   "reports.tab.users": "Users",
   "reports.tab.devices": "Devices",
@@ -659,6 +661,13 @@
   "procurement.field.currency": "Currency",
   "procurement.field.notes": "Notes",
   "procurement.field.requester": "Requested by",
+
+  "procurement.status.draft": "Draft",
+  "procurement.status.submitted": "Submitted",
+  "procurement.status.approved": "Approved",
+  "procurement.status.ordered": "Ordered",
+  "procurement.status.received": "Received",
+  "procurement.status.cancelled": "Cancelled",
 
   "options.group.computers": "Computers",
   "options.group.peripherals": "Peripherals",
@@ -779,6 +788,7 @@
   "widget.ticketsOverTime": "Tickets Over Time",
 
   "common.open": "Open",
+  "common.deletedUser": "Deleted user",
   "common.creating": "Creating…",
   "common.loading2": "Loading...",
   "common.na": "N/A",
@@ -944,7 +954,10 @@
   "settings.workflow.editor.enabled": "Enabled",
   "settings.workflow.editor.trigger": "Trigger:",
   "settings.workflow.editor.triggerCreate": "On ticket create",
-  "settings.workflow.editor.moreTriggers": "(more triggers coming)",
+  "settings.workflow.editor.triggerStateChange": "On state change",
+  "settings.workflow.editor.triggerAssign": "On assignment",
+  "settings.workflow.editor.triggerPriorityChange": "On priority change",
+  "settings.workflow.editor.triggerClose": "On close / resolve",
   "settings.workflow.editor.steps": "Steps",
   "settings.workflow.editor.stepsHint": "Add a step using the buttons above. Steps run in order.",
   "settings.workflow.editor.saveChanges": "Save changes",
@@ -1257,6 +1270,13 @@
   "licenses.assignments.empty": "No assignments yet.",
   "licenses.assignments.removed": "Assignment removed",
   "licenses.assignments.removeFailed": "Failed to remove assignment",
+  "licenses.assignments.add": "Add assignment",
+  "licenses.assignments.added": "License assigned successfully",
+  "licenses.assignments.addFailed": "Failed to assign license",
+  "licenses.assignments.device": "Device",
+  "licenses.assignments.user": "User",
+  "licenses.assignments.selectDevice": "Select a device…",
+  "licenses.assignments.selectUser": "Select a user…",
 
   "import.title": "Bulk Import",
   "import.entity.devices": "Devices",

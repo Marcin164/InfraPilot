@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -7,6 +7,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import Input from "../../../../Components/Inputs/Input";
+import Checkbox from "../../../../Components/Inputs/Checkbox";
+import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
 import {
   listTicketTemplates,
   createTicketTemplate,
@@ -26,6 +29,8 @@ const TicketTemplates = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(emptyDraft());
+  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
+  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
   const templatesQuery = useQuery({
     queryKey: ["ticket-templates"],
@@ -79,17 +84,16 @@ const TicketTemplates = () => {
           <code>{"{ticket.number}"}</code>, <code>{"{ticket.type}"}</code>.
         </p>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
-          <input
+          <Input
             value={draft.name}
-            onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+            handleChange={(v: string) => setDraft({ ...draft, name: v })}
             placeholder={t("settings.templates.namePlaceholder")}
-            className="md:col-span-2 h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
+            className="md:col-span-2"
           />
-          <input
+          <Input
             value={draft.category}
-            onChange={(e) => setDraft({ ...draft, category: e.target.value })}
+            handleChange={(v: string) => setDraft({ ...draft, category: v })}
             placeholder={t("settings.templates.categoryPlaceholder")}
-            className="h-[34px] rounded-[6px] border border-[#D0D0D0] px-3 text-[13px]"
           />
         </div>
         <textarea
@@ -100,16 +104,14 @@ const TicketTemplates = () => {
           className="mt-2 w-full rounded-[6px] border border-[#D0D0D0] px-3 py-2 text-[13px]"
         />
         <div className="mt-3 flex items-center gap-3">
-          <label className="flex items-center gap-2 text-[13px]">
-            <input
-              type="checkbox"
-              checked={draft.shared}
-              onChange={(e) =>
-                setDraft({ ...draft, shared: e.target.checked })
-              }
-            />
-            {t("settings.templates.shared")}
-          </label>
+          <Checkbox
+            id="template-shared"
+            checked={draft.shared}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setDraft({ ...draft, shared: e.target.checked })
+            }
+            label={t("settings.templates.shared")}
+          />
           <ButtonPrimary
             icon={faPlus}
             text={createMutation.isPending ? t("settings.templates.saving") : t("common.create")}
@@ -165,10 +167,7 @@ const TicketTemplates = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (window.confirm(t("settings.templates.confirmDelete", { name: tpl.name })))
-                      deleteMutation.mutate(tpl.id);
-                  }}
+                  onClick={() => askConfirm(() => deleteMutation.mutate(tpl.id), t("settings.templates.confirmDelete", { name: tpl.name }))}
                   className="text-[#F3606E] hover:text-[#C0392B] cursor-pointer"
                 >
                   <FontAwesomeIcon icon={faTrash} />
@@ -178,6 +177,13 @@ const TicketTemplates = () => {
           </div>
         )}
       </div>
+      <ConfirmationModal
+        isModalOpen={confirmState.open}
+        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
+        message={confirmState.message}
+      />
     </div>
   );
 };

@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
+import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
 import {
   getDeviceMaintenance,
   createMaintenance,
@@ -55,6 +56,8 @@ const MaintenanceTab = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<CreateMaintenanceDto>({ ...EMPTY, deviceId });
+  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
+  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
   const query = useQuery({
     queryKey: ["maintenance", deviceId],
@@ -257,7 +260,7 @@ const MaintenanceTab = () => {
                   <FontAwesomeIcon icon={faPen} className="text-[11px]" />
                 </button>
                 <button
-                  onClick={() => { if (window.confirm(t("maintenance.confirmDelete"))) deleteMut.mutate(r.id); }}
+                  onClick={() => askConfirm(() => deleteMut.mutate(r.id), t("maintenance.confirmDelete"))}
                   className="p-1.5 rounded-[6px] text-[#9a9a9a] hover:text-[#F3606E] hover:bg-[#FEF0F0] transition-colors"
                 >
                   <FontAwesomeIcon icon={faTrash} className="text-[11px]" />
@@ -267,6 +270,13 @@ const MaintenanceTab = () => {
           ))}
         </div>
       )}
+      <ConfirmationModal
+        isModalOpen={confirmState.open}
+        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
+        message={confirmState.message}
+      />
     </div>
   );
 };

@@ -21,7 +21,8 @@ interface TicketInfoPanelProps {
     number: string;
     state: string;
     assignee?: string | null;
-    requester: { id: string; distinguishedName: string };
+    requester?: { id: string; distinguishedName: string } | null;
+    requesterId?: string | null;
     device?: { id: string; assetName?: string; serialNumber: string } | null;
     createdAt: string;
     [key: string]: any;
@@ -54,11 +55,17 @@ const TicketInfoPanel = ({ ticket, isOpen = false, onClose }: TicketInfoPanelPro
       <div className="py-1 flex items-center gap-2">
         <FontAwesomeIcon icon={faUser} className="w-[20px]" />
         <span className="font-semibold">
-          <Link to={`/admin/users/${ticket.requester.id}`}>
-            {ticket.requester.distinguishedName}
-          </Link>
+          {ticket.requester ? (
+            <Link to={`/admin/users/${ticket.requester.id}`}>
+              {ticket.requester.distinguishedName}
+            </Link>
+          ) : ticket.requesterId ? (
+            <span className="text-[#9a9a9a] italic">{t("common.deletedUser")}</span>
+          ) : (
+            <span className="text-[#9a9a9a]">{t("common.na")}</span>
+          )}
         </span>
-        {(ticket.requester as any)?.isVip && (
+        {ticket.requester?.isVip && (
           <span className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white bg-[#C0392B]">
             ★ VIP
           </span>

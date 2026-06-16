@@ -10,6 +10,7 @@ import { TicketCategory } from 'src/entities/ticketCategory.entity';
 import {
   TicketWorkflow,
   WorkflowStep,
+  WorkflowTrigger,
 } from 'src/entities/ticketWorkflow.entity';
 import { Tickets } from 'src/entities/tickets.entity';
 import { TicketsApprovals } from 'src/entities/ticketsApprovals.entity';
@@ -72,6 +73,44 @@ export class TicketWorkflowService {
     return this.categories.findOneBy({ name });
   }
 
+  async seedDefaultCategories(): Promise<number> {
+    const defaults: {
+      name: string;
+      ticketType: 'Incident' | 'Service' | null;
+      color: string;
+    }[] = [
+      { name: 'Hardware issue',        ticketType: 'Incident', color: '#FF6B35' },
+      { name: 'Software issue',        ticketType: 'Incident', color: '#2B9AE9' },
+      { name: 'Network issue',         ticketType: 'Incident', color: '#30A712' },
+      { name: 'Account / Access',      ticketType: 'Incident', color: '#9B59B6' },
+      { name: 'Security incident',     ticketType: 'Incident', color: '#F3606E' },
+      { name: 'New equipment',         ticketType: 'Service',  color: '#1ABC9C' },
+      { name: 'Software installation', ticketType: 'Service',  color: '#3498DB' },
+      { name: 'Account request',       ticketType: 'Service',  color: '#8E44AD' },
+      { name: 'Access request',        ticketType: 'Service',  color: '#E67E22' },
+      { name: 'General question',      ticketType: 'Service',  color: '#2ECC71' },
+      { name: 'Other',                 ticketType: null,       color: '#9a9a9a' },
+    ];
+
+    let inserted = 0;
+    for (const d of defaults) {
+      const exists = await this.categories.findOneBy({ name: d.name });
+      if (exists) continue;
+      const row = this.categories.create({
+        id: uuidv4(),
+        name: d.name,
+        ticketType: d.ticketType as any,
+        color: d.color,
+        enabled: true,
+        workflowId: null,
+      } as any);
+      await this.categories.save(row);
+      inserted++;
+    }
+
+    return inserted;
+  }
+
   // ---------------- Workflows ----------------
 
   listWorkflows() {
@@ -130,12 +169,17 @@ export class TicketWorkflowService {
 
   // ---------------- Engine ----------------
 
-  /**
-   * Run all workflows associated with the ticket's category that match
-   * the trigger. Best-effort: logs & continues on step failures so one
-   * broken step doesn't sink the whole sequence.
-   */
+  /** Convenience wrapper kept for backward compat / readability at call site. */
   async runOnCreate(ticket: Tickets): Promise<void> {
+    return this.runForTicket(ticket, 'on_create');
+  }
+
+  /**
+   * Run all enabled workflows whose trigger matches for the ticket's category.
+   * Best-effort: logs & continues on step failures so one broken step doesn't
+   * sink the whole sequence.
+   */
+  async runForTicket(ticket: Tickets, trigger: WorkflowTrigger): Promise<void> {
     if (!ticket.category) return;
     const category = await this.categories.findOneBy({
       name: ticket.category,
@@ -145,13 +189,14 @@ export class TicketWorkflowService {
     const workflow = await this.workflows.findOneBy({
       id: category.workflowId,
     });
-    if (!workflow || !workflow.enabled || workflow.trigger !== 'on_create') {
+    if (!workflow || !workflow.enabled || workflow.trigger !== trigger) {
       return;
     }
 
     await this.audit.log('TicketWorkflow', workflow.id, 'started', {
       ticketId: ticket.id,
       ticketNumber: ticket.number,
+      trigger,
     });
 
     const ordered = [...(workflow.steps ?? [])].sort(

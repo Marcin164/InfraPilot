@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -34,10 +35,8 @@ const emptyForm: SmtpConfig = {
 const SmtpSettings = () => {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<SmtpConfig>(emptyForm);
-  const [testResult, setTestResult] = useState<{
-    success: boolean;
-    message: string;
-  } | null>(null);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const configQuery = useQuery({
     queryKey: ["smtp-config"],
@@ -179,7 +178,7 @@ const SmtpSettings = () => {
               }
               icon={faTrash}
               className="bg-[#F3606E] hover:bg-[#e04e5c]"
-              onClick={() => deleteMutation.mutate()}
+              onClick={() => setConfirmOpen(true)}
               disabled={isLoading}
             />
           )}
@@ -205,6 +204,13 @@ const SmtpSettings = () => {
           </div>
         )}
       </div>
+
+      <ConfirmationModal
+        isModalOpen={confirmOpen}
+        handleOnClose={() => setConfirmOpen(false)}
+        onCancel={() => setConfirmOpen(false)}
+        onDelete={() => { deleteMutation.mutate(); setConfirmOpen(false); }}
+      />
 
       <div className="bg-white shadow-xl rounded-[10px] p-4">
         <CardHeader text="Wskazówki konfiguracji" icon={faEnvelope} />

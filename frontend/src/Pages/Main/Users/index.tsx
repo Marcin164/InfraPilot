@@ -93,6 +93,7 @@ const UsersPage = () => {
     { name: "office", label: t("user.office") },
     { name: "streetaddress", label: t("user.street") },
     { name: "country", label: t("user.country") },
+    { name: "mfa", label: t("user.mfa") },
   ];
 
   return (

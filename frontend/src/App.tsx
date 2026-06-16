@@ -40,6 +40,7 @@ import NotificationPreferences from "./Pages/Main/Settings/Details/NotificationP
 import Workflows from "./Pages/Main/Settings/Details/Workflows";
 import WindowsAgent from "./Pages/Main/Settings/Details/WindowsAgent";
 import SmtpSettings from "./Pages/Main/Settings/Details/Smtp";
+import M365Settings from "./Pages/Main/Settings/Details/M365Settings";
 import UsersReports from "./Pages/Main/Reports/Details/UsersReports";
 import DevicesReports from "./Pages/Main/Reports/Details/DevicesReports";
 import TicketsReports from "./Pages/Main/Reports/Details/TicketsReports";
@@ -86,7 +87,8 @@ function App() {
                 <Route path="settings" element={<UserSettings />} />
               </Route>
               <Route path="/admin" element={<Main />}>
-                <Route index path="dashboards" element={<Dashboards />} />
+                <Route index element={<Navigate to="dashboards" replace />} />
+                <Route path="dashboards" element={<Dashboards />} />
                 <Route path="users" element={<Users />} />
                 <Route path="users/:id" element={<UserDetails />} />
                 <Route
@@ -158,8 +160,10 @@ function App() {
                   <Route path="windows-agent" element={<WindowsAgent />} />
                   <Route path="locations" element={<Locations />} />
                   <Route path="smtp" element={<SmtpSettings />} />
+                  <Route path="m365" element={<M365Settings />} />
                 </Route>
               </Route>
+              <Route path="*" element={<Navigate to="/admin/dashboards" replace />} />
             </Routes>
           </BrowserRouter>
         </ParseProvider>

@@ -175,4 +175,13 @@ export class Devices {
 
   @Column({ type: 'varchar', length: 128, nullable: true })
   disposalMethod: string | null;
+
+  @Column({ type: 'varchar', length: 64, nullable: true, default: null })
+  intuneDeviceId: string | null;
+
+  @Column({ type: 'varchar', length: 32, nullable: true, default: null })
+  intuneComplianceState: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true, default: null })
+  intuneLastSyncAt: Date | null;
 }

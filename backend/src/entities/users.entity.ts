@@ -91,4 +91,16 @@ export class Users {
 
   @Column({ type: 'text', nullable: true })
   erasureReason: string | null;
+
+  @Column({ type: 'varchar', length: 64, nullable: true, default: null })
+  entraId: string | null;
+
+  @Column({ type: 'boolean', nullable: true, default: null })
+  entraEnabled: boolean | null;
+
+  @Column({ type: 'timestamptz', nullable: true, default: null })
+  entraLastSignIn: Date | null;
+
+  @Column({ type: 'boolean', nullable: true, default: null })
+  entraMfaEnabled: boolean | null;
 }

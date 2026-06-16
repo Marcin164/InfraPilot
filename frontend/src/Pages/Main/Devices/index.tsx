@@ -86,6 +86,7 @@ const Index = () => {
     { name: "assetname", label: t("table.device.column.assetname") },
     { name: "serialnumber", label: t("table.device.column.serialnumber") },
     { name: "warranty", label: t("table.device.column.warranty") },
+    { name: "tags", label: t("table.device.column.tags", "Tags") },
   ];
 
   useEffect(() => {
