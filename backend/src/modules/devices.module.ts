@@ -27,6 +27,7 @@ import { NotificationModule } from './notification.module';
 import { Users } from 'src/entities/users.entity';
 import { AdminSettings } from 'src/entities/adminSettings.entity';
 import { AgentTokenService } from 'src/services/agent-token.service';
+import { AgentInstallerService } from 'src/services/agent-installer.service';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { AgentTokenService } from 'src/services/agent-token.service';
     AgentGuard,
     EnrollmentGuard,
     AgentTokenService,
+    AgentInstallerService,
   ],
   exports: [
     SoftwareInventoryService,
@@ -69,6 +71,7 @@ import { AgentTokenService } from 'src/services/agent-token.service';
     DeviceScanService,
     DeviceReportService,
     AgentTokenService,
+    AgentInstallerService,
   ],
 })
 export class DevicesModule {}

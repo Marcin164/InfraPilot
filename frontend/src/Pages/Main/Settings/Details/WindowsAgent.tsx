@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -9,13 +9,19 @@ import {
   faRotate,
   faCircleCheck,
   faCircleXmark,
+  faDownload,
+  faUpload,
 } from "@fortawesome/free-solid-svg-icons";
 import { faWindows as faWindowsBrand } from "@fortawesome/free-brands-svg-icons";
 
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Modal from "../../../../Components/Modals/AnimatedModal";
-import { getAgentSetupInfo, rotateAgentToken } from "../../../../Services/devices";
+import {
+  getAgentSetupInfo,
+  rotateAgentToken,
+  uploadAgentInstaller,
+} from "../../../../Services/devices";
 
 const CopyableBox = ({ value }: { value: string }) => {
   const [copied, setCopied] = useState(false);
@@ -46,9 +52,17 @@ const CopyableBox = ({ value }: { value: string }) => {
   );
 };
 
+const formatBytes = (bytes: number) => {
+  if (!bytes) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+  return `${(bytes / 1024 ** i).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+};
+
 const WindowsAgent = () => {
   const queryClient = useQueryClient();
   const [rotateModalOpen, setRotateModalOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["agent-setup-info"],
@@ -63,6 +77,15 @@ const WindowsAgent = () => {
       toast.success("Token został wygenerowany");
     },
     onError: () => toast.error("Nie udało się wygenerować tokenu"),
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: uploadAgentInstaller,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agent-setup-info"] });
+      toast.success("Instalator agenta został wgrany");
+    },
+    onError: () => toast.error("Nie udało się wgrać instalatora"),
   });
 
   if (isLoading) {
@@ -131,6 +154,59 @@ const WindowsAgent = () => {
           </>
         )}
       </div>
+
+      {data?.configured && (
+        <div className="bg-white rounded-[10px] shadow-xl p-4">
+          <CardHeader text="Instalator agenta" icon={faDownload} />
+          <p className="text-[14px] text-[#535353] mt-2 mb-3">
+            Plik .exe wgrany tutaj jest serwowany przez ten backend pod
+            adresem widocznym poniżej w snippecie PowerShell — nie trzeba
+            hostować go nigdzie indziej.
+          </p>
+          {data.installerMeta ? (
+            <div className="bg-[#F5F7FA] rounded-[8px] p-3 text-[13px] text-[#3C3C3C] mb-3 flex items-center justify-between">
+              <span>
+                {data.installerMeta.originalName} ·{" "}
+                {formatBytes(data.installerMeta.sizeBytes)}
+              </span>
+              <a
+                href={data.installerUrl ?? undefined}
+                className="text-[#2B9AE9] font-semibold"
+              >
+                Pobierz
+              </a>
+            </div>
+          ) : (
+            <div className="bg-[#FFFBEB] border border-[#F59E0B] rounded-[8px] p-3 text-[#92400E] text-[14px] mb-3">
+              Instalator nie został jeszcze wgrany. Wgraj plik .exe, żeby
+              snippet poniżej mógł go pobrać.
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".exe"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) uploadMutation.mutate(file);
+              e.target.value = "";
+            }}
+          />
+          <ButtonPrimary
+            text={
+              uploadMutation.isPending
+                ? "Wgrywanie..."
+                : data.installerMeta
+                  ? "Wgraj nową wersję"
+                  : "Wgraj instalator"
+            }
+            icon={faUpload}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadMutation.isPending}
+          />
+        </div>
+      )}
 
       {data?.configured && data.powershellSnippet && (
         <div className="bg-white rounded-[10px] shadow-xl p-4">

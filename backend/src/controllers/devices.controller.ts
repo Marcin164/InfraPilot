@@ -9,9 +9,12 @@ import {
   Query,
   Req,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { DeviceLifecycle } from 'src/entities/devices.entity';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { AgentGuard } from 'src/guards/agentGuard.guard';
@@ -29,6 +32,7 @@ import { AuditService } from 'src/services/audit.service';
 import { AgentEnrollDto, DeviceScanDto } from 'src/dto/devices.dto';
 import { AgentTaskType } from 'src/entities/agentTask.entity';
 import { AgentTokenService } from 'src/services/agent-token.service';
+import { AgentInstallerService } from 'src/services/agent-installer.service';
 
 @Controller('devices')
 export class DevicesController {
@@ -40,6 +44,7 @@ export class DevicesController {
     private readonly remoteAssist: RemoteAssistService,
     private readonly auditService: AuditService,
     private readonly agentTokenService: AgentTokenService,
+    private readonly agentInstallerService: AgentInstallerService,
   ) {}
 
   @UseGuards(AuthGuard)
@@ -298,7 +303,12 @@ export class DevicesController {
     const host =
       (req.headers['x-forwarded-host'] as string) ?? req.headers['host'];
     const baseUrl = `${proto}://${host}`.replace(/\/+$/, '');
-    const installerUrl = process.env.AGENT_INSTALLER_URL ?? null;
+    const installerMeta = await this.agentInstallerService.getMeta();
+    // AGENT_INSTALLER_URL wins when set (e.g. CDN / GitHub Releases). Otherwise,
+    // if an admin has uploaded an installer through this page, self-host it.
+    const installerUrl =
+      process.env.AGENT_INSTALLER_URL ??
+      (installerMeta ? `${baseUrl}/devices/agent/installer` : null);
     const snippet = installerUrl
       ? `# Run as Administrator\n` +
         `Invoke-WebRequest -Uri "${installerUrl}" -OutFile "$env:TEMP\\InfraPilotAgentSetup.exe"\n` +
@@ -309,6 +319,7 @@ export class DevicesController {
       backendUrl: baseUrl,
       enrollmentToken: token,
       installerUrl,
+      installerMeta,
       powershellSnippet: snippet,
     };
   }
@@ -319,6 +330,35 @@ export class DevicesController {
   async rotateAgentToken() {
     const newToken = await this.agentTokenService.rotateToken();
     return { success: true, token: newToken };
+  }
+
+  // Public — a freshly imaged host has no credentials yet, so the download
+  // itself can't require auth. The binary is a generic installer; secrets
+  // are only passed in at install time via CLI args (see WindowsAgent.tsx).
+  @Get('/agent/installer')
+  async downloadAgentInstaller(@Res() res: Response) {
+    const { stream, meta } = await this.agentInstallerService.getFileStream();
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${encodeURIComponent(meta.originalName || 'InfraPilotAgentSetup.exe')}"`,
+    );
+    stream.pipe(res);
+  }
+
+  @UseGuards(AuthGuard)
+  @Roles(Role.Admin)
+  @Post('/agent/installer')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadAgentInstaller(@UploadedFile() file: any, @Req() req: any) {
+    const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id ?? null;
+    const meta = await this.agentInstallerService.upload(file, actor);
+    await this.auditService.log('Device', null, 'agent_installer_uploaded', {
+      actor,
+      originalName: meta.originalName,
+      sizeBytes: meta.sizeBytes,
+    });
+    return meta;
   }
 
   @UseGuards(AuthGuard)

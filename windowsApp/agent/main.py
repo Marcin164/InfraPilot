@@ -30,6 +30,7 @@ from .config import (
 )
 from .enrollment import enroll
 from .transport import send_scan
+from .tasks import claim_tasks, complete_task, fail_task
 
 
 SECTION_COLLECTORS: dict[str, Callable[[], Any]] = {
@@ -101,6 +102,40 @@ def run_once(cfg: AgentConfig, state: AgentState, sections: list[str], dry_run: 
     return 0
 
 
+def process_tasks(cfg: AgentConfig, state: AgentState, sections: list[str]) -> None:
+    """Claim and run queued admin tasks (Settings > device > Tasks tab).
+
+    ``scan_now`` / ``inventory_refresh`` trigger a full scan; ``collect_event_log``
+    re-sends just the events section. Anything else (``custom``) has no
+    defined agent behaviour, so it's failed back with an explanatory error
+    rather than silently dropped.
+    """
+    log = logging.getLogger("agent.tasks")
+    try:
+        claimed = claim_tasks(cfg, state)
+    except Exception as err:  # noqa: BLE001
+        log.warning("Task claim failed: %s", err)
+        return
+
+    for task in claimed:
+        task_id, lease_token, task_type = task["id"], task["leaseToken"], task["type"]
+        log.info("Running task %s (%s)", task_id, task_type)
+        try:
+            if task_type in ("scan_now", "inventory_refresh"):
+                send_scan(cfg, state, build_payload(sections))
+            elif task_type == "collect_event_log":
+                send_scan(cfg, state, {"events": scanner.collect_events()})
+            else:
+                raise ValueError(f"Unsupported task type for this agent: {task_type}")
+            complete_task(cfg, state, task_id, lease_token, {"ok": True})
+        except Exception as err:  # noqa: BLE001
+            log.error("Task %s failed: %s", task_id, err)
+            try:
+                fail_task(cfg, state, task_id, lease_token, str(err))
+            except Exception as report_err:  # noqa: BLE001
+                log.error("Failed to report task failure: %s", report_err)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="infrapilot-agent")
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
@@ -155,7 +190,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.enroll_only:
         return 0
     if args.once:
-        return run_once(cfg, state, sections, dry_run=False)
+        result = run_once(cfg, state, sections, dry_run=False)
+        process_tasks(cfg, state, sections)
+        return result
 
     # --watch
     log = logging.getLogger("agent")
@@ -164,6 +201,10 @@ def main(argv: list[str] | None = None) -> int:
             run_once(cfg, state, sections, dry_run=False)
         except Exception as err:  # noqa: BLE001
             log.exception("Scan failed: %s", err)
+        try:
+            process_tasks(cfg, state, sections)
+        except Exception as err:  # noqa: BLE001
+            log.exception("Task processing failed: %s", err)
         sleep_for = max(60, cfg.interval_minutes * 60)
         log.info("Sleeping %ds before next scan.", sleep_for)
         time.sleep(sleep_for)

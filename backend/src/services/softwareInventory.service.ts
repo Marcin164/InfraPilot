@@ -31,6 +31,7 @@ export function extractSoftwareList(software: unknown): ObservedSoftware[] {
 
     const nameRaw =
       node.name ??
+      node.Name ??
       node.displayName ??
       node.DisplayName ??
       node.productName ??

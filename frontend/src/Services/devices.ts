@@ -227,13 +227,21 @@ export const revokeAgentSecret = async (deviceId: string): Promise<{ ok: boolean
   return data;
 };
 
+export type AgentInstallerMeta = {
+  originalName: string;
+  sizeBytes: number;
+  uploadedAt: string;
+  uploadedBy: string | null;
+};
+
 export type AgentSetupInfo =
   | {
       configured: true;
       backendUrl: string;
       enrollmentToken: string;
-      installerUrl: string;
-      powershellSnippet: string;
+      installerUrl: string | null;
+      installerMeta: AgentInstallerMeta | null;
+      powershellSnippet: string | null;
     }
   | { configured: false; message: string };
 
@@ -244,5 +252,14 @@ export const getAgentSetupInfo = async (): Promise<AgentSetupInfo> => {
 
 export const rotateAgentToken = async (): Promise<{ success: boolean; token: string }> => {
   const { data } = await api.post("/devices/agent/token/rotate");
+  return data;
+};
+
+export const uploadAgentInstaller = async (file: File): Promise<AgentInstallerMeta> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await api.post("/devices/agent/installer", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return data;
 };

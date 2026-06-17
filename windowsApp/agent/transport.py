@@ -34,7 +34,17 @@ def _sign(secret: str, timestamp: str, nonce: str, body: bytes) -> str:
     return hmac.new(key.encode("ascii"), msg, hashlib.sha256).hexdigest()
 
 
-def send_scan(cfg: AgentConfig, state: AgentState, payload: dict[str, Any]) -> dict[str, Any]:
+def signed_post(
+    cfg: AgentConfig,
+    state: AgentState,
+    path: str,
+    payload: dict[str, Any],
+) -> Any:
+    """HMAC-signed POST against an AgentGuard-protected endpoint.
+
+    Shared by ``send_scan`` (``/devices/agent/data``) and the task-queue
+    client (``/devices/agent/tasks/...``) -- same signature scheme.
+    """
     body = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     timestamp = _iso_timestamp()
     nonce = secrets.token_hex(16)
@@ -44,9 +54,9 @@ def send_scan(cfg: AgentConfig, state: AgentState, payload: dict[str, Any]) -> d
     if cfg.verify_tls and cfg.ca_bundle:
         verify = cfg.ca_bundle
 
-    log.info("POST %s/devices/agent/data (%d bytes)", cfg.backend_url, len(body))
+    log.info("POST %s%s (%d bytes)", cfg.backend_url, path, len(body))
     resp = requests.post(
-        f"{cfg.backend_url}/devices/agent/data",
+        f"{cfg.backend_url}{path}",
         data=body,
         headers={
             "Content-Type": "application/json",
@@ -61,8 +71,12 @@ def send_scan(cfg: AgentConfig, state: AgentState, payload: dict[str, Any]) -> d
         verify=verify,
     )
     if resp.status_code >= 400:
-        raise RuntimeError(f"Backend rejected scan: HTTP {resp.status_code} -- {resp.text[:500]}")
+        raise RuntimeError(f"Backend rejected {path}: HTTP {resp.status_code} -- {resp.text[:500]}")
     try:
         return resp.json()
     except ValueError:
         return {"raw": resp.text}
+
+
+def send_scan(cfg: AgentConfig, state: AgentState, payload: dict[str, Any]) -> dict[str, Any]:
+    return signed_post(cfg, state, "/devices/agent/data", payload)

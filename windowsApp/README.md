@@ -10,29 +10,32 @@ Trzymane prosto: **jeden binary, jeden instalator, jedna ścieżka deployu**.
 ## Model deployu
 
 ```
-   GitHub Releases               backend Docker image
-   (infrapilot-agent.exe in .iss) ─────► /app/assets/InfraPilotAgentSetup.exe
+   Settings > Windows Agent          backend (self-hosted)
+   (admin wgrywa .exe przez UI) ───► uploads/agent/InfraPilotAgentSetup.exe
                                               │
                                               ▼
-   Frontend "Settings > Windows Agent"     acme.infrapilot.io
-   (admin kopiuje snippet)                /devices/agent/installer
-                                              + /devices/agent/setup-info
+   Frontend "Settings > Windows Agent"     GET /devices/agent/installer
+   (admin kopiuje snippet)                 + /devices/agent/setup-info
                                               │
                                               ▼
                                           host Windows
 ```
 
-1. **CI builduje generic installer** — push tagu `v0.1.0` → GitHub Actions
-   → Releases attachment `InfraPilotAgentSetup-x.y.z.exe`. Bez sekretów.
-2. **Backend Docker image** przy buildzie ściąga ten plik
-   (`--build-arg AGENT_VERSION=v0.1.0`) i wkłada do `/app/assets/`.
-3. **Każda instancja** (cloud lub on-prem) serwuje swój `.exe` pod
-   `https://<tenant>/devices/agent/installer` — ten sam plik dla wszystkich.
-4. **Admin tenanta** w **Settings → Windows Agent** widzi swój Backend URL
-   + swój `AGENT_ENROLLMENT_TOKEN` + gotowy PowerShell snippet.
-5. **Operator hosta** wkleja snippet w elevated PowerShell:
+1. **Build lokalny / CI** produkuje `InfraPilotAgentSetup-x.y.z.exe`
+   (patrz "Build" poniżej).
+2. **Admin tenanta** w **Settings → Windows Agent** wgrywa ten plik
+   przyciskiem "Wgraj instalator" — backend zapisuje go pod
+   `uploads/agent/` (ten sam wolumin co inne uploady) i serwuje go publicznie
+   pod `GET /devices/agent/installer`. Brak kroku Docker-build-arg / GitHub
+   Releases — to jest teraz domyślna ścieżka.
+3. Strona pokazuje też Backend URL + `AGENT_ENROLLMENT_TOKEN` + gotowy
+   snippet PowerShell, który pobiera ten URL.
+4. **Operator hosta** wkleja snippet w elevated PowerShell:
    `Invoke-WebRequest ...` + `setup.exe /SILENT /BACKENDURL=... /TOKEN=...`.
    Instalator robi wszystko cicho, host pojawia się w UI po ~30 s.
+5. Opcjonalnie: ustaw `AGENT_INSTALLER_URL` w `.env`, żeby zamiast
+   self-hostingu wskazać zewnętrzny adres (CDN / GitHub Releases) — wtedy
+   ten URL nadpisuje przesłany plik.
 
 ## Co siedzi w środku
 
@@ -46,6 +49,7 @@ windowsApp/
 │   ├── enrollment.py          # POST /devices/agent/enroll
 │   ├── fingerprint.py         # TPM/MAC/CPU/serial collector
 │   ├── installer_core.py      # schtasks register/unregister
+│   ├── tasks.py                # POST /devices/agent/tasks/{claim,complete,fail}
 │   └── scanner/               # 8 sekcji: system/hardware/software/...
 ├── installer/installer.iss    # Inno Setup -- CLI args flow only
 ├── scripts/build.ps1          # PyInstaller + Inno Setup
@@ -64,6 +68,12 @@ infrapilot-agent.exe --force-enroll         # discard state + enroll
 infrapilot-agent.exe --register-task        # post-install hook (Inno Setup)
 infrapilot-agent.exe --unregister-task      # uninstall hook
 ```
+
+Po każdym skanie (`--once` i co iterację `--watch`) agent odpytuje
+`/devices/agent/tasks/claim` o zadania zlecone z zakładki "Tasks" na karcie
+urządzenia. `scan_now` / `inventory_refresh` wymuszają pełny skan,
+`collect_event_log` wysyła tylko sekcję `events`; `custom` nie ma
+zdefiniowanego zachowania i jest odsyłane jako failed.
 
 ## Pliki na hoście
 

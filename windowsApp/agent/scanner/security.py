@@ -27,12 +27,20 @@ try {
       ProtectionStatus = [int]$_.ProtectionStatus
       EncryptionMethod = [int]$_.EncryptionMethod
       VolumeStatus = "$($_.VolumeStatus)"
+      KeyProtector = @($_.KeyProtector | ForEach-Object { "$($_.KeyProtectorType)" })
     }
   }
 } catch { @() }
 """
 
 _FIREWALL_PROFILE_PS = r"""
+function Resolve-FirewallAction([string]$action) {
+  switch ($action) {
+    'Block' { 0 }
+    'Allow' { 1 }
+    default { 2 }
+  }
+}
 Get-NetFirewallProfile -ErrorAction SilentlyContinue | ForEach-Object {
   [pscustomobject]@{
     Name = "$($_.Name)"
@@ -40,6 +48,11 @@ Get-NetFirewallProfile -ErrorAction SilentlyContinue | ForEach-Object {
     AllowUserApps = if ($_.AllowUserApps -eq 'True') { 1 } else { 0 }
     AllowUserPorts = if ($_.AllowUserPorts -eq 'True') { 1 } else { 0 }
     AllowInboundRules = if ($_.AllowInboundRules -eq 'True') { 1 } else { 0 }
+    DefaultInboundAction = Resolve-FirewallAction "$($_.DefaultInboundAction)"
+    DefaultOutboundAction = Resolve-FirewallAction "$($_.DefaultOutboundAction)"
+    AllowLocalFirewallRules = if ($_.AllowLocalFirewallRules -eq 'True') { 1 } else { 0 }
+    EnableStealthModeForIPSec = if ($_.EnableStealthModeForIPSec -eq 'True') { 1 } else { 0 }
+    AllowUnicastResponseToMulticast = if ($_.AllowUnicastResponseToMulticast -eq 'True') { 1 } else { 0 }
   }
 }
 """

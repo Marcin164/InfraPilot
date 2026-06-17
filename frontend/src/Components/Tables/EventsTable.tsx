@@ -74,8 +74,7 @@ const EventsTable = ({ data }: Props) => {
     },
     {
       name: "Message",
-      selector: (row: any) =>
-        row?.Strings && row?.Strings?.length > 0 ? row.Strings[0] : "N/A",
+      selector: (row: any) => row?.Message || "N/A",
       width: "400px",
     },
     {
