@@ -88,6 +88,36 @@ Get-HotFix -ErrorAction SilentlyContinue | ForEach-Object {
 }
 """
 
+_UAC_PS = r"""
+$reg = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -ErrorAction SilentlyContinue
+function YesNo($v) {
+  if ($null -eq $v) { 'Unknown' } elseif ([int]$v -ne 0) { 'Enabled' } else { 'Disabled' }
+}
+$consentLevels = @{
+  0 = 'Elevate without prompting'
+  1 = 'Prompt for credentials on secure desktop'
+  2 = 'Prompt for consent on secure desktop'
+  3 = 'Prompt for credentials'
+  4 = 'Prompt for consent'
+  5 = 'Prompt for consent for non-Windows binaries'
+}
+[pscustomobject]@{
+  uac_enabled           = YesNo $reg.EnableLUA
+  admin_approval_mode   = if ($null -ne $reg.ConsentPromptBehaviorAdmin -and $consentLevels.ContainsKey([int]$reg.ConsentPromptBehaviorAdmin)) { $consentLevels[[int]$reg.ConsentPromptBehaviorAdmin] } else { 'Unknown' }
+  secure_desktop_prompt = YesNo $reg.PromptOnSecureDesktop
+  installer_detection   = YesNo $reg.EnableInstallerDetection
+  virtualization        = YesNo $reg.EnableVirtualization
+}
+"""
+
+_STARTUP_APPS_PS = r"""
+Get-CimInstance Win32_StartupCommand -ErrorAction SilentlyContinue | ForEach-Object {
+  [pscustomobject]@{
+    name = $_.Name; location = $_.Location; command = $_.Command; user = $_.User
+  }
+}
+"""
+
 
 def collect_security() -> dict[str, Any]:
     return {
@@ -96,7 +126,7 @@ def collect_security() -> dict[str, Any]:
         "firewall_profile": as_list(safe(run_powershell, [], _FIREWALL_PROFILE_PS)),
         "rdp_status":       safe(run_powershell, None, _RDP_PS) or {"RDP_Enabled": False},
         "tpm":              safe(run_powershell, None, _TPM_PS) or {},
-        "uac_status":       {},
+        "uac_status":       safe(run_powershell, None, _UAC_PS) or {},
         "updates":          as_list(safe(run_powershell, [], _UPDATES_PS, timeout=120)),
-        "startup_apps":     [],
+        "startup_apps":     as_list(safe(run_powershell, [], _STARTUP_APPS_PS, timeout=60)),
     }

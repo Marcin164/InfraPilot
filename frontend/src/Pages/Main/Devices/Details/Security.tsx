@@ -5,6 +5,8 @@ import Bitlocker from "../components/Bitlocker";
 import Firewall from "../components/Firewall";
 import RDP from "../components/RDP";
 import TPM from "../components/TPM";
+import UAC from "../components/UAC";
+import StartupApps from "../components/StartupApps";
 import NoData from "../components/NoData";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShieldHalved, faCircleCheck, faCircleXmark, faCircleQuestion } from "@fortawesome/free-solid-svg-icons";
@@ -74,6 +76,10 @@ const Security = () => {
           {hasSecurityData && <Firewall firewall={securityInfo.firewall_profile} />}
           {hasSecurityData && <RDP rdp={securityInfo.rdp_status} />}
           {hasSecurityData && <TPM {...securityInfo.tpm} />}
+          {hasSecurityData && <UAC uac={securityInfo.uac_status ?? {}} />}
+          {hasSecurityData && (
+            <StartupApps startupApps={securityInfo.startup_apps ?? []} />
+          )}
         </Masonry>
       </ResponsiveMasonry>
     </div>
