@@ -16,18 +16,27 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 
+function Format-CmdArg([string] $Value) {
+    if ($Value -match '[\s"]') {
+        return '"' + ($Value -replace '"', '""') + '"'
+    }
+    return $Value
+}
+
 function Invoke-Native {
     param(
         [Parameter(Mandatory)][string] $Exe,
         [Parameter(ValueFromRemainingArguments = $true)] $Args
     )
-    $prev = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    try {
-        & $Exe @Args
-    } finally {
-        $ErrorActionPreference = $prev
-    }
+    # Routed through cmd.exe with stderr merged into stdout *before* it
+    # reaches PowerShell. PowerShell itself treats any stderr line from a
+    # native exe as an error-stream record (worse on 7.3+, which can make
+    # it terminating) -- pip/PyInstaller log routine INFO/DEBUG progress to
+    # stderr, so without this every build would print scary false-positive
+    # errors (or outright abort) despite succeeding. $LASTEXITCODE below
+    # still reflects the wrapped command's real exit code.
+    $commandLine = (@($Exe) + $Args | ForEach-Object { Format-CmdArg([string]$_) }) -join ' '
+    cmd /c "$commandLine 2>&1"
     if ($LASTEXITCODE -ne 0) {
         throw "$Exe exited with code $LASTEXITCODE"
     }
