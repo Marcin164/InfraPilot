@@ -1,5 +1,5 @@
-import React from "react";
 import MainTable from "./MainTable";
+import StatusPill from "../Badges/StatusPill";
 
 type Props = { data: any };
 
@@ -27,8 +27,13 @@ const ConnectionsTable = ({ data }: Props) => {
     },
     {
       name: "Status",
-      selector: (row: any) => row.status,
-      width: "140px",
+      cell: (row: any) => (
+        <StatusPill
+          tone={row.status === "ESTABLISHED" ? "green" : row.status === "LISTEN" ? "blue" : "gray"}
+          text={row.status}
+        />
+      ),
+      width: "150px",
     },
     {
       name: "Local address",

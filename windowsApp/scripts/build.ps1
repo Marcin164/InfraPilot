@@ -59,6 +59,13 @@ try {
         -p . `
         agent\main.py
 
+    Write-Host "Building infrapilot-agent-gui.exe..." -ForegroundColor Cyan
+    Invoke-Native $Python -m PyInstaller `
+        --noconfirm --onefile --windowed --uac-admin `
+        --name infrapilot-agent-gui `
+        -p . `
+        agent\gui.py
+
     if ($SkipInstaller) {
         Write-Host "Skipping Inno Setup (use without -SkipInstaller to ship)." -ForegroundColor Yellow
         return
@@ -80,6 +87,7 @@ Install Inno Setup 6 from https://jrsoftware.org/isinfo.php
     Write-Host ""
     Write-Host "Build complete." -ForegroundColor Green
     Write-Host "  Agent:     $root\dist\infrapilot-agent.exe"
+    Write-Host "  GUI:       $root\dist\infrapilot-agent-gui.exe"
     Get-ChildItem "$root\installer\Output\*.exe" -ErrorAction SilentlyContinue | ForEach-Object {
         Write-Host ("  Installer: {0}" -f $_.FullName) -ForegroundColor Green
     }

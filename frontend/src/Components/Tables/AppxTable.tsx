@@ -6,12 +6,8 @@ type Props = { data: any };
 const AppxTable = ({ data }: Props) => {
   const columns = [
     {
-      cell: (row: any) => <div className="">{row.image}</div>,
-      width: "60px",
-    },
-    {
       name: "Name",
-      cell: (row: any) => <div className="font-bold">{row.Name}</div>,
+      cell: (row: any) => <div className="font-semibold text-[#3C3C3C]">{row.Name}</div>,
       width: "400px",
     },
     {

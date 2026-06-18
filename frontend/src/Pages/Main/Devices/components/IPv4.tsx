@@ -1,6 +1,4 @@
-import React from "react";
-import { useTranslation } from "react-i18next";
-import CardHeader from "../../../../Components/Headers/CardHeader";
+import Parameter from "../../../../Components/Lists/Parameter";
 
 type Props = {
   IPv4Address: string;
@@ -9,20 +7,10 @@ type Props = {
 };
 
 const IPv4 = ({ IPv4Address, NetMask, IPv4Gateway }: Props) => {
-  const { t } = useTranslation();
   return (
-    <div>
-      <CardHeader text={t("device.section.ipv4")} />
-      <div>
-        <span className="text-[#3C3C3C] font-light">Address: </span>
-        <span className="text-[#3C3C3C] font-semibold">{`${IPv4Address} | ${NetMask}`}</span>
-      </div>
-      {IPv4Gateway && (
-        <div>
-          <span className="text-[#3C3C3C] font-light">Gateway: </span>
-          <span className="text-[#3C3C3C] font-semibold">{IPv4Gateway}</span>
-        </div>
-      )}
+    <div className="divide-y divide-[#F0F0F0]">
+      <Parameter name="Address" value={IPv4Address ? `${IPv4Address} / ${NetMask}` : undefined} />
+      {IPv4Gateway && <Parameter name="Gateway" value={IPv4Gateway} />}
     </div>
   );
 };

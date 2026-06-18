@@ -23,14 +23,23 @@ import traceback
 from pathlib import Path
 from typing import Any, Callable
 
-from . import scanner
-from .config import (
+# PyInstaller freezes this file as the bare __main__ script (no package
+# context), which breaks the relative imports below -- they'd raise
+# "attempted relative import with no known parent package" at runtime
+# despite building/importing fine unfrozen. Put windowsApp/ on sys.path so
+# `agent` is importable as a top-level package regardless of how this file
+# is invoked (frozen exe, `python agent/main.py`, or `python -m agent.main`).
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from agent import scanner
+from agent.config import (
     DEFAULT_CONFIG_PATH, DEFAULT_STATE_PATH,
     AgentConfig, AgentState, dpapi_encrypt, load_config, load_state, write_state,
 )
-from .enrollment import enroll
-from .transport import send_scan
-from .tasks import claim_tasks, complete_task, fail_task
+from agent.enrollment import enroll
+from agent.transport import send_scan
+from agent.tasks import claim_tasks, complete_task, fail_task
 
 
 SECTION_COLLECTORS: dict[str, Callable[[], Any]] = {

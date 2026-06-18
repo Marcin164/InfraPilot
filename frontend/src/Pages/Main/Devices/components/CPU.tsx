@@ -2,7 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import Parameter from "../../../../Components/Lists/Parameter";
 import CardHeader from "../../../../Components/Headers/CardHeader";
-import Badge from "../../../../Components/Badges/Badge";
+import StatusPill from "../../../../Components/Badges/StatusPill";
 import { faMicrochip } from "@fortawesome/free-solid-svg-icons";
 
 type Props = { cpus: any };
@@ -31,42 +31,38 @@ const CPU = ({ cpus }: Props) => {
   return (
     <div className="w-full h-full h-fit bg-[#FFFFFF] shadow-xl rounded-[10px] p-4">
       <CardHeader text={t("device.section.cpu")} icon={faMicrochip} />
-      {cpus.map((cpu: any, index: number) => (
-        <div className="inline-block mr-4">
-          <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">
-            {cpu.name}
+      {(cpus ?? []).map((cpu: any, index: number) => {
+        const architecture = architectures.find(
+          (a: any) => a.number === cpu.architecture,
+        );
+        return (
+          <div key={index} className="mt-2 pt-2 first:mt-0 first:pt-0 border-t border-[#F0F0F0] first:border-t-0">
+            <div className="text-[16px] font-semibold text-[#2B9AE9]">
+              {cpu.name}
+            </div>
+            <div className="text-[13px] font-light text-[#9a9a9a] mb-2 truncate">
+              {cpu.processor_id}
+            </div>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              <StatusPill tone="green" text={`${cpu.cores} Cores`} />
+              <StatusPill tone="green" text={`${cpu.threads} Threads`} />
+              {architecture && <StatusPill tone="blue" text={architecture.name} />}
+            </div>
+            <div className="divide-y divide-[#F0F0F0]">
+              {architecture && (
+                <Parameter name="Architecture" value={architecture.description} />
+              )}
+              <Parameter name="L2 Cache" value={cpu.l2_cache} />
+              <Parameter name="L3 Cache" value={cpu.l3_cache} />
+              <Parameter name="Socket" value={cpu.socket} />
+              <Parameter
+                name="Clock Speed"
+                value={`${cpu.current_clock_speed} / ${cpu.max_clock_speed} MHz`}
+              />
+            </div>
           </div>
-          <div className="text-[14px] font-light text-[#3C3C3C] mb-2">
-            {cpu.processor_id}
-          </div>
-          <div className="flex">
-            <Badge text={`${cpu.cores} Cores`} className="bg-[#30A712]" />
-            <Badge text={`${cpu.threads} Threads`} className="bg-[#30A712]" />
-          </div>
-          <Parameter
-            name="Architecture"
-            value={`              ${
-              architectures.find(
-                (architecture: any) => architecture.number === cpu.architecture,
-              )?.name
-            }
-              (${
-                architectures.find(
-                  (architecture: any) =>
-                    architecture.number === cpu.architecture,
-                )?.description
-              })
-            `}
-          />
-          <Parameter name="L2 Cache" value={cpu.l2_cache} />
-          <Parameter name="L3 Cache" value={cpu.l3_cache} />
-          <Parameter name="Socket" value={cpu.socket} />
-          <Parameter
-            name="Clock Speed"
-            value={`${cpu.current_clock_speed} / ${cpu.max_clock_speed}`}
-          />
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

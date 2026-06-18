@@ -1,6 +1,5 @@
-import React from "react";
 import { useTranslation } from "react-i18next";
-import Badge from "../../../../Components/Badges/Badge";
+import StatusPill from "../../../../Components/Badges/StatusPill";
 import {
   faBan,
   faLock,
@@ -32,39 +31,42 @@ const Bitlocker = ({ bitlocker }: Props) => {
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
       <CardHeader text={t("device.section.bitlocker")} icon={faLock} />
-      {bitlocker.map((bl: any) => (
-        <div className="pb-2">
+      {(bitlocker ?? []).map((bl: any, index: number) => (
+        <div
+          key={index}
+          className="mt-2 pt-2 first:mt-0 first:pt-0 border-t border-[#F0F0F0] first:border-t-0"
+        >
           <div className="text-[#3C3C3C] font-semibold">{`Partition ${
             bl.MountPoint
           } (${Math.floor(bl.CapacityGB)} GB)`}</div>
-          <div className="text-[14px] font-light text-[#3C3C3C]">
+          <div className="text-[13px] font-light text-[#9a9a9a] mb-1">
             {volumeTypeArray[bl.VolumeType]}
           </div>
-          <div className="flex flex-wrap">
-            <Badge
+          <div className="flex flex-wrap gap-1.5 mb-1">
+            <StatusPill
               icon={bl.LockStatus === 1 ? faLock : faLockOpen}
-              className={bl.LockStatus === 1 ? "bg-[#30A712]" : "bg-[#F3606A]"}
+              tone={bl.LockStatus === 1 ? "green" : "red"}
               text={bl.LockStatus === 1 ? "Locked" : "Unlocked"}
             />
-            <Badge
+            <StatusPill
               icon={bl.ProtectionStatus === 1 ? faShield : faBan}
-              className={
-                bl.ProtectionStatus === 1 ? "bg-[#30A712]" : "bg-[#F3606A]"
-              }
+              tone={bl.ProtectionStatus === 1 ? "green" : "red"}
               text={bl.ProtectionStatus === 1 ? "Protected" : "Vulnerable"}
             />
+            {(bl.KeyProtector ?? []).map((kp: any, kpIndex: number) => (
+              <StatusPill key={kpIndex} tone="blue" text={kp} />
+            ))}
           </div>
-          {bl.KeyProtector.map((kp: any) => (
-            <div>{kp}</div>
-          ))}
-          <Parameter
-            name="Volume Status"
-            value={volumeEncryptingStatusArray[bl.VolumeStatus]}
-          />
-          <Parameter
-            name="Encryption Method"
-            value={encryptionMethodArray[bl.EncryptionMethod]}
-          />
+          <div className="divide-y divide-[#F0F0F0]">
+            <Parameter
+              name="Volume Status"
+              value={volumeEncryptingStatusArray[bl.VolumeStatus]}
+            />
+            <Parameter
+              name="Encryption Method"
+              value={encryptionMethodArray[bl.EncryptionMethod]}
+            />
+          </div>
         </div>
       ))}
     </div>

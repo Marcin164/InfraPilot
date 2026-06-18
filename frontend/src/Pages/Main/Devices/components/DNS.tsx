@@ -1,7 +1,4 @@
-import React from "react";
 import { useTranslation } from "react-i18next";
-import CardHeader from "../../../../Components/Headers/CardHeader";
-import { faCloud } from "@fortawesome/free-solid-svg-icons";
 
 type Props = {
   servers: any;
@@ -9,14 +6,16 @@ type Props = {
 
 const DNS = ({ servers }: Props) => {
   const { t } = useTranslation();
+  const list = servers ?? [];
+  if (list.length === 0) return null;
   return (
     <div>
-      <CardHeader text={t("device.section.dns")} icon={faCloud} />
-      <div>
-        {servers.map((server: any) => (
-          <div className="text-[#3C3C3C] font-semibold">{server}</div>
-        ))}
-      </div>
+      <span className="text-[#7a7a7a] font-light text-[13px]">
+        {t("device.section.dns")}:{" "}
+      </span>
+      <span className="text-[#3C3C3C] font-semibold text-[13px]">
+        {list.join(", ")}
+      </span>
     </div>
   );
 };

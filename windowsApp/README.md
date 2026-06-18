@@ -50,6 +50,7 @@ windowsApp/
 │   ├── fingerprint.py         # TPM/MAC/CPU/serial collector
 │   ├── installer_core.py      # schtasks register/unregister
 │   ├── tasks.py                # POST /devices/agent/tasks/{claim,complete,fail}
+│   ├── gui.py                  # Tkinter status/connect/rescan window
 │   └── scanner/               # 8 sekcji: system/hardware/software/...
 ├── installer/installer.iss    # Inno Setup -- CLI args flow only
 ├── scripts/build.ps1          # PyInstaller + Inno Setup
@@ -75,11 +76,35 @@ urządzenia. `scan_now` / `inventory_refresh` wymuszają pełny skan,
 `collect_event_log` wysyła tylko sekcję `events`; `custom` nie ma
 zdefiniowanego zachowania i jest odsyłane jako failed.
 
+## GUI agenta (`infrapilot-agent-gui.exe`)
+
+Prosty Tkinter-owy okienek dla operatora siedzącego przy hoście — nie
+zastępuje CLI/Task Schedulera, jest dodatkiem na sytuacje, gdy ktoś nie chce
+bawić się w PowerShell:
+
+- **Status** — czy `config.json`/`state.json` istnieją, czy host jest
+  zarejestrowany (Device ID), kiedy był ostatni skan, czy backend
+  odpowiada na `GET /health`.
+- **Połącz z backendem** — pola Backend URL + token, przycisk zapisuje
+  `config.json` i robi enrollment (to samo co `--force-enroll`, tylko
+  bez terminala).
+- **Skanuj teraz** — pełny skan + wysyłka, z logiem powodzenia/błędu w
+  oknie (to samo co `--once`, bez czekania na Task Scheduler).
+
+Wymaga uprawnień administratora (manifest `requireAdministrator` wbudowany
+przez `--uac-admin` w build.ps1) — `config.json`/`state.json` są ACL'owane
+tylko dla SYSTEM + Administrators, więc bez elewacji odczyt/zapis i tak by
+się nie udał. Dostępny ze Start Menu ("InfraPilot Agent") po instalacji;
+instalator oferuje też jego automatyczne otwarcie na stronie Finish, jeśli
+po instalacji `config.json` jeszcze nie istnieje (czyli zainstalowano bez
+`/BACKENDURL=`/`/TOKEN=`).
+
 ## Pliki na hoście
 
 | Ścieżka | Co tam jest |
 |---------|-------------|
-| `C:\Program Files\InfraPilot\agent\infrapilot-agent.exe` | Binarka |
+| `C:\Program Files\InfraPilot\agent\infrapilot-agent.exe` | Binarka CLI (scheduled task) |
+| `C:\Program Files\InfraPilot\agent\infrapilot-agent-gui.exe` | GUI (status/connect/rescan) |
 | `C:\ProgramData\InfraPilot\agent\config.json` | Backend URL + token (DPAPI po pierwszym czytaniu) |
 | `C:\ProgramData\InfraPilot\agent\state.json`  | device_id + sekret (DPAPI) |
 | `C:\ProgramData\InfraPilot\agent\agent.log`   | Log skaner + enroll |

@@ -11,7 +11,7 @@ import NetworkStats from "../components/NetworkStats";
 import MappedDrives from "../components/MappedDrives";
 import Shares from "../components/Shares";
 import { twMerge } from "tailwind-merge";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import StatusPill from "../../../../Components/Badges/StatusPill";
 import {
   faGauge,
   faPlug,
@@ -69,37 +69,32 @@ const Network = () => {
                   <div className="text-[14px] font-light text-[#3C3C3C]">
                     {adapter.InterfaceDescription}
                   </div>
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    <div className="px-2 rounded-[5px] text-[14px] text-center bg-[#2B9AE9] text-white">
-                      <FontAwesomeIcon icon={faGauge} />
-                      <span className="ml-1">{`${adapter["Speed(Mbps)"]} Mbps`}</span>
-                    </div>
-                    <div
-                      className={twMerge(
-                        "px-2 rounded-[5px] text-[14px] text-center text-white",
-                        adapter.Connected ? "bg-[#30A712]" : "bg-[#F3606A]",
-                      )}
-                    >
-                      <FontAwesomeIcon
-                        icon={adapter.Connected ? faPlug : faPlugCircleXmark}
-                      />
-                      <span className="ml-1">
-                        {adapter.Connected
+                  <div className="flex flex-wrap gap-1.5 mt-2 mb-1">
+                    <StatusPill icon={faGauge} tone="blue" text={`${adapter["Speed(Mbps)"]} Mbps`} />
+                    <StatusPill
+                      icon={adapter.Connected ? faPlug : faPlugCircleXmark}
+                      tone={adapter.Connected ? "green" : "red"}
+                      text={
+                        adapter.Connected
                           ? t("device.network.connected")
-                          : t("device.network.disconnected")}
-                      </span>
-                    </div>
-                    <div className="px-2 rounded-[5px] text-[14px] text-center bg-[#AFBA17] text-white">
-                      {adapter.DHCP === 1 ? "DHCP" : "Static"}
-                    </div>
+                          : t("device.network.disconnected")
+                      }
+                    />
+                    <StatusPill tone="amber" text={adapter.DHCP === 1 ? "DHCP" : "Static"} />
                   </div>
-                  <IPv4 {...adapter} />
-                  <IPv6 {...adapter} />
-                  <DNS servers={adapter.DNSServers?.value} />
-                  <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">
-                    {t("device.network.physicalAddress")}
+                  <div className="divide-y divide-[#F0F0F0]">
+                    <IPv4 {...adapter} />
+                    <IPv6 {...adapter} />
                   </div>
-                  <div className="text-[#3C3C3C] font-semibold">{adapter.MAC}</div>
+                  <div className="mt-2">
+                    <DNS servers={adapter.DNSServers?.value} />
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-[#F0F0F0]">
+                    <span className="text-[#7a7a7a] font-light text-[13px]">
+                      {t("device.network.physicalAddress")}:{" "}
+                    </span>
+                    <span className="text-[#3C3C3C] font-semibold text-[13px]">{adapter.MAC}</span>
+                  </div>
                 </div>
               ))}
             </Masonry>

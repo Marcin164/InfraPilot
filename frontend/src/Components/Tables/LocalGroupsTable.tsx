@@ -1,4 +1,3 @@
-import React from "react";
 import MainTable from "./MainTable";
 
 type Props = { data: any };
@@ -9,7 +8,7 @@ const LocalGroupsTable = ({ data }: Props) => {
   const columns = [
     {
       name: "Name",
-      cell: (row: any) => <span className="font-bold">{row.Name}</span>,
+      cell: (row: any) => <span className="font-semibold text-[#3C3C3C]">{row.Name}</span>,
       width: "300px",
     },
     {

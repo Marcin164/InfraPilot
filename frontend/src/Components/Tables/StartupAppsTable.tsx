@@ -1,4 +1,3 @@
-import React from "react";
 import HeadlessTable from "./HeadlessTable";
 
 type Props = { data: any };
@@ -6,16 +5,15 @@ type Props = { data: any };
 const StartupAppsTable = ({ data }: Props) => {
   const columns = [
     {
-      selector: (row: any) => row.name,
-      width: "150px",
+      cell: (row: any) => <div className="font-semibold text-[#3C3C3C] text-[13px]">{row.name}</div>,
+      width: "180px",
     },
     {
-      selector: (row: any) => row.location,
-      width: "150px",
+      cell: (row: any) => <div className="text-[12px] text-[#9a9a9a] truncate">{row.location}</div>,
+      width: "180px",
     },
     {
-      selector: (row: any) => row.command,
-      width: "150px",
+      cell: (row: any) => <div className="text-[12px] text-[#3C3C3C] truncate">{row.command}</div>,
     },
   ];
 

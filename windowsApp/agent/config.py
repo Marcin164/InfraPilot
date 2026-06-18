@@ -118,3 +118,50 @@ def write_state(
         "enrolled_at": _dt.datetime.now(tz=_dt.timezone.utc).isoformat(),
     }
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def read_state_raw(path: Path = DEFAULT_STATE_PATH) -> Optional[dict]:
+    """Undecrypted state.json, for display purposes (GUI status panel)."""
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+
+
+def touch_last_scan(path: Path, when: str) -> None:
+    raw = read_state_raw(path)
+    if raw is None:
+        return
+    raw["last_scan_at"] = when
+    path.write_text(json.dumps(raw, indent=2), encoding="utf-8")
+
+
+def save_config(
+    path: Path,
+    *,
+    backend_url: str,
+    enrollment_token: str,
+    interval_minutes: int = 60,
+    verify_tls: bool = True,
+    ca_bundle: Optional[str] = None,
+    timeout_seconds: int = 60,
+    log_path: Optional[str] = None,
+) -> None:
+    """Write config.json -- used by the GUI's "Connect" action. The Inno
+    Setup installer writes this same shape via its own Pascal code when
+    /BACKENDURL= /TOKEN= are passed on the command line; this is the
+    interactive equivalent for an operator who'd rather not use the CLI.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "backend_url": backend_url.rstrip("/"),
+        "enrollment_token": dpapi_encrypt(enrollment_token),
+        "interval_minutes": interval_minutes,
+        "verify_tls": verify_tls,
+        "ca_bundle": ca_bundle,
+        "timeout_seconds": timeout_seconds,
+        "log_path": log_path,
+    }
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")

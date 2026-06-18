@@ -588,7 +588,7 @@
   "device.tab.events": "Events",
   "device.tab.users": "Users",
   "device.tab.peripherals": "Peripherals",
-  "device.tab.history": "History",
+  "device.tab.history": "Assignment",
   "device.tab.compliance": "Compliance",
   "device.tab.cves": "CVEs",
   "device.tab.lifecycle": "Lifecycle",

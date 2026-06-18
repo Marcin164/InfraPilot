@@ -22,7 +22,9 @@ type Option = {
 
 type FormValues = typeof assignDeviceDefaultValues;
 
-const AssignDeviceForm: React.FC = () => {
+type Props = { close?: () => void };
+
+const AssignDeviceForm: React.FC<Props> = ({ close }) => {
   const { id: routeId } = useParams();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -85,7 +87,10 @@ const AssignDeviceForm: React.FC = () => {
       queryClient.invalidateQueries({
         queryKey: isUserContext ? ["userDevice"] : ["history"],
       });
-      close();
+      if (isDeviceContext) {
+        queryClient.invalidateQueries({ queryKey: ["device"] });
+      }
+      close?.();
     },
 
     onError: () => {
@@ -111,8 +116,6 @@ const AssignDeviceForm: React.FC = () => {
   ) {
     return null;
   }
-
-  console.log(userOptions);
 
   return (
     <form

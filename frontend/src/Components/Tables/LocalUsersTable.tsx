@@ -1,6 +1,5 @@
-import React from "react";
 import MainTable from "./MainTable";
-import Badge from "../Badges/Badge";
+import StatusPill from "../Badges/StatusPill";
 import { faLock, faLockOpen } from "@fortawesome/free-solid-svg-icons";
 
 type Props = { data: any };
@@ -35,7 +34,7 @@ const UsersGroupsTable = ({ data }: Props) => {
     {
       name: "Name",
       cell: (row: any) => (
-        <span className="font-bold">{row.FullName || row.Name}</span>
+        <span className="font-semibold text-[#3C3C3C]">{row.FullName || row.Name}</span>
       ),
     },
     {
@@ -43,14 +42,14 @@ const UsersGroupsTable = ({ data }: Props) => {
       selector: (row: any) =>
         parseAccountType.find(
           (type: any) => type.accountType === row?.AccountType
-        )?.accountTypeName,
+        )?.accountTypeName ?? "Unknown",
     },
     {
       name: "Disabled",
       cell: (row: any) => (
-        <Badge
+        <StatusPill
           icon={row.Disabled ? faLock : faLockOpen}
-          className={row.Disabled ? "bg-[#BC0E0E]" : "bg-[#30A712]"}
+          tone={row.Disabled ? "red" : "green"}
           text={row.Disabled ? "Disabled" : "Enabled"}
         />
       ),
@@ -58,40 +57,19 @@ const UsersGroupsTable = ({ data }: Props) => {
     {
       name: "Password Changeable",
       cell: (row: any) => (
-        <Badge
-          className={
-            row.PasswordChangeable
-              ? "text-[#30A712] font-bold"
-              : "text-[#BC0E0E] font-bold"
-          }
-          text={row.PasswordChangeable ? "Yes" : "No"}
-        />
+        <StatusPill tone={row.PasswordChangeable ? "green" : "red"} text={row.PasswordChangeable ? "Yes" : "No"} />
       ),
     },
     {
       name: "Password Expires",
       cell: (row: any) => (
-        <Badge
-          className={
-            row.PasswordExpires
-              ? "text-[#30A712] font-bold"
-              : "text-[#BC0E0E] font-bold"
-          }
-          text={row.PasswordExpires ? "Yes" : "No"}
-        />
+        <StatusPill tone={row.PasswordExpires ? "green" : "red"} text={row.PasswordExpires ? "Yes" : "No"} />
       ),
     },
     {
       name: "Password Required",
       cell: (row: any) => (
-        <Badge
-          className={
-            row.PasswordRequired
-              ? "text-[#30A712] font-bold"
-              : "text-[#BC0E0E] font-bold"
-          }
-          text={row.PasswordRequired ? "Yes" : "No"}
-        />
+        <StatusPill tone={row.PasswordRequired ? "green" : "red"} text={row.PasswordRequired ? "Yes" : "No"} />
       ),
     },
     {

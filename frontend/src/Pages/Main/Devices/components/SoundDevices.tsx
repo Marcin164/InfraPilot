@@ -10,16 +10,21 @@ const SoundDevices = ({ soundDevices }: Props) => {
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
       <CardHeader text={t("device.section.soundDevices")} icon={faHeadphones} />
-      {soundDevices.map((soundDevice: any) => (
-        <div>
-          <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">
+      {(soundDevices ?? []).map((soundDevice: any, index: number) => (
+        <div
+          key={index}
+          className="mt-2 pt-2 first:mt-0 first:pt-0 border-t border-[#F0F0F0] first:border-t-0"
+        >
+          <div className="text-[16px] font-semibold text-[#2B9AE9]">
             {soundDevice.name}
           </div>
-          <div className="text-[14px] font-light text-[#3C3C3C] mb-2">
+          <div className="text-[13px] font-light text-[#9a9a9a] mb-1">
             {soundDevice.manufacturer || "Manufacturer not available"}
           </div>
-          <Parameter name="Device ID" value={soundDevice.pnp_device_id} />
-          <Parameter name="Operational status" value={soundDevice.status} />
+          <div className="divide-y divide-[#F0F0F0]">
+            <Parameter name="Device ID" value={soundDevice.pnp_device_id} />
+            <Parameter name="Operational status" value={soundDevice.status} />
+          </div>
         </div>
       ))}
     </div>

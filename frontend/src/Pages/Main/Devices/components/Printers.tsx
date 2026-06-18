@@ -4,7 +4,7 @@ import {
   faXmarkCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
-import Badge from "../../../../Components/Badges/Badge";
+import StatusPill from "../../../../Components/Badges/StatusPill";
 import Parameter from "../../../../Components/Lists/Parameter";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 
@@ -15,30 +15,32 @@ const Printers = ({ printers }: Props) => {
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
       <CardHeader text={t("device.section.printers")} icon={faPrint} />
-      {printers.map((printer: any) => (
-        <div>
-          <div className="text-[16px] font-semibold text-[#2B9AE9] pt-2">
+      {(printers ?? []).map((printer: any, index: number) => (
+        <div
+          key={index}
+          className="mt-2 pt-2 first:mt-0 first:pt-0 border-t border-[#F0F0F0] first:border-t-0"
+        >
+          <div className="text-[16px] font-semibold text-[#2B9AE9]">
             {printer.name}
           </div>
-          <div className="text-[14px] font-light text-[#3C3C3C] mb-2 overflow-hidden text-ellipsis">
+          <div className="text-[13px] font-light text-[#9a9a9a] mb-1 overflow-hidden text-ellipsis">
             {printer.port}
           </div>
-          <Parameter name="Device ID" value={printer.pnp_device_id} />
-          <Parameter name="Driver" value={printer.driver} />
-          <Parameter
-            name="Offline mode"
-            value={printer.work_offline ? "Yes" : "No"}
-          />
-          <div className="flex mt-2">
+          <div className="divide-y divide-[#F0F0F0] mb-2">
+            <Parameter name="Device ID" value={printer.pnp_device_id} />
+            <Parameter name="Driver" value={printer.driver} />
+          </div>
+          <div className="flex flex-wrap gap-1.5">
             {!printer.default && (
-              <Badge text={t("device.section.printers.default")} className="bg-[#30A712]" />
+              <StatusPill tone="blue" text={t("device.section.printers.default")} />
             )}
-            <Badge
+            <StatusPill
               icon={printer.shared ? faShare : faXmarkCircle}
+              tone={printer.shared ? "green" : "gray"}
               text={printer.shared ? "Shared" : "Not shared"}
-              className={printer.shared ? "bg-[#30A712]" : "bg-[#3C3C3C]"}
             />
-            <Badge text={printer.status} className="bg-[#2B9AE9]" />
+            <StatusPill tone={printer.work_offline ? "amber" : "green"} text={printer.work_offline ? "Offline" : "Online"} />
+            {printer.status && <StatusPill tone="blue" text={printer.status} />}
           </div>
         </div>
       ))}

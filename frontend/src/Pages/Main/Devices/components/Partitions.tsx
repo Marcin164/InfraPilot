@@ -1,5 +1,3 @@
-import React from "react";
-
 type Props = {
   device_id: string;
   file_system: string;
@@ -22,21 +20,26 @@ const Partitions = ({
     return bytes / denominator;
   };
 
+  const usedPct = total_size > 0 ? Math.round((used_space / total_size) * 100) : 0;
+  const barColor = usedPct > 90 ? "#F3606E" : usedPct > 70 ? "#F1C40F" : "#30A712";
+
   return (
-    <div>
-      <div className="text-[#3C3C3C] font-semibold">{`${device_id} ${volume_name} (${file_system})`}</div>
-      <div>
-        <div className="w-[300px] h-[20px] bg-[#D9D9D9] rounded-[5px] overflow-hidden">
-          <div
-            className="h-[20px] bg-[#2B9AE9]"
-            style={{ width: (used_space / total_size) * 100 }}
-          />
-        </div>
-        <div className="text-[#3C3C3C] font-semibold">
-          {`used: ${Math.round(
-            bytesToGigaBytes(used_space)
-          )} GB, free: ${Math.round(bytesToGigaBytes(free_space))} GB`}
-        </div>
+    <div className="py-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[13px] font-semibold text-[#3C3C3C] truncate">
+          {`${device_id} ${volume_name}`.trim()}
+          {file_system && <span className="text-[#9a9a9a] font-light"> ({file_system})</span>}
+        </span>
+        <span className="text-[12px] text-[#9a9a9a] shrink-0">{usedPct}%</span>
+      </div>
+      <div className="mt-1 h-[6px] rounded-full bg-[#F0F0F0] overflow-hidden">
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${usedPct}%`, backgroundColor: barColor }}
+        />
+      </div>
+      <div className="text-[12px] text-[#9a9a9a] mt-1">
+        {`${Math.round(bytesToGigaBytes(used_space))} GB użyte, ${Math.round(bytesToGigaBytes(free_space))} GB wolne (${Math.round(bytesToGigaBytes(total_size))} GB razem)`}
       </div>
     </div>
   );

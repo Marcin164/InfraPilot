@@ -1,6 +1,5 @@
-import React from "react";
 import { useTranslation } from "react-i18next";
-import Parameter from "../../../../Components/Lists/Parameter";
+import StatusPill from "../../../../Components/Badges/StatusPill";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import { faPlug } from "@fortawesome/free-solid-svg-icons";
 
@@ -11,10 +10,12 @@ const RDP = ({ rdp }: Props) => {
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
       <CardHeader text={t("device.section.rdp")} icon={faPlug} />
-      <Parameter
-        name="Status"
-        value={rdp.RDP_Enabled ? "Enabled" : "Disabled"}
-      />
+      <div className="mt-2">
+        <StatusPill
+          tone={rdp?.RDP_Enabled ? "amber" : "green"}
+          text={rdp?.RDP_Enabled ? "Enabled" : "Disabled"}
+        />
+      </div>
     </div>
   );
 };

@@ -1,5 +1,5 @@
-import { twMerge } from "tailwind-merge";
 import MainTable from "./MainTable";
+import StatusPill from "../Badges/StatusPill";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
@@ -32,28 +32,19 @@ const FirewallRulesTable = ({ data }: Props) => {
       name: "Name",
       cell: (row: any) => (
         <div>
-          <div className="font-bold">{row.DisplayName}</div>
-          <div className="font-light text-[12px]">{row.Name}</div>
+          <div className="font-semibold text-[#3C3C3C]">{row.DisplayName}</div>
+          <div className="font-light text-[12px] text-[#9a9a9a]">{row.Name}</div>
         </div>
       ),
-      width: "300px",
-    },
-    {
-      name: "State",
-      selector: (row: any) => row.DisplayName,
-      width: "300px",
+      width: "320px",
     },
     {
       name: "Enabled",
       cell: (row: any) => (
-        <div
-          className={twMerge(
-            "w-[100px] py-2 rounded-[10px] text-center text-[#FFFFFF]",
-            `bg-[${row.Enabled === 1 ? "#30A712" : "#BC0E0E"}]`
-          )}
-        >
-          {row.Enabled === 1 ? "Enabled" : "Disabled"}
-        </div>
+        <StatusPill
+          tone={row.Enabled === 1 ? "green" : "red"}
+          text={row.Enabled === 1 ? "Enabled" : "Disabled"}
+        />
       ),
     },
     {
@@ -63,14 +54,9 @@ const FirewallRulesTable = ({ data }: Props) => {
     {
       name: "Direction",
       cell: (row: any) => (
-        <div>
-          <FontAwesomeIcon
-            icon={row.Direction === 1 ? faArrowRight : faArrowLeft}
-            className={`font-bold text-[${
-              row.Direction === 1 ? "#30A712" : "#BC0E0E"
-            }]`}
-          />
-          <span className="ml-2">
+        <div className={row.Direction === 1 ? "text-[#30A712]" : "text-[#BC0E0E]"}>
+          <FontAwesomeIcon icon={row.Direction === 1 ? faArrowRight : faArrowLeft} />
+          <span className="ml-2 text-[#3C3C3C]">
             {row.Direction === 1 ? "Inbound" : "Outbound"}
           </span>
         </div>
@@ -79,7 +65,7 @@ const FirewallRulesTable = ({ data }: Props) => {
     {
       name: "Action",
       cell: (row: any) => (
-        <span className="ml-2">{resolveAction(row.Action)}</span>
+        <span className="text-[#3C3C3C]">{resolveAction(row.Action)}</span>
       ),
     },
   ];

@@ -41,11 +41,16 @@ Name: "{commonappdata}\InfraPilot\agent"; \
 [Files]
 Source: "..\dist\{#MyAppExeName}"; DestDir: "{app}"; \
     Flags: ignoreversion restartreplace uninsrestartdelete
+Source: "..\dist\infrapilot-agent-gui.exe"; DestDir: "{app}"; \
+    Flags: ignoreversion restartreplace uninsrestartdelete
 
 [Icons]
 ; Start Menu folder gives the operator something visible after install.
 ; The agent runs headless via Task Scheduler -- these shortcuts are just
-; for operators to inspect state and uninstall cleanly.
+; for operators to inspect state, connect/reconnect, and uninstall cleanly.
+Name: "{group}\InfraPilot Agent"; \
+    Filename: "{app}\infrapilot-agent-gui.exe"; \
+    IconFilename: "{app}\infrapilot-agent-gui.exe"
 Name: "{group}\View agent log"; \
     Filename: "{win}\system32\notepad.exe"; \
     Parameters: """{commonappdata}\InfraPilot\agent\agent.log"""; \
@@ -67,6 +72,14 @@ Filename: "{app}\{#MyAppExeName}"; Parameters: "--enroll-only"; \
     StatusMsg: "Enrolling with backend..."; \
     Flags: runhidden waituntilterminated; \
     Check: ConfigPresent
+
+; Interactive installs only (skipifsilent): if the operator double-clicked
+; the installer without /BACKENDURL= /TOKEN=, offer the GUI on the Finish
+; page instead of leaving them to go find the PowerShell snippet.
+Filename: "{app}\infrapilot-agent-gui.exe"; \
+    Description: "Otwórz InfraPilot Agent i połącz z backendem"; \
+    Flags: postinstall nowait skipifsilent; \
+    Check: NoConfigYet
 
 [UninstallRun]
 Filename: "{app}\{#MyAppExeName}"; Parameters: "--unregister-task"; \
@@ -129,16 +142,19 @@ begin
   // After everything's wired up: if there's still no config (user
   // double-clicked .exe without /BACKENDURL= /TOKEN=), tell them where
   // to get those values. The agent is installed and scheduled but
-  // cannot do anything useful until config.json exists.
+  // cannot do anything useful until config.json exists. The Finish page
+  // (see [Run]) also offers to open the GUI directly for interactive
+  // installs -- this MsgBox is the fallback for anyone who skips that.
   if CurStep = ssDone then begin
     if not FileExists(ConfigPath) then begin
       MsgBox(
         'InfraPilot Agent installed -- but NOT YET configured.' + #13#10 + #13#10 +
-        'To finish setup:' + #13#10 +
-        '  1. Open your InfraPilot web UI' + #13#10 +
-        '  2. Go to Settings -> Windows Agent' + #13#10 +
-        '  3. Copy the PowerShell snippet shown there' + #13#10 +
-        '  4. Run it on this host in an elevated PowerShell' + #13#10 + #13#10 +
+        'Easiest: click "InfraPilot Agent" in the Start Menu and paste the ' +
+        'Backend URL + token there.' + #13#10 + #13#10 +
+        'Or, from your InfraPilot web UI:' + #13#10 +
+        '  1. Go to Settings -> Windows Agent' + #13#10 +
+        '  2. Copy the PowerShell snippet shown there' + #13#10 +
+        '  3. Run it on this host in an elevated PowerShell' + #13#10 + #13#10 +
         'The agent will then enroll automatically and start sending scans.',
         mbInformation, MB_OK);
     end;
@@ -148,6 +164,11 @@ end;
 function ConfigPresent: Boolean;
 begin
   Result := FileExists(ConfigPath);
+end;
+
+function NoConfigYet: Boolean;
+begin
+  Result := not FileExists(ConfigPath);
 end;
 
 function InitializeUninstall(): Boolean;

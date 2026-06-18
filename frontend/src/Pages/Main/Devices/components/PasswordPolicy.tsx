@@ -11,9 +11,9 @@ const PasswordPolicy = ({ passwordPolicy }: Props) => {
   return (
     <div className="w-full h-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 mb-4">
       <CardHeader text={t("device.section.passwordPolicy")} icon={faKey} />
-      <div>
-        {Object.entries(passwordPolicy).map(([key, value]: any) => (
-          <Parameter name={key} value={value} />
+      <div className="mt-2 divide-y divide-[#F0F0F0]">
+        {Object.entries(passwordPolicy ?? {}).map(([key, value]: any) => (
+          <Parameter key={key} name={key} value={value} />
         ))}
       </div>
     </div>

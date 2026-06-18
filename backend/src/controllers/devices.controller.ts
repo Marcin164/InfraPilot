@@ -306,8 +306,11 @@ export class DevicesController {
     const installerMeta = await this.agentInstallerService.getMeta();
     // AGENT_INSTALLER_URL wins when set (e.g. CDN / GitHub Releases). Otherwise,
     // if an admin has uploaded an installer through this page, self-host it.
+    // `?.trim() || ...` (not `??`) on purpose: an env var present but left
+    // blank (common with .env templates / docker-compose) is `""`, which
+    // `??` treats as "set" and would silently kill the self-hosted fallback.
     const installerUrl =
-      process.env.AGENT_INSTALLER_URL ??
+      process.env.AGENT_INSTALLER_URL?.trim() ||
       (installerMeta ? `${baseUrl}/devices/agent/installer` : null);
     const snippet = installerUrl
       ? `# Run as Administrator\n` +
