@@ -47,15 +47,12 @@ const Cves = () => {
       <CardHeader text={t("device.section.cves")} icon={faBug} />
 
       <p className="text-[12px] text-[#7a7a7a] mt-2">
-        Matched from installed software catalog against OSV.dev. Matches
-        refresh nightly; run the CVE sweep manually from Settings if you
-        need fresh data.
+        {t("device.cves.help")}
       </p>
 
       {cves.length === 0 ? (
         <div className="mt-4 rounded-[8px] border border-[#DFF0D8] bg-[#F6FBF1] p-3 text-[13px] text-[#3C3C3C]">
-          No known vulnerabilities match software currently installed on this
-          device.
+          {t("device.cves.none")}
         </div>
       ) : (
         <>
@@ -110,7 +107,7 @@ const Cves = () => {
                         </div>
                         {c.publishedAt && (
                           <span className="text-[11px] text-[#9a9a9a]">
-                            published{" "}
+                            {t("device.cves.published")}{" "}
                             {moment(c.publishedAt).format("DD.MM.YYYY")}
                           </span>
                         )}

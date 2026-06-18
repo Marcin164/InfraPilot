@@ -26,7 +26,18 @@ def _query(log_name: str, limit: int = 200) -> str:
         "    EventID = $_.Id; Category = $_.TaskDisplayName;"
         "    LevelName = \"$($_.LevelDisplayName)\";"
         "    SourceName = $_.ProviderName;"
-        "    Message = if ($_.Message) { ($_.Message -replace '\\s+', ' ').Substring(0, [Math]::Min(400, $_.Message.Length)) } else { '' };"
+        # Bug: computing the truncation length from $_.Message.Length (the
+        # ORIGINAL string) but calling .Substring() on the whitespace-collapsed
+        # string (always <= original length, often shorter -- real event
+        # messages are full of newlines/indentation). Whenever the collapsed
+        # string was shorter than min(400, original length), .Substring()
+        # threw "Index and length must refer to a location within the
+        # string" -- a single such event aborted the whole 200-event batch
+        # for that log (outer wrapper runs with $ErrorActionPreference=Stop),
+        # so the agent silently reported 0 events for entire logs that
+        # Event Viewer shows plenty of entries for. Compute the length from
+        # the already-collapsed string instead.
+        "    Message = if ($_.Message) { $m = ($_.Message -replace '\\s+', ' '); $m.Substring(0, [Math]::Min(400, $m.Length)) } else { '' };"
         "    TimeGenerated = $_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss');"
         "  }"
         "}"

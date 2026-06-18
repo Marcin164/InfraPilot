@@ -45,7 +45,7 @@ const Compliance = () => {
       toast.success(t("toast.success.complianceReevaluated"));
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Re-evaluation failed"),
+      toast.error(err?.response?.data?.message ?? t("toast.error.complianceReevaluateFailed")),
   });
 
   const results = resultsQuery.data ?? [];
@@ -62,7 +62,7 @@ const Compliance = () => {
         <CardHeader text={t("device.section.compliance")} icon={faShield} />
         <ButtonPrimary
           icon={faRotate}
-          text={reeval.isPending ? "Evaluating…" : "Re-evaluate"}
+          text={reeval.isPending ? t("device.compliance.evaluating") : t("device.compliance.reEvaluate")}
           onClick={() => reeval.mutate()}
           disabled={reeval.isPending}
         />
@@ -83,20 +83,20 @@ const Compliance = () => {
         <div className="text-[13px] text-[#7a7a7a]">
           <div>
             <span className="font-bold text-[#30A712]">
-              {passing.length} passing
+              {passing.length} {t("device.compliance.passing")}
             </span>
             {failing.length > 0 && (
               <>
                 {" · "}
                 <span className="font-bold text-[#F3606E]">
-                  {failing.length} failing
+                  {failing.length} {t("device.compliance.failing")}
                 </span>
               </>
             )}
           </div>
           {results[0]?.evaluatedAt && (
             <div>
-              Last evaluated{" "}
+              {t("device.compliance.lastEvaluated")}{" "}
               {moment(results[0].evaluatedAt).format("DD.MM.YYYY HH:mm")}
             </div>
           )}
@@ -106,7 +106,7 @@ const Compliance = () => {
       {failing.length > 0 && (
         <div className="mt-5">
           <div className="text-[14px] font-bold text-[#3C3C3C] mb-2">
-            Failing rules
+            {t("device.compliance.failingRules")}
           </div>
           <div className="space-y-2">
             {failing.map((r) => (
@@ -136,7 +136,7 @@ const Compliance = () => {
                     </div>
                   )}
                   <div className="text-[11px] text-[#9a9a9a] mt-0.5">
-                    path: <code>{r.rule?.jsonPath}</code>
+                    {t("device.compliance.path")}: <code>{r.rule?.jsonPath}</code>
                   </div>
                 </div>
               </div>
@@ -148,7 +148,7 @@ const Compliance = () => {
       {passing.length > 0 && (
         <div className="mt-5">
           <div className="text-[14px] font-bold text-[#3C3C3C] mb-2">
-            Passing ({passing.length})
+            {t("device.compliance.passingCount", { count: passing.length })}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {passing.map((r) => (
@@ -168,8 +168,7 @@ const Compliance = () => {
 
       {results.length === 0 && (
         <div className="mt-6 text-[13px] text-[#7a7a7a]">
-          No compliance rules have been evaluated yet. Trigger a scan or click
-          Re-evaluate.
+          {t("device.compliance.none")}
         </div>
       )}
     </div>

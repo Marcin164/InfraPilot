@@ -83,13 +83,12 @@ const Scans = () => {
       <div className="bg-white shadow-xl rounded-[10px] p-4">
         <CardHeader text={t("device.section.scanHistory")} icon={faClockRotateLeft} />
         <p className="text-[12px] text-[#7a7a7a] mt-2">
-          Every agent scan produces an immutable snapshot. Pick any two to
-          compare — the most recent pair is selected by default.
+          {t("device.scans.help")}
         </p>
 
         {scans.length === 0 ? (
           <div className="mt-3 text-[13px] text-[#7a7a7a]">
-            No scans yet for this device.
+            {t("device.scans.none")}
           </div>
         ) : (
           <div className="mt-3 max-h-[320px] overflow-y-auto">
@@ -97,8 +96,8 @@ const Scans = () => {
               <thead>
                 <tr className="text-left text-[#7a7a7a] text-[11px] uppercase">
                   <th className="py-1 w-[40px]" />
-                  <th className="py-1">Received</th>
-                  <th className="py-1">Snapshot SHA256</th>
+                  <th className="py-1">{t("device.scans.received")}</th>
+                  <th className="py-1">{t("device.scans.snapshotSha")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -116,12 +115,12 @@ const Scans = () => {
                       <td className="py-1 pl-1">
                         {isFrom && (
                           <span className="text-[10px] font-bold text-[#2B9AE9]">
-                            FROM
+                            {t("device.scans.from")}
                           </span>
                         )}
                         {isTo && (
                           <span className="text-[10px] font-bold text-[#30A712]">
-                            TO
+                            {t("device.scans.to")}
                           </span>
                         )}
                       </td>
@@ -152,7 +151,7 @@ const Scans = () => {
 
           {diff.changedSections.length === 0 ? (
             <div className="mt-3 rounded-[8px] border border-[#DFF0D8] bg-[#F6FBF1] p-3 text-[13px]">
-              No changes between these two scans.
+              {t("device.scans.noChanges")}
             </div>
           ) : (
             <div className="mt-3 flex flex-wrap gap-2">
@@ -173,12 +172,12 @@ const Scans = () => {
             diff.software.versionChanged.length > 0) && (
             <div className="mt-5">
               <div className="text-[14px] font-bold text-[#3C3C3C] mb-2">
-                Software
+                {t("device.scans.software")}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="rounded-[8px] border border-[#DFF0D8] bg-[#F6FBF1] p-3">
                   <div className="text-[12px] font-bold text-[#30A712] mb-1">
-                    <FontAwesomeIcon icon={faPlus} /> Installed (
+                    <FontAwesomeIcon icon={faPlus} /> {t("device.scans.installed")} (
                     {diff.software.added.length})
                   </div>
                   {diff.software.added.length === 0 ? (
@@ -198,7 +197,7 @@ const Scans = () => {
                 </div>
                 <div className="rounded-[8px] border border-[#F3D3D7] bg-[#FDF5F6] p-3">
                   <div className="text-[12px] font-bold text-[#F3606E] mb-1">
-                    <FontAwesomeIcon icon={faMinus} /> Removed (
+                    <FontAwesomeIcon icon={faMinus} /> {t("device.scans.removed")} (
                     {diff.software.removed.length})
                   </div>
                   {diff.software.removed.length === 0 ? (
@@ -218,7 +217,7 @@ const Scans = () => {
                 </div>
                 <div className="rounded-[8px] border border-[#FCEFCC] bg-[#FFFBEF] p-3">
                   <div className="text-[12px] font-bold text-[#F1C40F] mb-1">
-                    <FontAwesomeIcon icon={faRotate} /> Version change (
+                    <FontAwesomeIcon icon={faRotate} /> {t("device.scans.versionChange")} (
                     {diff.software.versionChanged.length})
                   </div>
                   {diff.software.versionChanged.length === 0 ? (
@@ -244,15 +243,15 @@ const Scans = () => {
           {diff.fieldChanges.filter((f) => f.section !== "software").length > 0 && (
             <div className="mt-5">
               <div className="text-[14px] font-bold text-[#3C3C3C] mb-2">
-                Field-level changes
+                {t("device.scans.fieldChanges")}
               </div>
               <table className="w-full text-[12px]">
                 <thead>
                   <tr className="text-left text-[#7a7a7a] text-[11px] uppercase">
-                    <th className="py-1">Section</th>
-                    <th className="py-1">Path</th>
-                    <th className="py-1">Before</th>
-                    <th className="py-1">After</th>
+                    <th className="py-1">{t("device.scans.colSection")}</th>
+                    <th className="py-1">{t("device.scans.colPath")}</th>
+                    <th className="py-1">{t("device.scans.colBefore")}</th>
+                    <th className="py-1">{t("device.scans.colAfter")}</th>
                   </tr>
                 </thead>
                 <tbody>

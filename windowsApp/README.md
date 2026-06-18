@@ -51,6 +51,7 @@ windowsApp/
 │   ├── installer_core.py      # schtasks register/unregister
 │   ├── tasks.py                # POST /devices/agent/tasks/{claim,complete,fail}
 │   ├── gui.py                  # Tkinter status/connect/rescan window
+│   ├── winauth.py               # ctypes LogonUserW -- gates GUI connection edits
 │   └── scanner/               # 8 sekcji: system/hardware/software/...
 ├── installer/installer.iss    # Inno Setup -- CLI args flow only
 ├── scripts/build.ps1          # PyInstaller + Inno Setup
@@ -70,11 +71,15 @@ infrapilot-agent.exe --register-task        # post-install hook (Inno Setup)
 infrapilot-agent.exe --unregister-task      # uninstall hook
 ```
 
-Po każdym skanie (`--once` i co iterację `--watch`) agent odpytuje
-`/devices/agent/tasks/claim` o zadania zlecone z zakładki "Tasks" na karcie
-urządzenia. `scan_now` / `inventory_refresh` wymuszają pełny skan,
-`collect_event_log` wysyła tylko sekcję `events`; `custom` nie ma
-zdefiniowanego zachowania i jest odsyłane jako failed.
+Po każdym skanie (`--once`, co iterację `--watch`, i po kliknięciu "Skanuj
+teraz" w GUI) agent odpytuje `/devices/agent/tasks/claim` o zadania zlecone
+z zakładki "Tasks" na karcie urządzenia. Trzy typy, żaden nie przyjmuje
+parametrów (payload się nie używa): `scan_now` / `inventory_refresh`
+wymuszają pełny skan, `collect_event_log` wysyła tylko sekcję `events`.
+Było tu kiedyś jeszcze `custom`, ale nic mu nie dawało zdefiniowanego
+zachowania (agent zawsze zwracał failed) — usunięty, bo zrobienie z niego
+czegoś użytecznego oznaczałoby pozwolenie adminowi na zdalne odpalanie
+dowolnej, nieaudytowanej treści na hoście.
 
 ## GUI agenta (`infrapilot-agent-gui.exe`)
 
@@ -87,9 +92,17 @@ bawić się w PowerShell:
   odpowiada na `GET /health`.
 - **Połącz z backendem** — pola Backend URL + token, przycisk zapisuje
   `config.json` i robi enrollment (to samo co `--force-enroll`, tylko
-  bez terminala).
+  bez terminala). **Zablokowane domyślnie** — pola i przycisk "Zapisz i
+  połącz" są wyszarzone, dopóki operator nie wpisze hasła swojego konta
+  Windows (sprawdzanego przez `LogonUserW`, ten sam mechanizm co logowanie
+  do systemu). To dodatkowa bariera ponad samym UAC -- okno GUI samo w
+  sobie już działa z podniesionymi uprawnieniami, więc bez tej blokady
+  ktokolwiek mający dostęp do otwartego okna mógłby przekierować agenta na
+  inny backend albo zmienić token bez podawania żadnego hasła. Odblokowanie
+  utrzymuje się do zamknięcia okna (bez automatycznego re-locka po zapisie).
 - **Skanuj teraz** — pełny skan + wysyłka, z logiem powodzenia/błędu w
-  oknie (to samo co `--once`, bez czekania na Task Scheduler).
+  oknie (to samo co `--once`, bez czekania na Task Scheduler). Nie wymaga
+  odblokowania -- samo skanowanie nie zmienia konfiguracji.
 
 Wymaga uprawnień administratora (manifest `requireAdministrator` wbudowany
 przez `--uac-admin` w build.ps1) — `config.json`/`state.json` są ACL'owane

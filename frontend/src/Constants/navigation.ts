@@ -8,6 +8,7 @@ import {
   faBuilding,
   faCalendar,
   faChartBar,
+  faCircleInfo,
   faClockRotateLeft,
   faChartPie,
   faCloud,
@@ -134,23 +135,31 @@ export const userNavbarPaths = new Set([
   "/user/settings",
 ]);
 
+// `scope` decides which device records get which tab:
+//   "computers" -- only meaningful with agent scan data (Windows today)
+//   "all"       -- generic asset bookkeeping, works for any record
+//   "other"     -- only for manually-tracked, non-scanned records
+//                  (Components/Peripherals/Network/Other groups)
+// See DeviceNavbar.tsx for the filtering and Details.tsx for the
+// scope-aware default-tab redirect.
 export const deviceNavbarItems = [
-  { to: "system", label: "device.tab.system", icon: faAddressBook },
-  { to: "hardware", label: "device.tab.hardware", icon: faHardDrive },
-  { to: "software", label: "device.tab.software", icon: faCode },
-  { to: "network", label: "device.tab.network", icon: faNetworkWired },
-  { to: "security", label: "device.tab.security", icon: faShield },
-  { to: "events", label: "device.tab.events", icon: faCalendar },
-  { to: "users", label: "device.tab.users", icon: faUsers },
-  { to: "peripherals", label: "device.tab.peripherals", icon: faComputerMouse },
-  { to: "history", label: "device.tab.history", icon: faUserTag },
-  { to: "compliance", label: "device.tab.compliance", icon: faShieldHalved },
-  { to: "cves", label: "device.tab.cves", icon: faBug },
-  { to: "lifecycle", label: "device.tab.lifecycle", icon: faBoxArchive },
-  { to: "tasks", label: "device.tab.tasks", icon: faPlay },
-  { to: "scans", label: "device.tab.scans", icon: faClockRotateLeft },
-  { to: "label", label: "device.tab.label", icon: faQrcode },
-  { to: "maintenance", label: "device.tab.maintenance", icon: faWrench },
+  { to: "overview", label: "device.tab.overview", icon: faCircleInfo, scope: "other" as const },
+  { to: "system", label: "device.tab.system", icon: faAddressBook, scope: "computers" as const },
+  { to: "hardware", label: "device.tab.hardware", icon: faHardDrive, scope: "computers" as const },
+  { to: "software", label: "device.tab.software", icon: faCode, scope: "computers" as const },
+  { to: "network", label: "device.tab.network", icon: faNetworkWired, scope: "computers" as const },
+  { to: "security", label: "device.tab.security", icon: faShield, scope: "computers" as const },
+  { to: "events", label: "device.tab.events", icon: faCalendar, scope: "computers" as const },
+  { to: "users", label: "device.tab.users", icon: faUsers, scope: "computers" as const },
+  { to: "peripherals", label: "device.tab.peripherals", icon: faComputerMouse, scope: "computers" as const },
+  { to: "history", label: "device.tab.history", icon: faUserTag, scope: "all" as const },
+  { to: "compliance", label: "device.tab.compliance", icon: faShieldHalved, scope: "computers" as const },
+  { to: "cves", label: "device.tab.cves", icon: faBug, scope: "computers" as const },
+  { to: "lifecycle", label: "device.tab.lifecycle", icon: faBoxArchive, scope: "all" as const },
+  { to: "tasks", label: "device.tab.tasks", icon: faPlay, scope: "computers" as const },
+  { to: "scans", label: "device.tab.scans", icon: faClockRotateLeft, scope: "computers" as const },
+  { to: "label", label: "device.tab.label", icon: faQrcode, scope: "all" as const },
+  { to: "maintenance", label: "device.tab.maintenance", icon: faWrench, scope: "all" as const },
 ];
 
 export const settingsNavbarItems = [

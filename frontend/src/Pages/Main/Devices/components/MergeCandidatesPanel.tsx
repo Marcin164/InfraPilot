@@ -46,7 +46,7 @@ const MergeCandidatesPanel = ({ device }: Props) => {
         .filter(([, n]) => n > 0)
         .map(([k, n]) => `${k}: ${n}`)
         .join(", ");
-      toast.success(`Merged. Moved ${moved || "nothing"}`);
+      toast.success(t("device.merge.mergedToast", { moved: moved || t("device.merge.nothing") }));
       queryClient.invalidateQueries({
         queryKey: ["merge-candidates", device.id],
       });
@@ -55,13 +55,13 @@ const MergeCandidatesPanel = ({ device }: Props) => {
       setShowManual(false);
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Merge failed"),
+      toast.error(err?.response?.data?.message ?? t("toast.error.mergeFailed")),
   });
 
   const confirmMerge = (sourceId: string, label: string) => {
     askConfirm(
       () => mergeMutation.mutate(sourceId),
-      `Merge "${label}" into this device?\n\nAll tickets, scans, software installs, tasks, compliance and tags from "${label}" will be repointed to this device. The source row stays as a tombstone with mergedIntoId set, but its agent secret is cleared.`,
+      `${t("device.merge.confirmTitle", { label })}\n\n${t("device.merge.confirmBody", { label })}`,
     );
   };
 
@@ -71,7 +71,7 @@ const MergeCandidatesPanel = ({ device }: Props) => {
         <div className="flex items-center gap-2 text-[#C0392B]">
           <FontAwesomeIcon icon={faTriangleExclamation} />
           <span className="font-bold text-[14px]">
-            This device has been merged into another record.
+            {t("device.merge.mergedNotice")}
           </span>
         </div>
         <ButtonPrimary
@@ -93,17 +93,14 @@ const MergeCandidatesPanel = ({ device }: Props) => {
     <div className="bg-white shadow-xl rounded-[10px] p-4 mt-4">
       <CardHeader text={t("device.merge.duplicates")} icon={faCodeMerge} />
       <p className="text-[12px] text-[#7a7a7a] mt-2">
-        Devices whose identity fingerprint (TPM, MAC, CPU id, serial)
-        overlaps with this one. Use after a reformat or motherboard swap to
-        merge a duplicate record back in. Source becomes a tombstone — no
-        history is lost.
+        {t("device.merge.help")}
       </p>
 
       {candidatesQuery.isLoading ? (
-        <div className="mt-3 text-[13px] text-[#7a7a7a]">Loading…</div>
+        <div className="mt-3 text-[13px] text-[#7a7a7a]">{t("device.merge.loading")}</div>
       ) : candidates.length === 0 ? (
         <div className="mt-3 text-[13px] text-[#7a7a7a]">
-          No duplicates detected from current fingerprint.
+          {t("device.merge.none")}
         </div>
       ) : (
         <div className="mt-3 space-y-2">
@@ -121,7 +118,7 @@ const MergeCandidatesPanel = ({ device }: Props) => {
                       : "bg-[#F1C40F]"
                 }`}
               >
-                score {c.score}
+                {t("device.merge.score")} {c.score}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-[13px] text-[#3C3C3C]">
@@ -130,10 +127,10 @@ const MergeCandidatesPanel = ({ device }: Props) => {
                     c.device.id}
                 </div>
                 <div className="text-[11px] text-[#7a7a7a] mt-0.5">
-                  SN: {c.device.serialNumber ?? "—"} · last scan{" "}
+                  {t("device.merge.serial")}: {c.device.serialNumber ?? "—"} · {t("device.merge.lastScan")}{" "}
                   {c.device.lastScanAt
                     ? moment(c.device.lastScanAt).fromNow()
-                    : "never"}
+                    : t("device.merge.never")}
                 </div>
                 <div className="text-[11px] text-[#535353] mt-1">
                   {c.reasons.join(" · ")}
@@ -170,20 +167,20 @@ const MergeCandidatesPanel = ({ device }: Props) => {
           onClick={() => setShowManual((v) => !v)}
           className="text-[12px] text-[#2B9AE9] hover:underline cursor-pointer"
         >
-          {showManual ? "Hide manual merge" : "Manual merge by ID →"}
+          {showManual ? t("device.merge.hideManual") : t("device.merge.manualLink")}
         </button>
         {showManual && (
           <div className="mt-2 flex items-end gap-2">
             <Input
               className="flex-1 pt-0"
-              label="Source device ID"
+              label={t("device.merge.sourceIdLabel")}
               value={manualSource}
               handleChange={setManualSource}
               placeholder={t("device.merge.placeholder")}
             />
             <ButtonPrimary
               icon={faCodeMerge}
-              text={mergeMutation.isPending ? "Merging…" : "Merge"}
+              text={mergeMutation.isPending ? t("device.merge.merging") : t("device.merge.mergeBtn")}
               onClick={() => {
                 const v = manualSource.trim();
                 if (!v) return;

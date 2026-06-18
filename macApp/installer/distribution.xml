@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+    <title>InfraPilot Agent</title>
+    <organization>com.infrapilot</organization>
+    <domains enable_localSystem="true"/>
+    <options customize="never" require-scripts="true" rootVolumeOnly="true"/>
+    <choices-outline>
+        <line choice="default">
+            <line choice="com.infrapilot.agent.pkg"/>
+        </line>
+    </choices-outline>
+    <choice id="default"/>
+    <choice id="com.infrapilot.agent.pkg" visible="false">
+        <pkg-ref id="com.infrapilot.agent.pkg"/>
+    </choice>
+    <!-- version is overwritten by build.sh via sed before productbuild -->
+    <pkg-ref id="com.infrapilot.agent.pkg" version="0.1.0" onConclusion="none">component.pkg</pkg-ref>
+</installer-gui-script>

@@ -32,7 +32,7 @@ import { AuditService } from 'src/services/audit.service';
 import { AgentEnrollDto, DeviceScanDto } from 'src/dto/devices.dto';
 import { AgentTaskType } from 'src/entities/agentTask.entity';
 import { AgentTokenService } from 'src/services/agent-token.service';
-import { AgentInstallerService } from 'src/services/agent-installer.service';
+import { AgentInstallerService, type AgentPlatform } from 'src/services/agent-installer.service';
 
 @Controller('devices')
 export class DevicesController {
@@ -168,6 +168,7 @@ export class DevicesController {
       serialNumber: body.serialNumber ?? null,
       agentVersion: body.agentVersion ?? null,
       platform: body.platform ?? null,
+      deviceType: body.deviceType ?? null,
     });
     return {
       deviceId: result.deviceId,
@@ -279,13 +280,14 @@ export class DevicesController {
     return { configured: this.remoteAssist.isConfigured() };
   }
 
-  // ---- Agent setup (Settings > Windows Agent page) ----
+  // ---- Agent setup (Settings > Windows/macOS Agent page) ----
   //
   // Returns everything the frontend needs to render a "how to install
-  // the agent" panel: download URL, the fleet-wide enrollment token
-  // (which is just AGENT_ENROLLMENT_TOKEN echoed back -- it's
-  // a bootstrap secret, not per-host), and a copy-pastable PowerShell
-  // one-liner. Admin only so the token never leaks to other roles.
+  // the agent" panel for both platforms: download URL, the fleet-wide
+  // enrollment token (which is just AGENT_ENROLLMENT_TOKEN echoed back --
+  // it's a bootstrap secret, shared across platforms, not per-host), and a
+  // copy-pastable install snippet per platform. Admin only so the token
+  // never leaks to other roles.
   @UseGuards(AuthGuard)
   @Roles(Role.Admin)
   @Get('/agent/setup-info')
@@ -303,27 +305,48 @@ export class DevicesController {
     const host =
       (req.headers['x-forwarded-host'] as string) ?? req.headers['host'];
     const baseUrl = `${proto}://${host}`.replace(/\/+$/, '');
-    const installerMeta = await this.agentInstallerService.getMeta();
-    // AGENT_INSTALLER_URL wins when set (e.g. CDN / GitHub Releases). Otherwise,
-    // if an admin has uploaded an installer through this page, self-host it.
-    // `?.trim() || ...` (not `??`) on purpose: an env var present but left
-    // blank (common with .env templates / docker-compose) is `""`, which
-    // `??` treats as "set" and would silently kill the self-hosted fallback.
-    const installerUrl =
+
+    // AGENT_INSTALLER_URL_<PLATFORM> wins when set (e.g. CDN / GitHub
+    // Releases). `AGENT_INSTALLER_URL` (no suffix) is kept as a legacy
+    // alias for Windows only. Otherwise, if an admin has uploaded an
+    // installer through this page, self-host it. `?.trim() || ...` (not
+    // `??`) on purpose: an env var present but left blank (common with
+    // .env templates / docker-compose) is `""`, which `??` treats as "set"
+    // and would silently kill the self-hosted fallback.
+    const windowsMeta = await this.agentInstallerService.getMeta('windows');
+    const windowsUrl =
+      process.env.AGENT_INSTALLER_URL_WINDOWS?.trim() ||
       process.env.AGENT_INSTALLER_URL?.trim() ||
-      (installerMeta ? `${baseUrl}/devices/agent/installer` : null);
-    const snippet = installerUrl
+      (windowsMeta ? `${baseUrl}/devices/agent/installer?platform=windows` : null);
+    const windowsSnippet = windowsUrl
       ? `# Run as Administrator\n` +
-        `Invoke-WebRequest -Uri "${installerUrl}" -OutFile "$env:TEMP\\InfraPilotAgentSetup.exe"\n` +
+        `Invoke-WebRequest -Uri "${windowsUrl}" -OutFile "$env:TEMP\\InfraPilotAgentSetup.exe"\n` +
         `& "$env:TEMP\\InfraPilotAgentSetup.exe" /SILENT /BACKENDURL="${baseUrl}" /TOKEN="${token}"`
       : null;
+
+    const macosMeta = await this.agentInstallerService.getMeta('macos');
+    const macosUrl =
+      process.env.AGENT_INSTALLER_URL_MACOS?.trim() ||
+      (macosMeta ? `${baseUrl}/devices/agent/installer?platform=macos` : null);
+    const macosSnippet = macosUrl
+      ? `curl -fsSL "${macosUrl}" -o /tmp/InfraPilotAgentSetup.pkg\n` +
+        `sudo BACKEND_URL="${baseUrl}" ENROLL_TOKEN="${token}" installer -pkg /tmp/InfraPilotAgentSetup.pkg -target /`
+      : null;
+
     return {
       configured: true,
       backendUrl: baseUrl,
       enrollmentToken: token,
-      installerUrl,
-      installerMeta,
-      powershellSnippet: snippet,
+      windows: {
+        installerUrl: windowsUrl,
+        installerMeta: windowsMeta,
+        snippet: windowsSnippet,
+      },
+      macos: {
+        installerUrl: macosUrl,
+        installerMeta: macosMeta,
+        snippet: macosSnippet,
+      },
     };
   }
 
@@ -337,14 +360,20 @@ export class DevicesController {
 
   // Public — a freshly imaged host has no credentials yet, so the download
   // itself can't require auth. The binary is a generic installer; secrets
-  // are only passed in at install time via CLI args (see WindowsAgent.tsx).
+  // are only passed in at install time via CLI args / env vars (see
+  // WindowsAgent.tsx). Defaults to windows for backward compat with any
+  // already-shared URL that predates the `?platform=` param.
   @Get('/agent/installer')
-  async downloadAgentInstaller(@Res() res: Response) {
-    const { stream, meta } = await this.agentInstallerService.getFileStream();
+  async downloadAgentInstaller(
+    @Res() res: Response,
+    @Query('platform') platform: AgentPlatform = 'windows',
+  ) {
+    const { stream, meta } = await this.agentInstallerService.getFileStream(platform);
+    const fallbackName = platform === 'macos' ? 'InfraPilotAgentSetup.pkg' : 'InfraPilotAgentSetup.exe';
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${encodeURIComponent(meta.originalName || 'InfraPilotAgentSetup.exe')}"`,
+      `attachment; filename="${encodeURIComponent(meta.originalName || fallbackName)}"`,
     );
     stream.pipe(res);
   }
@@ -353,11 +382,16 @@ export class DevicesController {
   @Roles(Role.Admin)
   @Post('/agent/installer')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadAgentInstaller(@UploadedFile() file: any, @Req() req: any) {
+  async uploadAgentInstaller(
+    @UploadedFile() file: any,
+    @Req() req: any,
+    @Body('platform') platform: AgentPlatform = 'windows',
+  ) {
     const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id ?? null;
-    const meta = await this.agentInstallerService.upload(file, actor);
+    const meta = await this.agentInstallerService.upload(file, platform, actor);
     await this.auditService.log('Device', null, 'agent_installer_uploaded', {
       actor,
+      platform,
       originalName: meta.originalName,
       sizeBytes: meta.sizeBytes,
     });

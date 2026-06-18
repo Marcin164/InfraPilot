@@ -15,6 +15,13 @@ import { DeviceIdentityService } from 'src/services/deviceIdentity.service';
 
 const PREV_SECRET_GRACE_MS = 24 * 60 * 60 * 1000;
 
+// Mirrors frontend/src/Constants/options.ts's computersTypeOptions --
+// the only values the Add Device subgroup dropdown (and its filters)
+// actually know about for group=Computers. Anything else the agent
+// might report falls back to unset rather than a value the UI can't
+// render as a real option.
+const VALID_COMPUTER_SUBGROUPS = new Set(['Laptop', 'PC', 'Thinclient']);
+
 @Injectable()
 export class DevicesService {
   private readonly logger = new Logger(DevicesService.name);
@@ -154,8 +161,12 @@ export class DevicesService {
    * same identifiers as `findMergeCandidates` (TPM > CPU > MAC overlap >
    * baseboard serial > hostname). If the best score crosses the
    * `MATCH_THRESHOLD`, the agent is bound to that existing device.
-   * Otherwise we auto-create a new row in group=Computers,
-   * subgroup='Auto-enrolled' so an admin can curate it later.
+   * Otherwise we auto-create a new row in group=Computers. subgroup is
+   * set from the agent's best-effort `deviceType` guess (WMI chassis
+   * type / PCSystemType / battery presence -- see windowsApp's
+   * fingerprint.py) when it's one of the real subgroup options, same
+   * convention as bulk import otherwise: left null for "we don't know
+   * yet" rather than inventing a value, so an admin can set it later.
    *
    * In both cases we rotate the agent secret and return the plaintext
    * once — the agent must persist it locally; the backend keeps only
@@ -169,6 +180,7 @@ export class DevicesService {
     hostname?: string;
     manufacturer?: string;
     model?: string;
+    deviceType?: string;
   }): Promise<{
     deviceId: string;
     secret: string;
@@ -241,10 +253,13 @@ export class DevicesService {
         `Agent enrollment matched device ${deviceId} (score ${best.score}: ${best.reasons.join(', ')})`,
       );
     } else {
+      const subgroup = VALID_COMPUTER_SUBGROUPS.has(fp.deviceType ?? '')
+        ? fp.deviceType
+        : undefined;
       const created = this.devicesRepository.create({
         id: uuidv4(),
         group: 'Computers',
-        subgroup: 'Auto-enrolled',
+        subgroup,
         state: 'active',
         isOn: true,
         serialNumber: fp.serialNumber ?? undefined,
@@ -362,15 +377,20 @@ export class DevicesService {
     }
 
     try {
+      // Snapshot the full merged row (`updated`), not the raw `scan`
+      // payload -- a partial scan (e.g. the agent's collect_event_log
+      // task) only carries `events`, so storing `scan` directly would
+      // record system/hardware/software/... as null, making the diff
+      // tab report a false "everything was wiped" between scans.
       await this.scanHistory.record(device.id, {
-        system: scan?.system,
-        hardware: scan?.hardware,
-        software: scan?.software,
-        network: scan?.network,
-        security: scan?.security,
-        peripherals: scan?.peripherals,
-        users: scan?.users_and_groups,
-        eventLogs: scan?.events,
+        system: updated?.system,
+        hardware: updated?.hardware,
+        software: updated?.software,
+        network: updated?.network,
+        security: updated?.security,
+        peripherals: updated?.peripherals,
+        users: updated?.users,
+        eventLogs: updated?.eventLogs,
       });
     } catch (err) {
       this.logger.warn(

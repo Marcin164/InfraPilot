@@ -21,6 +21,19 @@ export class HardwareSectionDto {
   @Type(() => BaseboardDto)
   baseboard?: BaseboardDto;
 
+  // Loosely-typed PS-shaped blobs -- @IsArray()/@IsObject() only, no nested
+  // shape validation. They MUST carry a decorator: the app's global
+  // ValidationPipe runs with `whitelist: true`, which strips any property
+  // of a @ValidateNested() class that has no validator at all -- a bare
+  // `[key: string]: any` index signature is TS-only and does NOT exempt a
+  // property from that stripping. Without these, cpu/ram/gpu/bios/disks
+  // were silently deleted from every single scan before reaching the DB.
+  @IsOptional() @IsArray() cpu?: unknown[];
+  @IsOptional() @IsArray() ram_modules?: unknown[];
+  @IsOptional() @IsArray() gpus?: unknown[];
+  @IsOptional() @IsObject() bios?: Record<string, unknown>;
+  @IsOptional() @IsArray() disks?: unknown[];
+
   [key: string]: any;
 }
 
@@ -28,6 +41,12 @@ export class SystemSectionDto {
   @IsOptional() @IsString() @MaxLength(512) hostname?: string;
   @IsOptional() @IsString() @MaxLength(256) os_name?: string;
   @IsOptional() @IsString() @MaxLength(256) os_version?: string;
+
+  // Same whitelist-stripping hazard as HardwareSectionDto above.
+  @IsOptional() @IsString() @MaxLength(256) username?: string;
+  @IsOptional() @IsString() @MaxLength(64) boot_time?: string;
+  @IsOptional() @IsString() @MaxLength(64) machine?: string;
+  @IsOptional() @IsObject() Cim?: Record<string, unknown>;
 
   [key: string]: any;
 }
@@ -75,5 +94,9 @@ export class AgentEnrollDto {
   @IsOptional() @IsString() @MaxLength(256) model?: string;
   @IsOptional() @IsString() @MaxLength(64) agentVersion?: string;
   @IsOptional() @IsString() @MaxLength(32) platform?: string;
+  /** Agent's best-effort guess ("Laptop" | "PC") from WMI chassis/battery
+   *  data. Service layer validates against the real subgroup options
+   *  before trusting it -- treat as a hint, not a guarantee. */
+  @IsOptional() @IsString() @MaxLength(32) deviceType?: string;
 }
 

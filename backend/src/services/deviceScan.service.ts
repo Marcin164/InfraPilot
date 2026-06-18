@@ -161,6 +161,18 @@ export class DeviceScanService {
       .update(canonicalJson(sections))
       .digest('hex');
 
+    // The agent scans hourly by default and most hours nothing changes --
+    // without this, the table fills up with byte-identical full-size rows.
+    // `lastScanAt` on the device already records "we heard from it at X";
+    // this table only needs a new row when the snapshot actually differs.
+    const previous = await this.repo.findOne({
+      where: { deviceId },
+      order: { receivedAt: 'DESC' },
+    });
+    if (previous && previous.snapshotSha256 === snapshotSha256) {
+      return previous;
+    }
+
     const scan = new DeviceScan();
     scan.id = uuidv4();
     scan.deviceId = deviceId;

@@ -9,11 +9,14 @@ import {
 } from 'typeorm';
 import { Devices } from './devices.entity';
 
+// "custom" used to be an option here, but nothing ever gave it a defined
+// behaviour -- the agent always failed it with "Unsupported task type",
+// and doing otherwise would mean letting an admin have the agent execute
+// arbitrary, unaudited input. Removed rather than wired up.
 export type AgentTaskType =
   | 'scan_now'
   | 'collect_event_log'
-  | 'inventory_refresh'
-  | 'custom';
+  | 'inventory_refresh';
 
 export type AgentTaskState =
   | 'queued'

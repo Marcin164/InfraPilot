@@ -297,7 +297,29 @@ describe('DevicesService', () => {
 
       expect(result.matched).toBe(false);
       expect(devicesRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ group: 'Computers', subgroup: 'Auto-enrolled' }),
+        expect.objectContaining({ group: 'Computers', subgroup: undefined }),
+      );
+    });
+
+    it('uses the agent-reported deviceType as subgroup when it is a real option', async () => {
+      devicesRepo.find.mockResolvedValue([]);
+      devicesRepo.findOneBy.mockResolvedValue({ ...mockDevice(), id: 'generated-uuid' });
+
+      await service.enrollAgent({ hostname: 'NEW-LAPTOP', deviceType: 'Laptop' });
+
+      expect(devicesRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ group: 'Computers', subgroup: 'Laptop' }),
+      );
+    });
+
+    it('ignores an unrecognized deviceType rather than saving a bogus subgroup', async () => {
+      devicesRepo.find.mockResolvedValue([]);
+      devicesRepo.findOneBy.mockResolvedValue({ ...mockDevice(), id: 'generated-uuid' });
+
+      await service.enrollAgent({ hostname: 'NEW-PC', deviceType: 'Tablet' });
+
+      expect(devicesRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ group: 'Computers', subgroup: undefined }),
       );
     });
 

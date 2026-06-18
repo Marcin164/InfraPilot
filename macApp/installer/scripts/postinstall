@@ -1,0 +1,18 @@
+#!/bin/bash
+# Runs as root during `installer -pkg ...`. Mirrors the Inno Setup
+# installer's CLI-args + post-install-hook flow on Windows: if the
+# install snippet set BACKEND_URL/ENROLL_TOKEN (see
+# devices.controller.ts's macOS install snippet), write config.json now;
+# either way, register the launchd daemon so the agent starts scanning
+# without any further operator action.
+set -euo pipefail
+
+AGENT_BIN="/Library/Application Support/InfraPilot/agent/infrapilot-agent"
+
+if [ -n "${BACKEND_URL:-}" ] && [ -n "${ENROLL_TOKEN:-}" ]; then
+  "$AGENT_BIN" --write-config
+fi
+
+"$AGENT_BIN" --register-task
+
+exit 0

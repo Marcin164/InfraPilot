@@ -115,9 +115,10 @@ def process_tasks(cfg: AgentConfig, state: AgentState, sections: list[str]) -> N
     """Claim and run queued admin tasks (Settings > device > Tasks tab).
 
     ``scan_now`` / ``inventory_refresh`` trigger a full scan; ``collect_event_log``
-    re-sends just the events section. Anything else (``custom``) has no
-    defined agent behaviour, so it's failed back with an explanatory error
-    rather than silently dropped.
+    re-sends just the events section. None of these read ``task["payload"]``
+    -- there's nothing to parameterize today. Any other type (there's no
+    UI to enqueue one, but the API doesn't enforce that) is failed back
+    with an explanatory error rather than silently dropped.
     """
     log = logging.getLogger("agent.tasks")
     try:

@@ -87,7 +87,7 @@ const DevicesTable = ({
       selector: (row: any) =>
         row?.user ? (
           <Link
-            to={`${row.user.id}`}
+            to={`/admin/users/${row.user.id}`}
             className="text-[#2B9AE9] underline"
             onClick={(e) => e.stopPropagation()}
           >
@@ -194,7 +194,9 @@ const DevicesTable = ({
     <MainTable
       columns={filterColumns()}
       data={data}
-      onRowClicked={(row: any) => navigate(`/admin/devices/${row.id}/system`)}
+      onRowClicked={(row: any) =>
+        navigate(`/admin/devices/${row.id}/${row.group === "Computers" ? "system" : "overview"}`)
+      }
       paginationServer
       paginationTotalRows={total}
       onChangePage={onPageChange}

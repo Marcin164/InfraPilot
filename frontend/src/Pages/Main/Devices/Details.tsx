@@ -33,9 +33,10 @@ const Details = () => {
   }, [deviceQuery?.data?.id, setParsers]);
 
   useEffect(() => {
-    if (location.pathname === `/admin/devices/${deviceQuery?.data?.id}`)
-      navigate("system");
-  }, [location.pathname]);
+    if (location.pathname === `/admin/devices/${deviceQuery?.data?.id}`) {
+      navigate(deviceQuery?.data?.group === "Computers" ? "system" : "overview");
+    }
+  }, [location.pathname, deviceQuery?.data?.id, deviceQuery?.data?.group]);
 
   const pdfMutation = useMutation({
     mutationFn: () => {
@@ -57,7 +58,7 @@ const Details = () => {
       {/* ── Navbar + PDF button: side by side on sm+, stacked on mobile ── */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-2">
         <div className="flex-1 min-w-0">
-          <DeviceNavbar />
+          <DeviceNavbar group={deviceQuery.data?.group} />
         </div>
         <ButtonPrimary
           icon={faFilePdf}

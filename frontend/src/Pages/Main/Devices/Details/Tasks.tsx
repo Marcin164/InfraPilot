@@ -9,7 +9,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
-import Input from "../../../../Components/Inputs/Input";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import {
   AgentTask,
@@ -19,12 +18,24 @@ import {
   cancelDeviceTask,
 } from "../../../../Services/agentTasks";
 
-const TASK_TYPES: { value: AgentTaskType; label: string }[] = [
-  { value: "scan_now", label: "Scan now" },
-  { value: "collect_event_log", label: "Collect event log" },
-  { value: "inventory_refresh", label: "Inventory refresh" },
-  { value: "custom", label: "Custom" },
+// Keep in sync with what windowsApp/agent/main.py's process_tasks()
+// actually implements. There used to be a "custom" option here, but the
+// agent has no defined behaviour for it (always failed with "Unsupported
+// task type") and making it do something would mean letting an admin
+// have the agent execute arbitrary, unaudited input -- not a tradeoff
+// worth the convenience. None of the remaining types take parameters, so
+// there's no payload field either.
+const TASK_TYPE_VALUES: AgentTaskType[] = [
+  "scan_now",
+  "collect_event_log",
+  "inventory_refresh",
 ];
+
+const TASK_TYPE_LABEL_KEYS: Record<AgentTaskType, string> = {
+  scan_now: "device.tasks.typeScanNow",
+  collect_event_log: "device.tasks.typeCollectEventLog",
+  inventory_refresh: "device.tasks.typeInventoryRefresh",
+};
 
 const STATE_COLOR: Record<string, string> = {
   queued: "#2B9AE9",
@@ -42,7 +53,11 @@ const Tasks = () => {
   const queryClient = useQueryClient();
 
   const [type, setType] = useState<AgentTaskType>("scan_now");
-  const [payload, setPayload] = useState("");
+
+  const TASK_TYPES = TASK_TYPE_VALUES.map((value) => ({
+    value,
+    label: tr(TASK_TYPE_LABEL_KEYS[value]),
+  }));
 
   const tasksQuery = useQuery({
     queryKey: ["device-tasks", deviceId],
@@ -52,27 +67,13 @@ const Tasks = () => {
   });
 
   const enqueueMutation = useMutation({
-    mutationFn: () => {
-      let parsedPayload: Record<string, any> | undefined;
-      if (payload.trim()) {
-        try {
-          parsedPayload = JSON.parse(payload);
-        } catch {
-          throw new Error("Payload must be valid JSON");
-        }
-      }
-      return enqueueDeviceTask(deviceId, {
-        type,
-        payload: parsedPayload,
-      });
-    },
+    mutationFn: () => enqueueDeviceTask(deviceId, { type }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["device-tasks", deviceId] });
-      setPayload("");
       toast.success(tr("toast.success.taskQueued"));
     },
     onError: (err: any) =>
-      toast.error(err?.message ?? err?.response?.data?.message ?? "Enqueue failed"),
+      toast.error(err?.message ?? err?.response?.data?.message ?? tr("toast.error.enqueueFailed")),
   });
 
   const cancelMutation = useMutation({
@@ -82,7 +83,7 @@ const Tasks = () => {
       toast.success(tr("toast.success.taskCancelled"));
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Cancel failed"),
+      toast.error(err?.response?.data?.message ?? tr("toast.error.cancelFailed")),
   });
 
   const tasks = tasksQuery.data ?? [];
@@ -98,32 +99,23 @@ const Tasks = () => {
       <div className="bg-white shadow-xl rounded-[10px] p-4">
         <CardHeader text={tr("device.section.tasksEnqueue")} icon={faPlay} />
         <p className="text-[12px] text-[#7a7a7a] mt-2">
-          Queued tasks are picked up by the agent on its next HMAC-authenticated
-          poll. Lease window is 15 minutes; expired leases auto-requeue up to 3
-          times.
+          {tr("device.tasks.help")}
         </p>
 
-        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+        <div className="mt-3 max-w-[280px]">
           <SelectSecondary
-            label="Task type"
+            label={tr("device.tasks.typeLabel")}
             options={TASK_TYPES}
             value={TASK_TYPES.find((t) => t.value === type)}
             onSelect={(opt: any) =>
               opt?.value && setType(opt.value as AgentTaskType)
             }
           />
-          <Input
-            className="md:col-span-2"
-            label="Payload"
-            value={payload}
-            handleChange={setPayload}
-            placeholder='Optional JSON, e.g. {"source":"manual"}'
-          />
         </div>
         <div className="mt-3">
           <ButtonPrimary
             icon={faPlay}
-            text={enqueueMutation.isPending ? "Queuing…" : "Queue task"}
+            text={enqueueMutation.isPending ? tr("device.tasks.queuing") : tr("device.tasks.queueBtn")}
             onClick={() => enqueueMutation.mutate()}
             disabled={enqueueMutation.isPending || !deviceId}
           />
@@ -134,12 +126,12 @@ const Tasks = () => {
         <div className="flex items-center justify-between">
           <CardHeader text={tr("device.section.tasksActive")} icon={faRotate} />
           <span className="text-[12px] text-[#7a7a7a]">
-            auto-refresh 15s
+            {tr("device.tasks.autoRefresh")}
           </span>
         </div>
         {active.length === 0 ? (
           <div className="mt-3 text-[13px] text-[#7a7a7a]">
-            No active tasks.
+            {tr("device.tasks.none")}
           </div>
         ) : (
           <div className="mt-3 space-y-2">
@@ -174,47 +166,50 @@ const TaskRow = ({
 }: {
   task: AgentTask;
   onCancel: (() => void) | null;
-}) => (
-  <div className="flex items-start gap-3 rounded-[8px] border border-[#E0E0E0] px-3 py-2">
-    <span
-      className="inline-block w-[70px] text-center rounded-full px-2 py-0.5 text-[11px] font-bold text-white mt-0.5"
-      style={{ backgroundColor: STATE_COLOR[task.state] }}
-    >
-      {task.state}
-    </span>
-    <div className="flex-1 min-w-0">
-      <div className="font-bold text-[13px] text-[#3C3C3C]">{task.type}</div>
-      <div className="text-[11px] text-[#9a9a9a]">
-        queued {moment(task.createdAt).format("DD.MM.YYYY HH:mm:ss")}
-        {task.completedAt && (
-          <>
-            {" · "}finished {moment(task.completedAt).format("DD.MM.YYYY HH:mm:ss")}
-          </>
-        )}
-        {task.attempts > 0 && <> · attempts: {task.attempts}</>}
-      </div>
-      {task.lastError && (
-        <div className="text-[11px] text-[#F3606E] mt-1">
-          Last error: {task.lastError}
+}) => {
+  const { t: tr } = useTranslation();
+  return (
+    <div className="flex items-start gap-3 rounded-[8px] border border-[#E0E0E0] px-3 py-2">
+      <span
+        className="inline-block w-[70px] text-center rounded-full px-2 py-0.5 text-[11px] font-bold text-white mt-0.5"
+        style={{ backgroundColor: STATE_COLOR[task.state] }}
+      >
+        {task.state}
+      </span>
+      <div className="flex-1 min-w-0">
+        <div className="font-bold text-[13px] text-[#3C3C3C]">{task.type}</div>
+        <div className="text-[11px] text-[#9a9a9a]">
+          {tr("device.tasks.queued")} {moment(task.createdAt).format("DD.MM.YYYY HH:mm:ss")}
+          {task.completedAt && (
+            <>
+              {" · "}{tr("device.tasks.finished")} {moment(task.completedAt).format("DD.MM.YYYY HH:mm:ss")}
+            </>
+          )}
+          {task.attempts > 0 && <> · {tr("device.tasks.attempts")}: {task.attempts}</>}
         </div>
-      )}
-      {task.payload && Object.keys(task.payload).length > 0 && (
-        <pre className="mt-1 text-[11px] text-[#7a7a7a] bg-[#FAFAFA] rounded p-1 overflow-x-auto">
-          {JSON.stringify(task.payload, null, 2)}
-        </pre>
+        {task.lastError && (
+          <div className="text-[11px] text-[#F3606E] mt-1">
+            {tr("device.tasks.lastError")}: {task.lastError}
+          </div>
+        )}
+        {task.payload && Object.keys(task.payload).length > 0 && (
+          <pre className="mt-1 text-[11px] text-[#7a7a7a] bg-[#FAFAFA] rounded p-1 overflow-x-auto">
+            {JSON.stringify(task.payload, null, 2)}
+          </pre>
+        )}
+      </div>
+      {onCancel && ["queued", "leased"].includes(task.state) && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-[12px] text-[#F3606E] hover:underline flex items-center gap-1 cursor-pointer"
+        >
+          <FontAwesomeIcon icon={faXmark} />
+          {tr("device.tasks.cancel")}
+        </button>
       )}
     </div>
-    {onCancel && ["queued", "leased"].includes(task.state) && (
-      <button
-        type="button"
-        onClick={onCancel}
-        className="text-[12px] text-[#F3606E] hover:underline flex items-center gap-1 cursor-pointer"
-      >
-        <FontAwesomeIcon icon={faXmark} />
-        Cancel
-      </button>
-    )}
-  </div>
-);
+  );
+};
 
 export default Tasks;

@@ -6,9 +6,14 @@ import * as path from 'path';
 import { AdminSettings } from 'src/entities/adminSettings.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
 
-const KEY = 'agent_installer';
+export type AgentPlatform = 'windows' | 'macos';
+
 const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads', 'agent');
-const FILE_NAME = 'InfraPilotAgentSetup.exe';
+
+const PLATFORM_CONFIG: Record<AgentPlatform, { key: string; fileName: string; extension: string }> = {
+  windows: { key: 'agent_installer_windows', fileName: 'InfraPilotAgentSetup.exe', extension: '.exe' },
+  macos:   { key: 'agent_installer_macos',   fileName: 'InfraPilotAgentSetup.pkg', extension: '.pkg' },
+};
 
 export type AgentInstallerMeta = {
   originalName: string;
@@ -28,29 +33,36 @@ export class AgentInstallerService {
     }
   }
 
-  private get filePath(): string {
-    return path.join(UPLOAD_DIR, FILE_NAME);
+  private filePath(platform: AgentPlatform): string {
+    return path.join(UPLOAD_DIR, PLATFORM_CONFIG[platform].fileName);
   }
 
-  async getMeta(): Promise<AgentInstallerMeta | null> {
-    if (!fs.existsSync(this.filePath)) return null;
-    const record = await this.repo.findOne({ where: { key: KEY } });
+  async getMeta(platform: AgentPlatform): Promise<AgentInstallerMeta | null> {
+    if (!fs.existsSync(this.filePath(platform))) return null;
+    const record = await this.repo.findOne({ where: { key: PLATFORM_CONFIG[platform].key } });
     return (record?.value as AgentInstallerMeta) ?? null;
   }
 
-  async getFileStream(): Promise<{ stream: fs.ReadStream; meta: AgentInstallerMeta }> {
-    const meta = await this.getMeta();
+  async getFileStream(
+    platform: AgentPlatform,
+  ): Promise<{ stream: fs.ReadStream; meta: AgentInstallerMeta }> {
+    const meta = await this.getMeta(platform);
     if (!meta) throw new NotFoundException('Instalator agenta nie został jeszcze wgrany.');
-    return { stream: fs.createReadStream(this.filePath), meta };
+    return { stream: fs.createReadStream(this.filePath(platform)), meta };
   }
 
-  async upload(file: any, uploadedBy: string | null): Promise<AgentInstallerMeta> {
+  async upload(
+    file: any,
+    platform: AgentPlatform,
+    uploadedBy: string | null,
+  ): Promise<AgentInstallerMeta> {
     if (!file) throw new BadRequestException('Brak pliku');
-    if (!file.originalname?.toLowerCase().endsWith('.exe')) {
-      throw new BadRequestException('Instalator agenta musi być plikiem .exe');
+    const { extension, key } = PLATFORM_CONFIG[platform];
+    if (!file.originalname?.toLowerCase().endsWith(extension)) {
+      throw new BadRequestException(`Instalator agenta musi być plikiem ${extension}`);
     }
 
-    fs.writeFileSync(this.filePath, file.buffer);
+    fs.writeFileSync(this.filePath(platform), file.buffer);
 
     const meta: AgentInstallerMeta = {
       originalName: file.originalname,
@@ -59,12 +71,12 @@ export class AgentInstallerService {
       uploadedBy,
     };
 
-    const existing = await this.repo.findOne({ where: { key: KEY } });
+    const existing = await this.repo.findOne({ where: { key } });
     if (existing) {
       existing.value = meta;
       await this.repo.save(existing);
     } else {
-      await this.repo.insert({ id: uuidv4(), key: KEY, value: meta as any });
+      await this.repo.insert({ id: uuidv4(), key, value: meta as any });
     }
     return meta;
   }

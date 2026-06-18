@@ -234,14 +234,21 @@ export type AgentInstallerMeta = {
   uploadedBy: string | null;
 };
 
+export type AgentPlatform = "windows" | "macos";
+
+export type AgentPlatformSetupInfo = {
+  installerUrl: string | null;
+  installerMeta: AgentInstallerMeta | null;
+  snippet: string | null;
+};
+
 export type AgentSetupInfo =
   | {
       configured: true;
       backendUrl: string;
       enrollmentToken: string;
-      installerUrl: string | null;
-      installerMeta: AgentInstallerMeta | null;
-      powershellSnippet: string | null;
+      windows: AgentPlatformSetupInfo;
+      macos: AgentPlatformSetupInfo;
     }
   | { configured: false; message: string };
 
@@ -255,9 +262,13 @@ export const rotateAgentToken = async (): Promise<{ success: boolean; token: str
   return data;
 };
 
-export const uploadAgentInstaller = async (file: File): Promise<AgentInstallerMeta> => {
+export const uploadAgentInstaller = async (
+  file: File,
+  platform: AgentPlatform,
+): Promise<AgentInstallerMeta> => {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("platform", platform);
   const { data } = await api.post("/devices/agent/installer", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });

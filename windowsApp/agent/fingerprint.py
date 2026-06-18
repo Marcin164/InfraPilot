@@ -44,6 +44,40 @@ $c = Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Obje
 if ($c) { $c.ProcessorId }
 """
 
+# Laptop vs. desktop, for the Computers/subgroup dropdown (Laptop/PC/
+# Thinclient) -- best-effort from three signals, in order of how directly
+# they describe the physical form factor: chassis type code, then
+# Win32_ComputerSystem's own "mobile" classification, then "does it even
+# have a battery". Anything inconclusive falls back to 'PC' rather than
+# guessing wrong in the other direction (a misclassified desktop is more
+# annoying to fix in bulk than one that's merely unclassified).
+_DEVICE_TYPE_PS = r"""
+# No early-exit here -- `exit` inside a script block run via `& { ... }`
+# (which is how run_powershell wraps every query) kills the whole
+# powershell.exe process before the outer wrapper gets to serialize
+# anything to JSON. Build up the result in a variable instead.
+$result = 'PC'
+$laptopChassisTypes = 8,9,10,11,12,14,18,21,30,31,32
+try {
+  $chassis = (Get-CimInstance Win32_SystemEnclosure -ErrorAction Stop | Select-Object -First 1).ChassisTypes
+  if ($chassis) {
+    foreach ($c in $chassis) { if ($laptopChassisTypes -contains $c) { $result = 'Laptop' } }
+  }
+} catch {}
+if ($result -eq 'PC') {
+  try {
+    $pcSystemType = (Get-CimInstance Win32_ComputerSystem -ErrorAction Stop | Select-Object -First 1).PCSystemType
+    if ($pcSystemType -eq 2) { $result = 'Laptop' }
+  } catch {}
+}
+if ($result -eq 'PC') {
+  try {
+    if (Get-CimInstance Win32_Battery -ErrorAction Stop | Select-Object -First 1) { $result = 'Laptop' }
+  } catch {}
+}
+$result
+"""
+
 
 def _tpm_fingerprint() -> str | None:
     ek = safe(run_powershell, None, _TPM_EK_PS)
@@ -87,6 +121,9 @@ def collect_fingerprint(agent_version: str) -> dict[str, Any]:
         payload["manufacturer"] = board["manufacturer"]
     if board.get("product"):
         payload["model"] = board["product"]
+    device_type = safe(run_powershell, None, _DEVICE_TYPE_PS)
+    if isinstance(device_type, str) and device_type.strip():
+        payload["deviceType"] = device_type.strip()
 
     if not any(k in payload for k in ("tpmFingerprint", "cpuId", "serialNumber", "macAddresses")):
         payload["cpuId"] = "fallback-" + str(uuid.uuid5(uuid.NAMESPACE_DNS, socket.gethostname()))

@@ -6,6 +6,7 @@ import Devices from "./Pages/Main/Devices";
 import Settings from "./Pages/Main/Settings";
 import UserDetails from "./Pages/Main/Users/Details";
 import DeviceDetails from "./Pages/Main/Devices/Details";
+import Overview from "./Pages/Main/Devices/Details/Overview";
 import SystemInfo from "./Pages/Main/Devices/Details/SystemInfo";
 import Hardware from "./Pages/Main/Devices/Details/Hardware";
 import Software from "./Pages/Main/Devices/Details/Software";
@@ -98,6 +99,7 @@ function App() {
                 <Route path="fleet" element={<FleetHealth />} />
                 <Route path="devices" element={<Devices />} />
                 <Route path="devices/:id" element={<DeviceDetails />}>
+                  <Route path="overview" element={<Overview />} />
                   <Route index path="system" element={<SystemInfo />} />
                   <Route path="hardware" element={<Hardware />} />
                   <Route path="software" element={<Software />} />

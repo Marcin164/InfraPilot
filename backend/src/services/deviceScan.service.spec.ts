@@ -37,6 +37,7 @@ describe('DeviceScanService', () => {
 
     repo = {
       find: jest.fn().mockResolvedValue([]),
+      findOne: jest.fn().mockResolvedValue(null),
       findOneBy: jest.fn().mockResolvedValue(null),
       save: jest.fn(async (s: any) => s),
       createQueryBuilder: jest.fn().mockReturnValue(qb),
@@ -73,6 +74,28 @@ describe('DeviceScanService', () => {
       const r1 = await service.record('dev-1', { system: { os: 'Win10' } });
       const r2 = await service.record('dev-1', { system: { os: 'Win11' } });
       expect(r1.snapshotSha256).not.toBe(r2.snapshotSha256);
+    });
+
+    it('skips inserting a new row when the snapshot is unchanged from the last one', async () => {
+      repo.findOne.mockResolvedValue(null);
+      repo.save.mockImplementation(async (s: any) => s);
+      const first = await service.record('dev-1', { system: { os: 'Win11' } });
+
+      repo.save.mockClear();
+      repo.findOne.mockResolvedValue(first);
+      const second = await service.record('dev-1', { system: { os: 'Win11' } });
+
+      expect(repo.save).not.toHaveBeenCalled();
+      expect(second).toBe(first);
+    });
+
+    it('still inserts when the snapshot differs from the last one', async () => {
+      const previous = makeScan({ snapshotSha256: 'stale-hash' });
+      repo.findOne.mockResolvedValue(previous);
+      repo.save.mockImplementation(async (s: any) => s);
+      const result = await service.record('dev-1', { system: { os: 'Win11' } });
+      expect(repo.save).toHaveBeenCalled();
+      expect(result).not.toBe(previous);
     });
   });
 

@@ -3,8 +3,7 @@ import api from "../lib/api";
 export type AgentTaskType =
   | "scan_now"
   | "collect_event_log"
-  | "inventory_refresh"
-  | "custom";
+  | "inventory_refresh";
 
 export type AgentTaskState =
   | "queued"
