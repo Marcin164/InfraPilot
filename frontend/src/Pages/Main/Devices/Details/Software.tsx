@@ -7,8 +7,8 @@ import AppxTable from "../../../../Components/Tables/AppxTable";
 import FeaturesTable from "../../../../Components/Tables/FeaturesTable";
 import NoData from "../components/NoData";
 
-const TABS = [1, 2, 3] as const;
-type TabId = (typeof TABS)[number];
+const ALL_TABS = [1, 2, 3] as const;
+type TabId = (typeof ALL_TABS)[number];
 
 const Software = () => {
   const { t } = useTranslation();
@@ -18,6 +18,11 @@ const Software = () => {
   if (!device?.data?.software) return <NoData />;
 
   const softwareInfo = device.data.software;
+  // AppX packages / Windows Optional Features have no macOS equivalent --
+  // the mac agent always sends `[]` for both, so there's nothing to tab to.
+  const isWindows = device?.data?.platform !== "darwin";
+  const tabs: TabId[] = isWindows ? ALL_TABS : [1];
+  const tab = tabs.includes(activeTab) ? activeTab : 1;
 
   const counts: Record<TabId, number> = {
     1: (softwareInfo.installed_programs ?? []).length,
@@ -32,7 +37,7 @@ const Software = () => {
   };
 
   const renderPanel = () => {
-    switch (activeTab) {
+    switch (tab) {
       case 1:
         return <SoftwareTable data={softwareInfo.installed_programs} />;
       case 2:
@@ -44,24 +49,26 @@ const Software = () => {
 
   return (
     <div className="w-full">
-      <div className="w-full bg-white shadow-xl rounded-[10px] p-4 mb-4">
-        <div className="flex flex-wrap gap-2">
-          {TABS.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={twMerge(
-                "px-4 py-2 rounded-[8px] text-[13px] font-semibold transition-colors",
-                activeTab === tab
-                  ? "bg-[#2B9AE9] text-white"
-                  : "bg-[#F5F7FA] text-[#3C3C3C] hover:bg-[#E8EEF4]",
-              )}
-            >
-              {tabLabels[tab]} ({counts[tab]})
-            </button>
-          ))}
+      {tabs.length > 1 && (
+        <div className="w-full bg-white shadow-xl rounded-[10px] p-4 mb-4">
+          <div className="flex flex-wrap gap-2">
+            {tabs.map((tabId) => (
+              <button
+                key={tabId}
+                onClick={() => setActiveTab(tabId)}
+                className={twMerge(
+                  "px-4 py-2 rounded-[8px] text-[13px] font-semibold transition-colors",
+                  tab === tabId
+                    ? "bg-[#2B9AE9] text-white"
+                    : "bg-[#F5F7FA] text-[#3C3C3C] hover:bg-[#E8EEF4]",
+                )}
+              >
+                {tabLabels[tabId]} ({counts[tabId]})
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
       {renderPanel()}
     </div>
   );

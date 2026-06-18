@@ -181,6 +181,7 @@ export class DevicesService {
     manufacturer?: string;
     model?: string;
     deviceType?: string;
+    platform?: string;
   }): Promise<{
     deviceId: string;
     secret: string;
@@ -252,6 +253,9 @@ export class DevicesService {
       this.logger.log(
         `Agent enrollment matched device ${deviceId} (score ${best.score}: ${best.reasons.join(', ')})`,
       );
+      if (fp.platform && !best.device.platform) {
+        await this.devicesRepository.update({ id: deviceId }, { platform: fp.platform });
+      }
     } else {
       const subgroup = VALID_COMPUTER_SUBGROUPS.has(fp.deviceType ?? '')
         ? fp.deviceType
@@ -272,6 +276,7 @@ export class DevicesService {
             ? fp.macAddresses
             : null,
         cpuId: fp.cpuId ?? null,
+        platform: fp.platform ?? null,
       } as Partial<Devices>);
       await this.devicesRepository.save(created);
       deviceId = created.id;
@@ -338,6 +343,15 @@ export class DevicesService {
 
     const model = scan?.hardware?.baseboard?.product;
     if (model && !device.model) patch.model = model;
+
+    // Fallback for devices enrolled before the `platform` field existed (or
+    // where it was somehow missing from the enroll payload) -- `os_name` is
+    // Python's raw `platform.system()` ("Darwin"/"Windows"), normalised to
+    // the same lowercase tokens the agent's enroll payload already uses.
+    const osName = scan?.system?.os_name;
+    if (!device.platform && (osName === 'Darwin' || osName === 'Windows')) {
+      patch.platform = osName === 'Darwin' ? 'darwin' : 'windows';
+    }
 
     patch.lastScanAt = new Date();
 

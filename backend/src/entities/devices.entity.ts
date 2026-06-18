@@ -120,6 +120,14 @@ export class Devices {
   @Column({ type: 'varchar', length: 64, nullable: true })
   cpuId: string | null;
 
+  /**
+   * OS platform reported by the agent at enrollment (``"windows"`` /
+   * ``"darwin"``) -- the only durable signal the frontend has for
+   * platform-conditional rendering (subgroup is form factor, not OS).
+   */
+  @Column({ type: 'varchar', length: 16, nullable: true })
+  platform: string | null;
+
   /** When set, this device row is a duplicate that was merged into another. */
   @Column({ type: 'uuid', nullable: true })
   mergedIntoId: string | null;

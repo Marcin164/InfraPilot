@@ -61,6 +61,9 @@ const Security = () => {
   const device: any = useOutletContext();
   const hasSecurityData = !!device?.data?.security;
   const hasIntuneData = !!device?.data?.intuneDeviceId || !!device?.data?.intuneComplianceState;
+  // TPM/UAC have no macOS equivalent -- the mac agent always sends `{}` for
+  // both, so showing the cards would just be two permanently-empty boxes.
+  const isWindows = device?.data?.platform !== "darwin";
 
   if (!hasSecurityData && !hasIntuneData) return <NoData />;
 
@@ -75,8 +78,8 @@ const Security = () => {
           {hasSecurityData && <Bitlocker bitlocker={securityInfo.bitlocker} />}
           {hasSecurityData && <Firewall firewall={securityInfo.firewall_profile} />}
           {hasSecurityData && <RDP rdp={securityInfo.rdp_status} />}
-          {hasSecurityData && <TPM {...securityInfo.tpm} />}
-          {hasSecurityData && <UAC uac={securityInfo.uac_status ?? {}} />}
+          {hasSecurityData && isWindows && <TPM {...securityInfo.tpm} />}
+          {hasSecurityData && isWindows && <UAC uac={securityInfo.uac_status ?? {}} />}
           {hasSecurityData && (
             <StartupApps startupApps={securityInfo.startup_apps ?? []} />
           )}
