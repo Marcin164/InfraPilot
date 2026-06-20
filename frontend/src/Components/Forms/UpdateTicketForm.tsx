@@ -109,7 +109,7 @@ const UpdateTicketForm = ({
   const assigneeOptions = useMemo(
     () =>
       (membersQuery.data ?? []).map((m) => ({
-        value: `${m.name} ${m.surname}`,
+        value: m.id,
         label: `${m.name} ${m.surname}${m.email ? ` (${m.email})` : ""}`,
       })),
     [membersQuery.data],

@@ -358,7 +358,7 @@ export class TicketsService {
     const qb = this.ticketsRepository
       .createQueryBuilder('ticket')
       .leftJoinAndSelect('ticket.requester', 'requester')
-      .leftJoinAndMapOne('ticket.assigneeUser', Users, 'assigneeUser', 'assigneeUser.authUserId = ticket.assignee')
+      .leftJoinAndMapOne('ticket.assigneeUser', Users, 'assigneeUser', 'assigneeUser.id = ticket.assignee')
       .where('ticket.requesterId IS NOT NULL');
 
     if (

@@ -11,6 +11,7 @@ import { TicketsComments } from 'src/entities/ticketsComments.entity';
 import { TicketsApprovals } from 'src/entities/ticketsApprovals.entity';
 import { TicketActivity } from 'src/entities/ticketActivity.entity';
 import { AdminSettings } from 'src/entities/adminSettings.entity';
+import { TicketCategory } from 'src/entities/ticketCategory.entity';
 import { SlaInstance } from 'src/entities/slaInstance.entity';
 import { TicketsGateway } from 'src/gateways/tickets.gateway';
 import { SlaEngineService } from './slaEngine.service';
@@ -77,6 +78,7 @@ describe('TicketsService', () => {
   let approvalsRepo: jest.Mocked<any>;
   let activityRepo: jest.Mocked<any>;
   let adminSettingsRepo: jest.Mocked<any>;
+  let ticketCategoryRepo: jest.Mocked<any>;
   let slaInstanceRepo: jest.Mocked<any>;
   let gateway: jest.Mocked<any>;
   let slaEngine: jest.Mocked<any>;
@@ -117,6 +119,13 @@ describe('TicketsService', () => {
     };
 
     adminSettingsRepo = {
+      findOne: jest.fn(),
+      create: jest.fn((dto) => dto),
+      save: jest.fn(),
+    };
+
+    ticketCategoryRepo = {
+      find: jest.fn().mockResolvedValue([]),
       findOne: jest.fn(),
       create: jest.fn((dto) => dto),
       save: jest.fn(),
@@ -166,6 +175,7 @@ describe('TicketsService', () => {
         { provide: getRepositoryToken(TicketsApprovals), useValue: approvalsRepo },
         { provide: getRepositoryToken(TicketActivity), useValue: activityRepo },
         { provide: getRepositoryToken(AdminSettings), useValue: adminSettingsRepo },
+        { provide: getRepositoryToken(TicketCategory), useValue: ticketCategoryRepo },
         { provide: getRepositoryToken(SlaInstance), useValue: slaInstanceRepo },
         { provide: TicketsGateway, useValue: gateway },
         { provide: SlaEngineService, useValue: slaEngine },
