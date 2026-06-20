@@ -45,6 +45,8 @@ const EditCalendarForm = ({ data }: Props) => {
       name: "",
       timezone: "",
       workingDays: [] as number[],
+      workStart: "09:00",
+      workEnd: "17:00",
     },
     onSubmit: ({ value }: any) => {
       value.holidays = value.holidays.map((holiday: any) => {
@@ -130,6 +132,30 @@ const EditCalendarForm = ({ data }: Props) => {
           </div>
         )}
       </form.Field>
+      <div className="grid grid-cols-2 gap-3">
+        <form.Field
+          name="workStart"
+          children={(field) => (
+            <Input
+              type="time"
+              value={field?.state?.value ?? ""}
+              handleChange={field.handleChange}
+              label={t("form.field.workStart", "Work start")}
+            />
+          )}
+        />
+        <form.Field
+          name="workEnd"
+          children={(field) => (
+            <Input
+              type="time"
+              value={field?.state?.value ?? ""}
+              handleChange={field.handleChange}
+              label={t("form.field.workEnd", "Work end")}
+            />
+          )}
+        />
+      </div>
       <ButtonPrimary type="submit" text={t("common.save")} />
     </form>
   );

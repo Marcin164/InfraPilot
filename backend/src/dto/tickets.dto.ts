@@ -102,13 +102,36 @@ export class UpdateTicketDto {
 }
 
 export class CreateTicketDto {
+  @IsEnum(TicketType)
   type: TicketType;
+
+  @IsString()
   description: string;
+
+  @IsString()
   requesterId: string;
-  assignmentGroup: string;
+
+  @IsOptional()
+  @IsString()
+  assignmentGroup?: string;
+
+  @IsOptional()
+  @IsEnum(TicketPriority)
   priority?: TicketPriority;
+
+  @IsOptional()
+  @IsEnum(TicketImpact)
   impact?: TicketImpact;
+
+  @IsOptional()
+  @IsEnum(TicketUrgency)
   urgency?: TicketUrgency;
+
+  @IsOptional()
+  @IsString()
   category?: string;
+
+  @IsOptional()
+  @IsString()
   deviceId?: string;
 }

@@ -39,6 +39,7 @@ import { AuditModule } from './modules/audit.module';
 import { SlaEscalationInstance } from './entities/slaEscalationInstance.entity';
 import { SlaEscalationDefinition } from './entities/slaEscalationDefinition.entity';
 import { ScheduleModule } from '@nestjs/schedule';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { RequestLoggingInterceptor } from './interceptors/requestLogging.interceptor';
@@ -186,6 +187,9 @@ import { BootstrapService } from './services/bootstrap.service';
       TicketActivity,
     ]),
     ScheduleModule.forRoot(),
+    // Global in-process event bus — emit domain events here, listen with
+    // @OnEvent(...) elsewhere to wire up cross-entity automation.
+    EventEmitterModule.forRoot(),
     // Global rate limit — defaults are conservative; specific endpoints
     // can opt out with @SkipThrottle() or tighten with @Throttle({...}).
     ThrottlerModule.forRoot([

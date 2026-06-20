@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { createHash } from 'crypto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DeviceScanService } from './deviceScan.service';
 import { DeviceScan } from 'src/entities/deviceScan.entity';
 
@@ -47,6 +48,7 @@ describe('DeviceScanService', () => {
       providers: [
         DeviceScanService,
         { provide: getRepositoryToken(DeviceScan), useValue: repo },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
       ],
     }).compile();
 

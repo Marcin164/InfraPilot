@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import Filter from "../../../Components/Filter";
 import Search from "../../../Components/Inputs/Search";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthInfo } from "@propelauth/react";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import TableSettings from "../../../Components/TableSettings";
+import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
 import { getTickets, getTicketsFilters } from "../../../Services/tickets";
 import { buildQuery } from "../../../Helpers/queries";
 import { useDebounce } from "../../../Hooks/useDebounce";
@@ -13,6 +15,7 @@ import { getUserSettings } from "../../../Services/settings";
 import { useFilterPresets } from "../../../Hooks/useFilterPresets";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
 import FilterPresetsBar from "../../../Components/Filter/FilterPresetsBar";
+import CreateTicketModal from "./components/CreateTicketModal";
 
 type TicketFilters = {
   type?: string[];
@@ -28,6 +31,7 @@ const Index = () => {
   const { t } = useTranslation();
   const authInfo: any = useAuthInfo();
   const myId = authInfo?.user?.metadata?.id ?? authInfo?.user?.userId ?? null;
+  const queryClient = useQueryClient();
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(30);
@@ -35,6 +39,7 @@ const Index = () => {
   const [filters, setFilters] = useState<TicketFilters>({});
   const [onlyMine, setOnlyMine] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
   const debouncedSearch = useDebounce(searchValue, 500);
 
   const presets = useFilterPresets("tickets", filters, (next) => {
@@ -152,6 +157,12 @@ const Index = () => {
             >
               {t("helpdesk.myTickets")}
             </button>
+            <ButtonPrimary
+              icon={faPlus}
+              text={t("helpdesk.newTicket.button")}
+              onClick={() => setCreateOpen(true)}
+              className="h-[36px]"
+            />
           </div>
         </div>
         <FilterPresetsBar
@@ -171,6 +182,12 @@ const Index = () => {
           isLoading={helpdeskQuery.isFetching}
         />
       </div>
+      {createOpen && (
+        <CreateTicketModal
+          onClose={() => setCreateOpen(false)}
+          onCreated={() => queryClient.invalidateQueries({ queryKey: ["helpdesk"] })}
+        />
+      )}
     </PageMotion>
   );
 };

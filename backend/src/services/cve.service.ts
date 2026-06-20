@@ -1,11 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Applications } from 'src/entities/applications.entity';
 import { DevicesApplications } from 'src/entities/devicesApplications.entity';
 import { CveMatch, CveSeverity } from 'src/entities/cveMatch.entity';
 import { AuditService } from 'src/services/audit.service';
 import { uuidv4 } from 'src/helpers/uuidv4';
+import { EVENTS } from 'src/events/events.constants';
+import { CveCriticalDetectedEvent } from 'src/events/cve-critical-detected.event';
 
 const OSV_BATCH_URL = 'https://api.osv.dev/v1/querybatch';
 const OSV_DETAIL_URL = 'https://api.osv.dev/v1/vulns';
@@ -59,6 +62,7 @@ export class CveService {
     @InjectRepository(CveMatch)
     private readonly cveRepo: Repository<CveMatch>,
     private readonly audit: AuditService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -152,6 +156,13 @@ export class CveService {
         row.source = 'osv';
         await this.cveRepo.save(row);
         newMatches += 1;
+
+        if (row.severity === 'CRITICAL') {
+          this.eventEmitter.emit(
+            EVENTS.CVE_CRITICAL_DETECTED,
+            new CveCriticalDetectedEvent(row.id, row.applicationId, row.version, row.cveId),
+          );
+        }
       }
     }
 

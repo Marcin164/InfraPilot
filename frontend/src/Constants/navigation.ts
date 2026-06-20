@@ -78,13 +78,13 @@ export const navbarItems: NavbarItem[] = [
     to: "/admin/licenses",
     label: "nav.licenses",
     icon: faKey,
-    requires: "admin" as NavbarRequirement,
+    requires: "helpdeskOrAdmin" as NavbarRequirement,
   },
   {
     to: "/admin/procurement",
     label: "nav.procurement",
     icon: faShoppingCart,
-    requires: "admin" as NavbarRequirement,
+    requires: "helpdeskOrAdmin" as NavbarRequirement,
   },
   {
     to: "/admin/helpdesk",

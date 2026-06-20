@@ -4,9 +4,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { PurchaseOrder, PurchaseOrderStatus } from 'src/entities/purchaseOrder.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
+import { EVENTS } from 'src/events/events.constants';
+import { PurchaseOrderReceivedEvent } from 'src/events/purchase-order-received.event';
 
 export class CreatePurchaseOrderDto {
   @IsString() @IsNotEmpty()
@@ -46,7 +49,20 @@ export class PurchaseOrderService {
   constructor(
     @InjectRepository(PurchaseOrder)
     private readonly repo: Repository<PurchaseOrder>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
+
+  private emitIfJustReceived(previousStatus: PurchaseOrderStatus, order: PurchaseOrder): void {
+    if (
+      previousStatus !== PurchaseOrderStatus.RECEIVED &&
+      order.status === PurchaseOrderStatus.RECEIVED
+    ) {
+      this.eventEmitter.emit(
+        EVENTS.PURCHASE_ORDER_RECEIVED,
+        new PurchaseOrderReceivedEvent(order.id, order.title, order.receivedAt ?? new Date()),
+      );
+    }
+  }
 
   async findAll(query: any = {}): Promise<{ data: PurchaseOrder[]; total: number }> {
     const page = Math.max(parseInt(query.page, 10) || 1, 1);
@@ -87,6 +103,7 @@ export class PurchaseOrderService {
 
   async update(id: string, dto: Partial<CreatePurchaseOrderDto>): Promise<PurchaseOrder> {
     const order = await this.findOne(id);
+    const previousStatus = order.status;
     Object.assign(order, {
       ...dto,
       orderDate: dto.orderDate !== undefined
@@ -99,7 +116,9 @@ export class PurchaseOrderService {
         ? (dto.receivedAt ? new Date(dto.receivedAt) : null)
         : order.receivedAt,
     });
-    return this.repo.save(order);
+    const saved = await this.repo.save(order);
+    this.emitIfJustReceived(previousStatus, saved);
+    return saved;
   }
 
   async remove(id: string): Promise<void> {
@@ -109,10 +128,13 @@ export class PurchaseOrderService {
 
   async updateStatus(id: string, status: PurchaseOrderStatus): Promise<PurchaseOrder> {
     const order = await this.findOne(id);
+    const previousStatus = order.status;
     order.status = status;
     if (status === PurchaseOrderStatus.RECEIVED && !order.receivedAt) {
       order.receivedAt = new Date();
     }
-    return this.repo.save(order);
+    const saved = await this.repo.save(order);
+    this.emitIfJustReceived(previousStatus, saved);
+    return saved;
   }
 }

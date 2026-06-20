@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthInfo } from "@propelauth/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faShoppingCart, faPlus, faTrash, faCheck, faXmark, faChevronDown,
@@ -26,6 +27,7 @@ import {
   CreatePurchaseOrderDto,
   PurchaseOrder,
 } from "../../../Services/purchaseOrders";
+import { getUser } from "../../../Services/users";
 
 const STATUS_CONFIG: Record<PurchaseOrderStatus, { color: string; bg: string }> = {
   draft:      { color: "#9a9a9a", bg: "#F5F5F5" },
@@ -195,11 +197,21 @@ type StatusMenuState = { id: string; x: number; y: number } | null;
 const Procurement = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const authInfo: any = useAuthInfo();
+  const currentUserId = authInfo?.user?.metadata?.id;
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<PurchaseOrder | null>(null);
   const [search, setSearch] = useState("");
   const [statusMenu, setStatusMenu] = useState<StatusMenuState>(null);
+
+  const currentUserQuery = useQuery({
+    queryKey: ["current-user", currentUserId],
+    queryFn: () => getUser(currentUserId),
+    enabled: Boolean(currentUserId),
+  });
+
+  const isAdmin = Boolean(currentUserQuery.data?.isAdmin);
 
   useEffect(() => {
     if (!statusMenu) return;
@@ -292,21 +304,22 @@ const Procurement = () => {
   const actionsColumn = {
     id: "actions",
     name: "",
-    cell: (row: PurchaseOrder) => (
-      <button
-        className="p-1.5 rounded-[6px] text-[#9a9a9a] hover:text-[#2B9AE9] hover:bg-[#EBF5FB] transition-colors"
-        title={t("procurement.changeStatus")}
-        onClick={(e) => {
-          e.stopPropagation();
-          const rect = e.currentTarget.getBoundingClientRect();
-          setStatusMenu((prev) =>
-            prev?.id === row.id ? null : { id: row.id, x: rect.left, y: rect.bottom + 4 }
-          );
-        }}
-      >
-        <FontAwesomeIcon icon={faChevronDown} className="text-[11px]" />
-      </button>
-    ),
+    cell: (row: PurchaseOrder) =>
+      isAdmin ? (
+        <button
+          className="p-1.5 rounded-[6px] text-[#9a9a9a] hover:text-[#2B9AE9] hover:bg-[#EBF5FB] transition-colors"
+          title={t("procurement.changeStatus")}
+          onClick={(e) => {
+            e.stopPropagation();
+            const rect = e.currentTarget.getBoundingClientRect();
+            setStatusMenu((prev) =>
+              prev?.id === row.id ? null : { id: row.id, x: rect.left, y: rect.bottom + 4 }
+            );
+          }}
+        >
+          <FontAwesomeIcon icon={faChevronDown} className="text-[11px]" />
+        </button>
+      ) : null,
     width: "52px",
     right: true,
   };
@@ -403,13 +416,15 @@ const Procurement = () => {
               checkboxes={checkboxes}
               settingsKey="procurementTableColumnOrder"
             />
-            <ButtonPrimary
-              color="white"
-              icon={faPlus}
-              text={t("procurement.add")}
-              onClick={() => setIsFormOpen(true)}
-              className="h-[34px]"
-            />
+            {isAdmin && (
+              <ButtonPrimary
+                color="white"
+                icon={faPlus}
+                text={t("procurement.add")}
+                onClick={() => setIsFormOpen(true)}
+                className="h-[34px]"
+              />
+            )}
           </div>
         </div>
 
@@ -417,7 +432,7 @@ const Procurement = () => {
           columns={filterColumns()}
           data={orders}
           progressPending={ordersQuery.isFetching}
-          onRowClicked={(row: PurchaseOrder) => setEditingOrder(row)}
+          onRowClicked={isAdmin ? (row: PurchaseOrder) => setEditingOrder(row) : undefined}
         />
       </div>
 

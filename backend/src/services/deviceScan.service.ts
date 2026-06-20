@@ -2,8 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createHash } from 'crypto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DeviceScan } from 'src/entities/deviceScan.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
+import { EVENTS } from 'src/events/events.constants';
+import { DeviceScanCompletedEvent } from 'src/events/device-scan-completed.event';
 
 type ScanPayload = {
   system?: any;
@@ -143,6 +146,7 @@ export class DeviceScanService {
   constructor(
     @InjectRepository(DeviceScan)
     private readonly repo: Repository<DeviceScan>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async record(deviceId: string, payload: ScanPayload): Promise<DeviceScan> {
@@ -186,7 +190,14 @@ export class DeviceScanService {
     scan.peripherals = sections.peripherals;
     scan.users = sections.users;
     scan.eventLogs = sections.eventLogs;
-    return this.repo.save(scan);
+    const saved = await this.repo.save(scan);
+
+    this.eventEmitter.emit(
+      EVENTS.DEVICE_SCAN_COMPLETED,
+      new DeviceScanCompletedEvent(deviceId, saved.id),
+    );
+
+    return saved;
   }
 
   async listForDevice(deviceId: string, limit = 50) {

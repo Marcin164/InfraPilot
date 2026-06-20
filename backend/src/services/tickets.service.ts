@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Tickets } from 'src/entities/tickets.entity';
+import { EVENTS } from 'src/events/events.constants';
+import { TicketStateChangedEvent } from 'src/events/ticket-state-changed.event';
 import { Users } from 'src/entities/users.entity';
 import {
   CreateTicketDto,
@@ -90,6 +93,7 @@ export class TicketsService {
     private readonly notifications: NotificationService,
     private readonly dispatcher: NotificationDispatcherService,
     private readonly workflows: TicketWorkflowService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     if (!fs.existsSync(ATTACHMENT_DIR)) {
       fs.mkdirSync(ATTACHMENT_DIR, { recursive: true });
@@ -305,6 +309,21 @@ export class TicketsService {
         this.logger.warn(
           `Workflow post-update failed for ticket ${updated.id}: ${(err as Error).message}`,
         );
+      }
+
+      // Publish to the app-wide event bus for cross-entity automation
+      // (e.g. device lifecycle sync on close). Best-effort, never blocks.
+      if (dto.state && dto.state !== previousState) {
+        try {
+          this.eventEmitter.emit(
+            EVENTS.TICKET_STATE_CHANGED,
+            new TicketStateChangedEvent(updated, previousState, dto.state, userId),
+          );
+        } catch (err) {
+          this.logger.warn(
+            `Event emit failed for ticket ${updated.id}: ${(err as Error).message}`,
+          );
+        }
       }
 
       return updated;

@@ -14,10 +14,10 @@ export class Calendar {
   timezone: string; // np. Europe/Warsaw
 
   @Column({ type: 'time', nullable: true })
-  workStart: string;
+  workStart: string | null;
 
   @Column({ type: 'time', nullable: true })
-  workEnd: string;
+  workEnd: string | null;
 
   @Column({ type: 'int', array: true })
   workingDays: number[];

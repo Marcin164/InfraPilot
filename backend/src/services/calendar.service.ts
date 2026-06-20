@@ -21,11 +21,19 @@ export class CalendarService {
     });
   }
 
-  async create(dto: { name: string; workingDays: any; timezone: string }) {
+  async create(dto: {
+    name: string;
+    workingDays: any;
+    timezone: string;
+    workStart?: string | null;
+    workEnd?: string | null;
+  }) {
     const calendar = this.calendarRepo.create({
       name: dto.name,
       workingDays: dto.workingDays,
       timezone: dto.timezone,
+      workStart: dto.workStart ?? null,
+      workEnd: dto.workEnd ?? null,
     });
 
     return this.calendarRepo.save(calendar);
@@ -37,6 +45,8 @@ export class CalendarService {
       name: string;
       workingDays: number[];
       timezone: string;
+      workStart?: string | null;
+      workEnd?: string | null;
     },
   ) {
     const calendar = await this.calendarRepo.preload({
@@ -44,6 +54,8 @@ export class CalendarService {
       name: dto.name,
       workingDays: dto.workingDays,
       timezone: dto.timezone,
+      workStart: dto.workStart ?? null,
+      workEnd: dto.workEnd ?? null,
     });
 
     if (!calendar) {

@@ -19,6 +19,7 @@ import { TicketAutoTagService } from './ticketAutoTag.service';
 import { NotificationService } from './notification.service';
 import { NotificationDispatcherService } from './notificationDispatcher.service';
 import { TicketWorkflowService } from './ticketWorkflow.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 jest.mock('fs', () => ({
   existsSync: jest.fn(() => true),
@@ -173,6 +174,7 @@ describe('TicketsService', () => {
         { provide: NotificationService, useValue: notifications },
         { provide: NotificationDispatcherService, useValue: dispatcher },
         { provide: TicketWorkflowService, useValue: workflows },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
       ],
     }).compile();
 

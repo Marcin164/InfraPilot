@@ -28,6 +28,7 @@ import { Users } from 'src/entities/users.entity';
 import { AdminSettings } from 'src/entities/adminSettings.entity';
 import { AgentTokenService } from 'src/services/agent-token.service';
 import { AgentInstallerService } from 'src/services/agent-installer.service';
+import { TicketDeviceLifecycleListener } from 'src/listeners/ticketDeviceLifecycle.listener';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { AgentInstallerService } from 'src/services/agent-installer.service';
     EnrollmentGuard,
     AgentTokenService,
     AgentInstallerService,
+    TicketDeviceLifecycleListener,
   ],
   exports: [
     SoftwareInventoryService,

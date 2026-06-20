@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthInfo } from "@propelauth/react";
 import { toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -32,7 +33,7 @@ import {
   type CreateLicensePayload,
   type SoftwareLicenseAssignment,
 } from "../../../Services/licenses";
-import { getUsers } from "../../../Services/users";
+import { getUser, getUsers } from "../../../Services/users";
 import { getDevicesOptions } from "../../../Services/devices";
 import ConfirmationModal from "../../../Components/Modals/ConfirmationModal";
 
@@ -225,9 +226,11 @@ const LicenseModal = ({
 const AssignmentsPanel = ({
   license,
   onClose,
+  isAdmin,
 }: {
   license: SoftwareLicense;
   onClose: () => void;
+  isAdmin: boolean;
 }) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -307,52 +310,54 @@ const AssignmentsPanel = ({
         </div>
 
         {/* Add assignment form */}
-        <div className="px-6 pt-4 pb-3 border-b border-[#F0F0F0]">
-          <div className="text-[13px] font-semibold text-[#3C3C3C] mb-2">
-            {t("licenses.assignments.add")}
-          </div>
-          <div className="flex gap-2 mb-3">
-            <button
-              onClick={() => { setTargetType("device"); setSelected(null); }}
-              className={`px-3 py-1 rounded-full text-[12px] font-semibold border transition-colors ${
-                targetType === "device"
-                  ? "bg-[#2B9AE9] text-white border-[#2B9AE9]"
-                  : "bg-white text-[#9a9a9a] border-[#E0E0E0] hover:border-[#2B9AE9]"
-              }`}
-            >
-              {t("licenses.assignments.device")}
-            </button>
-            <button
-              onClick={() => { setTargetType("user"); setSelected(null); }}
-              className={`px-3 py-1 rounded-full text-[12px] font-semibold border transition-colors ${
-                targetType === "user"
-                  ? "bg-[#2B9AE9] text-white border-[#2B9AE9]"
-                  : "bg-white text-[#9a9a9a] border-[#E0E0E0] hover:border-[#2B9AE9]"
-              }`}
-            >
-              {t("licenses.assignments.user")}
-            </button>
-          </div>
-          <div className="flex gap-2 items-end">
-            <div className="flex-1">
-              <SelectSecondary
-                options={targetType === "device" ? deviceOptions : userOptions}
-                value={selected}
-                onSelect={(opt: any) => setSelected(opt)}
-                placeholder={targetType === "device"
-                  ? t("licenses.assignments.selectDevice")
-                  : t("licenses.assignments.selectUser")}
+        {isAdmin && (
+          <div className="px-6 pt-4 pb-3 border-b border-[#F0F0F0]">
+            <div className="text-[13px] font-semibold text-[#3C3C3C] mb-2">
+              {t("licenses.assignments.add")}
+            </div>
+            <div className="flex gap-2 mb-3">
+              <button
+                onClick={() => { setTargetType("device"); setSelected(null); }}
+                className={`px-3 py-1 rounded-full text-[12px] font-semibold border transition-colors ${
+                  targetType === "device"
+                    ? "bg-[#2B9AE9] text-white border-[#2B9AE9]"
+                    : "bg-white text-[#9a9a9a] border-[#E0E0E0] hover:border-[#2B9AE9]"
+                }`}
+              >
+                {t("licenses.assignments.device")}
+              </button>
+              <button
+                onClick={() => { setTargetType("user"); setSelected(null); }}
+                className={`px-3 py-1 rounded-full text-[12px] font-semibold border transition-colors ${
+                  targetType === "user"
+                    ? "bg-[#2B9AE9] text-white border-[#2B9AE9]"
+                    : "bg-white text-[#9a9a9a] border-[#E0E0E0] hover:border-[#2B9AE9]"
+                }`}
+              >
+                {t("licenses.assignments.user")}
+              </button>
+            </div>
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <SelectSecondary
+                  options={targetType === "device" ? deviceOptions : userOptions}
+                  value={selected}
+                  onSelect={(opt: any) => setSelected(opt)}
+                  placeholder={targetType === "device"
+                    ? t("licenses.assignments.selectDevice")
+                    : t("licenses.assignments.selectUser")}
+                />
+              </div>
+              <ButtonPrimary
+                icon={faCheck}
+                text={assignMutation.isPending ? t("common.saving") : t("common.add")}
+                onClick={handleAssign}
+                disabled={!selected || assignMutation.isPending}
+                className="shrink-0"
               />
             </div>
-            <ButtonPrimary
-              icon={faCheck}
-              text={assignMutation.isPending ? t("common.saving") : t("common.add")}
-              onClick={handleAssign}
-              disabled={!selected || assignMutation.isPending}
-              className="shrink-0"
-            />
           </div>
-        </div>
+        )}
 
         {/* Existing assignments list */}
         <div className="px-6 py-4">
@@ -380,12 +385,14 @@ const AssignmentsPanel = ({
                       <span className="text-[13px] text-[#3C3C3C] font-medium">{label}</span>
                       <span className="ml-2 text-[11px] text-[#9a9a9a]">{type}</span>
                     </div>
-                    <button
-                      className="text-[#F3606E] text-[12px] hover:underline ml-4 shrink-0"
-                      onClick={() => unassignMutation.mutate(a.id)}
-                    >
-                      {t("common.delete")}
-                    </button>
+                    {isAdmin && (
+                      <button
+                        className="text-[#F3606E] text-[12px] hover:underline ml-4 shrink-0"
+                        onClick={() => unassignMutation.mutate(a.id)}
+                      >
+                        {t("common.delete")}
+                      </button>
+                    )}
                   </div>
                 );
               })}
@@ -400,10 +407,20 @@ const AssignmentsPanel = ({
 const Licenses = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const authInfo: any = useAuthInfo();
+  const currentUserId = authInfo?.user?.metadata?.id;
   const [createOpen, setCreateOpen] = useState(false);
   const [editingLicense, setEditingLicense] = useState<SoftwareLicense | null>(null);
   const [assignmentsLicense, setAssignmentsLicense] = useState<SoftwareLicense | null>(null);
   const [search, setSearch] = useState("");
+
+  const currentUserQuery = useQuery({
+    queryKey: ["current-user", currentUserId],
+    queryFn: () => getUser(currentUserId),
+    enabled: Boolean(currentUserId),
+  });
+
+  const isAdmin = Boolean(currentUserQuery.data?.isAdmin);
 
   const query = useQuery({
     queryKey: ["licenses"],
@@ -608,13 +625,15 @@ const Licenses = () => {
               checkboxes={checkboxes}
               settingsKey="licensesTableColumnOrder"
             />
-            <ButtonPrimary
-              color="white"
-              icon={faPlus}
-              text={t("licenses.create")}
-              onClick={() => setCreateOpen(true)}
-              className="h-[34px]"
-            />
+            {isAdmin && (
+              <ButtonPrimary
+                color="white"
+                icon={faPlus}
+                text={t("licenses.create")}
+                onClick={() => setCreateOpen(true)}
+                className="h-[34px]"
+              />
+            )}
           </div>
         </div>
 
@@ -625,7 +644,7 @@ const Licenses = () => {
             columns={filterColumns()}
             data={licenses}
             progressPending={query.isFetching}
-            onRowClicked={(row: SoftwareLicense) => setEditingLicense(row)}
+            onRowClicked={isAdmin ? (row: SoftwareLicense) => setEditingLicense(row) : undefined}
           />
         )}
 
@@ -653,6 +672,7 @@ const Licenses = () => {
           <AssignmentsPanel
             license={assignmentsLicense}
             onClose={() => setAssignmentsLicense(null)}
+            isAdmin={isAdmin}
           />
         )}
       </div>

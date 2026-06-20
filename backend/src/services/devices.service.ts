@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { randomBytes } from 'crypto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Devices } from 'src/entities/devices.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
 import { hashAgentSecret } from 'src/guards/agentGuard.guard';
@@ -12,6 +13,8 @@ import {
 import { ComplianceService } from 'src/services/compliance.service';
 import { DeviceScanService } from 'src/services/deviceScan.service';
 import { DeviceIdentityService } from 'src/services/deviceIdentity.service';
+import { EVENTS } from 'src/events/events.constants';
+import { DeviceLifecycleChangedEvent } from 'src/events/device-lifecycle-changed.event';
 
 const PREV_SECRET_GRACE_MS = 24 * 60 * 60 * 1000;
 
@@ -33,6 +36,7 @@ export class DevicesService {
     private readonly compliance: ComplianceService,
     private readonly scanHistory: DeviceScanService,
     private readonly identity: DeviceIdentityService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async findDevicesWithSerial(): Promise<any> {
@@ -496,8 +500,16 @@ export class DevicesService {
     }
 
     await this.devicesRepository.update({ id: deviceId }, cleaned);
-    const updated = await this.devicesRepository.findOneBy({ id: deviceId });
-    return { previous, updated: updated ?? previous };
+    const updated = (await this.devicesRepository.findOneBy({ id: deviceId })) ?? previous;
+
+    if (updated.lifecycle !== previous.lifecycle) {
+      this.eventEmitter.emit(
+        EVENTS.DEVICE_LIFECYCLE_CHANGED,
+        new DeviceLifecycleChangedEvent(deviceId, previous, updated),
+      );
+    }
+
+    return { previous, updated };
   }
 
   async findDevicesWithApplication(applicationId: string): Promise<any> {

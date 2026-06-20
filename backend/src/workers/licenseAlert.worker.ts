@@ -2,9 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cron } from '@nestjs/schedule';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SoftwareLicenseService } from 'src/services/softwareLicense.service';
 import { NotificationDispatcherService } from 'src/services/notificationDispatcher.service';
 import { Users } from 'src/entities/users.entity';
+import { EVENTS } from 'src/events/events.constants';
+import {
+  LicenseExpiredEvent,
+  LicenseExpiringEvent,
+} from 'src/events/license-expiry.event';
 
 @Injectable()
 export class LicenseAlertWorker {
@@ -15,6 +21,7 @@ export class LicenseAlertWorker {
     private readonly dispatcher: NotificationDispatcherService,
     @InjectRepository(Users)
     private readonly users: Repository<Users>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /** Daily at 08:00 — check for licenses expiring in 30 days and already expired today. */
@@ -54,6 +61,10 @@ export class LicenseAlertWorker {
           entityType: 'SOFTWARE_LICENSE',
           entityId: license.id,
         });
+        this.eventEmitter.emit(
+          EVENTS.LICENSE_EXPIRING,
+          new LicenseExpiringEvent(license.id, new Date(license.expiresAt!), days),
+        );
       }
     } catch (err) {
       this.logger.warn(`License expiry alert failed: ${(err as Error).message}`);
@@ -73,6 +84,10 @@ export class LicenseAlertWorker {
           entityType: 'SOFTWARE_LICENSE',
           entityId: license.id,
         });
+        this.eventEmitter.emit(
+          EVENTS.LICENSE_EXPIRED,
+          new LicenseExpiredEvent(license.id, new Date(license.expiresAt!)),
+        );
       }
     } catch (err) {
       this.logger.warn(`License expired alert failed: ${(err as Error).message}`);

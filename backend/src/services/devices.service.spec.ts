@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { IsNull } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DevicesService } from './devices.service';
 import { Devices } from 'src/entities/devices.entity';
 import { SoftwareInventoryService } from './softwareInventory.service';
@@ -80,6 +81,7 @@ describe('DevicesService', () => {
         { provide: ComplianceService, useValue: compliance },
         { provide: DeviceScanService, useValue: scanHistory },
         { provide: DeviceIdentityService, useValue: identity },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
       ],
     }).compile();
 

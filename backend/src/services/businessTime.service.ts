@@ -126,14 +126,16 @@ export class BusinessTimeService {
     });
   }
 
+  // Calendars without configured hours are treated as open all day
+  // (working-day restriction still applies via isWorkingDay).
   private getWorkStart(date: Date, calendar: Calendar) {
-    const [h, m] = calendar.workStart.split(':').map(Number);
+    const [h, m] = (calendar.workStart ?? '00:00').split(':').map(Number);
 
     return set(date, { hours: h, minutes: m, seconds: 0, milliseconds: 0 });
   }
 
   private getWorkEnd(date: Date, calendar: Calendar) {
-    const [h, m] = calendar.workEnd.split(':').map(Number);
+    const [h, m] = (calendar.workEnd ?? '23:59').split(':').map(Number);
 
     return set(date, { hours: h, minutes: m, seconds: 0, milliseconds: 0 });
   }

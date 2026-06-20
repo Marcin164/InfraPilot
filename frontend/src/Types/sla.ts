@@ -6,6 +6,8 @@ export interface SlaCalendar {
   name: string;
   timezone: string;
   workingDays: number[];
+  workStart?: string | null;
+  workEnd?: string | null;
   holidays: SlaHoliday[];
 }
 
