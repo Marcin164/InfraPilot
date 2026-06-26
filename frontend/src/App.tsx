@@ -20,6 +20,10 @@ import Tasks from "./Pages/Main/Devices/Details/Tasks";
 import Scans from "./Pages/Main/Devices/Details/Scans";
 import Events from "./Pages/Main/Devices/Details/Events";
 import DeviceHistory from "./Pages/Main/Devices/Details/History";
+import Connections from "./Pages/Main/Devices/Details/Connections";
+import Backup from "./Pages/Main/Devices/Details/Backup";
+import Topology from "./Pages/Main/Network/Topology";
+import Ipam from "./Pages/Main/Network/Ipam";
 import Helpdesk from "./Pages/Main/Helpdesk";
 import Reports from "./Pages/Main/Reports";
 import { ParseProvider } from "./Context/ParserContext";
@@ -97,6 +101,8 @@ function App() {
                   element={<EditEquipment />}
                 />
                 <Route path="fleet" element={<FleetHealth />} />
+                <Route path="topology" element={<Topology />} />
+                <Route path="ipam" element={<Ipam />} />
                 <Route path="devices" element={<Devices />} />
                 <Route path="devices/:id" element={<DeviceDetails />}>
                   <Route path="overview" element={<Overview />} />
@@ -109,6 +115,8 @@ function App() {
                   <Route path="users" element={<UsersInfo />} />
                   <Route path="peripherals" element={<Peripherals />} />
                   <Route path="history" element={<DeviceHistory />} />
+                  <Route path="connections" element={<Connections />} />
+                  <Route path="backup" element={<Backup />} />
                   <Route path="compliance" element={<Compliance />} />
                   <Route path="cves" element={<Cves />} />
                   <Route path="lifecycle" element={<Lifecycle />} />

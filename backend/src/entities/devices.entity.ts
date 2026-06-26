@@ -128,6 +128,40 @@ export class Devices {
   @Column({ type: 'varchar', length: 16, nullable: true })
   platform: string | null;
 
+  // ── Network device fields (manually tracked: switches/routers/APs/firewalls) ──
+
+  /** Address used to log into this device's admin UI/SSH (switches, routers, APs, firewalls). */
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  managementIp: string | null;
+
+  @Column({ type: 'int', nullable: true })
+  portCount: number | null;
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  firmwareVersion: string | null;
+
+  /** Manually entered MAC, distinct from agent-populated `macAddresses` below. */
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  macAddress: string | null;
+
+  // ── Availability monitoring (ICMP ping, devices with a managementIp) ──
+
+  @Column({ type: 'varchar', length: 16, default: 'unknown' })
+  pingStatus: 'unknown' | 'up' | 'down';
+
+  @Column({ type: 'timestamptz', nullable: true })
+  lastPingAt: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  lastStatusChangeAt: Date | null;
+
+  /** Consecutive failed/succeeded pings -- used to debounce flapping links before flipping pingStatus. */
+  @Column({ type: 'int', default: 0 })
+  consecutiveFailures: number;
+
+  @Column({ type: 'int', default: 0 })
+  consecutiveSuccesses: number;
+
   /** When set, this device row is a duplicate that was merged into another. */
   @Column({ type: 'uuid', nullable: true })
   mergedIntoId: string | null;

@@ -47,3 +47,28 @@ export const verifyAudit = async (): Promise<AuditVerifyResult> => {
   const { data } = await api.get(`/audit/verify`);
   return data;
 };
+
+export const exportAuditCsv = async (query: {
+  entityType?: string;
+  entityId?: string;
+  action?: string;
+  from?: string;
+  to?: string;
+}): Promise<void> => {
+  const params = new URLSearchParams();
+  Object.entries(query).forEach(([k, v]) => {
+    if (v) params.append(k, v);
+  });
+  const res = await api.get(`/audit/export?${params.toString()}`, {
+    responseType: "blob",
+  });
+  const blob = new Blob([res.data as Blob], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};

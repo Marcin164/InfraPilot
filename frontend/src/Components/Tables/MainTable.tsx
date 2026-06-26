@@ -44,6 +44,8 @@ const MainTable = ({
   onSelectedRowsChange,
   clearSelectedRows,
   noDataComponent,
+  expandableRows,
+  expandableRowsComponent,
 }: any) => {
   const { t } = useTranslation();
   const paginationComponentOptions = {
@@ -121,6 +123,8 @@ const MainTable = ({
           clearSelectedRows={clearSelectedRows}
           noDataComponent={noDataComponent ?? defaultNoData}
           paginationComponentOptions={paginationComponentOptions}
+          expandableRows={expandableRows}
+          expandableRowsComponent={expandableRowsComponent}
         />
       </motion.div>
     </AnimatePresence>

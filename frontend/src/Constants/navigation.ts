@@ -17,6 +17,7 @@ import {
   faEnvelope,
   faGaugeHigh,
   faComputerMouse,
+  faDatabase,
   faGear,
   faHardDrive,
   faHistory,
@@ -27,6 +28,7 @@ import {
   faQrcode,
   faRobot,
   faShield,
+  faSitemap,
   faShieldHalved,
   faShoppingCart,
   faTag,
@@ -73,6 +75,16 @@ export const navbarItems: NavbarItem[] = [
     to: "/admin/devices",
     label: "nav.devices",
     icon: faComputer,
+  },
+  {
+    to: "/admin/topology",
+    label: "nav.topology",
+    icon: faNetworkWired,
+  },
+  {
+    to: "/admin/ipam",
+    label: "nav.ipam",
+    icon: faSitemap,
   },
   {
     to: "/admin/licenses",
@@ -136,10 +148,17 @@ export const userNavbarPaths = new Set([
 ]);
 
 // `scope` decides which device records get which tab:
-//   "computers" -- only meaningful with agent scan data (Windows today)
-//   "all"       -- generic asset bookkeeping, works for any record
-//   "other"     -- only for manually-tracked, non-scanned records
-//                  (Components/Peripherals/Network/Other groups)
+//   "computers"          -- only meaningful with agent scan data (Windows today)
+//   "all"                -- generic asset bookkeeping, works for any record
+//   "other"              -- only for manually-tracked, non-scanned records
+//                            (Components/Peripherals/Network/Other groups)
+//   "computersOrNetwork" -- only things that can plausibly be cabled/linked
+//                            to something else (endpoints + network gear) --
+//                            excludes Components/Peripherals/Other (a spare
+//                            RAM stick or a mouse has no "connections")
+//   "network"            -- Network group only (switches/routers/APs/
+//                            firewalls) -- SSH config backup isn't
+//                            meaningful for an endpoint laptop
 // See DeviceNavbar.tsx for the filtering and Details.tsx for the
 // scope-aware default-tab redirect.
 export const deviceNavbarItems = [
@@ -153,6 +172,8 @@ export const deviceNavbarItems = [
   { to: "users", label: "device.tab.users", icon: faUsers, scope: "computers" as const },
   { to: "peripherals", label: "device.tab.peripherals", icon: faComputerMouse, scope: "computers" as const },
   { to: "history", label: "device.tab.history", icon: faUserTag, scope: "all" as const },
+  { to: "connections", label: "device.tab.connections", icon: faNetworkWired, scope: "computersOrNetwork" as const },
+  { to: "backup", label: "device.tab.backup", icon: faDatabase, scope: "network" as const },
   { to: "compliance", label: "device.tab.compliance", icon: faShieldHalved, scope: "computers" as const },
   { to: "cves", label: "device.tab.cves", icon: faBug, scope: "computers" as const },
   { to: "lifecycle", label: "device.tab.lifecycle", icon: faBoxArchive, scope: "all" as const },

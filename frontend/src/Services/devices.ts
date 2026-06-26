@@ -63,6 +63,26 @@ export const updateDeviceLifecycle = async (
   return data;
 };
 
+export type DeviceDetailsPatch = {
+  assetName?: string;
+  model?: string;
+  manufacturer?: string;
+  serialNumber?: string;
+  locationId?: string;
+  managementIp?: string;
+  portCount?: string | number;
+  firmwareVersion?: string;
+  macAddress?: string;
+};
+
+export const updateDeviceDetails = async (
+  deviceId: string,
+  patch: DeviceDetailsPatch,
+): Promise<Device> => {
+  const { data } = await api.patch(`/devices/${deviceId}/details`, patch);
+  return data;
+};
+
 export type DeviceInstall = {
   id: string;
   applicationId: string;

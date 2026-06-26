@@ -80,9 +80,34 @@ export class DevicesService {
       model: device.model,
       manufacturer: device.manufacturer,
       location: device.location,
+      locationId: device.locationId || null,
+      managementIp: device.managementIp || null,
+      portCount:
+        device.portCount === '' || device.portCount === null || device.portCount === undefined
+          ? null
+          : Number(device.portCount),
+      firmwareVersion: device.firmwareVersion || null,
+      macAddress: device.macAddress || null,
     });
 
     return await this.devicesRepository.save(newDevice);
+  }
+
+  /** Patches the Overview-tab identity fields (asset/location/network details). */
+  async updateDetails(deviceId: string, patch: Partial<Devices>): Promise<Devices> {
+    const previous = await this.devicesRepository.findOneBy({ id: deviceId });
+    if (!previous) {
+      throw new NotFoundException(`Device ${deviceId} not found`);
+    }
+
+    const cleaned: Partial<Devices> = {};
+    for (const [k, v] of Object.entries(patch)) {
+      if (v === undefined) continue;
+      (cleaned as any)[k] = v === '' ? null : v;
+    }
+
+    await this.devicesRepository.update({ id: deviceId }, cleaned);
+    return (await this.devicesRepository.findOneBy({ id: deviceId })) ?? previous;
   }
 
   async bulkImport(

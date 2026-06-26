@@ -2,7 +2,14 @@ import MainTable from "./MainTable";
 import { Link, useNavigate } from "react-router";
 import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faComputer } from "@fortawesome/free-solid-svg-icons";
+import {
+  faComputer,
+  faNetworkWired,
+  faServer,
+  faWifi,
+  faShieldHalved,
+  faPhone,
+} from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { getUserSettings } from "../../Services/settings";
@@ -61,11 +68,25 @@ const DevicesTable = ({
     (tags ?? []).map((t) => [t?.id, t]),
   );
 
+  const NETWORK_SUBGROUP_ICON: Record<string, any> = {
+    Switch: faNetworkWired,
+    Router: faServer,
+    AP: faWifi,
+    Firewall: faShieldHalved,
+    Deskphone: faPhone,
+  };
+
   const iconColumn = {
     id: "icon",
-    cell: (_row: any) => (
+    cell: (row: any) => (
       <div>
-        <FontAwesomeIcon icon={faComputer} />
+        <FontAwesomeIcon
+          icon={
+            row.group === "Network"
+              ? NETWORK_SUBGROUP_ICON[row.subgroup] ?? faNetworkWired
+              : faComputer
+          }
+        />
       </div>
     ),
     width: "60px",

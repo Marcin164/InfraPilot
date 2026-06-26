@@ -10,7 +10,10 @@ export type NotificationEvent =
   | "cve_critical"
   | "scan_completed"
   | "compliance_failing"
-  | "workflow_step_failed";
+  | "workflow_step_failed"
+  | "device_down"
+  | "config_backup_failed"
+  | "ip_conflict_detected";
 
 export type NotificationChannel = "inapp" | "email" | "sms";
 
@@ -58,4 +61,7 @@ export const EVENT_LABELS: Record<NotificationEvent, string> = {
   scan_completed: "Device scan completed",
   compliance_failing: "Compliance check failing",
   workflow_step_failed: "Workflow step failed",
+  device_down: "Device unreachable",
+  config_backup_failed: "Config backup failed",
+  ip_conflict_detected: "IP conflict detected",
 };

@@ -24,6 +24,9 @@ export const NOTIFICATION_EVENTS = [
   'license_expiring',
   'license_expired',
   'warranty_expiring',
+  'device_down',
+  'config_backup_failed',
+  'ip_conflict_detected',
 ] as const;
 
 export type NotificationEvent = (typeof NOTIFICATION_EVENTS)[number];

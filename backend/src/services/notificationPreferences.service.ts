@@ -25,8 +25,11 @@ const DEFAULTS: Record<NotificationChannel, Set<NotificationEvent>> = {
     'ticket_auto_followup',
     'cve_critical',
     'compliance_failing',
+    'device_down',
+    'config_backup_failed',
+    'ip_conflict_detected',
   ]),
-  sms: new Set(['ticket_sla_breach', 'cve_critical']),
+  sms: new Set(['ticket_sla_breach', 'cve_critical', 'device_down', 'ip_conflict_detected']),
 };
 
 export type PreferenceRow = {

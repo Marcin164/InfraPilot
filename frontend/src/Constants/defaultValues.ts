@@ -25,6 +25,10 @@ export const addDeviceDefaultValues = {
   manufacturer: "",
   location: "",
   locationId: "",
+  managementIp: "",
+  portCount: "",
+  firmwareVersion: "",
+  macAddress: "",
 };
 
 export const applyChangeDefaultValues = {

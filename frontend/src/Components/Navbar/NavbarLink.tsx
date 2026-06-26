@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
 
 type Props = {
   to: string;
@@ -11,10 +11,18 @@ type Props = {
 };
 
 const NavbarLink = ({ to, label, icon, alignment = "horizontal", onNavigate }: Props) => {
+  const { pathname } = useLocation();
+  // `to` may point at a default sub-tab (e.g. /admin/settings/personal).
+  // Stay highlighted for any sibling tab under the same section
+  // (e.g. /admin/settings/audit), not just the exact default path.
+  const sectionPath = to.split("/").slice(0, 3).join("/");
+  const inSection =
+    pathname === sectionPath || pathname.startsWith(`${sectionPath}/`);
+
   return (
     <NavLink
       className={({ isActive }) =>
-        isActive
+        isActive || inSection
           ? "text-[#2B9AE9] bg-[#D7EEFF]/50 text-[16px] px-2 py-[1px] block rounded-[10px]"
           : "text-[#535353] text-[16px] px-2 py-[1px] block"
       }

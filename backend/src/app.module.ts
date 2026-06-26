@@ -81,6 +81,13 @@ import { SoftwareLicenseAssignment } from './entities/softwareLicenseAssignment.
 import { SoftwareLicenseModule } from './modules/softwareLicense.module';
 import { Location } from './entities/location.entity';
 import { LocationModule } from './modules/location.module';
+import { NetworkConnection } from './entities/networkConnection.entity';
+import { NetworkConnectionsModule } from './modules/networkConnections.module';
+import { NetworkDeviceCredential } from './entities/networkDeviceCredential.entity';
+import { NetworkDeviceConfigBackup } from './entities/networkDeviceConfigBackup.entity';
+import { Subnet } from './entities/subnet.entity';
+import { IpAllocation } from './entities/ipAllocation.entity';
+import { IpamModule } from './modules/ipam.module';
 import { Maintenance } from './entities/maintenance.entity';
 import { MaintenanceModule } from './modules/maintenance.module';
 import { PurchaseOrder } from './entities/purchaseOrder.entity';
@@ -153,6 +160,11 @@ import { BootstrapService } from './services/bootstrap.service';
         Location,
         Maintenance,
         PurchaseOrder,
+        NetworkConnection,
+        NetworkDeviceCredential,
+        NetworkDeviceConfigBackup,
+        Subnet,
+        IpAllocation,
       ],
       synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true',
       migrationsRun: process.env.TYPEORM_SYNCHRONIZE !== 'true',
@@ -225,6 +237,8 @@ import { BootstrapService } from './services/bootstrap.service';
     LocationModule,
     MaintenanceModule,
     PurchaseOrderModule,
+    NetworkConnectionsModule,
+    IpamModule,
     AiModule,
     M365Module,
   ],

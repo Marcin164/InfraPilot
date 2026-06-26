@@ -211,6 +211,7 @@ export class AuditService {
   async exportRange(query: {
     entityType?: string;
     entityId?: string;
+    action?: string;
     from?: string;
     to?: string;
   }) {
@@ -219,6 +220,7 @@ export class AuditService {
       qb.andWhere('a.entityType = :et', { et: query.entityType });
     if (query.entityId)
       qb.andWhere('a.entityId = :ei', { ei: query.entityId });
+    if (query.action) qb.andWhere('a.action = :ac', { ac: query.action });
     if (query.from) qb.andWhere('a.createdAt >= :from', { from: query.from });
     if (query.to) qb.andWhere('a.createdAt <= :to', { to: query.to });
     return qb.getMany();

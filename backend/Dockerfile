@@ -26,8 +26,10 @@ WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3000
 
-# wget is used by HEALTHCHECK; tini gives us PID 1 signal handling.
-RUN apk add --no-cache tini wget \
+# wget is used by HEALTHCHECK; tini gives us PID 1 signal handling;
+# iputils provides a setuid `ping` binary so the non-root `app` user below
+# can still send ICMP (used by the device availability monitor).
+RUN apk add --no-cache tini wget iputils \
  && addgroup -S app && adduser -S app -G app
 
 COPY --from=prod-deps --chown=app:app /app/node_modules ./node_modules

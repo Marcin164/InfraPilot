@@ -114,6 +114,51 @@ const AddEquipmentForm: React.FC = () => {
           )
         }
       </form.Subscribe>
+      <form.Subscribe selector={(state) => state.values.group}>
+        {(group) =>
+          group === "Network" && (
+            <>
+              <form.Field name="managementIp">
+                {(field) => (
+                  <Input
+                    {...field}
+                    value={field.state.value}
+                    label={t("device.managementIp")}
+                  />
+                )}
+              </form.Field>
+              <form.Field name="portCount">
+                {(field) => (
+                  <Input
+                    {...field}
+                    value={field.state.value}
+                    type="number"
+                    label={t("device.portCount")}
+                  />
+                )}
+              </form.Field>
+              <form.Field name="firmwareVersion">
+                {(field) => (
+                  <Input
+                    {...field}
+                    value={field.state.value}
+                    label={t("device.firmwareVersion")}
+                  />
+                )}
+              </form.Field>
+              <form.Field name="macAddress">
+                {(field) => (
+                  <Input
+                    {...field}
+                    value={field.state.value}
+                    label={t("device.macAddress")}
+                  />
+                )}
+              </form.Field>
+            </>
+          )
+        }
+      </form.Subscribe>
       <form.Field
         name="model"
         validators={{

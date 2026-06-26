@@ -1,10 +1,16 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, Res, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
 
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { AuditService } from 'src/services/audit.service';
 import { AuditSinksService } from 'src/services/auditSinks/orchestrator.service';
+
+const csvCell = (value: unknown): string => {
+  const s = value === null || value === undefined ? '' : String(value);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
 
 @UseGuards(AuthGuard, MfaGuard)
 @Roles(Role.Admin, Role.Auditor)
@@ -52,5 +58,54 @@ export class AuditController {
       limit: query.limit ? Number(query.limit) : undefined,
       cursor: query.cursor,
     });
+  }
+
+  @Get('export')
+  async export(@Query() query: any, @Res() res: Response) {
+    const rows = await this.auditService.exportRange({
+      entityType: query.entityType,
+      entityId: query.entityId,
+      action: query.action,
+      from: query.from,
+      to: query.to,
+    });
+
+    const header = [
+      'sequence',
+      'createdAt',
+      'entityType',
+      'entityId',
+      'action',
+      'actor',
+      'metadata',
+      'hash',
+      'prevHash',
+    ];
+    const lines = [header.join(',')];
+    for (const row of rows) {
+      const actor = (row.metadata as any)?.actor ?? '';
+      lines.push(
+        [
+          row.sequence,
+          row.createdAt.toISOString(),
+          row.entityType,
+          row.entityId ?? '',
+          row.action,
+          actor,
+          row.metadata ? JSON.stringify(row.metadata) : '',
+          row.hash ?? '',
+          row.prevHash ?? '',
+        ]
+          .map(csvCell)
+          .join(','),
+      );
+    }
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="audit-log-${new Date().toISOString().slice(0, 10)}.csv"`,
+    );
+    res.send(lines.join('\n'));
   }
 }

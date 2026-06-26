@@ -514,6 +514,31 @@ export class DevicesController {
   }
 
   @UseGuards(AuthGuard)
+  @Roles(Role.Admin)
+  @Patch('/:deviceId/details')
+  async updateDetails(
+    @Param('deviceId') deviceId: string,
+    @Body()
+    body: {
+      assetName?: string;
+      model?: string;
+      manufacturer?: string;
+      serialNumber?: string;
+      locationId?: string;
+      managementIp?: string;
+      portCount?: number;
+      firmwareVersion?: string;
+      macAddress?: string;
+    },
+  ) {
+    const updated = await this.devicesService.updateDetails(deviceId, body);
+    await this.auditService.log('Device', deviceId, 'details_updated', {
+      changes: body,
+    });
+    return updated;
+  }
+
+  @UseGuards(AuthGuard)
   @Get('/:deviceId/tags')
   tagsForDevice(@Param('deviceId') deviceId: string) {
     return this.tagsService.tagsForDevice(deviceId);

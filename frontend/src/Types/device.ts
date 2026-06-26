@@ -17,6 +17,13 @@ export interface Device {
   apiSecretRotatedAt?: string | null;
   apiSecretPrevValidUntil?: string | null;
   lastScanAt?: string | null;
+  locationId?: string | null;
+  managementIp?: string | null;
+  portCount?: number | null;
+  firmwareVersion?: string | null;
+  macAddress?: string | null;
+  pingStatus?: "unknown" | "up" | "down";
+  lastPingAt?: string | null;
 }
 
 export type DeviceGroup = "Computers" | "Peripherals" | "Network" | "Components" | "Other";
@@ -49,7 +56,27 @@ export type CreateDeviceData = {
   model: string;
   manufacturer: string;
   location: string;
+  locationId?: string;
+  managementIp?: string;
+  portCount?: number | null;
+  firmwareVersion?: string;
+  macAddress?: string;
 };
+
+export type UpdateDeviceDetailsData = Partial<
+  Pick<
+    CreateDeviceData,
+    | "assetName"
+    | "model"
+    | "manufacturer"
+    | "serialNumber"
+    | "locationId"
+    | "managementIp"
+    | "portCount"
+    | "firmwareVersion"
+    | "macAddress"
+  >
+>;
 
 export interface DeviceFilter {
   group?: string[];
