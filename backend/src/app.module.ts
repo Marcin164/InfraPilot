@@ -95,6 +95,7 @@ import { PurchaseOrderModule } from './modules/purchaseOrder.module';
 import { AiModule } from './modules/ai.module';
 import { M365Module } from './modules/m365.module';
 import { BootstrapService } from './services/bootstrap.service';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 
 @Module({
   imports: [
@@ -103,6 +104,7 @@ import { BootstrapService } from './services/bootstrap.service';
       envFilePath: '.env',
       load: [adConfig],
     }),
+    PrometheusModule.register(),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST || 'localhost',
