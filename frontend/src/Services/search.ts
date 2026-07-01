@@ -9,7 +9,10 @@ export type SearchResultItem = {
     | "history"
     | "report"
     | "setting"
-    | "application";
+    | "application"
+    | "knowledge"
+    | "license"
+    | "procurement";
   title: string;
   subtitle?: string;
   url: string;
@@ -21,6 +24,9 @@ export type SearchResults = {
   tickets: SearchResultItem[];
   histories: SearchResultItem[];
   applications: SearchResultItem[];
+  knowledge: SearchResultItem[];
+  licenses: SearchResultItem[];
+  procurement: SearchResultItem[];
 };
 
 export const globalSearch = async (q: string): Promise<SearchResults> => {

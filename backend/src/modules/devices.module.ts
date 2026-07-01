@@ -19,6 +19,7 @@ import { DeviceTagsService } from 'src/services/deviceTags.service';
 import { AgentTaskService } from 'src/services/agentTask.service';
 import { DeviceScanService } from 'src/services/deviceScan.service';
 import { DeviceReportService } from 'src/services/deviceReport.service';
+import { HandoverFormService } from 'src/services/handoverForm.service';
 import { RemoteAssistService } from 'src/services/remoteAssist.service';
 import { DeviceIdentityService } from 'src/services/deviceIdentity.service';
 import { AgentTaskWorker } from 'src/workers/agentTask.worker';
@@ -35,6 +36,7 @@ import { AuditModule } from './audit.module';
 import { ComplianceModule } from './compliance.module';
 import { NotificationModule } from './notification.module';
 import { IpamModule } from './ipam.module';
+import { FormsModule } from './forms.module';
 import { Users } from 'src/entities/users.entity';
 import { AdminSettings } from 'src/entities/adminSettings.entity';
 import { AgentTokenService } from 'src/services/agent-token.service';
@@ -63,6 +65,7 @@ import { TicketDeviceLifecycleListener } from 'src/listeners/ticketDeviceLifecyc
     CveModule,
     NotificationModule,
     IpamModule,
+    FormsModule,
   ],
   controllers: [DevicesController, NetworkDeviceBackupController],
   providers: [
@@ -72,6 +75,7 @@ import { TicketDeviceLifecycleListener } from 'src/listeners/ticketDeviceLifecyc
     AgentTaskService,
     DeviceScanService,
     DeviceReportService,
+    HandoverFormService,
     RemoteAssistService,
     DeviceIdentityService,
     NetworkDeviceBackupService,
@@ -93,6 +97,7 @@ import { TicketDeviceLifecycleListener } from 'src/listeners/ticketDeviceLifecyc
     AgentTaskService,
     DeviceScanService,
     DeviceReportService,
+    HandoverFormService,
     AgentTokenService,
     AgentInstallerService,
   ],

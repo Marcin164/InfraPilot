@@ -232,6 +232,28 @@ export const downloadDeviceReportPdf = async (
   URL.revokeObjectURL(url);
 };
 
+export const downloadUserHandoverForm = async (
+  userId: string,
+  lang = "pl",
+  filename = `handover-${userId}.docx`,
+): Promise<void> => {
+  const res = await api.get(`/devices/user/${userId}/handover-form.docx`, {
+    params: { lang },
+    responseType: "blob",
+  });
+  const blob = new Blob([res.data as Blob], {
+    type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+
 export const getFilter = async (): Promise<DeviceFilter> => {
   const { data } = await api.get("/devices/filters");
   return data;

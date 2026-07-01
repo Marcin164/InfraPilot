@@ -1,14 +1,32 @@
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
-import { faComputer } from "@fortawesome/free-solid-svg-icons";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import { faComputer, faFileWord } from "@fortawesome/free-solid-svg-icons";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import EquipmentItem from "../../../../Components/Lists/EquipmentItem";
+import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import { downloadUserHandoverForm } from "../../../../Services/devices";
 
 type Props = { devices: any };
 
 const Equipment = ({ devices }: Props) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { id } = useParams();
+  const queryClient = useQueryClient();
+
+  const handoverMutation = useMutation({
+    mutationFn: () =>
+      downloadUserHandoverForm(id!, i18n.language, `handover-${id}.docx`),
+    onSuccess: () => {
+      toast.success(t("users.equipment.handoverSuccess"));
+      queryClient.invalidateQueries({ queryKey: ["forms", id] });
+    },
+    onError: (err: any) =>
+      toast.error(
+        err?.response?.data?.message ?? t("users.equipment.handoverError"),
+      ),
+  });
 
   if (!devices) return null;
 
@@ -19,6 +37,8 @@ const Equipment = ({ devices }: Props) => {
   const peripherals = devices.filter(
     (device: any) => device.userId === id && device.group === "Peripherals",
   );
+
+  const hasEquipment = mainDevices.length + peripherals.length > 0;
 
   const Section = ({ label, items }: { label: string; items: any[] }) => (
     <div className="mt-3">
@@ -39,7 +59,20 @@ const Equipment = ({ devices }: Props) => {
 
   return (
     <div className="bg-white shadow-xl rounded-[10px] p-4">
-      <CardHeader text={t("users.equipment")} icon={faComputer} />
+      <div className="flex items-center justify-between gap-2">
+        <CardHeader text={t("users.equipment")} icon={faComputer} />
+        <ButtonPrimary
+          icon={faFileWord}
+          text={
+            handoverMutation.isPending
+              ? t("users.equipment.handoverGenerating")
+              : t("users.equipment.handover")
+          }
+          onClick={() => handoverMutation.mutate()}
+          disabled={handoverMutation.isPending || !hasEquipment}
+          className="flex-shrink-0 text-[13px] px-3 py-1"
+        />
+      </div>
       <Section label={t("users.equipment.computersOwned")} items={mainDevices} />
       <Section label={t("users.equipment.peripherals")} items={peripherals} />
     </div>

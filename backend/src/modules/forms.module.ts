@@ -8,5 +8,6 @@ import { FormsService } from 'src/services/forms.service';
   imports: [TypeOrmModule.forFeature([Forms])],
   controllers: [FormsController],
   providers: [FormsService],
+  exports: [FormsService],
 })
 export class FormsModule {}

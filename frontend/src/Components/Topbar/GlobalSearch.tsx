@@ -13,6 +13,9 @@ import {
   faCode,
   faMagnifyingGlass,
   faXmark,
+  faBookOpen,
+  faKey,
+  faShoppingCart,
 } from "@fortawesome/free-solid-svg-icons";
 import Search from "../Inputs/Search";
 import { globalSearch, type SearchResultItem } from "../../Services/search";
@@ -28,6 +31,19 @@ const STATIC_SETTINGS_KEYS: SearchResultItem[] = [
   { id: "s-personal", type: "setting", title: "search.setting.personal", url: "/admin/settings/personal" },
   { id: "s-ad", type: "setting", title: "search.setting.ad", url: "/admin/settings/active-directory" },
   { id: "s-sla", type: "setting", title: "search.setting.sla", url: "/admin/settings/sla" },
+  { id: "s-workflows", type: "setting", title: "search.setting.workflows", url: "/admin/settings/workflows" },
+  { id: "s-notifications", type: "setting", title: "search.setting.notifications", url: "/admin/settings/notifications" },
+  { id: "s-admin", type: "setting", title: "search.setting.admin", url: "/admin/settings/admin" },
+  { id: "s-audit", type: "setting", title: "search.setting.audit", url: "/admin/settings/audit" },
+  { id: "s-retention", type: "setting", title: "search.setting.retention", url: "/admin/settings/retention" },
+  { id: "s-privacy", type: "setting", title: "search.setting.privacy", url: "/admin/settings/privacy" },
+  { id: "s-tags", type: "setting", title: "search.setting.tags", url: "/admin/settings/tags" },
+  { id: "s-compliance-rules", type: "setting", title: "search.setting.complianceRules", url: "/admin/settings/compliance-rules" },
+  { id: "s-ticket-templates", type: "setting", title: "search.setting.ticketTemplates", url: "/admin/settings/ticket-templates" },
+  { id: "s-windows-agent", type: "setting", title: "search.setting.windowsAgent", url: "/admin/settings/windows-agent" },
+  { id: "s-locations", type: "setting", title: "search.setting.locations", url: "/admin/settings/locations" },
+  { id: "s-smtp", type: "setting", title: "search.setting.smtp", url: "/admin/settings/smtp" },
+  { id: "s-m365", type: "setting", title: "search.setting.m365", url: "/admin/settings/m365" },
 ];
 
 const ICONS: Record<SearchResultItem["type"], any> = {
@@ -38,6 +54,9 @@ const ICONS: Record<SearchResultItem["type"], any> = {
   report: faChartBar,
   setting: faGear,
   application: faCode,
+  knowledge: faBookOpen,
+  license: faKey,
+  procurement: faShoppingCart,
 };
 
 const LABEL_KEYS: Record<string, string> = {
@@ -46,6 +65,9 @@ const LABEL_KEYS: Record<string, string> = {
   applications: "search.label.applications",
   tickets: "search.label.tickets",
   histories: "search.label.histories",
+  knowledge: "search.label.knowledge",
+  licenses: "search.label.licenses",
+  procurement: "search.label.procurement",
   reports: "search.label.reports",
   settings: "search.label.settings",
 };
@@ -99,6 +121,9 @@ const GlobalSearch = () => {
     { key: "applications", items: data?.applications ?? [] },
     { key: "tickets", items: data?.tickets ?? [] },
     { key: "histories", items: data?.histories ?? [] },
+    { key: "knowledge", items: data?.knowledge ?? [] },
+    { key: "licenses", items: data?.licenses ?? [] },
+    { key: "procurement", items: data?.procurement ?? [] },
     { key: "reports", items: staticMatches.reports },
     { key: "settings", items: staticMatches.settings },
   ];

@@ -6,10 +6,13 @@ import { Devices } from 'src/entities/devices.entity';
 import { Tickets } from 'src/entities/tickets.entity';
 import { Histories } from 'src/entities/histories.entity';
 import { Applications } from 'src/entities/applications.entity';
+import { KnowledgeArticle } from 'src/entities/knowledgeArticle.entity';
+import { SoftwareLicense } from 'src/entities/softwareLicense.entity';
+import { PurchaseOrder } from 'src/entities/purchaseOrder.entity';
 
 export type SearchResultItem = {
   id: string;
-  type: 'user' | 'device' | 'ticket' | 'history' | 'application';
+  type: 'user' | 'device' | 'ticket' | 'history' | 'application' | 'knowledge' | 'license' | 'procurement';
   title: string;
   subtitle?: string;
   url: string;
@@ -26,6 +29,12 @@ export class SearchService {
     @InjectRepository(Histories) private historiesRepo: Repository<Histories>,
     @InjectRepository(Applications)
     private applicationsRepo: Repository<Applications>,
+    @InjectRepository(KnowledgeArticle)
+    private knowledgeRepo: Repository<KnowledgeArticle>,
+    @InjectRepository(SoftwareLicense)
+    private licenseRepo: Repository<SoftwareLicense>,
+    @InjectRepository(PurchaseOrder)
+    private procurementRepo: Repository<PurchaseOrder>,
   ) {}
 
   /**
@@ -53,6 +62,9 @@ export class SearchService {
     tickets: SearchResultItem[];
     histories: SearchResultItem[];
     applications: SearchResultItem[];
+    knowledge: SearchResultItem[];
+    licenses: SearchResultItem[];
+    procurement: SearchResultItem[];
   }> {
     const term = (q || '').trim();
     if (!term) {
@@ -62,6 +74,9 @@ export class SearchService {
         tickets: [],
         histories: [],
         applications: [],
+        knowledge: [],
+        licenses: [],
+        procurement: [],
       };
     }
     const like = `%${term}%`;
@@ -73,6 +88,9 @@ export class SearchService {
       tickets,
       histories,
       applications,
+      knowledgeArticles,
+      licenses,
+      purchaseOrders,
     ] = await Promise.all([
       this.usersRepo.find({
         where: [
@@ -119,6 +137,31 @@ export class SearchService {
         })
         .limit(LIMIT)
         .getMany(),
+      this.knowledgeRepo.find({
+        where: [
+          { title: ILike(like) },
+          { content: ILike(like) },
+          { category: ILike(like) },
+        ],
+        take: LIMIT,
+        order: { views: 'DESC' },
+      }),
+      this.licenseRepo.find({
+        where: [
+          { name: ILike(like) },
+          { publisher: ILike(like) },
+          { vendor: ILike(like) },
+        ],
+        take: LIMIT,
+      }),
+      this.procurementRepo.find({
+        where: [
+          { title: ILike(like) },
+          { supplier: ILike(like) },
+        ],
+        take: LIMIT,
+        order: { createdAt: 'DESC' },
+      }),
     ]);
 
     // Merge structured + jsonb hits, dedup by id, cap at LIMIT.
@@ -166,6 +209,27 @@ export class SearchService {
         title: a.name,
         subtitle: a.publisher ?? undefined,
         url: `/admin/reports/devices?applicationId=${a.id}`,
+      })),
+      knowledge: knowledgeArticles.map((a) => ({
+        id: a.id,
+        type: 'knowledge' as const,
+        title: a.title,
+        subtitle: a.category ?? undefined,
+        url: `/admin/knowledge/${a.spaceId}/${a.id}`,
+      })),
+      licenses: licenses.map((l) => ({
+        id: l.id,
+        type: 'license' as const,
+        title: l.name,
+        subtitle: [l.publisher, l.vendor].filter(Boolean).join(' • ') || undefined,
+        url: `/admin/licenses`,
+      })),
+      procurement: purchaseOrders.map((p) => ({
+        id: p.id,
+        type: 'procurement' as const,
+        title: p.title,
+        subtitle: p.supplier ?? undefined,
+        url: `/admin/procurement`,
       })),
     };
   }

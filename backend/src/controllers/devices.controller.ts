@@ -27,6 +27,7 @@ import { DevicesService } from 'src/services/devices.service';
 import { DeviceTagsService } from 'src/services/deviceTags.service';
 import { AgentTaskService } from 'src/services/agentTask.service';
 import { DeviceReportService } from 'src/services/deviceReport.service';
+import { HandoverFormService } from 'src/services/handoverForm.service';
 import { RemoteAssistService } from 'src/services/remoteAssist.service';
 import { AuditService } from 'src/services/audit.service';
 import { AgentEnrollDto, DeviceScanDto } from 'src/dto/devices.dto';
@@ -41,6 +42,7 @@ export class DevicesController {
     private readonly tagsService: DeviceTagsService,
     private readonly agentTasks: AgentTaskService,
     private readonly deviceReport: DeviceReportService,
+    private readonly handoverForm: HandoverFormService,
     private readonly remoteAssist: RemoteAssistService,
     private readonly auditService: AuditService,
     private readonly agentTokenService: AgentTokenService,
@@ -417,6 +419,38 @@ export class DevicesController {
       bytes: buffer.length,
     });
     res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${filename}"`,
+    );
+    res.setHeader('X-Report-Sha256', sha256);
+    res.send(buffer);
+  }
+
+  @UseGuards(AuthGuard)
+  @Roles(Role.Admin, Role.Auditor, Role.Helpdesk)
+  @Get('/user/:userId/handover-form.docx')
+  async userHandoverForm(
+    @Param('userId') userId: string,
+    @Query('lang') lang: string,
+    @Req() req: any,
+    @Res() res: Response,
+  ) {
+    const actor =
+      req?.user?.properties?.metadata?.id ?? req?.user?.id ?? undefined;
+    const { buffer, filename, sha256 } =
+      await this.handoverForm.renderForUser(userId, lang);
+    await this.auditService.log('User', userId, 'handover_form_exported', {
+      actor,
+      format: 'docx',
+      lang,
+      sha256,
+      bytes: buffer.length,
+    });
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    );
     res.setHeader(
       'Content-Disposition',
       `attachment; filename="${filename}"`,
