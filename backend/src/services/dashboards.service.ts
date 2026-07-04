@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Dashboards } from 'src/entities/dashboards.entity';
@@ -28,5 +28,12 @@ export class DashboardsService {
 
   async deleteDashboard(id: string): Promise<void> {
     await this.dashboardsRepository.delete(id);
+  }
+
+  async updateCards(id: string, cards: Record<string, any>[]): Promise<Dashboards> {
+    await this.dashboardsRepository.update(id, { cards: cards as any });
+    const updated = await this.dashboardsRepository.findOneBy({ id });
+    if (!updated) throw new NotFoundException('Dashboard not found');
+    return updated;
   }
 }

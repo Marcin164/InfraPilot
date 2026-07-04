@@ -14,3 +14,11 @@ export const createDashboard = async (body: { name: string; userId: string; card
 export const deleteDashboard = async (id: string): Promise<void> => {
   await api.delete(`/dashboards/${id}`);
 };
+
+export const updateDashboardCards = async (
+  id: string,
+  cards: Dashboard["cards"]
+): Promise<Dashboard> => {
+  const { data } = await api.patch(`/dashboards/${id}`, { cards });
+  return data;
+};

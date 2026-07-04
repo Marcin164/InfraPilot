@@ -5,6 +5,7 @@ import {
   Param,
   UseGuards,
   Post,
+  Patch,
   Delete,
   Body,
 } from '@nestjs/common';
@@ -33,5 +34,11 @@ export class DashboardsController {
   @Delete(':id')
   delete(@Param('id') id: string) {
     return this.dashboardsService.deleteDashboard(id);
+  }
+
+  @Roles(Role.Admin)
+  @Patch(':id')
+  updateCards(@Param('id') id: string, @Body() body: { cards: Record<string, any>[] }) {
+    return this.dashboardsService.updateCards(id, body.cards);
   }
 }

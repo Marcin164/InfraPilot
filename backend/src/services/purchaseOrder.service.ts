@@ -10,6 +10,7 @@ import { PurchaseOrder, PurchaseOrderStatus } from 'src/entities/purchaseOrder.e
 import { uuidv4 } from 'src/helpers/uuidv4';
 import { EVENTS } from 'src/events/events.constants';
 import { PurchaseOrderReceivedEvent } from 'src/events/purchase-order-received.event';
+import { invalidateReportCache } from 'src/helpers/reportCache';
 
 export class CreatePurchaseOrderDto {
   @IsString() @IsNotEmpty()
@@ -98,7 +99,9 @@ export class PurchaseOrderService {
       currency: dto.currency ?? null,
       notes: dto.notes ?? null,
     });
-    return this.repo.save(order);
+    const saved = await this.repo.save(order);
+    invalidateReportCache('procurement-pipeline');
+    return saved;
   }
 
   async update(id: string, dto: Partial<CreatePurchaseOrderDto>): Promise<PurchaseOrder> {
@@ -118,12 +121,14 @@ export class PurchaseOrderService {
     });
     const saved = await this.repo.save(order);
     this.emitIfJustReceived(previousStatus, saved);
+    invalidateReportCache('procurement-pipeline');
     return saved;
   }
 
   async remove(id: string): Promise<void> {
     const order = await this.findOne(id);
     await this.repo.remove(order);
+    invalidateReportCache('procurement-pipeline');
   }
 
   async updateStatus(id: string, status: PurchaseOrderStatus): Promise<PurchaseOrder> {
@@ -135,6 +140,7 @@ export class PurchaseOrderService {
     }
     const saved = await this.repo.save(order);
     this.emitIfJustReceived(previousStatus, saved);
+    invalidateReportCache('procurement-pipeline');
     return saved;
   }
 }

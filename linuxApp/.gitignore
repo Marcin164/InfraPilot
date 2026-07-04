@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# Debian packaging
+installer/Output/
+installer/pkgroot/
+installer/baked/   # baked deployment config (plaintext token) -- never commit

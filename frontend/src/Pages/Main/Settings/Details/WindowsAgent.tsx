@@ -12,7 +12,7 @@ import {
   faDownload,
   faUpload,
 } from "@fortawesome/free-solid-svg-icons";
-import { faWindows as faWindowsBrand, faApple } from "@fortawesome/free-brands-svg-icons";
+import { faWindows as faWindowsBrand, faApple, faLinux } from "@fortawesome/free-brands-svg-icons";
 import { twMerge } from "tailwind-merge";
 
 import CardHeader from "../../../../Components/Headers/CardHeader";
@@ -79,6 +79,13 @@ const PLATFORM_CONFIG: Record<
     accept: ".pkg",
     installCardTitle: "Instalacja na hoście",
     installHint: "Na hoście macOS otwórz <strong>Terminal</strong> i wklej:",
+  },
+  linux: {
+    label: "Linux",
+    icon: faLinux,
+    accept: ".deb",
+    installCardTitle: "Instalacja na hoście",
+    installHint: "Na hoście Linux otwórz <strong>terminal</strong> i wklej:",
   },
 };
 
@@ -208,10 +215,10 @@ const WindowsAgent = () => {
       <div className="bg-white rounded-[10px] shadow-xl p-4">
         <CardHeader text="Agent setup" icon={faWindowsBrand} />
         <p className="text-[14px] text-[#535353] mt-2">
-          Install the InfraPilot agent on a Windows or macOS host to start
-          collecting inventory. The agent self-enrolls against this backend —
-          no manual device creation needed. Each scan signs its request with
-          a per-host HMAC-SHA256 secret.
+          Install the InfraPilot agent on a Windows, macOS or Linux host to
+          start collecting inventory. The agent self-enrolls against this
+          backend — no manual device creation needed. Each scan signs its
+          request with a per-host HMAC-SHA256 secret.
         </p>
       </div>
 
@@ -233,9 +240,9 @@ const WindowsAgent = () => {
         ) : (
           <>
             <p className="text-[14px] text-[#535353] mt-2 mb-3">
-              Token floty — używany przy pierwszej rejestracji agenta (Windows
-              i macOS). Każde urządzenie po rejestracji otrzymuje własny
-              sekret HMAC.
+              Token floty — używany przy pierwszej rejestracji agenta
+              (Windows, macOS i Linux). Każde urządzenie po rejestracji
+              otrzymuje własny sekret HMAC.
             </p>
             {data?.configured && (
               <div className="mb-3">

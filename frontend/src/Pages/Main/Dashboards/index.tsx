@@ -22,8 +22,16 @@ import ComplianceBaseline from "./components/ComplianceBaseline";
 import CveSummary from "./components/CveSummary";
 import AgentScoreboard from "./components/AgentScoreboard";
 import AgentSlaQuality from "./components/AgentSlaQuality";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createDashboard, deleteDashboard, getDashboards } from "../../../Services/dashboards";
+import LicensesExpiring from "./components/LicensesExpiring";
+import LicenseSeatUtilization from "./components/LicenseSeatUtilization";
+import IpConflicts from "./components/IpConflicts";
+import IpamSubnetUtilization from "./components/IpamSubnetUtilization";
+import StaleAgents from "./components/StaleAgents";
+import NetworkBackupStatus from "./components/NetworkBackupStatus";
+import RetentionLegalHold from "./components/RetentionLegalHold";
+import ProcurementPipeline from "./components/ProcurementPipeline";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createDashboard, deleteDashboard, getDashboards, updateDashboardCards } from "../../../Services/dashboards";
 import type { Dashboard } from "../../../Types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import DataLoader from "../../../Components/Loaders/DataLoader";
@@ -58,6 +66,14 @@ const componentMap: any = {
   CveSummary,
   AgentScoreboard,
   AgentSlaQuality,
+  LicensesExpiring,
+  LicenseSeatUtilization,
+  IpConflicts,
+  IpamSubnetUtilization,
+  StaleAgents,
+  NetworkBackupStatus,
+  RetentionLegalHold,
+  ProcurementPipeline,
 };
 
 const Index = () => {
@@ -76,6 +92,22 @@ const Index = () => {
     w: 3,
     h: 2,
   });
+
+  const saveCardsMutation = useMutation({
+    mutationFn: ({ id, cards }: { id: string; cards: any[] }) =>
+      updateDashboardCards(id, cards),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboards"] });
+    },
+  });
+
+  const persistLayout = useCallback(
+    (nextLayout: any[]) => {
+      if (!currentDashboard) return;
+      saveCardsMutation.mutate({ id: currentDashboard.id, cards: nextLayout });
+    },
+    [currentDashboard, saveCardsMutation]
+  );
 
   const pendingWidgetRef = useRef<string | null>(null);
   const autoCreatedRef = useRef(false);
@@ -123,14 +155,18 @@ const Index = () => {
 
   const syncLayoutItem = useCallback((newLayout: any[]) => {
     setLayout((prev) => {
-      return prev.map((card) => {
+      let changed = false;
+      const merged = prev.map((card) => {
         const updated = newLayout.find((item) => item.i === card.i);
         if (!updated) return card;
         if (card.x === updated.x && card.y === updated.y && card.w === updated.w && card.h === updated.h) return card;
+        changed = true;
         return { ...card, x: updated.x, y: updated.y, w: updated.w, h: updated.h };
       });
+      if (changed) persistLayout(merged);
+      return merged;
     });
-  }, []);
+  }, [persistLayout]);
 
   if (dashboardsQuery.isLoading) return <DataLoader />;
   if (!dashboardsQuery.isSuccess) return null;
@@ -176,11 +212,19 @@ const Index = () => {
       component: widget.component,
     };
 
-    setLayout((prev) => [...prev, newCard]);
+    setLayout((prev) => {
+      const next = [...prev, newCard];
+      persistLayout(next);
+      return next;
+    });
   };
 
   const removeWidget = (id: string) => {
-    setLayout((prev) => prev.filter((item) => item.i !== id));
+    setLayout((prev) => {
+      const next = prev.filter((item) => item.i !== id);
+      persistLayout(next);
+      return next;
+    });
   };
 
   const handleDeleteDashboard = () => {

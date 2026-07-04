@@ -276,7 +276,7 @@ export type AgentInstallerMeta = {
   uploadedBy: string | null;
 };
 
-export type AgentPlatform = "windows" | "macos";
+export type AgentPlatform = "windows" | "macos" | "linux";
 
 export type AgentPlatformSetupInfo = {
   installerUrl: string | null;
@@ -291,6 +291,7 @@ export type AgentSetupInfo =
       enrollmentToken: string;
       windows: AgentPlatformSetupInfo;
       macos: AgentPlatformSetupInfo;
+      linux: AgentPlatformSetupInfo;
     }
   | { configured: false; message: string };
 

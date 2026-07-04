@@ -61,9 +61,10 @@ const Security = () => {
   const device: any = useOutletContext();
   const hasSecurityData = !!device?.data?.security;
   const hasIntuneData = !!device?.data?.intuneDeviceId || !!device?.data?.intuneComplianceState;
-  // TPM/UAC have no macOS equivalent -- the mac agent always sends `{}` for
-  // both, so showing the cards would just be two permanently-empty boxes.
-  const isWindows = device?.data?.platform !== "darwin";
+  // TPM/UAC have no macOS/Linux equivalent -- those agents always send `{}`
+  // for both, so showing the cards there would just be two permanently-empty
+  // boxes.
+  const isWindows = device?.data?.platform === "windows";
 
   if (!hasSecurityData && !hasIntuneData) return <NoData />;
 

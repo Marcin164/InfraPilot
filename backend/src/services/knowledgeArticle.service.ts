@@ -2,6 +2,13 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
 import { KnowledgeArticle } from 'src/entities/knowledgeArticle.entity';
+import { invalidateReportCache } from 'src/helpers/reportCache';
+
+function invalidateKnowledgeReports() {
+  invalidateReportCache('knowledge-most-viewed');
+  invalidateReportCache('knowledge-by-status');
+  invalidateReportCache('knowledge-by-space');
+}
 
 @Injectable()
 export class KnowledgeArticleService {
@@ -64,20 +71,25 @@ export class KnowledgeArticleService {
       ...dto,
       authorId: userId ?? dto.authorId,
     });
-    return this.repo.save(article);
+    const saved = await this.repo.save(article);
+    invalidateKnowledgeReports();
+    return saved;
   }
 
   async update(id: string, dto: any) {
     const article = await this.repo.findOneBy({ id });
     if (!article) throw new NotFoundException('Article not found');
     Object.assign(article, dto);
-    return this.repo.save(article);
+    const saved = await this.repo.save(article);
+    invalidateKnowledgeReports();
+    return saved;
   }
 
   async remove(id: string) {
     const article = await this.repo.findOneBy({ id });
     if (!article) throw new NotFoundException('Article not found');
     await this.repo.remove(article);
+    invalidateKnowledgeReports();
     return { deleted: true };
   }
 }

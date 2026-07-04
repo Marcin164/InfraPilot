@@ -12,7 +12,7 @@ export interface Device {
   user?: { id: string; distinguishedName: string };
   userId?: string;
   data?: DeviceData;
-  /** "windows" | "darwin" -- set by the agent at enrollment; null for devices added manually. */
+  /** "windows" | "darwin" | "linux" -- set by the agent at enrollment; null for devices added manually. */
   platform?: string | null;
   apiSecretRotatedAt?: string | null;
   apiSecretPrevValidUntil?: string | null;

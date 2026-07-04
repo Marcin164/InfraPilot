@@ -335,6 +335,15 @@ export class DevicesController {
         `sudo BACKEND_URL="${baseUrl}" ENROLL_TOKEN="${token}" installer -pkg /tmp/InfraPilotAgentSetup.pkg -target /`
       : null;
 
+    const linuxMeta = await this.agentInstallerService.getMeta('linux');
+    const linuxUrl =
+      process.env.AGENT_INSTALLER_URL_LINUX?.trim() ||
+      (linuxMeta ? `${baseUrl}/devices/agent/installer?platform=linux` : null);
+    const linuxSnippet = linuxUrl
+      ? `curl -fsSL "${linuxUrl}" -o /tmp/InfraPilotAgentSetup.deb\n` +
+        `sudo env BACKEND_URL="${baseUrl}" ENROLL_TOKEN="${token}" dpkg -i /tmp/InfraPilotAgentSetup.deb`
+      : null;
+
     return {
       configured: true,
       backendUrl: baseUrl,
@@ -348,6 +357,11 @@ export class DevicesController {
         installerUrl: macosUrl,
         installerMeta: macosMeta,
         snippet: macosSnippet,
+      },
+      linux: {
+        installerUrl: linuxUrl,
+        installerMeta: linuxMeta,
+        snippet: linuxSnippet,
       },
     };
   }
@@ -371,7 +385,10 @@ export class DevicesController {
     @Query('platform') platform: AgentPlatform = 'windows',
   ) {
     const { stream, meta } = await this.agentInstallerService.getFileStream(platform);
-    const fallbackName = platform === 'macos' ? 'InfraPilotAgentSetup.pkg' : 'InfraPilotAgentSetup.exe';
+    const fallbackName =
+      platform === 'macos' ? 'InfraPilotAgentSetup.pkg' :
+      platform === 'linux' ? 'InfraPilotAgentSetup.deb' :
+      'InfraPilotAgentSetup.exe';
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader(
       'Content-Disposition',

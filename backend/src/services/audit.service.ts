@@ -12,6 +12,7 @@ export type AuditListQuery = {
   entityType?: string;
   entityId?: string;
   action?: string;
+  actorId?: string;
   from?: string;
   to?: string;
   limit?: number;
@@ -189,6 +190,8 @@ export class AuditService {
     if (query.entityId)
       qb.andWhere('a.entityId = :ei', { ei: query.entityId });
     if (query.action) qb.andWhere('a.action = :ac', { ac: query.action });
+    if (query.actorId)
+      qb.andWhere(`a.metadata->>'actor' = :actorId`, { actorId: query.actorId });
     if (query.from) qb.andWhere('a.createdAt >= :from', { from: query.from });
     if (query.to) qb.andWhere('a.createdAt <= :to', { to: query.to });
 
@@ -201,11 +204,96 @@ export class AuditService {
     const rows = await qb.getMany();
     const hasMore = rows.length > limit;
     const items = hasMore ? rows.slice(0, limit) : rows;
-    const nextCursor = hasMore
-      ? items[items.length - 1].sequence
-      : null;
+    const nextCursor = hasMore ? items[items.length - 1].sequence : null;
 
-    return { items, nextCursor };
+    const nameMap = await this.resolveEntityNames(items);
+
+    return {
+      items: items.map((i) => ({
+        ...i,
+        entityName: i.entityId
+          ? (nameMap.get(`${i.entityType}:${i.entityId}`) ?? null)
+          : null,
+      })),
+      nextCursor,
+    };
+  }
+
+  private async resolveEntityNames(
+    entries: SystemAuditLog[],
+  ): Promise<Map<string, string>> {
+    const nameMap = new Map<string, string>();
+    const byType = new Map<string, string[]>();
+    for (const e of entries) {
+      if (!e.entityId) continue;
+      const ids = byType.get(e.entityType) ?? [];
+      ids.push(e.entityId);
+      byType.set(e.entityType, ids);
+    }
+
+    const set = (type: string, id: string, label: string) =>
+      nameMap.set(`${type}:${id}`, label);
+
+    if (byType.has('Device')) {
+      const rows: any[] = await this.repo.manager.query(
+        `SELECT id::text, "assetName", "serialNumber" FROM devices WHERE id::text = ANY($1)`,
+        [byType.get('Device')],
+      );
+      for (const r of rows)
+        set('Device', r.id, r.assetName || r.serialNumber || r.id);
+    }
+
+    if (byType.has('Ticket')) {
+      const rows: any[] = await this.repo.manager.query(
+        `SELECT id::text, number, category FROM tickets WHERE id::text = ANY($1)`,
+        [byType.get('Ticket')],
+      );
+      for (const r of rows) {
+        const label = `#${r.number}${r.category ? ' · ' + r.category : ''}`;
+        set('Ticket', r.id, label);
+      }
+    }
+
+    if (byType.has('User')) {
+      const rows: any[] = await this.repo.manager.query(
+        `SELECT id::text, name, surname, username, email FROM users WHERE id::text = ANY($1)`,
+        [byType.get('User')],
+      );
+      for (const r of rows) {
+        const label =
+          [r.name, r.surname].filter(Boolean).join(' ') ||
+          r.username ||
+          r.email ||
+          r.id;
+        set('User', r.id, label);
+      }
+    }
+
+    if (byType.has('KnowledgeArticle')) {
+      const rows: any[] = await this.repo.manager.query(
+        `SELECT id::text, title FROM knowledge_article WHERE id::text = ANY($1)`,
+        [byType.get('KnowledgeArticle')],
+      );
+      for (const r of rows) set('KnowledgeArticle', r.id, r.title);
+    }
+
+    if (byType.has('SoftwareLicense')) {
+      const rows: any[] = await this.repo.manager.query(
+        `SELECT id, name FROM software_license WHERE id = ANY($1)`,
+        [byType.get('SoftwareLicense')],
+      );
+      for (const r of rows) set('SoftwareLicense', r.id, r.name);
+    }
+
+    if (byType.has('PurchaseOrder')) {
+      const rows: any[] = await this.repo.manager.query(
+        `SELECT id, title FROM purchase_order WHERE id = ANY($1)`,
+        [byType.get('PurchaseOrder')],
+      );
+      for (const r of rows) set('PurchaseOrder', r.id, r.title);
+    }
+
+    return nameMap;
   }
 
   async exportRange(query: {

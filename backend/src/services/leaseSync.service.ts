@@ -15,6 +15,7 @@ import { compileLeaseTemplate, parseLeaseOutput } from 'src/helpers/leaseTemplat
 import { AuditService } from './audit.service';
 import { IpamService } from './ipam.service';
 import { NotificationDispatcherService } from './notificationDispatcher.service';
+import { invalidateReportCache } from 'src/helpers/reportCache';
 
 const CONFLICTS_SETTINGS_KEY = 'ipam.lastKnownConflicts';
 
@@ -83,6 +84,9 @@ export class LeaseSyncService {
         row.lastSeenAt = now;
         await this.allocations.save(row);
       }
+
+      invalidateReportCache('ipam-conflicts');
+      invalidateReportCache('ipam-subnet-utilization');
 
       await this.auditService.log('NETWORK_DEVICE_LEASE_SYNC', deviceId, 'SUCCEEDED', {
         actorId,

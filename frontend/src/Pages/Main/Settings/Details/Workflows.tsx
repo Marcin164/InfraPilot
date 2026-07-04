@@ -18,6 +18,7 @@ import {
   faPlus,
   faTrash,
   faUser,
+  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -39,6 +40,8 @@ import {
   upsertWorkflow,
   deleteWorkflow,
 } from "../../../../Services/ticketWorkflows";
+import { getUsers } from "../../../../Services/users";
+import type { User } from "../../../../Types";
 
 const TRIGGER_OPTIONS: { value: TicketWorkflow["trigger"]; labelKey: string }[] = [
   { value: "on_create", labelKey: "settings.workflow.editor.triggerCreate" },
@@ -484,6 +487,7 @@ const WorkflowEditor = ({
   saving: boolean;
 }) => {
   const { t } = useTranslation();
+  const usersQuery = useQuery({ queryKey: ["users-list"], queryFn: getUsers });
   const setField = <K extends keyof TicketWorkflow>(
     key: K,
     value: TicketWorkflow[K],
@@ -631,7 +635,7 @@ const WorkflowEditor = ({
                   </div>
                 </div>
 
-                <StepConfig step={step} onChange={(p) => setStep(i, p)} />
+                <StepConfig step={step} onChange={(p) => setStep(i, p)} users={usersQuery.data ?? []} />
               </li>
             ))}
           </ol>
@@ -654,6 +658,91 @@ const WorkflowEditor = ({
         />
       </div>
     </div>
+  );
+};
+
+// ───────────────────────── User pickers ─────────────────────────
+
+const userLabel = (u: User) =>
+  `${u.name ?? ""} ${u.surname ?? ""}`.trim() || u.username || u.email;
+
+const UserMultiPicker = ({
+  label,
+  ids,
+  users,
+  onChange,
+}: {
+  label: string;
+  ids: string[];
+  users: User[];
+  onChange: (ids: string[]) => void;
+}) => {
+  const { t } = useTranslation();
+  const selected = ids.map((id) => users.find((u) => u.id === id)).filter(Boolean) as User[];
+  const remaining = users.filter((u) => !ids.includes(u.id));
+
+  return (
+    <div>
+      <label className="font-bold text-[#3C3C3C] text-[14px]">{label}</label>
+      <div className="mt-1">
+        <SelectSecondary
+          options={remaining.map((u) => ({ value: u.id, label: userLabel(u) }))}
+          value={null}
+          placeholder={t("settings.workflow.config.addApprover")}
+          onSelect={(opt: any) => {
+            if (opt?.value && !ids.includes(opt.value)) onChange([...ids, opt.value]);
+          }}
+        />
+      </div>
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {selected.map((u) => (
+            <span
+              key={u.id}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#EAF4FD] border border-[#B3D9F7] text-[#2B6CB0] text-[12px] px-2.5 py-1 font-semibold"
+            >
+              <FontAwesomeIcon icon={faUser} className="text-[10px]" />
+              {userLabel(u)}
+              <button
+                type="button"
+                onClick={() => onChange(ids.filter((id) => id !== u.id))}
+                className="ml-0.5 text-[#2B6CB0] hover:text-[#C53030] cursor-pointer"
+                aria-label="Remove"
+              >
+                <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const UserSinglePicker = ({
+  label,
+  userId,
+  users,
+  onChange,
+}: {
+  label: string;
+  userId: string;
+  users: User[];
+  onChange: (id: string) => void;
+}) => {
+  const { t } = useTranslation();
+  const selected = users.find((u) => u.id === userId);
+  const opts = [
+    { value: "", label: t("settings.workflow.config.noUser") },
+    ...users.map((u) => ({ value: u.id, label: userLabel(u) })),
+  ];
+  return (
+    <SelectSecondary
+      label={label}
+      options={opts}
+      value={selected ? { value: selected.id, label: userLabel(selected) } : opts[0]}
+      onSelect={(opt: any) => onChange(opt?.value ?? "")}
+    />
   );
 };
 
@@ -681,9 +770,11 @@ const SelectField = ({
 const StepConfig = ({
   step,
   onChange,
+  users,
 }: {
   step: WorkflowStep;
   onChange: (patch: Partial<WorkflowStep>) => void;
+  users: User[];
 }) => {
   const { t } = useTranslation();
   const setCfg = (k: string, v: any) =>
@@ -693,16 +784,11 @@ const StepConfig = ({
     case "request_approval":
       return (
         <div className="mt-2 grid grid-cols-1 gap-2">
-          <Input
+          <UserMultiPicker
             label={t("settings.workflow.config.approverIds")}
-            value={(step.config.approverIds ?? []).join(",")}
-            handleChange={(v: string) =>
-              setCfg(
-                "approverIds",
-                v.split(",").map((s) => s.trim()).filter(Boolean),
-              )
-            }
-            placeholder={t("settings.workflow.config.approverIdsPh")}
+            ids={step.config.approverIds ?? []}
+            users={users}
+            onChange={(ids) => setCfg("approverIds", ids)}
           />
           <Input
             label={t("settings.workflow.config.message")}
@@ -725,28 +811,28 @@ const StepConfig = ({
             ]}
             onChange={(v) => setCfg("recipientType", v)}
           />
-          {step.config.recipientType === "specific" && (
-            <Input
-              label={t("settings.workflow.config.recipientIds")}
-              value={(step.config.recipientIds ?? []).join(",")}
-              handleChange={(v: string) =>
-                setCfg(
-                  "recipientIds",
-                  v.split(",").map((s) => s.trim()).filter(Boolean),
-                )
-              }
-            />
-          )}
           <Input
             label={t("settings.workflow.config.title")}
             value={step.config.title ?? ""}
             handleChange={(v: string) => setCfg("title", v)}
           />
-          <Input
-            label={t("settings.workflow.config.body")}
-            value={step.config.body ?? ""}
-            handleChange={(v: string) => setCfg("body", v)}
-          />
+          <div className="md:col-span-2">
+            <Input
+              label={t("settings.workflow.config.body")}
+              value={step.config.body ?? ""}
+              handleChange={(v: string) => setCfg("body", v)}
+            />
+          </div>
+          {step.config.recipientType === "specific" && (
+            <div className="md:col-span-2">
+              <UserMultiPicker
+                label={t("settings.workflow.config.recipientIds")}
+                ids={step.config.recipientIds ?? []}
+                users={users}
+                onChange={(ids) => setCfg("recipientIds", ids)}
+              />
+            </div>
+          )}
         </div>
       );
 
@@ -775,11 +861,11 @@ const StepConfig = ({
     case "assign_to":
       return (
         <div className="mt-2">
-          <Input
+          <UserSinglePicker
             label={t("settings.workflow.config.userId")}
-            value={step.config.userId ?? ""}
-            handleChange={(v: string) => setCfg("userId", v)}
-            placeholder={t("settings.workflow.config.userIdPh")}
+            userId={step.config.userId ?? ""}
+            users={users}
+            onChange={(id) => setCfg("userId", id)}
           />
         </div>
       );

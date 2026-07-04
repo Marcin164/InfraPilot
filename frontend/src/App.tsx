@@ -50,6 +50,9 @@ import UsersReports from "./Pages/Main/Reports/Details/UsersReports";
 import DevicesReports from "./Pages/Main/Reports/Details/DevicesReports";
 import TicketsReports from "./Pages/Main/Reports/Details/TicketsReports";
 import SecurityReports from "./Pages/Main/Reports/Details/SecurityReports";
+import LicensesReports from "./Pages/Main/Reports/Details/LicensesReports";
+import NetworkReports from "./Pages/Main/Reports/Details/NetworkReports";
+import KnowledgeReports from "./Pages/Main/Reports/Details/KnowledgeReports";
 import Knowledge from "./Pages/Main/Knowledge";
 import KnowledgeDetails from "./Pages/Main/Knowledge/Details";
 import Licenses from "./Pages/Main/Licenses";
@@ -141,6 +144,9 @@ function App() {
                   <Route path="devices" element={<DevicesReports />} />
                   <Route path="tickets" element={<TicketsReports />} />
                   <Route path="security" element={<SecurityReports />} />
+                  <Route path="licenses" element={<LicensesReports />} />
+                  <Route path="network" element={<NetworkReports />} />
+                  <Route path="knowledge" element={<KnowledgeReports />} />
                 </Route>
                 <Route path="settings" element={<Settings />}>
                   <Route index path="personal" element={<Personal />} />
@@ -167,7 +173,7 @@ function App() {
                     path="ticket-templates"
                     element={<TicketTemplates />}
                   />
-                  <Route path="windows-agent" element={<WindowsAgent />} />
+                  <Route path="agent" element={<WindowsAgent />} />
                   <Route path="locations" element={<Locations />} />
                   <Route path="smtp" element={<SmtpSettings />} />
                   <Route path="m365" element={<M365Settings />} />

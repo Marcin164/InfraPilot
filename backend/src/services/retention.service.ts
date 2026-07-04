@@ -12,12 +12,21 @@ import {
 } from 'src/entities/retentionPolicy.entity';
 import { AuditService } from './audit.service';
 
-const ENTITY_TABLE_MAP: Record<string, string> = {
-  TicketActivity: 'ticket_activity',
-  TicketComment: 'tickets_comments',
-  Ticket: 'tickets',
-  History: 'histories',
-  Form: 'forms',
+const ENTITY_TABLE_MAP: Record<string, { table: string; dateCol: string }> = {
+  // Helpdesk
+  Ticket:          { table: 'tickets',          dateCol: 'createdAt' },
+  TicketActivity:  { table: 'ticket_activity',   dateCol: 'createdAt' },
+  TicketComment:   { table: 'tickets_comments',  dateCol: 'createdAt' },
+  // Asset management
+  History:         { table: 'histories',         dateCol: 'createdAt' },
+  Form:            { table: 'forms',             dateCol: 'createdAt' },
+  // Device monitoring — high-volume time-series data
+  AgentTask:       { table: 'agent_task',        dateCol: 'createdAt' },
+  DeviceScan:      { table: 'device_scan',       dateCol: 'receivedAt' },
+  ComplianceResult:{ table: 'compliance_result', dateCol: 'evaluatedAt' },
+  CveMatch:        { table: 'cve_match',         dateCol: 'firstSeenAt' },
+  // Notifications
+  Notification:    { table: 'notification',      dateCol: 'createdAt' },
 };
 
 const FORBIDDEN_ENTITIES = new Set(['SystemAuditLog', 'system_audit_log']);
@@ -98,6 +107,10 @@ export class RetentionService {
     return Object.keys(ENTITY_TABLE_MAP);
   }
 
+  private tableFor(entityType: string) {
+    return ENTITY_TABLE_MAP[entityType];
+  }
+
   async runAll(): Promise<{ runs: { policyId: string; affected: number }[] }> {
     const policies = await this.repo.find({ where: { enabled: true } });
     const runs: { policyId: string; affected: number }[] = [];
@@ -116,7 +129,7 @@ export class RetentionService {
 
   async runPolicy(policy: RetentionPolicy): Promise<number> {
     this.assertSupported(policy.entityType);
-    const table = ENTITY_TABLE_MAP[policy.entityType];
+    const { table, dateCol } = this.tableFor(policy.entityType);
     const cutoff = new Date(
       Date.now() - policy.retentionDays * 24 * 60 * 60 * 1000,
     );
@@ -125,13 +138,13 @@ export class RetentionService {
 
     if (policy.action === 'purge') {
       const result = await this.dataSource.query(
-        `DELETE FROM "${table}" WHERE "createdAt" < $1`,
+        `DELETE FROM "${table}" WHERE "${dateCol}" < $1`,
         [cutoff],
       );
       affected = Array.isArray(result) ? (result[1] ?? 0) : (result ?? 0);
     } else {
       const rows = await this.dataSource.query(
-        `SELECT * FROM "${table}" WHERE "createdAt" < $1`,
+        `SELECT * FROM "${table}" WHERE "${dateCol}" < $1`,
         [cutoff],
       );
       affected = rows.length;
@@ -144,7 +157,7 @@ export class RetentionService {
         );
       }
       await this.dataSource.query(
-        `DELETE FROM "${table}" WHERE "createdAt" < $1`,
+        `DELETE FROM "${table}" WHERE "${dateCol}" < $1`,
         [cutoff],
       );
     }

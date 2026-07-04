@@ -1,0 +1,14 @@
+Package: infrapilot-agent
+Version: 0.0.0
+Section: admin
+Priority: optional
+Architecture: amd64
+Installed-Size: 0
+Maintainer: InfraPilot <noreply@infrapilot.local>
+Depends: libc6
+Recommends: policykit-1, dmidecode, pciutils, usbutils, util-linux
+Description: InfraPilot Linux inventory agent
+ Scans host hardware, software, network, security and user inventory and
+ reports it to a self-hosted InfraPilot backend. Self-enrolls via a
+ fleet-wide enrollment token and signs every scan with a per-host
+ HMAC-SHA256 secret.

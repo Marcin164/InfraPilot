@@ -14,6 +14,12 @@ import {
   UpdateLicenseDto,
 } from 'src/dto/softwareLicense.dto';
 import { uuidv4 } from 'src/helpers/uuidv4';
+import { invalidateReportCache } from 'src/helpers/reportCache';
+
+function invalidateLicenseReports() {
+  invalidateReportCache('licenses-expiring-soon');
+  invalidateReportCache('licenses-seat-utilization');
+}
 
 @Injectable()
 export class SoftwareLicenseService {
@@ -55,20 +61,25 @@ export class SoftwareLicenseService {
 
   async create(dto: CreateLicenseDto): Promise<SoftwareLicense> {
     const license = this.licenseRepo.create({ ...dto, id: uuidv4() });
-    return this.licenseRepo.save(license);
+    const saved = await this.licenseRepo.save(license);
+    invalidateLicenseReports();
+    return saved;
   }
 
   async update(id: string, dto: UpdateLicenseDto): Promise<SoftwareLicense> {
     const license = await this.licenseRepo.findOneBy({ id });
     if (!license) throw new NotFoundException('License not found');
     Object.assign(license, dto);
-    return this.licenseRepo.save(license);
+    const saved = await this.licenseRepo.save(license);
+    invalidateLicenseReports();
+    return saved;
   }
 
   async remove(id: string): Promise<void> {
     const license = await this.licenseRepo.findOneBy({ id });
     if (!license) throw new NotFoundException('License not found');
     await this.licenseRepo.remove(license);
+    invalidateLicenseReports();
   }
 
   async getAssignments(licenseId: string): Promise<SoftwareLicenseAssignment[]> {
@@ -102,13 +113,16 @@ export class SoftwareLicenseService {
       deviceId: dto.deviceId ?? null,
       userId: dto.userId ?? null,
     });
-    return this.assignmentRepo.save(assignment);
+    const saved = await this.assignmentRepo.save(assignment);
+    invalidateLicenseReports();
+    return saved;
   }
 
   async unassign(assignmentId: string): Promise<void> {
     const assignment = await this.assignmentRepo.findOneBy({ id: assignmentId });
     if (!assignment) throw new NotFoundException('Assignment not found');
     await this.assignmentRepo.remove(assignment);
+    invalidateLicenseReports();
   }
 
   /** Returns licenses expiring within the given number of days (for alerts). */

@@ -230,10 +230,16 @@ const Procurement = () => {
     queryFn: getUserSettings,
   });
 
+  const invalidateReports = () => {
+    queryClient.invalidateQueries({ queryKey: ["reports"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-reports-batch"] });
+  };
+
   const createMut = useMutation({
     mutationFn: createPurchaseOrder,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["procurement"] });
+      invalidateReports();
       toast.success(t("procurement.created"));
       setIsFormOpen(false);
     },
@@ -245,6 +251,7 @@ const Procurement = () => {
       updatePurchaseOrder(id, dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["procurement"] });
+      invalidateReports();
       toast.success(t("procurement.updated"));
       setEditingOrder(null);
     },
@@ -256,6 +263,7 @@ const Procurement = () => {
       updatePurchaseOrderStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["procurement"] });
+      invalidateReports();
       setStatusMenu(null);
     },
     onError: () => toast.error(t("procurement.error")),
@@ -265,6 +273,7 @@ const Procurement = () => {
     mutationFn: deletePurchaseOrder,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["procurement"] });
+      invalidateReports();
       toast.success(t("procurement.deleted"));
       setEditingOrder(null);
     },

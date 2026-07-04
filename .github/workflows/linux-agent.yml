@@ -1,0 +1,96 @@
+name: Linux Agent
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'linuxApp/**'
+      - '.github/workflows/linux-agent.yml'
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches: [master, main]
+    paths:
+      - 'linuxApp/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write  # needed to attach the installer to a GitHub Release.
+
+jobs:
+  build:
+    name: Build agent + GUI + installer
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: linuxApp
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: linuxApp/requirements.txt
+
+      # Tkinter's C extension isn't installed by setup-python's Python
+      # builds -- the GUI (agent/gui.py) needs the system Tcl/Tk dev
+      # package to import `tkinter` at all, let alone PyInstaller-bundle it.
+      - name: Install Tk + dpkg-deb
+        run: sudo apt-get update && sudo apt-get install -y python3-tk tk-dev dpkg-dev
+
+      - name: Build (agent + GUI + .deb installer)
+        run: ./scripts/build.sh
+        # No LV_* secrets: this is a generic, no-secrets-baked installer.
+        # Each InfraPilot backend deployment serves this same .deb and
+        # operators install with BACKEND_URL=... ENROLL_TOKEN=... env vars
+        # copied from their tenant's Settings > Linux Agent page.
+
+      - name: Compute installer path
+        id: artefact
+        run: |
+          DEB=$(ls installer/Output/InfraPilotAgentSetup-*.deb | head -n1)
+          if [ -z "$DEB" ]; then echo "Installer not produced." >&2; exit 1; fi
+          echo "path=$DEB" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$DEB")" >> "$GITHUB_OUTPUT"
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: InfraPilotAgentSetup-linux
+          path: linuxApp/installer/Output/InfraPilotAgentSetup-*.deb
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload raw agent + GUI bundles (for debugging)
+        uses: actions/upload-artifact@v4
+        with:
+          name: infrapilot-agent-linux-binaries
+          path: |
+            linuxApp/dist/infrapilot-agent
+            linuxApp/dist/infrapilot-agent-gui
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Create / update GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: linuxApp/installer/Output/InfraPilotAgentSetup-*.deb
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          body: |
+            ## InfraPilot Linux Agent ${{ github.ref_name }}
+
+            Installer: **${{ steps.artefact.outputs.name }}**
+
+            ### Install
+            ```bash
+            curl -fsSL "<installerUrl from Settings > Linux Agent>" -o /tmp/InfraPilotAgentSetup.deb
+            sudo env BACKEND_URL="<backend>" ENROLL_TOKEN="<token>" dpkg -i /tmp/InfraPilotAgentSetup.deb
+            ```
+
+            See [linuxApp/README.md](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/linuxApp/README.md)
+            for backend setup and the CLI flags.

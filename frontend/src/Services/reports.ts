@@ -11,7 +11,14 @@ export type ReportCategory =
   | "applications"
   | "histories"
   | "audit"
-  | "forms";
+  | "forms"
+  | "licenses"
+  | "ipam"
+  | "fleet"
+  | "network"
+  | "retention"
+  | "procurement"
+  | "knowledge";
 
 export interface ReportMeta {
   key: string;

@@ -60,11 +60,17 @@ const Ipam = () => {
     status: "reserved",
   });
 
+  const invalidateReports = () => {
+    queryClient.invalidateQueries({ queryKey: ["reports"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-reports-batch"] });
+  };
+
   const createSubnetMutation = useMutation({
     mutationFn: () => createSubnet(subnetForm),
     onSuccess: () => {
       toast.success(t("ipam.subnet.created"));
       queryClient.invalidateQueries({ queryKey: ["subnets"] });
+      invalidateReports();
       setAddingSubnet(false);
       setSubnetForm({ name: "", cidr: "" });
     },
@@ -75,6 +81,7 @@ const Ipam = () => {
     mutationFn: (id: string) => deleteSubnet(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subnets"] });
+      invalidateReports();
       setSelectedSubnetId(null);
     },
   });
@@ -86,6 +93,7 @@ const Ipam = () => {
       toast.success(t("ipam.allocation.created"));
       queryClient.invalidateQueries({ queryKey: ["subnet-utilization", selectedSubnetId] });
       queryClient.invalidateQueries({ queryKey: ["ip-conflicts"] });
+      invalidateReports();
       setAddingAllocation(false);
       setAllocationForm({ ip: "", status: "reserved" });
     },
@@ -97,6 +105,7 @@ const Ipam = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subnet-utilization", selectedSubnetId] });
       queryClient.invalidateQueries({ queryKey: ["ip-conflicts"] });
+      invalidateReports();
     },
   });
 

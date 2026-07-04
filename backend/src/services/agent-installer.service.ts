@@ -6,13 +6,14 @@ import * as path from 'path';
 import { AdminSettings } from 'src/entities/adminSettings.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
 
-export type AgentPlatform = 'windows' | 'macos';
+export type AgentPlatform = 'windows' | 'macos' | 'linux';
 
 const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads', 'agent');
 
 const PLATFORM_CONFIG: Record<AgentPlatform, { key: string; fileName: string; extension: string }> = {
   windows: { key: 'agent_installer_windows', fileName: 'InfraPilotAgentSetup.exe', extension: '.exe' },
   macos:   { key: 'agent_installer_macos',   fileName: 'InfraPilotAgentSetup.pkg', extension: '.pkg' },
+  linux:   { key: 'agent_installer_linux',   fileName: 'InfraPilotAgentSetup.deb', extension: '.deb' },
 };
 
 export type AgentInstallerMeta = {

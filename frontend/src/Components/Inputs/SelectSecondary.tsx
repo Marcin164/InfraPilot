@@ -66,6 +66,7 @@ const SelectSecondary = ({
       transition: "background-color 0.2s ease",
     }),
     menu: (styles: any) => ({ ...styles, width: "100%" }),
+    menuPortal: (styles: any) => ({ ...styles, zIndex: 9999 }),
     input: (styles: any) => ({ ...styles, width: "100%", outline: "none" }),
     placeholder: (styles: any) => ({ ...styles }),
     singleValue: (styles: any) => ({ ...styles, width: "100%" }),
@@ -86,6 +87,8 @@ const SelectSecondary = ({
         isClearable={isClearable}
         isDisabled={isDisabled}
         placeholder={placeholder}
+        menuPortalTarget={typeof document !== "undefined" ? document.body : null}
+        menuPosition="fixed"
       />
       {errors && (
         <em role="alert" className="text-[14px] text-[#BC0E0E] font-bold">

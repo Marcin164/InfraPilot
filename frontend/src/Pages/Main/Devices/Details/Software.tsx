@@ -18,9 +18,10 @@ const Software = () => {
   if (!device?.data?.software) return <NoData />;
 
   const softwareInfo = device.data.software;
-  // AppX packages / Windows Optional Features have no macOS equivalent --
-  // the mac agent always sends `[]` for both, so there's nothing to tab to.
-  const isWindows = device?.data?.platform !== "darwin";
+  // AppX packages / Windows Optional Features have no macOS/Linux
+  // equivalent -- those agents always send `[]` for both, so there's
+  // nothing to tab to.
+  const isWindows = device?.data?.platform === "windows";
   const tabs: TabId[] = isWindows ? ALL_TABS : [1];
   const tab = tabs.includes(activeTab) ? activeTab : 1;
 

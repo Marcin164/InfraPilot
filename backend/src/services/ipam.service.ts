@@ -20,6 +20,12 @@ import {
 import { Devices } from 'src/entities/devices.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
 import { cidrRange, ipToInt, isIpInCidr } from 'src/helpers/cidr';
+import { invalidateReportCache } from 'src/helpers/reportCache';
+
+function invalidateIpamReports() {
+  invalidateReportCache('ipam-conflicts');
+  invalidateReportCache('ipam-subnet-utilization');
+}
 
 export class CreateSubnetDto {
   @IsString() @IsNotEmpty()
@@ -104,19 +110,24 @@ export class IpamService {
       locationId: dto.locationId ?? null,
       notes: dto.notes ?? null,
     });
-    return this.subnets.save(subnet);
+    const saved = await this.subnets.save(subnet);
+    invalidateIpamReports();
+    return saved;
   }
 
   async updateSubnet(id: string, dto: Partial<CreateSubnetDto>): Promise<Subnet> {
     const subnet = await this.findSubnet(id);
     if (dto.cidr) cidrRange(dto.cidr);
     Object.assign(subnet, dto);
-    return this.subnets.save(subnet);
+    const saved = await this.subnets.save(subnet);
+    invalidateIpamReports();
+    return saved;
   }
 
   async removeSubnet(id: string): Promise<void> {
     const subnet = await this.findSubnet(id);
     await this.subnets.remove(subnet);
+    invalidateIpamReports();
   }
 
   // ---- Allocations ----
@@ -143,13 +154,16 @@ export class IpamService {
       source: IpAllocationSource.MANUAL,
       notes: dto.notes ?? null,
     });
-    return this.allocations.save(allocation);
+    const saved = await this.allocations.save(allocation);
+    invalidateIpamReports();
+    return saved;
   }
 
   async removeAllocation(id: string): Promise<void> {
     const allocation = await this.allocations.findOneBy({ id });
     if (!allocation) throw new NotFoundException('Allocation not found');
     await this.allocations.remove(allocation);
+    invalidateIpamReports();
   }
 
   // ---- Utilization & conflicts ----

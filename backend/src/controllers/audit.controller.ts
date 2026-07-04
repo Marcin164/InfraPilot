@@ -53,6 +53,7 @@ export class AuditController {
       entityType: query.entityType,
       entityId: query.entityId,
       action: query.action,
+      actorId: query.actorId,
       from: query.from,
       to: query.to,
       limit: query.limit ? Number(query.limit) : undefined,

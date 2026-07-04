@@ -1,0 +1,17 @@
+#!/bin/bash
+# Runs as root before package removal -- unregisters the systemd
+# service+timer so a removed package doesn't leave a scheduled unit
+# pointing at a binary that's about to disappear.
+set -euo pipefail
+
+AGENT_BIN="/opt/infrapilot/agent/infrapilot-agent"
+
+case "${1:-remove}" in
+  remove|deconfigure)
+    if [ -x "$AGENT_BIN" ]; then
+      "$AGENT_BIN" --unregister-task || true
+    fi
+    ;;
+esac
+
+exit 0

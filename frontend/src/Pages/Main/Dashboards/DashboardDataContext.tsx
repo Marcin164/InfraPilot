@@ -16,6 +16,14 @@ const ALL_REPORT_KEYS = [
   "security-outside-domain",
   "applications-top-installed",
   "audit-activity-over-time",
+  "licenses-expiring-soon",
+  "licenses-seat-utilization",
+  "ipam-conflicts",
+  "ipam-subnet-utilization",
+  "fleet-stale-agents",
+  "network-backup-status",
+  "retention-legal-hold",
+  "procurement-pipeline",
 ];
 
 type DashboardData = Record<string, ReportDataPoint[]>;

@@ -196,7 +196,7 @@ export const settingsNavbarItems = [
   { to: "tags", label: "settings.tab.tags", icon: faTag, requires: "admin" as NavbarRequirement },
   { to: "compliance-rules", label: "settings.tab.complianceRules", icon: faShieldHalved, requires: "complianceOrAdmin" as NavbarRequirement },
   { to: "ticket-templates", label: "settings.tab.ticketTemplates", icon: faPaste, requires: "helpdeskOrAdmin" as NavbarRequirement },
-  { to: "windows-agent", label: "settings.tab.windowsAgent", icon: faWindowMaximize, requires: "admin" as NavbarRequirement },
+  { to: "agent", label: "settings.tab.windowsAgent", icon: faWindowMaximize, requires: "admin" as NavbarRequirement },
   { to: "locations", label: "settings.tab.locations", icon: faBuilding, requires: "admin" as NavbarRequirement },
   { to: "smtp", label: "settings.tab.smtp", icon: faEnvelope, requires: "admin" as NavbarRequirement },
   { to: "m365", label: "settings.tab.m365", icon: faCloud, requires: "admin" as NavbarRequirement },
@@ -209,6 +209,9 @@ export const reportsNavbarItems = [
   { to: "devices", label: "reports.tab.devices", icon: faComputerMouse },
   { to: "tickets", label: "reports.tab.tickets", icon: faTicket },
   { to: "security", label: "reports.tab.security", icon: faShield },
+  { to: "licenses", label: "reports.tab.licenses", icon: faKey },
+  { to: "network", label: "reports.tab.network", icon: faNetworkWired },
+  { to: "knowledge", label: "reports.tab.knowledge", icon: faBookAtlas },
 ];
 
 // Single source of truth mapping each Reports page route to the report
@@ -218,5 +221,8 @@ export const reportPageCategories: Record<string, ReportCategory[]> = {
   users: ["users", "forms"],
   devices: ["devices", "applications", "histories"],
   tickets: ["tickets", "sla"],
-  security: ["security", "audit"],
+  security: ["security", "audit", "retention"],
+  licenses: ["licenses", "procurement"],
+  network: ["ipam", "network", "fleet"],
+  knowledge: ["knowledge"],
 };

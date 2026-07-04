@@ -7,6 +7,13 @@ import * as sla from '../reports/sla';
 import * as histories from '../reports/histories';
 import * as audit from '../reports/audit';
 import * as forms from '../reports/forms';
+import * as licenses from '../reports/licenses';
+import * as ipam from '../reports/ipam';
+import * as fleet from '../reports/fleet';
+import * as network from '../reports/network';
+import * as retention from '../reports/retention';
+import * as procurement from '../reports/procurement';
+import * as knowledge from '../reports/knowledge';
 
 export type ReportCategory =
   | 'users'
@@ -17,7 +24,14 @@ export type ReportCategory =
   | 'applications'
   | 'histories'
   | 'audit'
-  | 'forms';
+  | 'forms'
+  | 'licenses'
+  | 'ipam'
+  | 'fleet'
+  | 'network'
+  | 'retention'
+  | 'procurement'
+  | 'knowledge';
 
 export type ChartType = 'bar' | 'pie' | 'line' | 'table';
 
@@ -262,6 +276,53 @@ export const REPORTS: ReportMeta[] = [
   { key: 'forms-flows-by-owner', category: 'forms', chart: 'bar',
     title: 'Flows by owner', description: 'Flows per owning user',
     fn: forms.flowsByOwnerReport },
+
+  // ───────── LICENSES ─────────
+  { key: 'licenses-expiring-soon', category: 'licenses', chart: 'bar',
+    title: 'Licenses expiring soon', description: 'Expiring within 30 days vs active total',
+    fn: licenses.licensesExpiringSoonReport },
+  { key: 'licenses-seat-utilization', category: 'licenses', chart: 'bar',
+    title: 'License seat utilization', description: 'Seats used vs total, per license',
+    fn: licenses.licenseSeatUtilizationReport },
+
+  // ───────── IPAM ─────────
+  { key: 'ipam-conflicts', category: 'ipam', chart: 'bar',
+    title: 'IP conflicts', description: 'IPs claimed by more than one device/allocation',
+    fn: ipam.ipamConflictsReport },
+  { key: 'ipam-subnet-utilization', category: 'ipam', chart: 'bar',
+    title: 'Subnet utilization', description: '% of addresses in use, per subnet',
+    fn: ipam.ipamSubnetUtilizationReport },
+
+  // ───────── FLEET HEALTH ─────────
+  { key: 'fleet-stale-agents', category: 'fleet', chart: 'bar',
+    title: 'Stale agents', description: 'Active-lifecycle devices silent past the threshold',
+    fn: fleet.staleAgentsReport },
+
+  // ───────── NETWORK DEVICES ─────────
+  { key: 'network-backup-status', category: 'network', chart: 'pie',
+    title: 'Network device backup status', description: 'Latest config backup per device: ok vs failed',
+    fn: network.networkBackupStatusReport },
+
+  // ───────── RETENTION & LEGAL HOLD ─────────
+  { key: 'retention-legal-hold', category: 'retention', chart: 'bar',
+    title: 'Retention & legal hold', description: 'Active legal holds, policies never run, last purge size',
+    fn: retention.retentionLegalHoldReport },
+
+  // ───────── PROCUREMENT ─────────
+  { key: 'procurement-pipeline', category: 'procurement', chart: 'bar',
+    title: 'Purchase order pipeline', description: 'Open purchase orders by status',
+    fn: procurement.procurementPipelineReport },
+
+  // ───────── KNOWLEDGE BASE ─────────
+  { key: 'knowledge-most-viewed', category: 'knowledge', chart: 'bar',
+    title: 'Most viewed articles', description: 'Top 10 knowledge base articles by views',
+    fn: knowledge.knowledgeMostViewedReport },
+  { key: 'knowledge-by-status', category: 'knowledge', chart: 'pie',
+    title: 'Articles by status', description: 'Draft vs published vs archived',
+    fn: knowledge.knowledgeByStatusReport },
+  { key: 'knowledge-by-space', category: 'knowledge', chart: 'bar',
+    title: 'Articles by space', description: 'Article count per knowledge space',
+    fn: knowledge.knowledgeBySpaceReport },
 ];
 
 const _byKey: Record<string, ReportMeta> = {};

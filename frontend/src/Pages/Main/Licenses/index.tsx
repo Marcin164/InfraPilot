@@ -258,6 +258,8 @@ const AssignmentsPanel = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["license-assignments", license.id] });
       queryClient.invalidateQueries({ queryKey: ["licenses"] });
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-reports-batch"] });
       toast.success(t("licenses.assignments.added"));
       setSelected(null);
     },
@@ -270,6 +272,8 @@ const AssignmentsPanel = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["license-assignments", license.id] });
       queryClient.invalidateQueries({ queryKey: ["licenses"] });
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-reports-batch"] });
       toast.success(t("licenses.assignments.removed"));
     },
     onError: (err: any) =>
@@ -437,6 +441,8 @@ const Licenses = () => {
     onSuccess: () => {
       toast.success(t("licenses.created"));
       queryClient.invalidateQueries({ queryKey: ["licenses"] });
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-reports-batch"] });
       setCreateOpen(false);
     },
     onError: (err: any) =>
@@ -449,6 +455,8 @@ const Licenses = () => {
     onSuccess: () => {
       toast.success(t("licenses.updated"));
       queryClient.invalidateQueries({ queryKey: ["licenses"] });
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-reports-batch"] });
       setEditingLicense(null);
     },
     onError: (err: any) =>
@@ -460,6 +468,8 @@ const Licenses = () => {
     onSuccess: () => {
       toast.success(t("licenses.deleted"));
       queryClient.invalidateQueries({ queryKey: ["licenses"] });
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-reports-batch"] });
       setEditingLicense(null);
     },
     onError: (err: any) =>

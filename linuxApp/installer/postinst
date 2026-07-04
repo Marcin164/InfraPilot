@@ -1,0 +1,22 @@
+#!/bin/bash
+# Runs as root during `dpkg -i .../InfraPilotAgentSetup-*.deb`. Mirrors
+# the Inno Setup installer's CLI-args + post-install-hook flow on
+# Windows and the pkg postinstall flow on macOS: if the install snippet
+# set BACKEND_URL/ENROLL_TOKEN (see devices.controller.ts's Linux
+# install snippet), write config.json now; either way, register the
+# systemd service+timer so the agent starts scanning without any
+# further operator action.
+set -euo pipefail
+
+AGENT_BIN="/opt/infrapilot/agent/infrapilot-agent"
+
+case "${1:-configure}" in
+  configure)
+    if [ -n "${BACKEND_URL:-}" ] && [ -n "${ENROLL_TOKEN:-}" ]; then
+      "$AGENT_BIN" --write-config
+    fi
+    "$AGENT_BIN" --register-task
+    ;;
+esac
+
+exit 0

@@ -40,7 +40,7 @@ const STATIC_SETTINGS_KEYS: SearchResultItem[] = [
   { id: "s-tags", type: "setting", title: "search.setting.tags", url: "/admin/settings/tags" },
   { id: "s-compliance-rules", type: "setting", title: "search.setting.complianceRules", url: "/admin/settings/compliance-rules" },
   { id: "s-ticket-templates", type: "setting", title: "search.setting.ticketTemplates", url: "/admin/settings/ticket-templates" },
-  { id: "s-windows-agent", type: "setting", title: "search.setting.windowsAgent", url: "/admin/settings/windows-agent" },
+  { id: "s-agent", type: "setting", title: "search.setting.windowsAgent", url: "/admin/settings/agent" },
   { id: "s-locations", type: "setting", title: "search.setting.locations", url: "/admin/settings/locations" },
   { id: "s-smtp", type: "setting", title: "search.setting.smtp", url: "/admin/settings/smtp" },
   { id: "s-m365", type: "setting", title: "search.setting.m365", url: "/admin/settings/m365" },

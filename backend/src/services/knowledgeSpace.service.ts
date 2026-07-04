@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { KnowledgeSpace } from 'src/entities/knowledgeSpace.entity';
+import { invalidateReportCache } from 'src/helpers/reportCache';
 
 @Injectable()
 export class KnowledgeSpaceService {
@@ -31,20 +32,25 @@ export class KnowledgeSpaceService {
       ...dto,
       authorId: userId ?? dto.authorId,
     });
-    return this.repo.save(space);
+    const saved = await this.repo.save(space);
+    invalidateReportCache('knowledge-by-space');
+    return saved;
   }
 
   async update(id: string, dto: any) {
     const space = await this.repo.findOneBy({ id });
     if (!space) throw new NotFoundException('Space not found');
     Object.assign(space, dto);
-    return this.repo.save(space);
+    const saved = await this.repo.save(space);
+    invalidateReportCache('knowledge-by-space');
+    return saved;
   }
 
   async remove(id: string) {
     const space = await this.repo.findOneBy({ id });
     if (!space) throw new NotFoundException('Space not found');
     await this.repo.remove(space);
+    invalidateReportCache('knowledge-by-space');
     return { deleted: true };
   }
 }

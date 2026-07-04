@@ -4,6 +4,7 @@ export type AuditEntry = {
   id: string;
   entityType: string;
   entityId: string;
+  entityName: string | null;
   action: string;
   metadata: Record<string, any> | null;
   createdAt: string;
@@ -28,6 +29,7 @@ export const listAudit = async (query: {
   entityType?: string;
   entityId?: string;
   action?: string;
+  actorId?: string;
   from?: string;
   to?: string;
   limit?: number;
