@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SlaDefinition } from 'src/entities/slaDefinition.entity';
-import { SlaRule } from 'src/entities/slaRule.entity';
+import { SlaRule, TicketType } from 'src/entities/slaRule.entity';
 import { TicketPriority } from 'src/entities/tickets.entity';
 import { Repository } from 'typeorm';
 
@@ -22,9 +22,13 @@ export class SlaRuleService {
     });
   }
 
-  async create(dto: { priority: TicketPriority; slaDefinitionId: string }) {
+  async create(dto: {
+    priority: TicketPriority;
+    definitionId: string;
+    ticketType?: TicketType | null;
+  }) {
     const sla = await this.slaRepo.findOne({
-      where: { id: dto.slaDefinitionId },
+      where: { id: dto.definitionId },
     });
 
     if (!sla) {
@@ -35,7 +39,8 @@ export class SlaRuleService {
     await this.ruleRepo.delete({ priority: dto.priority });
 
     const rule = this.ruleRepo.create({
-      ...dto,
+      priority: dto.priority,
+      ticketType: dto.ticketType ?? null,
       slaDefinition: sla,
     });
 
@@ -46,11 +51,11 @@ export class SlaRuleService {
     id: string,
     dto: {
       priority?: TicketPriority;
-      type: string;
-      slaDefinitionId?: string;
+      ticketType?: TicketType | null;
+      definitionId?: string;
     },
   ) {
-    const rule: any = await this.ruleRepo.findOne({
+    const rule = await this.ruleRepo.findOne({
       where: { id },
       relations: ['slaDefinition'],
     });
@@ -59,9 +64,9 @@ export class SlaRuleService {
       throw new NotFoundException('SLA rule not found');
     }
 
-    if (dto.slaDefinitionId) {
+    if (dto.definitionId) {
       const sla = await this.slaRepo.findOne({
-        where: { id: dto.slaDefinitionId },
+        where: { id: dto.definitionId },
       });
 
       if (!sla) {
@@ -72,7 +77,7 @@ export class SlaRuleService {
     }
 
     if (dto.priority !== undefined) rule.priority = dto.priority;
-    if (dto.type !== undefined) rule.type = dto.type;
+    if (dto.ticketType !== undefined) rule.ticketType = dto.ticketType;
 
     return this.ruleRepo.save(rule);
   }

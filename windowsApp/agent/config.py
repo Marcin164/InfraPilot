@@ -63,6 +63,21 @@ def dpapi_encrypt(plaintext: str) -> str:
     return "dpapi:" + base64.b64encode(blob).decode("ascii")
 
 
+def _validate_backend_url(url: str) -> str:
+    """Reject plaintext http:// so the bootstrap token and per-device HMAC
+    secret can't leak on the wire on first contact. localhost/127.0.0.1 stay
+    allowed for local testing against a backend without TLS configured."""
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url)
+    if parsed.scheme != "https" and parsed.hostname not in ("localhost", "127.0.0.1", "::1"):
+        raise ValueError(
+            f"backend_url must use https:// (got {parsed.scheme or 'no scheme'}://...); "
+            "use https, or localhost/127.0.0.1 for local testing only"
+        )
+    return url
+
+
 def load_config(path: Path = DEFAULT_CONFIG_PATH) -> AgentConfig:
     if not path.exists():
         raise FileNotFoundError(
@@ -74,7 +89,7 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> AgentConfig:
         if not raw.get(key):
             raise ValueError(f"Config missing required key: {key}")
     return AgentConfig(
-        backend_url=raw["backend_url"].rstrip("/"),
+        backend_url=_validate_backend_url(raw["backend_url"].rstrip("/")),
         enrollment_token=_dpapi_decrypt(raw["enrollment_token"]),
         interval_minutes=int(raw.get("interval_minutes", 60)),
         verify_tls=bool(raw.get("verify_tls", True)),

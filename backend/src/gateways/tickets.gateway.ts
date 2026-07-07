@@ -4,9 +4,11 @@ import {
   SubscribeMessage,
   MessageBody,
   ConnectedSocket,
+  OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { validateAccessTokenAndGetUserClass } from 'src/helpers/propelAuthClient';
 
 type Viewer = { userId: string; label: string };
 
@@ -24,7 +26,7 @@ const wsOrigins = (() => {
     credentials: true,
   },
 })
-export class TicketsGateway implements OnGatewayDisconnect {
+export class TicketsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -33,6 +35,29 @@ export class TicketsGateway implements OnGatewayDisconnect {
    * multiple tabs counts once per tab; consumers can dedupe by userId.
    */
   private viewersByTicket = new Map<string, Map<string, Viewer>>();
+
+  // Every socket must present a valid PropelAuth access token — handshake
+  // auth payload (browser clients) or an Authorization header (non-browser
+  // callers) — the same bar the REST AuthGuard enforces. Unauthenticated
+  // sockets are dropped before they can join any ticket room.
+  async handleConnection(client: Socket) {
+    const token =
+      (client.handshake.auth as any)?.token ||
+      client.handshake.headers.authorization?.split(' ')[1];
+
+    if (!token) {
+      client.disconnect(true);
+      return;
+    }
+
+    try {
+      const user = await validateAccessTokenAndGetUserClass(token);
+      (client.data as any).internalUserId =
+        (user as any)?.properties?.metadata?.id || (user as any)?.userId || '';
+    } catch {
+      client.disconnect(true);
+    }
+  }
 
   private snapshotViewers(ticketId: string): Viewer[] {
     const inner = this.viewersByTicket.get(ticketId);
@@ -52,27 +77,29 @@ export class TicketsGateway implements OnGatewayDisconnect {
 
   @SubscribeMessage('ticket.join')
   handleJoinTicket(
-    @MessageBody() body: string | { ticketId: string; userId?: string; label?: string },
+    @MessageBody() body: string | { ticketId: string; label?: string },
     @ConnectedSocket() client: Socket,
   ) {
+    // Identity comes from the token verified in handleConnection, never
+    // from the message body — the client only gets to pick a display label.
+    const userId = (client.data as any)?.internalUserId;
+    if (!userId) {
+      client.disconnect(true);
+      return;
+    }
+
     const ticketId = typeof body === 'string' ? body : body.ticketId;
-    const userId =
-      typeof body === 'string' ? '' : body.userId ?? '';
-    const label =
-      typeof body === 'string' ? '' : body.label ?? userId;
+    const label = (typeof body === 'string' ? '' : body.label) || userId;
 
     client.join(`ticket:${ticketId}`);
     (client.data as any).ticketId = ticketId;
-    (client.data as any).userId = userId;
 
-    if (userId) {
-      const inner =
-        this.viewersByTicket.get(ticketId) ??
-        new Map<string, Viewer>();
-      inner.set(client.id, { userId, label });
-      this.viewersByTicket.set(ticketId, inner);
-      this.broadcastViewers(ticketId);
-    }
+    const inner =
+      this.viewersByTicket.get(ticketId) ??
+      new Map<string, Viewer>();
+    inner.set(client.id, { userId, label });
+    this.viewersByTicket.set(ticketId, inner);
+    this.broadcastViewers(ticketId);
   }
 
   @SubscribeMessage('ticket.leave')
@@ -102,7 +129,6 @@ export class TicketsGateway implements OnGatewayDisconnect {
   }
 
   emitNewComment(ticketId: string, payload: any) {
-    console.log('[WS] emit comment to ticket:', ticketId);
     this.server
       .to(`ticket:${ticketId}`)
       .emit('ticket.comment.created', payload);

@@ -4,6 +4,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { PartialType } from '@nestjs/mapped-types';
 import { IsIn, IsOptional, IsString } from 'class-validator';
 import { Maintenance, MaintenanceType } from 'src/entities/maintenance.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
@@ -36,6 +37,8 @@ export class CreateMaintenanceDto {
   @IsOptional() @IsString()
   notes?: string;
 }
+
+export class UpdateMaintenanceDto extends PartialType(CreateMaintenanceDto) {}
 
 @Injectable()
 export class MaintenanceService {

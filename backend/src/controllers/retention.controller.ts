@@ -12,7 +12,7 @@ import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { RetentionService } from 'src/services/retention.service';
-import { RetentionAction } from 'src/entities/retentionPolicy.entity';
+import { CreateRetentionPolicyDto, UpdateRetentionPolicyDto } from 'src/dto/retention.dto';
 
 @UseGuards(AuthGuard, MfaGuard)
 @Roles(Role.Admin, Role.Compliance)
@@ -31,28 +31,14 @@ export class RetentionController {
   }
 
   @Post()
-  create(
-    @Body()
-    body: {
-      entityType: string;
-      retentionDays: number;
-      action?: RetentionAction;
-      enabled?: boolean;
-    },
-  ) {
+  create(@Body() body: CreateRetentionPolicyDto) {
     return this.retentionService.create(body);
   }
 
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @Body()
-    body: {
-      entityType?: string;
-      retentionDays?: number;
-      action?: RetentionAction;
-      enabled?: boolean;
-    },
+    @Body() body: UpdateRetentionPolicyDto,
   ) {
     return this.retentionService.update(id, body);
   }

@@ -37,11 +37,8 @@ describe('EscalationActionService', () => {
   });
 
   describe('execute', () => {
-    it('calls notify (console) for NOTIFY action', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-      await service.execute(makeEscalation('NOTIFY', {}));
-      expect(consoleSpy).toHaveBeenCalled();
-      consoleSpy.mockRestore();
+    it('resolves without error for NOTIFY action (stub — no dispatcher wired up yet)', async () => {
+      await expect(service.execute(makeEscalation('NOTIFY', {}))).resolves.toBeUndefined();
     });
 
     it('updates assignmentGroup for REASSIGN action', async () => {

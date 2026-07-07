@@ -87,6 +87,7 @@ import { NetworkDeviceCredential } from './entities/networkDeviceCredential.enti
 import { NetworkDeviceConfigBackup } from './entities/networkDeviceConfigBackup.entity';
 import { Subnet } from './entities/subnet.entity';
 import { IpAllocation } from './entities/ipAllocation.entity';
+import { DeviceEnrollmentToken } from './entities/deviceEnrollmentToken.entity';
 import { IpamModule } from './modules/ipam.module';
 import { Maintenance } from './entities/maintenance.entity';
 import { MaintenanceModule } from './modules/maintenance.module';
@@ -96,6 +97,7 @@ import { AiModule } from './modules/ai.module';
 import { M365Module } from './modules/m365.module';
 import { BootstrapService } from './services/bootstrap.service';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { MetricsController } from './controllers/metrics.controller';
 
 @Module({
   imports: [
@@ -104,7 +106,7 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
       envFilePath: '.env',
       load: [adConfig],
     }),
-    PrometheusModule.register(),
+    PrometheusModule.register({ controller: MetricsController }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST || 'localhost',
@@ -167,6 +169,7 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
         NetworkDeviceConfigBackup,
         Subnet,
         IpAllocation,
+        DeviceEnrollmentToken,
       ],
       synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true',
       migrationsRun: process.env.TYPEORM_SYNCHRONIZE !== 'true',

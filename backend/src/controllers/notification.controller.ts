@@ -10,6 +10,7 @@ import {
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { NotificationService } from 'src/services/notification.service';
+import { MarkNotificationsReadDto } from 'src/dto/notification.dto';
 
 @UseGuards(AuthGuard)
 @Roles(
@@ -47,7 +48,7 @@ export class NotificationController {
   }
 
   @Post('read')
-  async markRead(@Req() req: any, @Body() body: { ids: string[] }) {
+  async markRead(@Req() req: any, @Body() body: MarkNotificationsReadDto) {
     const affected = await this.service.markRead(this.actorOf(req), body.ids ?? []);
     return { affected };
   }

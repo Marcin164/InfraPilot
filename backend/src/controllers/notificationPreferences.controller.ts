@@ -8,11 +8,9 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
-import {
-  NotificationPreferencesService,
-  PreferenceRow,
-} from 'src/services/notificationPreferences.service';
+import { NotificationPreferencesService } from 'src/services/notificationPreferences.service';
 import { NotificationDispatcherService } from 'src/services/notificationDispatcher.service';
+import { UpdatePreferencesDto } from 'src/dto/notificationPreferences.dto';
 
 @UseGuards(AuthGuard)
 @Roles(
@@ -40,7 +38,7 @@ export class NotificationPreferencesController {
   }
 
   @Post()
-  async update(@Req() req: any, @Body() body: { rows: PreferenceRow[] }) {
+  async update(@Req() req: any, @Body() body: UpdatePreferencesDto) {
     const written = await this.service.setMany(this.actorOf(req), body.rows ?? []);
     return { written };
   }

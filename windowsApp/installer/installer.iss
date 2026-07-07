@@ -1,9 +1,13 @@
 ; Inno Setup script for the InfraPilot Windows agent.
 ;
-; One install flow: the operator runs the installer with /BACKENDURL=...
-; and /TOKEN=... params (from the admin UI snippet). Installer copies
-; the agent, registers a SYSTEM scheduled task, and performs the initial
-; enrollment in the background.
+; Silent install: the operator runs the installer with either
+;   /CONFIGFILE=<path to a JSON config file>            (preferred -- see
+;                                                          CurStepChanged)
+;   /BACKENDURL=... /TOKEN=...                           (legacy, kept for
+;                                                          compatibility)
+; from the admin UI's copy-paste snippet. Installer copies the agent,
+; registers a SYSTEM scheduled task, and performs the initial enrollment
+; in the background.
 
 #define MyAppName       "InfraPilot Agent"
 #define MyAppVersion    "0.1.0"
@@ -110,6 +114,15 @@ begin
   end;
 end;
 
+function JsonEscape(const S: String): String;
+begin
+  Result := S;
+  { Backslash first -- escaping the quote below introduces new backslashes
+    that must not themselves get re-escaped by a second pass. }
+  StringChangeEx(Result, '\', '\\', True);
+  StringChangeEx(Result, '"', '\"', True);
+end;
+
 procedure WriteCliConfig(const BackendUrl, Token: String);
 var
   Lines: TArrayOfString;
@@ -117,8 +130,8 @@ begin
   ForceDirectories(ExpandConstant('{commonappdata}\InfraPilot\agent'));
   SetArrayLength(Lines, 8);
   Lines[0] := '{';
-  Lines[1] := '  "backend_url": "' + BackendUrl + '",';
-  Lines[2] := '  "enrollment_token": "' + Token + '",';
+  Lines[1] := '  "backend_url": "' + JsonEscape(BackendUrl) + '",';
+  Lines[2] := '  "enrollment_token": "' + JsonEscape(Token) + '",';
   Lines[3] := '  "interval_minutes": 60,';
   Lines[4] := '  "verify_tls": true,';
   Lines[5] := '  "ca_bundle": null,';
@@ -129,13 +142,29 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
-  BackendUrl, Token: String;
+  BackendUrl, Token, ConfigFileParam: String;
 begin
   if CurStep = ssPostInstall then begin
-    BackendUrl := GetCmdParam('BACKENDURL');
-    Token      := GetCmdParam('TOKEN');
-    if (BackendUrl <> '') and (Token <> '') and (not FileExists(ConfigPath)) then begin
-      WriteCliConfig(BackendUrl, Token);
+    if not FileExists(ConfigPath) then begin
+      // Preferred silent path: /CONFIGFILE=<path to a JSON file the caller
+      // already wrote>. Keeps the backend URL + enrollment token out of
+      // this process's own command line (Task Manager / Process Explorer
+      // show installer.exe's argv to anyone with access to the host) --
+      // the caller is expected to write that file to a per-user temp
+      // location and delete it right after this run.
+      ConfigFileParam := GetCmdParam('CONFIGFILE');
+      if (ConfigFileParam <> '') and FileExists(ConfigFileParam) then begin
+        ForceDirectories(ExpandConstant('{commonappdata}\InfraPilot\agent'));
+        FileCopy(ConfigFileParam, ConfigPath, False);
+      end else begin
+        // Legacy path: /BACKENDURL=... /TOKEN=... directly on the command
+        // line. Kept for backward compatibility with existing snippets.
+        BackendUrl := GetCmdParam('BACKENDURL');
+        Token      := GetCmdParam('TOKEN');
+        if (BackendUrl <> '') and (Token <> '') then begin
+          WriteCliConfig(BackendUrl, Token);
+        end;
+      end;
     end;
   end;
 

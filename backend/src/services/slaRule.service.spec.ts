@@ -52,16 +52,16 @@ describe('SlaRuleService', () => {
   describe('create', () => {
     it('throws NotFoundException when SLA definition not found', async () => {
       slaRepo.findOne.mockResolvedValue(null);
-      await expect(service.create({ priority: 'High' as any, slaDefinitionId: 'ghost' })).rejects.toThrow(NotFoundException);
+      await expect(service.create({ priority: 'High' as any, definitionId: 'ghost' })).rejects.toThrow(NotFoundException);
     });
 
     it('deletes existing rule for same priority before creating new one', async () => {
-      await service.create({ priority: 'High' as any, slaDefinitionId: 'def-1' });
+      await service.create({ priority: 'High' as any, definitionId: 'def-1' });
       expect(ruleRepo.delete).toHaveBeenCalledWith({ priority: 'High' });
     });
 
     it('creates and saves the new rule', async () => {
-      await service.create({ priority: 'High' as any, slaDefinitionId: 'def-1' });
+      await service.create({ priority: 'High' as any, definitionId: 'def-1' });
       expect(ruleRepo.create).toHaveBeenCalled();
       expect(ruleRepo.save).toHaveBeenCalled();
     });
@@ -70,19 +70,19 @@ describe('SlaRuleService', () => {
   describe('update', () => {
     it('throws NotFoundException when rule not found', async () => {
       ruleRepo.findOne.mockResolvedValue(null);
-      await expect(service.update('ghost', { type: 'X' })).rejects.toThrow(NotFoundException);
+      await expect(service.update('ghost', { ticketType: 'Incident' as any })).rejects.toThrow(NotFoundException);
     });
 
-    it('throws NotFoundException when new slaDefinitionId does not resolve', async () => {
+    it('throws NotFoundException when new definitionId does not resolve', async () => {
       ruleRepo.findOne.mockResolvedValue(makeRule());
       slaRepo.findOne.mockResolvedValue(null);
-      await expect(service.update('rule-1', { type: 'X', slaDefinitionId: 'ghost' })).rejects.toThrow(NotFoundException);
+      await expect(service.update('rule-1', { ticketType: 'Incident' as any, definitionId: 'ghost' })).rejects.toThrow(NotFoundException);
     });
 
     it('updates priority when provided', async () => {
       const rule = makeRule() as any;
       ruleRepo.findOne.mockResolvedValue(rule);
-      await service.update('rule-1', { priority: 'Low' as any, type: 'X' });
+      await service.update('rule-1', { priority: 'Low' as any, ticketType: 'Incident' as any });
       expect(rule.priority).toBe('Low');
     });
   });

@@ -6,23 +6,28 @@ import {
   faCopy,
   faKey,
   faTriangleExclamation,
-  faRotate,
-  faCircleCheck,
-  faCircleXmark,
+  faTrash,
   faDownload,
   faUpload,
+  faPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import { faWindows as faWindowsBrand, faApple, faLinux } from "@fortawesome/free-brands-svg-icons";
 import { twMerge } from "tailwind-merge";
+import moment from "moment";
 
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import Input from "../../../../Components/Inputs/Input";
+import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import Modal from "../../../../Components/Modals/AnimatedModal";
 import {
   AgentPlatform,
   AgentPlatformSetupInfo,
+  EnrollmentTokenSnippets,
   getAgentSetupInfo,
-  rotateAgentToken,
+  listEnrollmentTokens,
+  createEnrollmentToken,
+  revokeEnrollmentToken,
   uploadAgentInstaller,
 } from "../../../../Services/devices";
 
@@ -62,6 +67,27 @@ const formatBytes = (bytes: number) => {
   return `${(bytes / 1024 ** i).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 };
 
+const STATUS_PILL: Record<string, string> = {
+  pending: "bg-[#FFFBEB] text-[#92400E]",
+  used: "bg-[#EAFBF1] text-[#166534]",
+  revoked: "bg-[#FDECEC] text-[#991B1B]",
+  expired: "bg-[#F0F0F0] text-[#6B7280]",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Oczekuje",
+  used: "Użyty",
+  revoked: "Unieważniony",
+  expired: "Wygasł",
+};
+
+const TTL_OPTIONS = [
+  { label: "1 godzina", value: 1 },
+  { label: "24 godziny", value: 24 },
+  { label: "72 godziny", value: 72 },
+  { label: "7 dni", value: 24 * 7 },
+];
+
 const PLATFORM_CONFIG: Record<
   AgentPlatform,
   { label: string; icon: any; accept: string; installCardTitle: string; installHint: string }
@@ -97,77 +123,298 @@ const AgentPlatformPanel = ({
 }: {
   platform: AgentPlatform;
   data: AgentPlatformSetupInfo;
-  onUpload: (file: File) => void;
+  onUpload: (file: File, signatureFile?: File) => void;
   uploading: boolean;
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const sigInputRef = useRef<HTMLInputElement | null>(null);
+  const [pendingSignature, setPendingSignature] = useState<File | null>(null);
   const cfg = PLATFORM_CONFIG[platform];
 
   return (
-    <div className="space-y-4">
-      <div className="bg-white rounded-[10px] shadow-xl p-4">
-        <CardHeader text={`Instalator agenta (${cfg.label})`} icon={faDownload} />
-        <p className="text-[14px] text-[#535353] mt-2 mb-3">
-          Plik {cfg.accept} wgrany tutaj jest serwowany przez ten backend pod
-          adresem widocznym poniżej w snippecie -- nie trzeba hostować go
-          nigdzie indziej.
-        </p>
-        {data.installerMeta ? (
-          <div className="bg-[#F5F7FA] rounded-[8px] p-3 text-[13px] text-[#3C3C3C] mb-3 flex items-center justify-between">
-            <span>
-              {data.installerMeta.originalName} ·{" "}
-              {formatBytes(data.installerMeta.sizeBytes)}
-            </span>
-            <a href={data.installerUrl ?? undefined} className="text-[#2B9AE9] font-semibold">
-              Pobierz
-            </a>
-          </div>
-        ) : (
-          <div className="bg-[#FFFBEB] border border-[#F59E0B] rounded-[8px] p-3 text-[#92400E] text-[14px] mb-3">
-            Instalator nie został jeszcze wgrany. Wgraj plik {cfg.accept}, żeby
-            snippet poniżej mógł go pobrać.
-          </div>
-        )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={cfg.accept}
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onUpload(file);
-            e.target.value = "";
-          }}
-        />
+    <div className="bg-white rounded-[10px] shadow-xl p-4">
+      <CardHeader text={`Instalator agenta (${cfg.label})`} icon={faDownload} />
+      <p className="text-[14px] text-[#535353] mt-2 mb-3">
+        Plik {cfg.accept} wgrany tutaj jest serwowany przez ten backend --
+        nie trzeba hostować go nigdzie indziej. Snippet instalacyjny (adres +
+        token) generujesz osobno w sekcji „Tokeny rejestracji" powyżej.
+      </p>
+      {data.installerMeta ? (
+        <div className="bg-[#F5F7FA] rounded-[8px] p-3 text-[13px] text-[#3C3C3C] mb-3 flex items-center justify-between">
+          <span>
+            {data.installerMeta.originalName} ·{" "}
+            {formatBytes(data.installerMeta.sizeBytes)}
+            {platform === "linux" && (
+              <span className={data.installerMeta.signature ? "text-[#166534]" : "text-[#92400E]"}>
+                {" "}· {data.installerMeta.signature ? "podpisany" : "niepodpisany"}
+              </span>
+            )}
+          </span>
+          <a href={data.installerUrl ?? undefined} className="text-[#2B9AE9] font-semibold">
+            Pobierz
+          </a>
+        </div>
+      ) : (
+        <div className="bg-[#FFFBEB] border border-[#F59E0B] rounded-[8px] p-3 text-[#92400E] text-[14px] mb-3">
+          Instalator nie został jeszcze wgrany. Wgraj plik {cfg.accept}, żeby
+          wygenerowane tokeny mogły go pobrać.
+        </div>
+      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={cfg.accept}
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onUpload(file, pendingSignature ?? undefined);
+          e.target.value = "";
+          setPendingSignature(null);
+        }}
+      />
+      <div className="flex flex-wrap gap-2 items-center">
         <ButtonPrimary
           text={uploading ? "Wgrywanie..." : data.installerMeta ? "Wgraj nową wersję" : "Wgraj instalator"}
           icon={faUpload}
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
         />
+        {platform === "linux" && (
+          <>
+            <input
+              ref={sigInputRef}
+              type="file"
+              accept=".asc,.sig"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setPendingSignature(file);
+                e.target.value = "";
+              }}
+            />
+            <ButtonPrimary
+              color="white"
+              text={pendingSignature ? `Podpis: ${pendingSignature.name}` : "Dołącz podpis (.sig)"}
+              icon={faKey}
+              onClick={() => sigInputRef.current?.click()}
+              disabled={uploading}
+            />
+          </>
+        )}
       </div>
-
-      {data.snippet && (
-        <div className="bg-white rounded-[10px] shadow-xl p-4">
-          <CardHeader text={cfg.installCardTitle} icon={cfg.icon} />
-          <p
-            className="text-[14px] text-[#535353] mt-2 mb-3"
-            dangerouslySetInnerHTML={{ __html: cfg.installHint }}
-          />
-          <CopyableBox value={data.snippet} />
-          <p className="text-[12px] text-[#7a7a7a] mt-2">
-            Skrypt pobiera instalator z backendu i uruchamia go w trybie
-            cichym z adresem URL i tokenem rejestracji.
-          </p>
-        </div>
+      {platform === "linux" && pendingSignature && (
+        <p className="text-[12px] text-[#7a7a7a] mt-2">
+          Podpis zostanie wysłany razem z następnym plikiem {cfg.accept} wybranym powyżej.
+        </p>
       )}
     </div>
   );
 };
 
-const WindowsAgent = () => {
+const GenerateTokenModal = ({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) => {
   const queryClient = useQueryClient();
-  const [rotateModalOpen, setRotateModalOpen] = useState(false);
+  const [label, setLabel] = useState("");
+  const [ttlHours, setTtlHours] = useState(24);
+  const [result, setResult] = useState<EnrollmentTokenSnippets | null>(null);
+  const [activePlatform, setActivePlatform] = useState<AgentPlatform>("windows");
+
+  const generateMutation = useMutation({
+    mutationFn: () => createEnrollmentToken({ label: label.trim() || undefined, ttlHours }),
+    onSuccess: (data) => {
+      setResult(data);
+      queryClient.invalidateQueries({ queryKey: ["enrollment-tokens"] });
+    },
+    onError: () => toast.error("Nie udało się wygenerować tokenu"),
+  });
+
+  const handleClose = () => {
+    setLabel("");
+    setTtlHours(24);
+    setResult(null);
+    setActivePlatform("windows");
+    onClose();
+  };
+
+  return (
+    <Modal
+      classNames={{ modal: "w-[560px] h-fit rounded-[10px]" }}
+      open={open}
+      onClose={handleClose}
+      center
+    >
+      <div className="text-center font-bold text-[22px] mb-4">
+        {result ? "Token wygenerowany" : "Nowy token rejestracji"}
+      </div>
+
+      {!result ? (
+        <>
+          <div className="mb-3">
+            <Input
+              label="Etykieta (opcjonalnie)"
+              placeholder="np. Laptopy magazyn — marzec"
+              value={label}
+              onChange={(e: any) => setLabel(e.target.value)}
+            />
+          </div>
+          <div className="mb-4">
+            <SelectSecondary
+              label="Ważność"
+              options={TTL_OPTIONS}
+              value={TTL_OPTIONS.find((o) => o.value === ttlHours)}
+              onSelect={(opt: any) => setTtlHours(opt.value)}
+            />
+          </div>
+          <div className="flex justify-around mt-2">
+            <ButtonPrimary text="Anuluj" onClick={handleClose} />
+            <ButtonPrimary
+              icon={faKey}
+              text={generateMutation.isPending ? "Generowanie..." : "Wygeneruj"}
+              onClick={() => generateMutation.mutate()}
+              disabled={generateMutation.isPending}
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="text-[13px] text-[#535353] text-center mb-3">
+            Wygasa {moment(result.expiresAt).format("DD/MM/YYYY, HH:mm")}
+          </p>
+          <div className="flex flex-wrap gap-2 justify-center mb-3">
+            {(Object.keys(PLATFORM_CONFIG) as AgentPlatform[]).map((platform) => (
+              <button
+                key={platform}
+                onClick={() => setActivePlatform(platform)}
+                className={twMerge(
+                  "px-4 py-2 rounded-[8px] text-[13px] font-semibold transition-colors flex items-center gap-2",
+                  activePlatform === platform
+                    ? "bg-[#2B9AE9] text-white"
+                    : "bg-[#F5F7FA] text-[#3C3C3C] hover:bg-[#E8EEF4]",
+                )}
+              >
+                <FontAwesomeIcon icon={PLATFORM_CONFIG[platform].icon} />
+                {PLATFORM_CONFIG[platform].label}
+              </button>
+            ))}
+          </div>
+          {result[activePlatform].snippet ? (
+            <div
+              className="text-[13px] text-[#535353] mb-2"
+              dangerouslySetInnerHTML={{ __html: PLATFORM_CONFIG[activePlatform].installHint }}
+            />
+          ) : (
+            <p className="text-[13px] text-[#92400E] mb-2">
+              Instalator dla {PLATFORM_CONFIG[activePlatform].label} nie został
+              jeszcze wgrany — wgraj go w panelu poniżej, żeby snippet zadziałał.
+            </p>
+          )}
+          {result[activePlatform].snippet && (
+            <CopyableBox value={result[activePlatform].snippet as string} />
+          )}
+          <p className="text-[12px] text-[#BC0E0E] mt-3 text-center">
+            ⚠ Token pokazany tylko raz. Zamknięcie tego okna = trzeba wygenerować nowy.
+          </p>
+          <div className="flex justify-center mt-3">
+            <ButtonPrimary text="Zamknij" onClick={handleClose} />
+          </div>
+        </>
+      )}
+    </Modal>
+  );
+};
+
+const EnrollmentTokensCard = () => {
+  const queryClient = useQueryClient();
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const { data: tokens, isLoading } = useQuery({
+    queryKey: ["enrollment-tokens"],
+    queryFn: listEnrollmentTokens,
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: revokeEnrollmentToken,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["enrollment-tokens"] });
+      toast.success("Token unieważniony");
+    },
+    onError: () => toast.error("Nie udało się unieważnić tokenu"),
+  });
+
+  return (
+    <div className="bg-white rounded-[10px] shadow-xl p-4">
+      <div className="flex items-center justify-between mb-2">
+        <CardHeader text="Tokeny rejestracji" icon={faKey} />
+        <ButtonPrimary text="+ Nowy token" icon={faPlus} onClick={() => setModalOpen(true)} />
+      </div>
+      <p className="text-[14px] text-[#535353] mt-2 mb-3">
+        Każda instalacja agenta (Windows, macOS, Linux) używa własnego,
+        jednorazowego tokenu. Po rejestracji urządzenie dostaje własny sekret
+        HMAC — token służy tylko do otwarcia furtki na pierwsze podłączenie.
+      </p>
+
+      {isLoading ? (
+        <p className="text-[13px] text-[#7a7a7a]">Ładowanie...</p>
+      ) : !tokens || tokens.length === 0 ? (
+        <p className="text-[13px] text-[#7a7a7a]">
+          Brak wygenerowanych tokenów. Kliknij „+ Nowy token", żeby zainstalować
+          pierwszego agenta.
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-[13px]">
+            <thead>
+              <tr className="text-left text-[#7a7a7a] text-[12px]">
+                <th className="pb-2 pr-3">Etykieta</th>
+                <th className="pb-2 pr-3">Utworzony</th>
+                <th className="pb-2 pr-3">Wygasa</th>
+                <th className="pb-2 pr-3">Status</th>
+                <th className="pb-2 pr-3">Urządzenie</th>
+                <th className="pb-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {tokens.map((t) => (
+                <tr key={t.id} className="border-t border-[#F0F0F0]">
+                  <td className="py-2 pr-3">{t.label ?? "(bez etykiety)"}</td>
+                  <td className="py-2 pr-3">{moment(t.createdAt).format("DD/MM/YYYY HH:mm")}</td>
+                  <td className="py-2 pr-3">{moment(t.expiresAt).format("DD/MM/YYYY HH:mm")}</td>
+                  <td className="py-2 pr-3">
+                    <span className={twMerge("rounded-full px-2 py-[2px] text-[11px] font-semibold", STATUS_PILL[t.displayStatus])}>
+                      {STATUS_LABEL[t.displayStatus]}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-3">{t.deviceId ?? "—"}</td>
+                  <td className="py-2 text-right">
+                    {t.displayStatus === "pending" && (
+                      <button
+                        onClick={() => revokeMutation.mutate(t.id)}
+                        disabled={revokeMutation.isPending}
+                        className="text-[#BC0E0E] hover:opacity-70 cursor-pointer"
+                        title="Unieważnij"
+                      >
+                        <FontAwesomeIcon icon={faTrash} />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <GenerateTokenModal open={modalOpen} onClose={() => setModalOpen(false)} />
+    </div>
+  );
+};
+
+const WindowsAgent = () => {
   const [activePlatform, setActivePlatform] = useState<AgentPlatform>("windows");
 
   const { data, isLoading, isError, error } = useQuery({
@@ -175,19 +422,17 @@ const WindowsAgent = () => {
     queryFn: getAgentSetupInfo,
   });
 
-  const rotateMutation = useMutation({
-    mutationFn: rotateAgentToken,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["agent-setup-info"] });
-      setRotateModalOpen(false);
-      toast.success("Token został wygenerowany");
-    },
-    onError: () => toast.error("Nie udało się wygenerować tokenu"),
-  });
-
+  const queryClient = useQueryClient();
   const uploadMutation = useMutation({
-    mutationFn: ({ file, platform }: { file: File; platform: AgentPlatform }) =>
-      uploadAgentInstaller(file, platform),
+    mutationFn: ({
+      file,
+      platform,
+      signatureFile,
+    }: {
+      file: File;
+      platform: AgentPlatform;
+      signatureFile?: File;
+    }) => uploadAgentInstaller(file, platform, signatureFile),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agent-setup-info"] });
       toast.success("Instalator agenta został wgrany");
@@ -222,44 +467,9 @@ const WindowsAgent = () => {
         </p>
       </div>
 
-      <div className="bg-white rounded-[10px] shadow-xl p-4">
-        <CardHeader text="Token rejestracji" icon={faKey} />
+      <EnrollmentTokensCard />
 
-        {data && !data.configured ? (
-          <>
-            <div className="mt-3 bg-[#FFFBEB] border border-[#F59E0B] rounded-[8px] p-3 text-[#92400E] text-[14px] mb-4">
-              {data.message}
-            </div>
-            <ButtonPrimary
-              text={rotateMutation.isPending ? "Generowanie..." : "Wygeneruj token"}
-              icon={faKey}
-              onClick={() => rotateMutation.mutate()}
-              disabled={rotateMutation.isPending}
-            />
-          </>
-        ) : (
-          <>
-            <p className="text-[14px] text-[#535353] mt-2 mb-3">
-              Token floty — używany przy pierwszej rejestracji agenta
-              (Windows, macOS i Linux). Każde urządzenie po rejestracji
-              otrzymuje własny sekret HMAC.
-            </p>
-            {data?.configured && (
-              <div className="mb-3">
-                <CopyableBox value={data.enrollmentToken} />
-              </div>
-            )}
-            <ButtonPrimary text="Rotuj token" icon={faRotate} onClick={() => setRotateModalOpen(true)} />
-            <p className="text-[12px] text-[#7a7a7a] mt-2">
-              Rotacja unieważnia stary token. Już zarejestrowane urządzenia
-              działają normalnie — nowy token potrzebny tylko przy instalacji
-              kolejnych hostów.
-            </p>
-          </>
-        )}
-      </div>
-
-      {data?.configured && (
+      {data && (
         <>
           <div className="bg-white rounded-[10px] shadow-xl p-4">
             <div className="flex flex-wrap gap-2">
@@ -284,46 +494,13 @@ const WindowsAgent = () => {
           <AgentPlatformPanel
             platform={activePlatform}
             data={data[activePlatform]}
-            onUpload={(file) => uploadMutation.mutate({ file, platform: activePlatform })}
+            onUpload={(file, signatureFile) =>
+              uploadMutation.mutate({ file, platform: activePlatform, signatureFile })
+            }
             uploading={uploadMutation.isPending}
           />
         </>
       )}
-
-      <Modal
-        classNames={{ modal: "w-[480px] h-fit rounded-[10px]" }}
-        open={rotateModalOpen}
-        onClose={() => setRotateModalOpen(false)}
-        center
-      >
-        <div className="text-center font-bold text-[22px] mb-4">
-          Rotacja tokenu rejestracji
-        </div>
-        <div className="text-center py-4">
-          <FontAwesomeIcon
-            icon={faTriangleExclamation}
-            className="text-[#F59E0B] text-[64px]"
-          />
-        </div>
-        <p className="text-[16px] font-light text-justify pb-4">
-          Stary token zostanie unieważniony. Nowe instalacje agenta będą
-          wymagały nowego tokenu. Już zarejestrowane urządzenia{" "}
-          <strong>nie stracą</strong> połączenia.
-        </p>
-        <div className="flex justify-around mt-2">
-          <ButtonPrimary
-            icon={faCircleXmark}
-            text="Anuluj"
-            onClick={() => setRotateModalOpen(false)}
-          />
-          <ButtonPrimary
-            icon={rotateMutation.isPending ? faRotate : faCircleCheck}
-            text={rotateMutation.isPending ? "Generowanie..." : "Wygeneruj nowy token"}
-            onClick={() => rotateMutation.mutate()}
-            disabled={rotateMutation.isPending}
-          />
-        </div>
-      </Modal>
     </div>
   );
 };

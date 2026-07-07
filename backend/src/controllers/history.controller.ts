@@ -18,6 +18,7 @@ import {
   HistoriesService,
   type HistoryFeedQuery,
 } from 'src/services/histories.service';
+import { CreateHistoryDto } from 'src/dto/history.dto';
 
 @UseGuards(AuthGuard)
 @Controller('histories')
@@ -49,7 +50,7 @@ export class HistoriesController {
 
   @Roles(Role.Admin, Role.Helpdesk)
   @Post()
-  async createHistory(@Body() body: any): Promise<any> {
+  async createHistory(@Body() body: CreateHistoryDto): Promise<any> {
     return this.historiesService.createHistory(body);
   }
 

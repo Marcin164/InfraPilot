@@ -12,8 +12,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
-import { ActiveDirectoryService } from 'src/services/active-directory.service';
-import type { AdConfig } from 'src/services/active-directory.service';
+import {
+  ActiveDirectoryService,
+  AdConnectDto,
+  AdDisconnectDto,
+} from 'src/services/active-directory.service';
 import { UsersService } from 'src/services/users.service';
 
 @UseGuards(AuthGuard, MfaGuard)
@@ -31,18 +34,18 @@ export class ActiveDirectoryController {
   }
 
   @Post('/connect')
-  async connect(@Body() config: any) {
-    return this.adService.connect(config as AdConfig);
+  async connect(@Body() config: AdConnectDto) {
+    return this.adService.connect(config);
   }
 
   @Post('/disconnect')
-  async disconnect(@Body() body: any) {
+  async disconnect(@Body() body: AdDisconnectDto) {
     return this.adService.disconnect(body?.password);
   }
 
   @Post('/test')
-  async testConnection(@Body() config: any) {
-    return this.adService.testConnection(config as AdConfig);
+  async testConnection(@Body() config: AdConnectDto) {
+    return this.adService.testConnection(config);
   }
 
   @Post('/sync')
@@ -65,7 +68,7 @@ export class ActiveDirectoryController {
   }
 
   @Post('/certificate')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2 * 1024 * 1024 } }))
   async uploadCertificate(@UploadedFile() file: any) {
     if (!file) {
       return { success: false, message: 'Nie przesłano pliku' };

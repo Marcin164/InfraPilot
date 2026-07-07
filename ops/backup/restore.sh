@@ -101,10 +101,12 @@ trap 'rm -rf "$WORK"' EXIT
 
 log "Decrypting bundle"
 TAR="${WORK}/bundle.tar"
+# --passphrase-fd (not --passphrase) so the secret never appears as a
+# command-line argument visible to other local users via `ps`.
 gpg --batch --yes --quiet \
     --pinentry-mode loopback \
-    --passphrase "$BACKUP_ENCRYPT_PASSPHRASE" \
-    --decrypt --output "$TAR" "$BUNDLE"
+    --passphrase-fd 0 \
+    --decrypt --output "$TAR" "$BUNDLE" <<< "$BACKUP_ENCRYPT_PASSPHRASE"
 
 log "Extracting"
 tar --directory "$WORK" --extract --file="$TAR"

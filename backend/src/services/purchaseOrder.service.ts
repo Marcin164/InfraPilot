@@ -5,6 +5,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { PartialType } from '@nestjs/mapped-types';
 import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { PurchaseOrder, PurchaseOrderStatus } from 'src/entities/purchaseOrder.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
@@ -43,6 +44,13 @@ export class CreatePurchaseOrderDto {
 
   @IsOptional() @IsString()
   notes?: string;
+}
+
+export class UpdatePurchaseOrderDto extends PartialType(CreatePurchaseOrderDto) {}
+
+export class UpdatePurchaseOrderStatusDto {
+  @IsIn(['draft', 'submitted', 'approved', 'ordered', 'received', 'cancelled'])
+  status: PurchaseOrderStatus;
 }
 
 @Injectable()

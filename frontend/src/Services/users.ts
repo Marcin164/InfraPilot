@@ -47,7 +47,7 @@ export const addUser = async (
 export const addManyUsers = async (
   data: Record<string, unknown>[],
 ): Promise<User[]> => {
-  const { data: result } = await api.post("/users/many", data);
+  const { data: result } = await api.post("/users/many", { users: data });
   return result;
 };
 

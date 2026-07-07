@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
 import { AdminSettings } from 'src/entities/adminSettings.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
 
@@ -21,6 +22,11 @@ export type AgentInstallerMeta = {
   sizeBytes: number;
   uploadedAt: string;
   uploadedBy: string | null;
+  sha256: string;
+  // Detached GPG signature (ASCII-armored), Linux only for now — see
+  // linuxApp/installer/PACKAGE_SIGNING.md. Verified against the public key
+  // baked into backend/src/config/packageSigningKey.ts before dpkg -i runs.
+  signature: string | null;
 };
 
 @Injectable()
@@ -56,11 +62,21 @@ export class AgentInstallerService {
     file: any,
     platform: AgentPlatform,
     uploadedBy: string | null,
+    signatureFile?: any,
   ): Promise<AgentInstallerMeta> {
     if (!file) throw new BadRequestException('Brak pliku');
     const { extension, key } = PLATFORM_CONFIG[platform];
     if (!file.originalname?.toLowerCase().endsWith(extension)) {
       throw new BadRequestException(`Instalator agenta musi być plikiem ${extension}`);
+    }
+
+    let signature: string | null = null;
+    if (signatureFile) {
+      const text = signatureFile.buffer.toString('utf8');
+      if (!text.includes('BEGIN PGP SIGNATURE')) {
+        throw new BadRequestException('Plik podpisu musi być odłączonym podpisem GPG (.asc/.sig)');
+      }
+      signature = text;
     }
 
     fs.writeFileSync(this.filePath(platform), file.buffer);
@@ -70,6 +86,8 @@ export class AgentInstallerService {
       sizeBytes: file.size,
       uploadedAt: new Date().toISOString(),
       uploadedBy,
+      sha256: crypto.createHash('sha256').update(file.buffer).digest('hex'),
+      signature,
     };
 
     const existing = await this.repo.findOne({ where: { key } });

@@ -13,6 +13,7 @@ import { Request } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { DashboardsService } from 'src/services/dashboards.service';
+import { CreateDashboardDto, UpdateDashboardCardsDto } from 'src/dto/dashboards.dto';
 
 @UseGuards(AuthGuard)
 @Controller('dashboards')
@@ -26,7 +27,7 @@ export class DashboardsController {
 
   @Roles(Role.Admin)
   @Post()
-  create(@Body() body: { name: string; userId: string }) {
+  create(@Body() body: CreateDashboardDto) {
     return this.dashboardsService.createDashboard(body.name, body.userId);
   }
 
@@ -38,7 +39,7 @@ export class DashboardsController {
 
   @Roles(Role.Admin)
   @Patch(':id')
-  updateCards(@Param('id') id: string, @Body() body: { cards: Record<string, any>[] }) {
+  updateCards(@Param('id') id: string, @Body() body: UpdateDashboardCardsDto) {
     return this.dashboardsService.updateCards(id, body.cards);
   }
 }

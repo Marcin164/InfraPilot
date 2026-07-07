@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { PartialType } from '@nestjs/mapped-types';
 import {
   IsIn,
   IsNotEmpty,
@@ -49,6 +50,8 @@ export class CreateSubnetDto {
   @IsOptional() @IsString()
   notes?: string | null;
 }
+
+export class UpdateSubnetDto extends PartialType(CreateSubnetDto) {}
 
 export class CreateAllocationDto {
   @IsOptional() @IsString()

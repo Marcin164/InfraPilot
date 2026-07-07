@@ -5,8 +5,26 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { PartialType } from '@nestjs/mapped-types';
 import { TicketTemplate } from 'src/entities/ticketTemplate.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
+
+export class CreateTicketTemplateDto {
+  @IsString() @IsNotEmpty()
+  name: string;
+
+  @IsString() @IsNotEmpty()
+  body: string;
+
+  @IsOptional() @IsString()
+  category?: string;
+
+  @IsOptional() @IsBoolean()
+  shared?: boolean;
+}
+
+export class UpdateTicketTemplateDto extends PartialType(CreateTicketTemplateDto) {}
 
 @Injectable()
 export class TicketTemplateService {

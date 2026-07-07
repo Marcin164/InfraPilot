@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
+import { PartialType } from '@nestjs/mapped-types';
 import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Location, LocationType } from 'src/entities/location.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
@@ -22,6 +23,8 @@ export class CreateLocationDto {
   @IsOptional() @IsString()
   description?: string | null;
 }
+
+export class UpdateLocationDto extends PartialType(CreateLocationDto) {}
 
 @Injectable()
 export class LocationService {

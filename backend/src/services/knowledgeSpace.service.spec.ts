@@ -64,10 +64,10 @@ describe('KnowledgeSpaceService', () => {
       expect(repo.save).toHaveBeenCalled();
     });
 
-    it('uses dto.authorId when userId not provided', async () => {
-      await service.create({ name: 'HR', authorId: 'user-9' });
+    it('ignores a client-supplied authorId in the dto', async () => {
+      await service.create({ name: 'HR', authorId: 'user-9' } as any);
       const arg = repo.create.mock.calls[0][0];
-      expect(arg.authorId).toBe('user-9');
+      expect(arg.authorId).toBeUndefined();
     });
   });
 

@@ -12,6 +12,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
+import DOMPurify from "dompurify";
 
 import {
   getArticle,
@@ -273,7 +274,7 @@ const ArticlePage = () => {
           {article.content ? (
             <div
               className="article-content max-w-none"
-              dangerouslySetInnerHTML={{ __html: article.content }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content) }}
             />
           ) : (
             <div className="text-[15px] italic text-[#8A8A8A]">

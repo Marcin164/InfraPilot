@@ -158,7 +158,6 @@ export class UsersService {
   }
 
   async delete(id: string): Promise<any> {
-    console.log(id);
     return await this.usersRepository.delete({ id });
   }
 

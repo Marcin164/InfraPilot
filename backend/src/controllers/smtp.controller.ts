@@ -4,6 +4,7 @@ import { MfaGuard } from 'src/guards/mfaGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { SmtpSettingsService } from 'src/services/smtp-settings.service';
 import { MailService } from 'src/services/mail.service';
+import { SaveSmtpConfigDto } from 'src/dto/smtp.dto';
 
 @UseGuards(AuthGuard, MfaGuard)
 @Roles(Role.Admin)
@@ -21,7 +22,7 @@ export class SmtpController {
   }
 
   @Post('/config')
-  async saveConfig(@Body() body: any) {
+  async saveConfig(@Body() body: SaveSmtpConfigDto) {
     await this.smtpSettings.saveConfig(body);
     await this.mailService.reinit();
     return { success: true, message: 'Konfiguracja SMTP zapisana' };
@@ -35,7 +36,7 @@ export class SmtpController {
   }
 
   @Post('/test')
-  async testConnection(@Body() body: any) {
+  async testConnection(@Body() body: SaveSmtpConfigDto) {
     return this.smtpSettings.testConnection(body);
   }
 }

@@ -19,6 +19,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "ts-node src/seed.ts",
+    "reencrypt-secrets": "ts-node -r tsconfig-paths/register src/reencrypt-secrets.ts",
     "typeorm": "node -r ts-node/register -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/data-source.ts",
     "migration:generate": "npm run typeorm -- migration:generate",
     "migration:create": "node -r ts-node/register ./node_modules/typeorm/cli.js migration:create",
@@ -33,6 +34,7 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/event-emitter": "^3.1.0",
     "@nestjs/jwt": "^11.0.0",
+    "@nestjs/mapped-types": "^2.1.1",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/platform-socket.io": "^11.1.11",
     "@nestjs/schedule": "^6.1.1",
@@ -58,6 +60,9 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.27"
+  },
+  "overrides": {
+    "multer": "^2.2.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

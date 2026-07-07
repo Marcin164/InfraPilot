@@ -53,11 +53,11 @@ describe('EscalationConfigService', () => {
   describe('create', () => {
     it('throws NotFoundException when SLA definition not found', async () => {
       slaDefRepo.findOneBy.mockResolvedValue(null);
-      await expect(service.create({ definition: 'ghost', triggerPercentage: 75 })).rejects.toThrow(NotFoundException);
+      await expect(service.create({ slaDefinitionId: 'ghost', triggerPercentage: 75, actionType: 'NOTIFY' })).rejects.toThrow(NotFoundException);
     });
 
     it('creates and saves escalation definition', async () => {
-      await service.create({ definition: 'def-1', triggerPercentage: 75, actionType: 'notify' });
+      await service.create({ slaDefinitionId: 'def-1', triggerPercentage: 75, actionType: 'NOTIFY' });
       expect(escalationRepo.create).toHaveBeenCalled();
       expect(escalationRepo.save).toHaveBeenCalled();
     });

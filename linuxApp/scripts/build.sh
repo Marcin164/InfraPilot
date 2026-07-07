@@ -3,15 +3,22 @@
 #   1. PyInstaller --onedir -> dist/infrapilot-agent (CLI) + dist/infrapilot-agent-gui (Tkinter GUI)
 #   2. Assemble a .deb root under /opt/infrapilot/agent + a desktop entry
 #   3. dpkg-deb --build -> installer/Output/InfraPilotAgentSetup-x.y.z-<arch>.deb
-#
-# No signing step (unlike the macOS pipeline's codesign/notarize) --
-# .deb has no equivalent of Gatekeeper; distros that want provenance
-# verify via apt's repo signing instead, which is a packaging-repo
-# concern, not something a standalone .deb build can do on its own.
+#   4. Detached GPG signature (see "Signing" below) -> same file + .sig
 #
 # Usage:
 #   ./scripts/build.sh
 #   ./scripts/build.sh --skip-installer   # stop after the PyInstaller bundles
+#
+# Signing:
+#   Set SIGNING_KEY_ID to a GPG key already present in this machine's
+#   keyring (never a private key file checked into this repo -- that key
+#   must live on a separate, controlled signing machine/CI secret store,
+#   never on the same host that serves the built .deb for download, or
+#   the signature proves nothing). Without SIGNING_KEY_ID the build still
+#   produces a usable .deb, just unsigned -- with a loud warning.
+#   The matching public key lives at installer/infrapilot-packages-public.asc
+#   (committed) and must be kept in sync with backend/src/config/packageSigningKey.ts,
+#   which is what the install-time verification step actually trusts.
 
 set -euo pipefail
 
@@ -93,6 +100,18 @@ chmod 0755 "$PKGROOT/DEBIAN/postinst" "$PKGROOT/DEBIAN/prerm"
 echo "==> dpkg-deb --build"
 OUT_DEB="installer/Output/InfraPilotAgentSetup-${VERSION}-${DEB_ARCH}.deb"
 dpkg-deb --root-owner-group --build "$PKGROOT" "$OUT_DEB"
+
+if [ -n "${SIGNING_KEY_ID:-}" ]; then
+  echo "==> Signing with GPG key ${SIGNING_KEY_ID}"
+  gpg --batch --yes --detach-sign --armor -u "$SIGNING_KEY_ID" \
+      -o "${OUT_DEB}.sig" "$OUT_DEB"
+  echo "  Signature: $ROOT/${OUT_DEB}.sig"
+else
+  echo ""
+  echo "!! SIGNING_KEY_ID not set -- .deb built UNSIGNED. Set it (a key already"
+  echo "!! in this machine's keyring, never a private key from this repo) to"
+  echo "!! produce a signature the bootstrap script can verify before dpkg -i."
+fi
 
 echo ""
 echo "Build complete."

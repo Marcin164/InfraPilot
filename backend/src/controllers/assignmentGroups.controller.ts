@@ -12,6 +12,11 @@ import {
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { AdminGuard } from 'src/guards/adminGuard.guard';
 import { AssignmentGroupsService } from 'src/services/assignmentGroups.service';
+import {
+  CreateAssignmentGroupDto,
+  UpdateAssignmentGroupDto,
+  SetGroupMembersDto,
+} from 'src/dto/assignmentGroups.dto';
 
 @UseGuards(AuthGuard)
 @Controller('assignment-groups')
@@ -37,7 +42,7 @@ export class AssignmentGroupsController {
 
   @UseGuards(AdminGuard)
   @Post()
-  async create(@Body() dto: { name: string; description?: string }) {
+  async create(@Body() dto: CreateAssignmentGroupDto) {
     return this.assignmentGroupsService.create(dto);
   }
 
@@ -45,7 +50,7 @@ export class AssignmentGroupsController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body() dto: { name?: string; description?: string },
+    @Body() dto: UpdateAssignmentGroupDto,
   ) {
     return this.assignmentGroupsService.update(id, dto);
   }
@@ -60,7 +65,7 @@ export class AssignmentGroupsController {
   @Put(':id/members')
   async setMembers(
     @Param('id') id: string,
-    @Body() body: { userIds: string[] },
+    @Body() body: SetGroupMembersDto,
   ) {
     return this.assignmentGroupsService.setMembers(id, body?.userIds ?? []);
   }

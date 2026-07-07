@@ -3,6 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import { NodeSSH } from 'node-ssh';
+import {
+  IsBoolean,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { NetworkDeviceCredential } from 'src/entities/networkDeviceCredential.entity';
 import { NetworkDeviceConfigBackup } from 'src/entities/networkDeviceConfigBackup.entity';
 import { Devices } from 'src/entities/devices.entity';
@@ -12,19 +22,33 @@ import { uuidv4 } from 'src/helpers/uuidv4';
 import { AuditService } from './audit.service';
 import { NotificationDispatcherService } from './notificationDispatcher.service';
 
-export type SetCredentialDto = {
+export class SetCredentialDto {
+  @IsString() @IsNotEmpty() @MaxLength(255)
   sshUsername: string;
-  sshPassword?: string | null;
-  sshPort?: number;
-  backupCommand: string;
-  backupEnabled?: boolean;
-};
 
-export type SetLeaseSyncDto = {
+  @IsOptional() @IsString() @MaxLength(1000)
+  sshPassword?: string | null;
+
+  @IsOptional() @IsInt() @Min(1) @Max(65535)
+  sshPort?: number;
+
+  @IsString() @IsNotEmpty() @MaxLength(4000)
+  backupCommand: string;
+
+  @IsOptional() @IsBoolean()
+  backupEnabled?: boolean;
+}
+
+export class SetLeaseSyncDto {
+  @IsString() @IsNotEmpty() @MaxLength(4000)
   leaseSyncCommand: string;
+
+  @IsString() @IsNotEmpty() @MaxLength(4000)
   leaseSyncLineTemplate: string;
+
+  @IsOptional() @IsBoolean()
   leaseSyncEnabled?: boolean;
-};
+}
 
 export type CredentialPublic = {
   deviceId: string;

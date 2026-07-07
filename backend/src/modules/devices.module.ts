@@ -41,6 +41,9 @@ import { Users } from 'src/entities/users.entity';
 import { AdminSettings } from 'src/entities/adminSettings.entity';
 import { AgentTokenService } from 'src/services/agent-token.service';
 import { AgentInstallerService } from 'src/services/agent-installer.service';
+import { AgentBootstrapService } from 'src/services/agent-bootstrap.service';
+import { DeviceEnrollmentToken } from 'src/entities/deviceEnrollmentToken.entity';
+import { DeviceEnrollmentTokenService } from 'src/services/deviceEnrollmentToken.service';
 import { TicketDeviceLifecycleListener } from 'src/listeners/ticketDeviceLifecycle.listener';
 
 @Module({
@@ -59,6 +62,7 @@ import { TicketDeviceLifecycleListener } from 'src/listeners/ticketDeviceLifecyc
       NetworkDeviceConfigBackup,
       IpAllocation,
       Subnet,
+      DeviceEnrollmentToken,
     ]),
     AuditModule,
     ComplianceModule,
@@ -89,6 +93,8 @@ import { TicketDeviceLifecycleListener } from 'src/listeners/ticketDeviceLifecyc
     EnrollmentGuard,
     AgentTokenService,
     AgentInstallerService,
+    AgentBootstrapService,
+    DeviceEnrollmentTokenService,
     TicketDeviceLifecycleListener,
   ],
   exports: [

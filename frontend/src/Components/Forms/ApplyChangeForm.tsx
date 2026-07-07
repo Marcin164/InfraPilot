@@ -57,13 +57,17 @@ const ApplyChangeForm: React.FC = () => {
 
       if (values.removedComponents.length > 0) {
         createdDevices = await Promise.all(
-          values.removedComponents.map((component: any) =>
-            addDevice({
-              ...component,
+          values.removedComponents.map((component: any) => {
+            // `type` ("remove") is history-tracking metadata (see the
+            // removedComponents mapping below) -- not a device field, so it
+            // must not be sent to POST /devices.
+            const { type, ...deviceFields } = component;
+            return addDevice({
+              ...deviceFields,
               location: deviceContext.data.location,
               group: "Components",
-            }),
-          ),
+            });
+          }),
         );
       }
 

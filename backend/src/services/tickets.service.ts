@@ -353,8 +353,6 @@ export class TicketsService {
   async getTickets(query: GetTicketsQueryDto) {
     const { page = 1, limit = 30, search, current, ...filters } = query as any;
 
-    console.log(current);
-    console.log('Dziala?');
     const qb = this.ticketsRepository
       .createQueryBuilder('ticket')
       .leftJoinAndSelect('ticket.requester', 'requester')
@@ -832,7 +830,19 @@ export class TicketsService {
     };
   }
 
-  async createApproval(ticketId: any, requesterId: any, approverId: any) {
+  async createApproval(
+    ticketId: any,
+    requesterId: any,
+    approverId: any,
+    currentUserId?: string,
+  ) {
+    const ticket = await this.ticketsRepository.findOneBy({ id: ticketId });
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    if (currentUserId && approverId === currentUserId) {
+      throw new ForbiddenException('You cannot approve your own request');
+    }
+
     const approval = this.ticketsApprovalsRepository.create({
       ticketId,
       requesterId,

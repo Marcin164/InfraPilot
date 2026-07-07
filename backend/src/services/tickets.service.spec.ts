@@ -29,6 +29,14 @@ jest.mock('fs', () => ({
   createReadStream: jest.fn(() => ({ pipe: jest.fn() })),
 }));
 
+// TicketsGateway now validates PropelAuth tokens on connect, which requires
+// PROPELAUTH_AUTH_URL/PROPELAUTH_API_KEY to be set. Replace the whole module
+// so importing it here (transitively, via TicketsService) never touches that
+// check — the DI below fully replaces it with a plain mock anyway.
+jest.mock('src/gateways/tickets.gateway', () => ({
+  TicketsGateway: class TicketsGateway {},
+}));
+
 const buildQueryBuilder = (overrides: Record<string, any> = {}) => {
   const qb: any = {
     select: jest.fn().mockReturnThis(),

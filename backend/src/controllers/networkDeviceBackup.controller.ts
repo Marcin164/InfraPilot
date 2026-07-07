@@ -10,8 +10,11 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
-import { NetworkDeviceBackupService } from 'src/services/networkDeviceBackup.service';
-import type { SetCredentialDto, SetLeaseSyncDto } from 'src/services/networkDeviceBackup.service';
+import {
+  NetworkDeviceBackupService,
+  SetCredentialDto,
+  SetLeaseSyncDto,
+} from 'src/services/networkDeviceBackup.service';
 import { LeaseSyncService } from 'src/services/leaseSync.service';
 
 @UseGuards(AuthGuard)

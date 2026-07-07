@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { SettingsService } from 'src/services/settings.service';
+import { UpdateUserSettingsDto } from 'src/dto/settings.dto';
 
 @UseGuards(AuthGuard)
 @Controller('settings')
@@ -21,7 +22,7 @@ export class SettingsController {
   }
 
   @Patch()
-  updateUserSettings(@Request() req: any, @Body() dto: any) {
+  updateUserSettings(@Request() req: any, @Body() dto: UpdateUserSettingsDto) {
     return this.settingsService.updateUserSettings(
       req.user.properties.metadata.id,
       dto,

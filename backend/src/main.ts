@@ -24,6 +24,13 @@ async function bootstrap() {
         : ['log', 'warn', 'error', 'debug'],
   });
 
+  // Only trust X-Forwarded-* when we know a reverse proxy sits in front of
+  // us — otherwise any client could spoof its own IP and defeat per-IP rate
+  // limiting. Opt-in via env since we can't infer the deployment topology.
+  if (process.env.TRUST_PROXY === 'true') {
+    app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  }
+
   // Request ID middleware — propagate X-Request-Id from caller or generate
   // one. Lets us correlate logs/audit across services.
   app.use((req: Request, res: Response, next: NextFunction) => {
@@ -34,11 +41,18 @@ async function bootstrap() {
     next();
   });
 
-  // Security headers — sane defaults from helmet. CSP is left to the reverse
-  // proxy / static host because the SPA configures its own.
+  // Security headers — sane defaults from helmet. This app is a JSON API
+  // (the SPA ships its own CSP via a <meta> tag in its built index.html),
+  // so a locked-down default-src covers any error page or future HTML
+  // response without needing to know the frontend's own asset origins.
   app.use(
     helmet({
-      contentSecurityPolicy: false,
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+        },
+      },
       crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),
   );
@@ -75,7 +89,7 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: false,
+      forbidNonWhitelisted: true,
       transform: true,
     }),
   );
@@ -91,6 +105,13 @@ async function bootstrap() {
     );
   } else {
     logger.log(`CORS allowed origins: ${(corsOrigins as string[]).join(', ')}`);
+  }
+  if (process.env.MFA_REQUIRED !== 'true') {
+    logger.warn(
+      'MFA_REQUIRED is not set to \'true\' — MFA is NOT enforced on sensitive modules ' +
+        '(audit export, privacy erase/export, legal hold, retention run, AD sync, SMTP, ' +
+        'M365, compliance, CVE, fleet). Set it in .env for production.',
+    );
   }
 }
 bootstrap();

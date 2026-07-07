@@ -12,6 +12,7 @@ import type { Response } from 'express';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { ReportsService } from 'src/services/reports.service';
+import { BatchReportsDto } from 'src/dto/reports.dto';
 
 @UseGuards(AuthGuard)
 @Controller('reports')
@@ -26,7 +27,7 @@ export class ReportsController {
 
   @Roles(Role.Admin, Role.Compliance)
   @Post('batch')
-  async batch(@Body() body: { types: string[] }) {
+  async batch(@Body() body: BatchReportsDto) {
     return this.reportsService.generateBatch(body.types);
   }
 

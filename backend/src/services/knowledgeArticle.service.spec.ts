@@ -119,7 +119,7 @@ describe('KnowledgeArticleService', () => {
 
   describe('create', () => {
     it('creates and saves article with authorId', async () => {
-      await service.create({ title: 'New Article', content: 'Content' }, 'user-1');
+      await service.create({ title: 'New Article', content: 'Content', spaceId: 'space-1' }, 'user-1');
       expect(repo.create).toHaveBeenCalledWith(
         expect.objectContaining({ authorId: 'user-1' }),
       );

@@ -274,6 +274,8 @@ export type AgentInstallerMeta = {
   sizeBytes: number;
   uploadedAt: string;
   uploadedBy: string | null;
+  sha256?: string;
+  signature?: string | null;
 };
 
 export type AgentPlatform = "windows" | "macos" | "linux";
@@ -281,39 +283,70 @@ export type AgentPlatform = "windows" | "macos" | "linux";
 export type AgentPlatformSetupInfo = {
   installerUrl: string | null;
   installerMeta: AgentInstallerMeta | null;
-  snippet: string | null;
 };
 
-export type AgentSetupInfo =
-  | {
-      configured: true;
-      backendUrl: string;
-      enrollmentToken: string;
-      windows: AgentPlatformSetupInfo;
-      macos: AgentPlatformSetupInfo;
-      linux: AgentPlatformSetupInfo;
-    }
-  | { configured: false; message: string };
+export type AgentSetupInfo = {
+  backendUrl: string;
+  windows: AgentPlatformSetupInfo;
+  macos: AgentPlatformSetupInfo;
+  linux: AgentPlatformSetupInfo;
+};
 
 export const getAgentSetupInfo = async (): Promise<AgentSetupInfo> => {
   const { data } = await api.get("/devices/agent/setup-info");
   return data;
 };
 
-export const rotateAgentToken = async (): Promise<{ success: boolean; token: string }> => {
-  const { data } = await api.post("/devices/agent/token/rotate");
-  return data;
-};
-
 export const uploadAgentInstaller = async (
   file: File,
   platform: AgentPlatform,
+  signatureFile?: File,
 ): Promise<AgentInstallerMeta> => {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("platform", platform);
+  if (signatureFile) formData.append("signature", signatureFile);
   const { data } = await api.post("/devices/agent/installer", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+  return data;
+};
+
+// ---- Per-device enrollment tokens ----
+
+export type EnrollmentTokenStatus = "pending" | "used" | "revoked" | "expired";
+
+export type EnrollmentTokenListItem = {
+  id: string;
+  label: string | null;
+  createdAt: string;
+  expiresAt: string;
+  displayStatus: EnrollmentTokenStatus;
+  deviceId: string | null;
+};
+
+export type EnrollmentTokenSnippets = {
+  id: string;
+  label: string | null;
+  expiresAt: string;
+  windows: { snippet: string | null };
+  macos: { snippet: string | null };
+  linux: { snippet: string | null };
+};
+
+export const listEnrollmentTokens = async (): Promise<EnrollmentTokenListItem[]> => {
+  const { data } = await api.get("/devices/agent/enrollment-tokens");
+  return data;
+};
+
+export const createEnrollmentToken = async (
+  input: { label?: string; ttlHours?: number },
+): Promise<EnrollmentTokenSnippets> => {
+  const { data } = await api.post("/devices/agent/enrollment-tokens", input);
+  return data;
+};
+
+export const revokeEnrollmentToken = async (id: string): Promise<{ ok: boolean }> => {
+  const { data } = await api.delete(`/devices/agent/enrollment-tokens/${id}`);
   return data;
 };

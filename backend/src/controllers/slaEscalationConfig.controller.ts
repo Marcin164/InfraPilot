@@ -11,6 +11,7 @@ import {
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { EscalationConfigService } from 'src/services/escalationConfig.service';
+import { CreateEscalationConfigDto, UpdateEscalationConfigDto } from 'src/dto/slaEscalationConfig.dto';
 
 @UseGuards(AuthGuard)
 @Controller('sla/escalations')
@@ -29,13 +30,13 @@ export class SlaEscalationConfigController {
 
   @Roles(Role.Admin)
   @Post()
-  async create(@Body() dto: any) {
+  async create(@Body() dto: CreateEscalationConfigDto) {
     return this.service.create(dto);
   }
 
   @Roles(Role.Admin)
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: any) {
+  async update(@Param('id') id: string, @Body() dto: UpdateEscalationConfigDto) {
     return this.service.update(id, dto);
   }
 

@@ -42,8 +42,7 @@ export class EscalationActionService {
     }
   }
 
-  private async notify(ticketId: string, config: any) {
-    console.log(`[ESCALATION NOTIFY] Ticket ${ticketId}`, config);
+  private async notify(_ticketId: string, _config: any) {
     // tu możesz podpiąć mail / websocket
   }
 

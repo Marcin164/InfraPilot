@@ -12,8 +12,12 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
-import { PurchaseOrderService, CreatePurchaseOrderDto } from 'src/services/purchaseOrder.service';
-import { PurchaseOrderStatus } from 'src/entities/purchaseOrder.entity';
+import {
+  PurchaseOrderService,
+  CreatePurchaseOrderDto,
+  UpdatePurchaseOrderDto,
+  UpdatePurchaseOrderStatusDto,
+} from 'src/services/purchaseOrder.service';
 import { AuditService } from 'src/services/audit.service';
 
 @UseGuards(AuthGuard)
@@ -45,7 +49,7 @@ export class PurchaseOrderController {
 
   @Roles(Role.Admin)
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: Partial<CreatePurchaseOrderDto>) {
+  async update(@Param('id') id: string, @Body() dto: UpdatePurchaseOrderDto) {
     const order = await this.poService.update(id, dto);
     await this.auditService.log('PurchaseOrder', id, 'UPDATED', dto);
     return order;
@@ -53,7 +57,7 @@ export class PurchaseOrderController {
 
   @Roles(Role.Admin)
   @Patch(':id/status')
-  async updateStatus(@Param('id') id: string, @Body() body: { status: PurchaseOrderStatus }) {
+  async updateStatus(@Param('id') id: string, @Body() body: UpdatePurchaseOrderStatusDto) {
     const order = await this.poService.updateStatus(id, body.status);
     await this.auditService.log('PurchaseOrder', id, 'STATUS_CHANGED', { status: body.status });
     return order;

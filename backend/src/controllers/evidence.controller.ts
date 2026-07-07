@@ -10,10 +10,8 @@ import type { Response } from 'express';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
-import {
-  EvidenceInclude,
-  EvidencePackService,
-} from 'src/services/evidencePack.service';
+import { EvidencePackService } from 'src/services/evidencePack.service';
+import { BuildEvidencePackDto } from 'src/dto/evidence.dto';
 
 @UseGuards(AuthGuard, MfaGuard)
 @Roles(Role.Admin, Role.Compliance, Role.Auditor)
@@ -23,13 +21,7 @@ export class EvidenceController {
 
   @Post('pack')
   async build(
-    @Body()
-    body: {
-      from: string;
-      to: string;
-      include: EvidenceInclude[];
-      reportTypes?: string[];
-    },
+    @Body() body: BuildEvidencePackDto,
     @Req() req: any,
     @Res() res: Response,
   ) {

@@ -15,6 +15,7 @@ import { MfaGuard } from 'src/guards/mfaGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { PrivacyService } from 'src/services/privacy.service';
 import { AuditService } from 'src/services/audit.service';
+import { EraseUserDto } from 'src/dto/privacy.dto';
 
 const actorOf = (req: any): string =>
   req?.user?.properties?.metadata?.id ?? req?.user?.id ?? 'unknown';
@@ -87,7 +88,7 @@ export class PrivacyController {
   @Post('user/:id/erase')
   async eraseUser(
     @Param('id') id: string,
-    @Body() body: { reason: string },
+    @Body() body: EraseUserDto,
     @Req() req: any,
   ) {
     return this.privacyService.eraseUser(id, {

@@ -11,6 +11,7 @@ import {
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { CalendarService } from 'src/services/calendar.service';
+import { CreateCalendarDto, UpdateCalendarDto, AddHolidayDto } from 'src/dto/calendar.dto';
 
 @UseGuards(AuthGuard)
 @Controller('sla/calendars')
@@ -24,19 +25,19 @@ export class CalendarController {
 
   @Roles(Role.Admin)
   @Post()
-  create(@Body() dto: any) {
+  create(@Body() dto: CreateCalendarDto) {
     return this.calendarService.create(dto);
   }
 
   @Roles(Role.Admin)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: any) {
+  update(@Param('id') id: string, @Body() dto: UpdateCalendarDto) {
     return this.calendarService.update(id, dto);
   }
 
   @Roles(Role.Admin)
   @Post(':id/holidays')
-  addHoliday(@Param('id') id: string, @Body() dto: any) {
+  addHoliday(@Param('id') id: string, @Body() dto: AddHolidayDto) {
     return this.calendarService.addHoliday(id, dto);
   }
 

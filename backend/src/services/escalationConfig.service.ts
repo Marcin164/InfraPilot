@@ -63,26 +63,45 @@ export class EscalationConfigService {
     return Array.from(grouped.values());
   }
 
-  async create(dto: any) {
+  async create(dto: {
+    slaDefinitionId: string;
+    triggerPercentage: number;
+    actionType: string;
+    actionConfig?: Record<string, any>;
+  }) {
     const slaDefinition = await this.slaDefRepo.findOneBy({
-      id: dto.definition,
+      id: dto.slaDefinitionId,
     });
 
     if (!slaDefinition) throw new NotFoundException('SLA definition not found');
 
     const escalation = this.escalationRepo.create({
-      ...dto,
+      slaDefinitionId: dto.slaDefinitionId,
+      triggerPercentage: dto.triggerPercentage,
+      actionType: dto.actionType as any,
+      actionConfig: dto.actionConfig,
     });
 
     return this.escalationRepo.save(escalation);
   }
 
-  async update(id: string, dto: any) {
+  async update(
+    id: string,
+    dto: {
+      slaDefinitionId?: string;
+      triggerPercentage?: number;
+      actionType?: string;
+      actionConfig?: Record<string, any>;
+    },
+  ) {
     const escalation = await this.escalationRepo.findOneBy({ id });
 
     if (!escalation) throw new NotFoundException('Escalation not found');
 
-    Object.assign(escalation, dto);
+    if (dto.slaDefinitionId !== undefined) escalation.slaDefinitionId = dto.slaDefinitionId;
+    if (dto.triggerPercentage !== undefined) escalation.triggerPercentage = dto.triggerPercentage;
+    if (dto.actionType !== undefined) escalation.actionType = dto.actionType as any;
+    if (dto.actionConfig !== undefined) escalation.actionConfig = dto.actionConfig;
 
     return this.escalationRepo.save(escalation);
   }

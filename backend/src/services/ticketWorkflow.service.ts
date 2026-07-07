@@ -6,18 +6,90 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TicketCategory } from 'src/entities/ticketCategory.entity';
+import { Type } from 'class-transformer';
 import {
-  TicketWorkflow,
-  WorkflowStep,
-  WorkflowTrigger,
-} from 'src/entities/ticketWorkflow.entity';
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { TicketCategory } from 'src/entities/ticketCategory.entity';
+import { TicketType } from 'src/entities/tickets.entity';
+import { TicketWorkflow, WorkflowStep } from 'src/entities/ticketWorkflow.entity';
+import type { WorkflowStepType, WorkflowTrigger } from 'src/entities/ticketWorkflow.entity';
 import { Tickets } from 'src/entities/tickets.entity';
 import { TicketsApprovals } from 'src/entities/ticketsApprovals.entity';
 import { TicketsComments } from 'src/entities/ticketsComments.entity';
 import { AuditService } from './audit.service';
 import { NotificationDispatcherService } from './notificationDispatcher.service';
 import { uuidv4 } from 'src/helpers/uuidv4';
+
+export class UpsertCategoryDto {
+  @IsOptional() @IsString()
+  id?: string;
+
+  @IsString() @IsNotEmpty()
+  name: string;
+
+  @IsOptional() @IsIn(Object.values(TicketType))
+  ticketType?: TicketType;
+
+  @IsOptional() @IsString()
+  description?: string | null;
+
+  @IsOptional() @IsString()
+  color?: string;
+
+  @IsOptional() @IsBoolean()
+  enabled?: boolean;
+
+  @IsOptional() @IsString()
+  workflowId?: string | null;
+}
+
+export class WorkflowStepDto {
+  @IsOptional() @IsString()
+  id?: string;
+
+  @IsOptional() @IsNumber()
+  order?: number;
+
+  @IsIn(['request_approval', 'notify', 'set_field', 'assign_to', 'create_comment'])
+  type: WorkflowStepType;
+
+  @IsOptional() @IsString()
+  label?: string;
+
+  @IsOptional()
+  config?: Record<string, any>;
+}
+
+export class UpsertWorkflowDto {
+  @IsOptional() @IsString()
+  id?: string;
+
+  @IsString() @IsNotEmpty()
+  name: string;
+
+  @IsOptional() @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsIn(['on_create', 'on_state_change', 'on_assign', 'on_priority_change', 'on_close'])
+  trigger?: WorkflowTrigger;
+
+  @IsOptional() @IsBoolean()
+  enabled?: boolean;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => WorkflowStepDto)
+  steps: WorkflowStepDto[];
+}
 
 @Injectable()
 export class TicketWorkflowService {
@@ -44,7 +116,7 @@ export class TicketWorkflowService {
     return this.categories.find({ order: { name: 'ASC' as any } });
   }
 
-  async upsertCategory(input: Partial<TicketCategory> & { name: string }) {
+  async upsertCategory(input: UpsertCategoryDto) {
     if (!input.name?.trim()) {
       throw new BadRequestException('name is required');
     }
@@ -123,10 +195,7 @@ export class TicketWorkflowService {
     return w;
   }
 
-  async upsertWorkflow(
-    input: Partial<TicketWorkflow> & { name: string; steps: WorkflowStep[] },
-    actorId: string,
-  ) {
+  async upsertWorkflow(input: UpsertWorkflowDto, actorId: string) {
     const cleanedSteps = (input.steps ?? []).map((s, i) => ({
       id: s.id ?? uuidv4(),
       order: typeof s.order === 'number' ? s.order : i,

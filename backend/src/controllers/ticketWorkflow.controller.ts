@@ -11,7 +11,11 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
-import { TicketWorkflowService } from 'src/services/ticketWorkflow.service';
+import {
+  TicketWorkflowService,
+  UpsertCategoryDto,
+  UpsertWorkflowDto,
+} from 'src/services/ticketWorkflow.service';
 
 @UseGuards(AuthGuard)
 @Roles(Role.Admin, Role.Helpdesk, Role.Auditor)
@@ -28,7 +32,7 @@ export class TicketWorkflowController {
 
   @Roles(Role.Admin, Role.Helpdesk)
   @Put('categories')
-  upsertCategory(@Body() body: any) {
+  upsertCategory(@Body() body: UpsertCategoryDto) {
     return this.service.upsertCategory(body);
   }
 
@@ -53,7 +57,7 @@ export class TicketWorkflowController {
 
   @Roles(Role.Admin, Role.Helpdesk)
   @Put()
-  upsertWorkflow(@Body() body: any, @Req() req: any) {
+  upsertWorkflow(@Body() body: UpsertWorkflowDto, @Req() req: any) {
     const actorId =
       req?.user?.properties?.metadata?.id ?? req?.user?.id ?? 'unknown';
     return this.service.upsertWorkflow(body, actorId);

@@ -103,11 +103,13 @@ tar --directory "$WORK" --create --file="$TAR" \
 
 log "Encrypting with GPG AES-256"
 ENC="${BACKUP_DIR}/${NAME}.tar.gpg"
+# --passphrase-fd (not --passphrase) so the secret never appears as a
+# command-line argument visible to other local users via `ps`.
 gpg --batch --yes --quiet \
     --pinentry-mode loopback \
-    --passphrase "$BACKUP_ENCRYPT_PASSPHRASE" \
+    --passphrase-fd 0 \
     --symmetric --cipher-algo AES256 \
-    --output "$ENC" "$TAR"
+    --output "$ENC" "$TAR" <<< "$BACKUP_ENCRYPT_PASSPHRASE"
 
 # 5. Sidecar checksum on the encrypted file.
 sha256sum "$ENC" > "${ENC}.sha256"

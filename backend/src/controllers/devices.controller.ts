@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -11,11 +12,11 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { DeviceLifecycle } from 'src/entities/devices.entity';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { AgentGuard } from 'src/guards/agentGuard.guard';
 import { EnrollmentGuard } from 'src/guards/enrollmentGuard.guard';
@@ -30,10 +31,32 @@ import { DeviceReportService } from 'src/services/deviceReport.service';
 import { HandoverFormService } from 'src/services/handoverForm.service';
 import { RemoteAssistService } from 'src/services/remoteAssist.service';
 import { AuditService } from 'src/services/audit.service';
-import { AgentEnrollDto, DeviceScanDto } from 'src/dto/devices.dto';
-import { AgentTaskType } from 'src/entities/agentTask.entity';
+import {
+  AgentEnrollDto,
+  CreateEnrollmentTokenDto,
+  DeviceScanDto,
+  AddDeviceDto,
+  BulkImportDevicesDto,
+  AssignDeviceDto,
+  CreateDeviceTagDto,
+  MergeDevicesDto,
+  StartRemoteSessionDto,
+  UpdateDeviceLifecycleDto,
+  UpdateDeviceDetailsDto,
+  BulkTagActionDto,
+  BulkAssignDto,
+  BulkLifecycleDto,
+  EnqueueBulkTasksDto,
+  EnqueueTaskDto,
+  ClaimTasksDto,
+  CompleteTaskDto,
+  FailTaskDto,
+} from 'src/dto/devices.dto';
 import { AgentTokenService } from 'src/services/agent-token.service';
 import { AgentInstallerService, type AgentPlatform } from 'src/services/agent-installer.service';
+import { AgentBootstrapService } from 'src/services/agent-bootstrap.service';
+import { DeviceEnrollmentTokenService } from 'src/services/deviceEnrollmentToken.service';
+import { LINUX_PACKAGE_SIGNING_PUBLIC_KEY } from 'src/config/packageSigningKey';
 
 @Controller('devices')
 export class DevicesController {
@@ -47,12 +70,14 @@ export class DevicesController {
     private readonly auditService: AuditService,
     private readonly agentTokenService: AgentTokenService,
     private readonly agentInstallerService: AgentInstallerService,
+    private readonly agentBootstrapService: AgentBootstrapService,
+    private readonly enrollmentTokenService: DeviceEnrollmentTokenService,
   ) {}
 
   @UseGuards(AuthGuard)
   @Roles(Role.Admin)
   @Post()
-  async addDevice(@Body() body: any): Promise<any> {
+  async addDevice(@Body() body: AddDeviceDto): Promise<any> {
     return this.devicesService.addDevice(body);
   }
 
@@ -60,7 +85,7 @@ export class DevicesController {
   @Roles(Role.Admin)
   @Post('bulk-import')
   async bulkImportDevices(
-    @Body() body: { rows: any[] },
+    @Body() body: BulkImportDevicesDto,
     @Req() req: any,
   ) {
     const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id;
@@ -76,11 +101,11 @@ export class DevicesController {
   @UseGuards(AuthGuard)
   @Roles(Role.Admin)
   @Post('assign')
-  async assignDevice(@Body() body: { deviceId: any; userId: any }) {
+  async assignDevice(@Body() body: AssignDeviceDto) {
     return this.devicesService.assignDeviceToUser(body.deviceId, body.userId);
   }
 
-  // @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard)
   @Get('/options')
   async findDevicesWithSerial(): Promise<any> {
     return this.devicesService.findDevicesWithSerial();
@@ -116,7 +141,7 @@ export class DevicesController {
   @UseGuards(AuthGuard)
   @Roles(Role.Admin)
   @Post('/tags')
-  createTag(@Body() body: any) {
+  createTag(@Body() body: CreateDeviceTagDto) {
     return this.tagsService.createTag(body);
   }
 
@@ -161,6 +186,15 @@ export class DevicesController {
       );
     }
     const result = await this.devicesService.enrollAgent(body);
+
+    // Set by EnrollmentGuard when a per-device token (not the legacy shared
+    // one) was redeemed for this request — link it to the device it just
+    // created so the audit trail shows which token this was.
+    const enrollmentTokenId = (req as any).enrollmentTokenId as string | undefined;
+    if (enrollmentTokenId) {
+      await this.enrollmentTokenService.linkDevice(enrollmentTokenId, result.deviceId);
+    }
+
     await this.auditService.log('Device', result.deviceId, 'agent_enrolled', {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
@@ -171,6 +205,7 @@ export class DevicesController {
       agentVersion: body.agentVersion ?? null,
       platform: body.platform ?? null,
       deviceType: body.deviceType ?? null,
+      enrollmentTokenId: enrollmentTokenId ?? null,
     });
     return {
       deviceId: result.deviceId,
@@ -246,7 +281,7 @@ export class DevicesController {
   @Post('/:deviceId/merge')
   async mergeDevices(
     @Param('deviceId') deviceId: string,
-    @Body() body: { sourceDeviceId: string },
+    @Body() body: MergeDevicesDto,
     @Req() req: any,
   ) {
     const actorId =
@@ -263,7 +298,7 @@ export class DevicesController {
   @Post('/:deviceId/remote-session')
   async startRemoteSession(
     @Param('deviceId') deviceId: string,
-    @Body() body: { ticketId?: string | null },
+    @Body() body: StartRemoteSessionDto,
     @Req() req: any,
   ) {
     const actorId =
@@ -282,31 +317,24 @@ export class DevicesController {
     return { configured: this.remoteAssist.isConfigured() };
   }
 
-  // ---- Agent setup (Settings > Windows/macOS Agent page) ----
-  //
-  // Returns everything the frontend needs to render a "how to install
-  // the agent" panel for both platforms: download URL, the fleet-wide
-  // enrollment token (which is just AGENT_ENROLLMENT_TOKEN echoed back --
-  // it's a bootstrap secret, shared across platforms, not per-host), and a
-  // copy-pastable install snippet per platform. Admin only so the token
-  // never leaks to other roles.
-  @UseGuards(AuthGuard)
-  @Roles(Role.Admin)
-  @Get('/agent/setup-info')
-  async agentSetupInfo(@Req() req: any) {
-    const token = await this.agentTokenService.getToken();
-    if (!token || token.length < 16) {
-      return {
-        configured: false,
-        message:
-          'Token rejestracji agenta nie jest skonfigurowany. Wygeneruj go na tej stronie lub ustaw AGENT_ENROLLMENT_TOKEN w pliku .env.',
-      };
-    }
+  private resolveBaseUrl(req: any): string {
     const proto =
       (req.headers['x-forwarded-proto'] as string) ?? req.protocol ?? 'https';
     const host =
       (req.headers['x-forwarded-host'] as string) ?? req.headers['host'];
-    const baseUrl = `${proto}://${host}`.replace(/\/+$/, '');
+    return `${proto}://${host}`.replace(/\/+$/, '');
+  }
+
+  // ---- Agent setup (Settings > Agent page) ----
+  //
+  // Installer download status per platform only — no token, no snippet.
+  // Install snippets are minted on demand from a one-time per-device token,
+  // see createEnrollmentToken below.
+  @UseGuards(AuthGuard)
+  @Roles(Role.Admin)
+  @Get('/agent/setup-info')
+  async agentSetupInfo(@Req() req: any) {
+    const baseUrl = this.resolveBaseUrl(req);
 
     // AGENT_INSTALLER_URL_<PLATFORM> wins when set (e.g. CDN / GitHub
     // Releases). `AGENT_INSTALLER_URL` (no suffix) is kept as a legacy
@@ -316,53 +344,19 @@ export class DevicesController {
     // .env templates / docker-compose) is `""`, which `??` treats as "set"
     // and would silently kill the self-hosted fallback.
     const windowsMeta = await this.agentInstallerService.getMeta('windows');
-    const windowsUrl =
-      process.env.AGENT_INSTALLER_URL_WINDOWS?.trim() ||
-      process.env.AGENT_INSTALLER_URL?.trim() ||
-      (windowsMeta ? `${baseUrl}/devices/agent/installer?platform=windows` : null);
-    const windowsSnippet = windowsUrl
-      ? `# Run as Administrator\n` +
-        `Invoke-WebRequest -Uri "${windowsUrl}" -OutFile "$env:TEMP\\InfraPilotAgentSetup.exe"\n` +
-        `& "$env:TEMP\\InfraPilotAgentSetup.exe" /SILENT /BACKENDURL="${baseUrl}" /TOKEN="${token}"`
-      : null;
+    const windowsUrl = await this.resolveInstallerUrl('windows', baseUrl, windowsMeta);
 
     const macosMeta = await this.agentInstallerService.getMeta('macos');
-    const macosUrl =
-      process.env.AGENT_INSTALLER_URL_MACOS?.trim() ||
-      (macosMeta ? `${baseUrl}/devices/agent/installer?platform=macos` : null);
-    const macosSnippet = macosUrl
-      ? `curl -fsSL "${macosUrl}" -o /tmp/InfraPilotAgentSetup.pkg\n` +
-        `sudo BACKEND_URL="${baseUrl}" ENROLL_TOKEN="${token}" installer -pkg /tmp/InfraPilotAgentSetup.pkg -target /`
-      : null;
+    const macosUrl = await this.resolveInstallerUrl('macos', baseUrl, macosMeta);
 
     const linuxMeta = await this.agentInstallerService.getMeta('linux');
-    const linuxUrl =
-      process.env.AGENT_INSTALLER_URL_LINUX?.trim() ||
-      (linuxMeta ? `${baseUrl}/devices/agent/installer?platform=linux` : null);
-    const linuxSnippet = linuxUrl
-      ? `curl -fsSL "${linuxUrl}" -o /tmp/InfraPilotAgentSetup.deb\n` +
-        `sudo env BACKEND_URL="${baseUrl}" ENROLL_TOKEN="${token}" dpkg -i /tmp/InfraPilotAgentSetup.deb`
-      : null;
+    const linuxUrl = await this.resolveInstallerUrl('linux', baseUrl, linuxMeta);
 
     return {
-      configured: true,
       backendUrl: baseUrl,
-      enrollmentToken: token,
-      windows: {
-        installerUrl: windowsUrl,
-        installerMeta: windowsMeta,
-        snippet: windowsSnippet,
-      },
-      macos: {
-        installerUrl: macosUrl,
-        installerMeta: macosMeta,
-        snippet: macosSnippet,
-      },
-      linux: {
-        installerUrl: linuxUrl,
-        installerMeta: linuxMeta,
-        snippet: linuxSnippet,
-      },
+      windows: { installerUrl: windowsUrl, installerMeta: windowsMeta },
+      macos: { installerUrl: macosUrl, installerMeta: macosMeta },
+      linux: { installerUrl: linuxUrl, installerMeta: linuxMeta },
     };
   }
 
@@ -374,6 +368,203 @@ export class DevicesController {
     return { success: true, token: newToken };
   }
 
+  // ---- Per-device enrollment tokens (Settings > Agent > "Nowy token") ----
+  //
+  // Replaces the fleet-wide token as the primary bootstrap path: one-time,
+  // expires on its own, and every install traces back to exactly which
+  // token created it. /agent/token/rotate above still exists as a legacy
+  // fallback for snippets generated before this existed.
+
+  @UseGuards(AuthGuard)
+  @Roles(Role.Admin)
+  @Post('/agent/enrollment-tokens')
+  async createEnrollmentToken(
+    @Body() body: CreateEnrollmentTokenDto,
+    @Req() req: any,
+  ) {
+    const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id ?? null;
+    const { id, rawToken, expiresAt } = await this.enrollmentTokenService.generate(
+      body.label ?? null,
+      body.ttlHours,
+      actor,
+    );
+
+    const baseUrl = this.resolveBaseUrl(req);
+    const windowsMeta = await this.agentInstallerService.getMeta('windows');
+    const windowsUrl = await this.resolveInstallerUrl('windows', baseUrl, windowsMeta);
+    const macosMeta = await this.agentInstallerService.getMeta('macos');
+    const macosUrl = await this.resolveInstallerUrl('macos', baseUrl, macosMeta);
+    const linuxMeta = await this.agentInstallerService.getMeta('linux');
+    const linuxUrl = await this.resolveInstallerUrl('linux', baseUrl, linuxMeta);
+
+    // Same bootstrap-code wrapper used everywhere else — the snippet itself
+    // never contains the raw token, just a short-lived redemption code (see
+    // AgentBootstrapService).
+    const bootstrapCode = this.agentBootstrapService.mint(baseUrl, rawToken);
+    const bootstrapBase = `${baseUrl}/devices/agent/bootstrap/${bootstrapCode}`;
+
+    await this.auditService.log('DeviceEnrollmentToken', id, 'created', {
+      actor,
+      label: body.label ?? null,
+      expiresAt,
+    });
+
+    return {
+      id,
+      label: body.label ?? null,
+      expiresAt,
+      windows: {
+        snippet: windowsUrl
+          ? `# Run as Administrator\nirm "${bootstrapBase}/windows" | iex`
+          : null,
+      },
+      macos: {
+        snippet: macosUrl ? `curl -fsSL "${bootstrapBase}/macos" | sudo bash` : null,
+      },
+      linux: {
+        snippet: linuxUrl ? `curl -fsSL "${bootstrapBase}/linux" | sudo bash` : null,
+      },
+    };
+  }
+
+  @UseGuards(AuthGuard)
+  @Roles(Role.Admin)
+  @Get('/agent/enrollment-tokens')
+  async listEnrollmentTokens() {
+    return this.enrollmentTokenService.list();
+  }
+
+  @UseGuards(AuthGuard)
+  @Roles(Role.Admin)
+  @Delete('/agent/enrollment-tokens/:id')
+  async revokeEnrollmentToken(@Param('id') id: string, @Req() req: any) {
+    const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id ?? null;
+    const revoked = await this.enrollmentTokenService.revoke(id);
+    if (revoked) {
+      await this.auditService.log('DeviceEnrollmentToken', id, 'revoked', { actor });
+    }
+    return { ok: revoked };
+  }
+
+  private async resolveInstallerUrl(
+    platform: AgentPlatform,
+    baseUrl: string,
+    meta: unknown,
+  ): Promise<string | null> {
+    const envKey =
+      platform === 'windows'
+        ? 'AGENT_INSTALLER_URL_WINDOWS'
+        : platform === 'macos'
+          ? 'AGENT_INSTALLER_URL_MACOS'
+          : 'AGENT_INSTALLER_URL_LINUX';
+    const legacy = platform === 'windows' ? process.env.AGENT_INSTALLER_URL?.trim() : undefined;
+    return (
+      process.env[envKey]?.trim() ||
+      legacy ||
+      (meta ? `${baseUrl}/devices/agent/installer?platform=${platform}` : null)
+    );
+  }
+
+  // Public — fetched by `curl`/`irm` from the copy-paste install snippet
+  // itself, which runs on the freshly imaged target host before any admin
+  // session exists there. Protected purely by possessing an unguessable,
+  // 10-minute-lived code minted per-view of the setup panel (see
+  // AgentBootstrapService) — never by a long-lived secret, so there is
+  // nothing here worth capturing from shell history or a process listing.
+  @Get('/agent/bootstrap/:code/:platform')
+  async agentBootstrapScript(
+    @Param('code') code: string,
+    @Param('platform') platform: AgentPlatform,
+    @Res() res: Response,
+  ) {
+    const entry = this.agentBootstrapService.redeem(code);
+    if (!entry) {
+      res
+        .status(410)
+        .type('text/plain')
+        .send(
+          '# Bootstrap link expired or already used. Re-open Settings > Agent for a fresh command.\n',
+        );
+      return;
+    }
+
+    const meta = await this.agentInstallerService.getMeta(platform);
+    const installerUrl = await this.resolveInstallerUrl(platform, entry.baseUrl, meta);
+    if (!installerUrl) {
+      res.status(404).type('text/plain').send('# No installer configured for this platform.\n');
+      return;
+    }
+
+    let script: string;
+    if (platform === 'windows') {
+      // Write backend_url/token to a per-user temp file and pass
+      // /CONFIGFILE=<path> instead of /BACKENDURL=/TOKEN= — keeps the
+      // secret out of installer.exe's own argv (Task Manager / Process
+      // Explorer show that to anyone with access to the host). The file
+      // itself is deleted right after the installer reads it.
+      const cfgJson = JSON.stringify({
+        backend_url: entry.baseUrl,
+        enrollment_token: entry.token,
+      });
+      // Single-quoted PowerShell string literal: only `'` needs escaping
+      // (doubled) — backslashes/`$`/backticks are all literal inside one.
+      const cfgJsonPs = cfgJson.replace(/'/g, "''");
+      script =
+        `$ErrorActionPreference = "Stop"\n` +
+        `$cfg = Join-Path $env:TEMP "infrapilot-enroll.json"\n` +
+        `[System.IO.File]::WriteAllText($cfg, '${cfgJsonPs}', [System.Text.UTF8Encoding]::new($false))\n` +
+        `Invoke-WebRequest -Uri "${installerUrl}" -OutFile "$env:TEMP\\InfraPilotAgentSetup.exe"\n` +
+        `& "$env:TEMP\\InfraPilotAgentSetup.exe" /SILENT /CONFIGFILE="$cfg"\n` +
+        `Remove-Item $cfg -Force -ErrorAction SilentlyContinue\n`;
+    } else if (platform === 'macos') {
+      script =
+        `set -euo pipefail\n` +
+        `curl -fsSL "${installerUrl}" -o /tmp/InfraPilotAgentSetup.pkg\n` +
+        `export BACKEND_URL="${entry.baseUrl}"\n` +
+        `export ENROLL_TOKEN="${entry.token}"\n` +
+        `installer -pkg /tmp/InfraPilotAgentSetup.pkg -target /\n`;
+    } else {
+      // Prefer the GPG signature (proves the .deb came from our build
+      // pipeline) over the plain checksum (only proves it wasn't corrupted
+      // in transit) — both only apply when we resolved the self-hosted URL,
+      // since the hash/signature on file are for that exact upload; an
+      // external AGENT_INSTALLER_URL_LINUX may point at a different build.
+      const isSelfHosted = !process.env.AGENT_INSTALLER_URL_LINUX?.trim();
+      const linuxMetaTyped = meta as { sha256?: string; signature?: string | null } | null;
+      const sha256 = isSelfHosted ? linuxMetaTyped?.sha256 : null;
+      const signature = isSelfHosted ? linuxMetaTyped?.signature : null;
+
+      let verificationStep: string;
+      if (signature) {
+        const signatureUrl = `${entry.baseUrl}/devices/agent/installer?platform=linux&format=signature`;
+        verificationStep =
+          `curl -fsSL "${signatureUrl}" -o /tmp/InfraPilotAgentSetup.deb.sig\n` +
+          `INFRAPILOT_GPG_HOME="$(mktemp -d)"\n` +
+          `export GNUPGHOME="$INFRAPILOT_GPG_HOME"\n` +
+          `gpg --batch --quiet --import <<'INFRAPILOT_PUBKEY_EOF'\n` +
+          LINUX_PACKAGE_SIGNING_PUBLIC_KEY +
+          `INFRAPILOT_PUBKEY_EOF\n` +
+          `gpg --batch --verify /tmp/InfraPilotAgentSetup.deb.sig /tmp/InfraPilotAgentSetup.deb || ` +
+          `{ echo "Signature verification failed — refusing to install" >&2; rm -rf "$INFRAPILOT_GPG_HOME"; exit 1; }\n` +
+          `rm -rf "$INFRAPILOT_GPG_HOME"\n`;
+      } else if (sha256) {
+        verificationStep =
+          `echo "${sha256}  /tmp/InfraPilotAgentSetup.deb" | sha256sum -c - || { echo "Checksum verification failed — refusing to install" >&2; exit 1; }\n`;
+      } else {
+        verificationStep = '';
+      }
+
+      script =
+        `set -euo pipefail\n` +
+        `curl -fsSL "${installerUrl}" -o /tmp/InfraPilotAgentSetup.deb\n` +
+        verificationStep +
+        `export BACKEND_URL="${entry.baseUrl}"\n` +
+        `export ENROLL_TOKEN="${entry.token}"\n` +
+        `dpkg -i /tmp/InfraPilotAgentSetup.deb\n`;
+    }
+    res.type('text/plain').send(script);
+  }
+
   // Public — a freshly imaged host has no credentials yet, so the download
   // itself can't require auth. The binary is a generic installer; secrets
   // are only passed in at install time via CLI args / env vars (see
@@ -383,7 +574,18 @@ export class DevicesController {
   async downloadAgentInstaller(
     @Res() res: Response,
     @Query('platform') platform: AgentPlatform = 'windows',
+    @Query('format') format?: string,
   ) {
+    if (format === 'signature') {
+      const meta = await this.agentInstallerService.getMeta(platform);
+      if (!meta?.signature) {
+        res.status(404).type('text/plain').send('No signature on file for this platform.\n');
+        return;
+      }
+      res.type('text/plain').send(meta.signature);
+      return;
+    }
+
     const { stream, meta } = await this.agentInstallerService.getFileStream(platform);
     const fallbackName =
       platform === 'macos' ? 'InfraPilotAgentSetup.pkg' :
@@ -400,19 +602,33 @@ export class DevicesController {
   @UseGuards(AuthGuard)
   @Roles(Role.Admin)
   @Post('/agent/installer')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'file', maxCount: 1 },
+        { name: 'signature', maxCount: 1 },
+      ],
+      { limits: { fileSize: 200 * 1024 * 1024 } },
+    ),
+  )
   async uploadAgentInstaller(
-    @UploadedFile() file: any,
+    @UploadedFiles() files: { file?: any[]; signature?: any[] },
     @Req() req: any,
     @Body('platform') platform: AgentPlatform = 'windows',
   ) {
     const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id ?? null;
-    const meta = await this.agentInstallerService.upload(file, platform, actor);
+    const meta = await this.agentInstallerService.upload(
+      files.file?.[0],
+      platform,
+      actor,
+      files.signature?.[0],
+    );
     await this.auditService.log('Device', null, 'agent_installer_uploaded', {
       actor,
       platform,
       originalName: meta.originalName,
       sizeBytes: meta.sizeBytes,
+      signed: !!meta.signature,
     });
     return meta;
   }
@@ -528,23 +744,7 @@ export class DevicesController {
   @Patch('/:deviceId/lifecycle')
   async updateLifecycle(
     @Param('deviceId') deviceId: string,
-    @Body()
-    body: {
-      lifecycle?: DeviceLifecycle;
-      lifecycleNote?: string;
-      purchaseDate?: string;
-      purchasePrice?: string;
-      purchaseCurrency?: string;
-      vendor?: string;
-      purchaseOrder?: string;
-      warrantyStart?: string;
-      warrantyEnd?: string;
-      depreciationYears?: number;
-      retiredAt?: string;
-      disposedAt?: string;
-      disposalMethod?: string;
-      locationId?: string;
-    },
+    @Body() body: UpdateDeviceLifecycleDto,
     @Req() req: any,
   ) {
     const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id;
@@ -569,18 +769,7 @@ export class DevicesController {
   @Patch('/:deviceId/details')
   async updateDetails(
     @Param('deviceId') deviceId: string,
-    @Body()
-    body: {
-      assetName?: string;
-      model?: string;
-      manufacturer?: string;
-      serialNumber?: string;
-      locationId?: string;
-      managementIp?: string;
-      portCount?: number;
-      firmwareVersion?: string;
-      macAddress?: string;
-    },
+    @Body() body: UpdateDeviceDetailsDto,
   ) {
     const updated = await this.devicesService.updateDetails(deviceId, body);
     await this.auditService.log('Device', deviceId, 'details_updated', {
@@ -601,7 +790,7 @@ export class DevicesController {
   @Roles(Role.Admin, Role.Helpdesk)
   @Post('/bulk/tag')
   async bulkTag(
-    @Body() body: { deviceIds: string[]; tagIds: string[]; action: 'attach' | 'detach' },
+    @Body() body: BulkTagActionDto,
     @Req() req: any,
   ) {
     const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id ?? null;
@@ -623,7 +812,7 @@ export class DevicesController {
   @Roles(Role.Admin)
   @Post('/bulk/assign')
   async bulkAssign(
-    @Body() body: { deviceIds: string[]; userId: string | null },
+    @Body() body: BulkAssignDto,
     @Req() req: any,
   ) {
     const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id ?? null;
@@ -644,8 +833,7 @@ export class DevicesController {
   @Roles(Role.Admin)
   @Post('/bulk/lifecycle')
   async bulkLifecycle(
-    @Body()
-    body: { deviceIds: string[]; lifecycle: DeviceLifecycle; note?: string },
+    @Body() body: BulkLifecycleDto,
     @Req() req: any,
   ) {
     const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id ?? null;
@@ -669,12 +857,7 @@ export class DevicesController {
   @Roles(Role.Admin, Role.Helpdesk)
   @Post('/bulk/tasks')
   async enqueueBulkTasks(
-    @Body()
-    body: {
-      deviceIds: string[];
-      type: AgentTaskType;
-      payload?: Record<string, any>;
-    },
+    @Body() body: EnqueueBulkTasksDto,
     @Req() req: any,
   ) {
     const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id ?? null;
@@ -700,7 +883,7 @@ export class DevicesController {
   @Post('/:deviceId/tasks')
   async enqueueTask(
     @Param('deviceId') deviceId: string,
-    @Body() body: { type: AgentTaskType; payload?: Record<string, any> },
+    @Body() body: EnqueueTaskDto,
     @Req() req: any,
   ) {
     const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id ?? null;
@@ -733,7 +916,7 @@ export class DevicesController {
 
   @UseGuards(AgentGuard)
   @Post('/agent/tasks/claim')
-  async claimTasks(@Body() body: { max?: number }, @Req() req: any) {
+  async claimTasks(@Body() body: ClaimTasksDto, @Req() req: any) {
     const device = (req as any).agentDevice;
     const tasks = await this.agentTasks.claimForDevice(
       device.id,
@@ -752,7 +935,7 @@ export class DevicesController {
   @Post('/agent/tasks/:id/complete')
   async completeTask(
     @Param('id') id: string,
-    @Body() body: { leaseToken: string; result?: Record<string, any> },
+    @Body() body: CompleteTaskDto,
   ) {
     return this.agentTasks.complete(id, body.leaseToken, body.result ?? null);
   }
@@ -761,7 +944,7 @@ export class DevicesController {
   @Post('/agent/tasks/:id/fail')
   async failTask(
     @Param('id') id: string,
-    @Body() body: { leaseToken: string; error: string },
+    @Body() body: FailTaskDto,
   ) {
     return this.agentTasks.fail(id, body.leaseToken, body.error ?? 'unknown');
   }

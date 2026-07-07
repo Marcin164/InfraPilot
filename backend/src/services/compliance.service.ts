@@ -1,14 +1,49 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { IsBoolean, IsIn, IsOptional, IsString } from 'class-validator';
 import { Devices } from 'src/entities/devices.entity';
-import {
+import { ComplianceRule } from 'src/entities/complianceRule.entity';
+import type {
   ComplianceOperator,
-  ComplianceRule,
   ComplianceSeverity,
 } from 'src/entities/complianceRule.entity';
 import { ComplianceResult } from 'src/entities/complianceResult.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
+
+// All fields optional: this DTO backs a single upsert endpoint (PUT
+// rules/:key) that both creates and patches a rule, and the service already
+// treats every field as independently patchable via Object.assign. Excludes
+// `key`/`builtin`/`createdAt`/`updatedAt` on purpose — `key` comes from the
+// URL param, and `builtin` must stay server-controlled (see deleteRule's
+// built-in check, which a caller could otherwise flip off first).
+export class UpsertComplianceRuleDto {
+  @IsOptional() @IsString()
+  name?: string;
+
+  @IsOptional() @IsString()
+  description?: string | null;
+
+  @IsOptional() @IsString()
+  category?: string;
+
+  @IsOptional() @IsString()
+  jsonPath?: string;
+
+  @IsOptional()
+  @IsIn(['eq', 'ne', 'gte', 'lte', 'exists', 'notExists', 'contains', 'notContains'])
+  operator?: ComplianceOperator;
+
+  @IsOptional()
+  expected?: any;
+
+  @IsOptional()
+  @IsIn(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])
+  severity?: ComplianceSeverity;
+
+  @IsOptional() @IsBoolean()
+  enabled?: boolean;
+}
 
 export const BUILTIN_RULES: Array<
   Omit<

@@ -12,6 +12,7 @@ import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { LegalHoldService } from 'src/services/legalHold.service';
+import { CreateLegalHoldDto, ReleaseLegalHoldDto } from 'src/dto/legalHold.dto';
 
 const actorOf = (req: any): string =>
   req?.user?.properties?.metadata?.id ?? req?.user?.id ?? 'unknown';
@@ -37,13 +38,7 @@ export class LegalHoldController {
 
   @Post()
   create(
-    @Body()
-    body: {
-      userId: string;
-      reason: string;
-      legalBasis?: string;
-      retainUntil?: string;
-    },
+    @Body() body: CreateLegalHoldDto,
     @Req() req: any,
   ) {
     return this.service.create({
@@ -58,7 +53,7 @@ export class LegalHoldController {
   @Post(':id/release')
   release(
     @Param('id') id: string,
-    @Body() body: { releasedReason: string },
+    @Body() body: ReleaseLegalHoldDto,
     @Req() req: any,
   ) {
     return this.service.release({

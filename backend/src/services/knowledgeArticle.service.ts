@@ -1,8 +1,41 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
-import { KnowledgeArticle } from 'src/entities/knowledgeArticle.entity';
+import { PartialType } from '@nestjs/mapped-types';
+import {
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { ArticleStatus, KnowledgeArticle } from 'src/entities/knowledgeArticle.entity';
 import { invalidateReportCache } from 'src/helpers/reportCache';
+
+export class CreateArticleDto {
+  @IsString() @IsNotEmpty()
+  title: string;
+
+  @IsOptional() @IsString()
+  content?: string;
+
+  @IsOptional() @IsEnum(ArticleStatus)
+  status?: ArticleStatus;
+
+  @IsString() @IsNotEmpty()
+  spaceId: string;
+
+  @IsOptional() @IsString()
+  category?: string;
+
+  @IsOptional() @IsArray() @IsString({ each: true })
+  tags?: string[];
+
+  @IsOptional() @IsString()
+  ticketId?: string;
+}
+
+export class UpdateArticleDto extends PartialType(CreateArticleDto) {}
 
 function invalidateKnowledgeReports() {
   invalidateReportCache('knowledge-most-viewed');
@@ -66,17 +99,17 @@ export class KnowledgeArticleService {
     });
   }
 
-  async create(dto: any, userId?: string) {
+  async create(dto: CreateArticleDto, userId?: string) {
     const article = this.repo.create({
       ...dto,
-      authorId: userId ?? dto.authorId,
+      authorId: userId,
     });
     const saved = await this.repo.save(article);
     invalidateKnowledgeReports();
     return saved;
   }
 
-  async update(id: string, dto: any) {
+  async update(id: string, dto: UpdateArticleDto) {
     const article = await this.repo.findOneBy({ id });
     if (!article) throw new NotFoundException('Article not found');
     Object.assign(article, dto);

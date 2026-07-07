@@ -129,7 +129,13 @@ const Workflows = () => {
   };
 
   const saveMutation = useMutation({
-    mutationFn: (w: TicketWorkflow) => upsertWorkflow(w),
+    mutationFn: (w: TicketWorkflow) => {
+      // createdBy/createdAt/updatedAt are server-managed -- strip them so we
+      // don't send a whole loaded TicketWorkflow object (incl. read-only
+      // fields UpsertWorkflowDto doesn't declare) back to the PUT endpoint.
+      const { createdBy, createdAt, updatedAt, ...input } = w;
+      return upsertWorkflow(input);
+    },
     onSuccess: (saved) => {
       toast.success(t("settings.workflow.saved"));
       setEditing(saved);
@@ -448,12 +454,17 @@ const CategoriesPanel = ({
                         }
                       : { value: "", label: t("settings.workflow.categories.noWorkflow") }
                   }
-                  onSelect={(opt: any) =>
-                    upsertTicketCategory({
-                      ...c,
+                  onSelect={(opt: any) => {
+                    // createdAt/updatedAt are server-managed -- strip them so
+                    // we don't send a whole loaded TicketCategory object
+                    // (incl. read-only fields UpsertCategoryDto doesn't
+                    // declare) back to the PUT endpoint.
+                    const { createdAt, updatedAt, ...input } = c;
+                    return upsertTicketCategory({
+                      ...input,
                       workflowId: opt?.value || null,
-                    }).then(onChanged)
-                  }
+                    }).then(onChanged);
+                  }}
                 />
               </div>
             </div>

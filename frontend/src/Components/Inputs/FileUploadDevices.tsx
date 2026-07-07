@@ -6,7 +6,7 @@ import {
   faCircleExclamation,
   faCloudArrowUp,
 } from "@fortawesome/free-solid-svg-icons";
-import * as XLSX from "xlsx";
+import { parseSpreadsheetFile } from "../../lib/parseSpreadsheet";
 import Papa from "papaparse";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { bulkImportDevices } from "../../Services/bulkImport";
@@ -91,19 +91,16 @@ const FileUploadDevices = ({ close }: Props) => {
     setProgress(null);
   };
 
-  const parseXLSX = (file: File) => {
-    const reader = new FileReader();
-    reader.onprogress = (e) => {
-      if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
-    };
-    reader.onload = (e) => {
+  const parseXLSX = async (file: File) => {
+    try {
+      setProgress(50);
+      const json = await parseSpreadsheetFile(file);
       setProgress(90);
-      const wb = XLSX.read(e.target?.result, { type: "binary" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json(ws, { defval: "" });
-      handleParsedData(json as any[]);
-    };
-    reader.readAsBinaryString(file);
+      handleParsedData(json);
+    } catch {
+      setError(t("file.parser.error"));
+      setProgress(null);
+    }
   };
 
   const parseCSV = (file: File) => {

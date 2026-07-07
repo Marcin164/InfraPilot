@@ -11,7 +11,11 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
-import { TicketTemplateService } from 'src/services/ticketTemplate.service';
+import {
+  TicketTemplateService,
+  CreateTicketTemplateDto,
+  UpdateTicketTemplateDto,
+} from 'src/services/ticketTemplate.service';
 
 const actorOf = (req: any): string =>
   req?.user?.properties?.metadata?.id ?? req?.user?.id ?? 'unknown';
@@ -30,8 +34,7 @@ export class TicketTemplateController {
   @Roles(Role.Admin, Role.Helpdesk)
   @Post()
   create(
-    @Body()
-    body: { name: string; body: string; category?: string; shared?: boolean },
+    @Body() body: CreateTicketTemplateDto,
     @Req() req: any,
   ) {
     return this.service.create(body, actorOf(req));
@@ -39,7 +42,7 @@ export class TicketTemplateController {
 
   @Roles(Role.Admin, Role.Helpdesk)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() patch: any, @Req() req: any) {
+  update(@Param('id') id: string, @Body() patch: UpdateTicketTemplateDto, @Req() req: any) {
     return this.service.update(id, patch, actorOf(req));
   }
 

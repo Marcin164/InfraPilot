@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
-import { LocationService, CreateLocationDto } from 'src/services/location.service';
+import { LocationService, CreateLocationDto, UpdateLocationDto } from 'src/services/location.service';
 import { AuditService } from 'src/services/audit.service';
 
 @UseGuards(AuthGuard)
@@ -46,7 +46,7 @@ export class LocationController {
 
   @Roles(Role.Admin)
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: Partial<CreateLocationDto>) {
+  async update(@Param('id') id: string, @Body() dto: UpdateLocationDto) {
     const loc = await this.locationService.update(id, dto);
     await this.auditService.log('LOCATION', id, 'UPDATED', dto);
     return loc;

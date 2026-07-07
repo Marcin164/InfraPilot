@@ -78,7 +78,6 @@ const ComplianceRules = () => {
   const createMutation = useMutation({
     mutationFn: () =>
       upsertComplianceRule(draft.key.trim(), {
-        key: draft.key.trim(),
         name: draft.name.trim(),
         description: draft.description.trim() || null,
         category: draft.category.trim() || "security",

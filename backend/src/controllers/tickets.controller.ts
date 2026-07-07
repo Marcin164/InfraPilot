@@ -14,7 +14,15 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { CreateTicketDto, GetTicketsQueryDto } from 'src/dto/tickets.dto';
+import {
+  CreateTicketDto,
+  GetTicketsQueryDto,
+  UpdateTicketDto,
+  CreateCommentDto,
+  UpdateTicketCategoriesDto,
+  LinkTicketDto,
+  UpdateApprovalDto,
+} from 'src/dto/tickets.dto';
 import { Tickets } from 'src/entities/tickets.entity';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
@@ -57,10 +65,11 @@ export class TicketsController {
 
   @Roles(Role.Admin, Role.Helpdesk)
   @Patch('/categories')
-  async updateTicketCategories(@Body() dto: any) {
+  async updateTicketCategories(@Body() dto: UpdateTicketCategoriesDto) {
     return this.ticketsService.updateTicketCategories(dto);
   }
 
+  @Roles(Role.Admin, Role.Helpdesk)
   @Get('/by-requester/:userId')
   async getByRequester(
     @Param('userId') userId: string,
@@ -83,6 +92,7 @@ export class TicketsController {
     );
   }
 
+  @Roles(Role.Admin, Role.Helpdesk)
   @Get('/by-device/:deviceId')
   async getByDevice(
     @Param('deviceId') deviceId: string,
@@ -98,7 +108,7 @@ export class TicketsController {
   @Post(':id/link')
   async linkTicket(
     @Param('id') id: string,
-    @Body() body: { parentTicketId: string | null },
+    @Body() body: LinkTicketDto,
     @Req() req: any,
   ) {
     const userId = req?.user?.properties?.metadata?.id;
@@ -114,7 +124,7 @@ export class TicketsController {
   @Patch(':id')
   async updateTicket(
     @Param('id') id: string,
-    @Body() dto: any,
+    @Body() dto: UpdateTicketDto,
     @Req() req: any,
   ) {
     const userId = req?.user?.properties?.metadata?.id;
@@ -129,23 +139,25 @@ export class TicketsController {
   @Post('/comment/:id/:requesterId')
   async createComment(
     @Param('id') id: string,
-    @Param('requesterId') requesterId: string,
-    @Body() dto: any,
+    @Body() dto: CreateCommentDto,
+    @Req() req: any,
   ): Promise<any> {
-    return this.ticketsService.createComment(id, requesterId, dto);
+    const authorId = req?.user?.properties?.metadata?.id;
+    return this.ticketsService.createComment(id, authorId, dto);
   }
 
   @Post('/comment/:id/:requesterId/attachment')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }))
   async createCommentWithAttachment(
     @Param('id') id: string,
-    @Param('requesterId') requesterId: string,
     @UploadedFile() file: any,
-    @Body() dto: any,
+    @Body() dto: CreateCommentDto,
+    @Req() req: any,
   ): Promise<any> {
+    const authorId = req?.user?.properties?.metadata?.id;
     return this.ticketsService.createCommentWithAttachment(
       id,
-      requesterId,
+      authorId,
       dto,
       file,
     );
@@ -169,24 +181,27 @@ export class TicketsController {
     stream.pipe(res);
   }
 
+  @Roles(Role.Admin, Role.Helpdesk)
   @Post('/approve/:ticketId/:requesterId/:approverId')
   async createApproval(
     @Param('ticketId') ticketId: string,
     @Param('requesterId') requesterId: string,
     @Param('approverId') approverId: string,
+    @Req() req: any,
   ): Promise<any> {
-    console.log('ticketId', ticketId);
+    const currentUserId = req?.user?.properties?.metadata?.id;
     return this.ticketsService.createApproval(
       ticketId,
       requesterId,
       approverId,
+      currentUserId,
     );
   }
 
   @Patch('/approve/:id')
   async updateApproval(
     @Param('id') id: string,
-    @Body() dto: any,
+    @Body() dto: UpdateApprovalDto,
     @Req() req: any,
   ): Promise<any> {
     const currentUserId = req?.user?.properties?.metadata?.id;

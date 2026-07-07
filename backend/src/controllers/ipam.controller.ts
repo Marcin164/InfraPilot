@@ -14,6 +14,7 @@ import { Role, Roles } from 'src/decorators/roles.decorator';
 import {
   IpamService,
   CreateSubnetDto,
+  UpdateSubnetDto,
   CreateAllocationDto,
 } from 'src/services/ipam.service';
 import { AuditService } from 'src/services/audit.service';
@@ -51,7 +52,7 @@ export class IpamController {
 
   @Roles(Role.Admin)
   @Patch('subnets/:id')
-  async updateSubnet(@Param('id') id: string, @Body() dto: Partial<CreateSubnetDto>) {
+  async updateSubnet(@Param('id') id: string, @Body() dto: UpdateSubnetDto) {
     const subnet = await this.ipamService.updateSubnet(id, dto);
     await this.auditService.log('SUBNET', id, 'UPDATED', dto);
     return subnet;

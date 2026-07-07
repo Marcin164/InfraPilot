@@ -16,6 +16,12 @@ import { MfaGuard } from 'src/guards/mfaGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { UsersService } from 'src/services/users.service';
 import { ActiveDirectoryService } from 'src/services/active-directory.service';
+import {
+  CreateUserDto,
+  InsertManyUsersDto,
+  BulkImportUsersDto,
+  UpdateUserDto,
+} from 'src/dto/users.dto';
 
 @Controller('users')
 export class UsersController {
@@ -42,21 +48,21 @@ export class UsersController {
   @UseGuards(AuthGuard, MfaGuard)
   @Roles(Role.Admin)
   @Post()
-  async insertOne(@Body() body: any): Promise<any> {
+  async insertOne(@Body() body: CreateUserDto): Promise<any> {
     return this.usersService.insertOne(body);
   }
 
   @UseGuards(AuthGuard, MfaGuard)
   @Roles(Role.Admin)
   @Post('/many')
-  async insertMany(@Body() body: any): Promise<any> {
-    return this.usersService.insertMany(body);
+  async insertMany(@Body() body: InsertManyUsersDto): Promise<any> {
+    return this.usersService.insertMany(body.users);
   }
 
   @UseGuards(AuthGuard, MfaGuard)
   @Roles(Role.Admin)
   @Post('bulk-import')
-  async bulkImport(@Body() body: { rows: any[] }): Promise<any> {
+  async bulkImport(@Body() body: BulkImportUsersDto): Promise<any> {
     return this.usersService.bulkImport(body.rows ?? []);
   }
 
@@ -70,7 +76,7 @@ export class UsersController {
   @UseGuards(AuthGuard, MfaGuard)
   @Roles(Role.Admin)
   @Patch(':id')
-  async update(@Body() body: any, @Param('id') id: string): Promise<any> {
+  async update(@Body() body: UpdateUserDto, @Param('id') id: string): Promise<any> {
     return this.usersService.update(body, id);
   }
 

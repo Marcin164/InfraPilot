@@ -40,7 +40,7 @@ export class M365Service {
 
   // ─── Config ──────────────────────────────────────────────────────────────
 
-  async saveConfig(dto: M365Config): Promise<void> {
+  async saveConfig(dto: Omit<M365Config, 'clientSecret'> & { clientSecret?: string }): Promise<void> {
     let record = await this.adminRepo.findOne({ where: { key: CONFIG_KEY } });
     const stored = {
       tenantId: dto.tenantId,

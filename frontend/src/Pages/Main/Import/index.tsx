@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import Papa from "papaparse";
-import * as XLSX from "xlsx";
+import { parseSpreadsheetFile } from "../../../lib/parseSpreadsheet";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faFileImport,
@@ -33,32 +33,21 @@ const DEVICE_TEMPLATE = DEVICE_COLUMNS.join(",") + "\nLaptop-001,SN123456,Comput
 const USER_TEMPLATE = USER_COLUMNS.join(",") + "\nJan,Kowalski,jan.kowalski@company.com,+48123456789,IT,Building A,Engineer";
 
 function parseFile(file: File): Promise<Record<string, string>[]> {
-  return new Promise((resolve, reject) => {
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    if (ext === "csv") {
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  if (ext === "csv") {
+    return new Promise((resolve, reject) => {
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
         complete: (result) => resolve(result.data as Record<string, string>[]),
         error: reject,
       });
-    } else if (ext === "xlsx" || ext === "xls") {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const wb = XLSX.read(e.target?.result, { type: "binary" });
-          const ws = wb.Sheets[wb.SheetNames[0]];
-          const data = XLSX.utils.sheet_to_json<Record<string, string>>(ws, { defval: "" });
-          resolve(data);
-        } catch (err) {
-          reject(err);
-        }
-      };
-      reader.readAsBinaryString(file);
-    } else {
-      reject(new Error("Unsupported file format. Use CSV, XLS, or XLSX."));
-    }
-  });
+    });
+  }
+  if (ext === "xlsx" || ext === "xls") {
+    return parseSpreadsheetFile(file);
+  }
+  return Promise.reject(new Error("Unsupported file format. Use CSV, XLS, or XLSX."));
 }
 
 function downloadTemplate(entity: EntityType) {

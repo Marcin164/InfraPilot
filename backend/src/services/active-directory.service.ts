@@ -6,6 +6,7 @@ import { AdminSettings } from 'src/entities/adminSettings.entity';
 import { Repository } from 'typeorm';
 import { uuidv4 } from 'src/helpers/uuidv4';
 import { encrypt, decrypt } from 'src/helpers/crypto';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -17,6 +18,25 @@ export interface AdConfig {
   baseDN: string;
   username: string;
   password: string;
+}
+
+export class AdConnectDto implements AdConfig {
+  @IsString() @IsNotEmpty()
+  url: string;
+
+  @IsString() @IsNotEmpty()
+  baseDN: string;
+
+  @IsString() @IsNotEmpty()
+  username: string;
+
+  @IsString() @IsNotEmpty()
+  password: string;
+}
+
+export class AdDisconnectDto {
+  @IsOptional() @IsString()
+  password?: string;
 }
 
 export interface AdStatus {
@@ -108,15 +128,18 @@ export class ActiveDirectoryService implements OnModuleInit {
     };
 
     if (config.url.startsWith('ldaps')) {
+      // rejectUnauthorized must stay true here — this is what actually makes
+      // the uploaded CA cert (Settings > Active Directory > Certificate)
+      // mean something. With it false (the old default), a loaded CA was
+      // read but never used to validate anything, so a MITM presenting any
+      // certificate at all — not even one signed by that CA — was accepted
+      // silently. If your AD server's cert isn't already trusted by this
+      // machine's OS certificate store, upload its CA cert through that
+      // page; without it, LDAPS connections now fail closed instead of
+      // silently trusting an unverified peer.
+      opts.tlsOptions = { rejectUnauthorized: true };
       if (fs.existsSync(CERT_PATH)) {
-        opts.tlsOptions = {
-          ca: [fs.readFileSync(CERT_PATH)],
-          rejectUnauthorized: false,
-        };
-      } else {
-        opts.tlsOptions = {
-          rejectUnauthorized: false,
-        };
+        opts.tlsOptions.ca = [fs.readFileSync(CERT_PATH)];
       }
     }
 

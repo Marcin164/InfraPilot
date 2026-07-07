@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
-import { MaintenanceService, CreateMaintenanceDto } from 'src/services/maintenance.service';
+import { MaintenanceService, CreateMaintenanceDto, UpdateMaintenanceDto } from 'src/services/maintenance.service';
 import { AuditService } from 'src/services/audit.service';
 
 @UseGuards(AuthGuard)
@@ -46,7 +46,7 @@ export class MaintenanceController {
 
   @Roles(Role.Admin)
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: Partial<CreateMaintenanceDto>) {
+  async update(@Param('id') id: string, @Body() dto: UpdateMaintenanceDto) {
     const record = await this.maintenanceService.update(id, dto);
     await this.auditService.log('Maintenance', id, 'UPDATED', dto);
     return record;

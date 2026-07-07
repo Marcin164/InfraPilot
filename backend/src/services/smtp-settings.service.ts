@@ -55,7 +55,7 @@ export class SmtpSettingsService {
     return { ...rest, hasPass: !!pass };
   }
 
-  async saveConfig(config: SmtpConfig): Promise<void> {
+  async saveConfig(config: Omit<SmtpConfig, 'pass'> & { pass?: string }): Promise<void> {
     const toStore = { ...config, pass: config.pass ? encrypt(config.pass) : '' };
     const existing = await this.repo.findOne({ where: { key: KEY } });
     if (existing) {
@@ -70,7 +70,7 @@ export class SmtpSettingsService {
     await this.repo.delete({ key: KEY });
   }
 
-  async testConnection(config: SmtpConfig): Promise<{ success: boolean; message: string }> {
+  async testConnection(config: Omit<SmtpConfig, 'pass'> & { pass?: string }): Promise<{ success: boolean; message: string }> {
     try {
       const transporter = nodemailer.createTransport({
         host: config.host,

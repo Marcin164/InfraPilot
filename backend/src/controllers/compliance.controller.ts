@@ -11,7 +11,7 @@ import {
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
-import { ComplianceService } from 'src/services/compliance.service';
+import { ComplianceService, UpsertComplianceRuleDto } from 'src/services/compliance.service';
 
 @UseGuards(AuthGuard, MfaGuard)
 @Roles(Role.Admin, Role.Auditor, Role.Compliance, Role.Helpdesk)
@@ -26,7 +26,7 @@ export class ComplianceController {
 
   @Roles(Role.Admin, Role.Compliance)
   @Put('rules/:key')
-  upsertRule(@Param('key') key: string, @Body() body: any) {
+  upsertRule(@Param('key') key: string, @Body() body: UpsertComplianceRuleDto) {
     return this.service.upsertRule({ ...body, key });
   }
 
