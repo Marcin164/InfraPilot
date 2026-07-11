@@ -402,6 +402,8 @@ export class DevicesController {
     // AgentBootstrapService).
     const bootstrapCode = this.agentBootstrapService.mint(baseUrl, rawToken);
     const bootstrapBase = `${baseUrl}/devices/agent/bootstrap/${bootstrapCode}`;
+    const host = (req.headers['x-forwarded-host'] as string) ?? req.headers['host'];
+    const bootstrapBaseHttp = `http://${host}/devices/agent/bootstrap/${bootstrapCode}`;
 
     await this.auditService.log('DeviceEnrollmentToken', id, 'created', {
       actor,
@@ -415,7 +417,7 @@ export class DevicesController {
       expiresAt,
       windows: {
         snippet: windowsUrl
-          ? `# Run as Administrator\n[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }; irm "${bootstrapBase}/windows" | iex`
+          ? `# Run as Administrator\nirm "${bootstrapBaseHttp}/windows" | iex`
           : null,
       },
       macos: {
