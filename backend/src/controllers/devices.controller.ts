@@ -415,7 +415,7 @@ export class DevicesController {
       expiresAt,
       windows: {
         snippet: windowsUrl
-          ? `# Run as Administrator\n[System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }; irm "${bootstrapBase}/windows" | iex`
+          ? `# Run as Administrator\n[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }; irm "${bootstrapBase}/windows" | iex`
           : null,
       },
       macos: {
