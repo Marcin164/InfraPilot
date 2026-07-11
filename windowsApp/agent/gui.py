@@ -18,9 +18,7 @@ run elevated -- those files are ACL'd to Administrators + SYSTEM only
 
 from __future__ import annotations
 
-import getpass
 import logging
-import os
 import queue
 import sys
 import threading
@@ -48,7 +46,6 @@ from agent.config import (
 from agent.enrollment import enroll
 from agent.main import SECTION_COLLECTORS, build_payload, process_tasks
 from agent.transport import send_scan
-from agent.winauth import verify_password
 
 
 def _iso_now() -> str:
@@ -74,7 +71,6 @@ class AgentGui(tk.Tk):
 
         self._work_queue: queue.Queue[Callable[[], None]] = queue.Queue()
         self._busy = False
-        self._unlocked = False
 
         self._build_widgets()
         self.after(100, self._drain_queue)
@@ -116,33 +112,18 @@ class AgentGui(tk.Tk):
         connect_frame.pack(fill="x", **pad)
         connect_frame.columnconfigure(1, weight=1)
 
-        self._current_username = os.environ.get("USERNAME") or getpass.getuser()
+        ttk.Label(connect_frame, text="Backend URL:").grid(row=0, column=0, sticky="w", padx=6, pady=4)
+        self.backend_url_entry = ttk.Entry(connect_frame, width=42, state="normal")
+        self.backend_url_entry.grid(row=0, column=1, columnspan=2, sticky="we", padx=6, pady=4)
 
-        ttk.Label(
-            connect_frame, text=f"Hasło administratora ({self._current_username}):",
-        ).grid(row=0, column=0, sticky="w", padx=6, pady=4)
-        self.unlock_password_entry = ttk.Entry(connect_frame, width=28, show="*")
-        self.unlock_password_entry.grid(row=0, column=1, sticky="we", padx=(6, 0), pady=4)
-        self.unlock_password_entry.bind("<Return>", lambda _e: self._on_unlock_clicked())
-        self.unlock_button = ttk.Button(connect_frame, text="Odblokuj", command=self._on_unlock_clicked)
-        self.unlock_button.grid(row=0, column=2, padx=6, pady=4)
-        self.lock_status_var = tk.StringVar(value="🔒 Zablokowane -- podaj hasło, aby edytować")
-        ttk.Label(connect_frame, textvariable=self.lock_status_var, foreground="#7a7a7a").grid(
-            row=1, column=0, columnspan=3, sticky="w", padx=6,
-        )
-
-        ttk.Label(connect_frame, text="Backend URL:").grid(row=2, column=0, sticky="w", padx=6, pady=4)
-        self.backend_url_entry = ttk.Entry(connect_frame, width=42, state="disabled")
-        self.backend_url_entry.grid(row=2, column=1, columnspan=2, sticky="we", padx=6, pady=4)
-
-        ttk.Label(connect_frame, text="Token rejestracji:").grid(row=3, column=0, sticky="w", padx=6, pady=4)
-        self.token_entry = ttk.Entry(connect_frame, width=42, show="*", state="disabled")
-        self.token_entry.grid(row=3, column=1, columnspan=2, sticky="we", padx=6, pady=4)
+        ttk.Label(connect_frame, text="Token rejestracji:").grid(row=1, column=0, sticky="w", padx=6, pady=4)
+        self.token_entry = ttk.Entry(connect_frame, width=42, show="*", state="normal")
+        self.token_entry.grid(row=1, column=1, columnspan=2, sticky="we", padx=6, pady=4)
 
         self.connect_button = ttk.Button(
-            connect_frame, text="Zapisz i połącz", command=self._on_connect_clicked, state="disabled",
+            connect_frame, text="Zapisz i połącz", command=self._on_connect_clicked,
         )
-        self.connect_button.grid(row=4, column=0, columnspan=3, pady=(4, 6))
+        self.connect_button.grid(row=2, column=0, columnspan=3, pady=(4, 6))
 
         scan_frame = ttk.LabelFrame(self, text="Skanowanie")
         scan_frame.pack(fill="x", **pad)
@@ -178,26 +159,7 @@ class AgentGui(tk.Tk):
     def _set_busy(self, busy: bool) -> None:
         self._busy = busy
         self.scan_button.configure(state="disabled" if busy else "normal")
-        # connect_button additionally stays disabled while locked, even
-        # once busy=False -- "not busy" must not override "not unlocked".
-        self.connect_button.configure(
-            state="disabled" if (busy or not self._unlocked) else "normal",
-        )
-
-    def _set_unlocked(self, unlocked: bool) -> None:
-        self._unlocked = unlocked
-        entry_state = "normal" if unlocked else "disabled"
-        self.backend_url_entry.configure(state=entry_state)
-        self.token_entry.configure(state=entry_state)
-        self.connect_button.configure(
-            state="disabled" if (self._busy or not unlocked) else "normal",
-        )
-        self.unlock_password_entry.configure(state="disabled" if unlocked else "normal")
-        self.unlock_button.configure(state="disabled" if unlocked else "normal")
-        self.lock_status_var.set(
-            "🔓 Odblokowane" if unlocked
-            else "🔒 Zablokowane -- podaj hasło, aby edytować"
-        )
+        self.connect_button.configure(state="disabled" if busy else "normal")
 
     @staticmethod
     def _set_entry_text(entry: ttk.Entry, value: str) -> None:
@@ -262,33 +224,7 @@ class AgentGui(tk.Tk):
 
     # ---- actions ----------------------------------------------------
 
-    def _on_unlock_clicked(self) -> None:
-        password = self.unlock_password_entry.get()
-        if not password:
-            self.log("Podaj hasło administratora, aby odblokować edycję.")
-            return
-        username = self._current_username
-        domain = os.environ.get("USERDOMAIN", ".")
-
-        def work() -> None:
-            ok = verify_password(username, password, domain)
-
-            def finish() -> None:
-                self.unlock_password_entry.delete(0, "end")
-                if ok:
-                    self._set_unlocked(True)
-                    self.log(f"Odblokowano edycję połączenia (jako {username}).")
-                else:
-                    self.log("Nieprawidłowe hasło -- edycja połączenia pozostaje zablokowana.")
-
-            self._work_queue.put(finish)
-
-        self._run_in_background(work)
-
     def _on_connect_clicked(self) -> None:
-        if not self._unlocked:
-            self.log("Najpierw odblokuj edycję hasłem administratora.")
-            return
         backend_url = self.backend_url_entry.get().strip()
         token = self.token_entry.get().strip()
         if not backend_url or not token:
