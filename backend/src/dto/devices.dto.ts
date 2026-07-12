@@ -20,7 +20,7 @@ export class CreateEnrollmentTokenDto {
   @IsOptional() @IsString() @MaxLength(200)
   label?: string;
 
-  @IsOptional() @IsInt() @Min(1) @Max(24 * 7)
+  @IsOptional() @IsInt() @Min(1) @Max(24 * 90)
   ttlHours?: number;
 }
 

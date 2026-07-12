@@ -86,6 +86,8 @@ const TTL_OPTIONS = [
   { label: "24 godziny", value: 24 },
   { label: "72 godziny", value: 72 },
   { label: "7 dni", value: 24 * 7 },
+  { label: "30 dni", value: 24 * 30 },
+  { label: "90 dni", value: 24 * 90 },
 ];
 
 const PLATFORM_CONFIG: Record<
@@ -220,7 +222,7 @@ const GenerateTokenModal = ({
 }) => {
   const queryClient = useQueryClient();
   const [label, setLabel] = useState("");
-  const [ttlHours, setTtlHours] = useState(24);
+  const [ttlHours, setTtlHours] = useState(24 * 30);
   const [result, setResult] = useState<EnrollmentTokenSnippets | null>(null);
   const [activePlatform, setActivePlatform] = useState<AgentPlatform>("windows");
 
@@ -235,7 +237,7 @@ const GenerateTokenModal = ({
 
   const handleClose = () => {
     setLabel("");
-    setTtlHours(24);
+    setTtlHours(24 * 30);
     setResult(null);
     setActivePlatform("windows");
     onClose();

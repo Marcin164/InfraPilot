@@ -17,8 +17,8 @@ export type EnrollmentTokenListItem = {
 };
 
 const MIN_TTL_HOURS = 1;
-const MAX_TTL_HOURS = 24 * 7;
-const DEFAULT_TTL_HOURS = 24;
+const MAX_TTL_HOURS = 24 * 90;
+const DEFAULT_TTL_HOURS = 24 * 30;
 
 function hash(raw: string): string {
   return createHash('sha256').update(raw).digest('hex');

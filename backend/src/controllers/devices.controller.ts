@@ -317,7 +317,18 @@ export class DevicesController {
     return { configured: this.remoteAssist.isConfigured() };
   }
 
+  // AGENT_PUBLIC_BASE_URL wins when set — pins every installer/bootstrap
+  // snippet to the one TLS-terminating front door (e.g. https://host, no
+  // port) regardless of which host/port an admin's browser happened to hit
+  // the API through. Without this, an admin opening Settings via the raw
+  // backend port (e.g. https://host:3000, bypassing the reverse proxy)
+  // would bake that same wrong, TLS-less port into every snippet generated
+  // from that request — which is exactly the mismatch that breaks agent
+  // enrollment with "SSL: WRONG_VERSION_NUMBER".
   private resolveBaseUrl(req: any): string {
+    const pinned = process.env.AGENT_PUBLIC_BASE_URL?.trim();
+    if (pinned) return pinned.replace(/\/+$/, '');
+
     const proto =
       (req.headers['x-forwarded-proto'] as string) ?? req.protocol ?? 'https';
     const host =
