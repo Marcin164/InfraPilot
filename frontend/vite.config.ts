@@ -4,13 +4,14 @@ import react from "@vitejs/plugin-react";
 
 // Injected only into the production build — the dev server's own HMR client
 // needs inline/eval script execution that this policy would otherwise block.
+const apiUrl = process.env.VITE_API_URL?.trim() ?? '';
 const CSP = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https: wss:",
+  `connect-src 'self' https: wss:${apiUrl ? ` ${apiUrl}` : ''}`,
   "frame-src https:",
   "object-src 'none'",
   "base-uri 'self'",
