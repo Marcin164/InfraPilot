@@ -316,6 +316,21 @@ const GenerateTokenModal = ({
           {result[activePlatform].snippet && (
             <CopyableBox value={result[activePlatform].snippet as string} />
           )}
+          {result.enrollmentToken && (
+            <div className="mt-4 border border-[#E0E0E0] rounded-[8px] p-3 bg-[#F9FAFB]">
+              <p className="text-[12px] font-semibold text-[#3C3C3C] mb-2">
+                Ręczna konfiguracja (agent GUI — pole „Połącz z backendem"):
+              </p>
+              <div className="mb-2">
+                <p className="text-[11px] text-[#7a7a7a] mb-1">Backend URL:</p>
+                <CopyableBox value={result.backendUrl as string} />
+              </div>
+              <div>
+                <p className="text-[11px] text-[#7a7a7a] mb-1">Token rejestracji:</p>
+                <CopyableBox value={result.enrollmentToken as string} />
+              </div>
+            </div>
+          )}
           <p className="text-[12px] text-[#BC0E0E] mt-3 text-center">
             ⚠ Token pokazany tylko raz. Zamknięcie tego okna = trzeba wygenerować nowy.
           </p>

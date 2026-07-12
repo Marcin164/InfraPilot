@@ -415,6 +415,8 @@ export class DevicesController {
       id,
       label: body.label ?? null,
       expiresAt,
+      enrollmentToken: rawToken,
+      backendUrl: baseUrl,
       windows: {
         snippet: windowsUrl
           ? `# Run as Administrator\nirm "${bootstrapBaseHttp}/windows" | iex`
