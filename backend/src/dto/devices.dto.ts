@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsEnum,
   IsIn,
   IsInt,
@@ -28,6 +29,8 @@ export class BaseboardDto {
   @IsOptional() @IsString() @MaxLength(256) serial_number?: string;
   @IsOptional() @IsString() @MaxLength(256) manufacturer?: string;
   @IsOptional() @IsString() @MaxLength(256) product?: string;
+  @IsOptional() @IsBoolean() hosting_board?: boolean;
+  @IsOptional() @IsString() @MaxLength(256) version?: string;
 }
 
 export class HardwareSectionDto {
