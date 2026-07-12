@@ -120,10 +120,17 @@ class AgentGui(tk.Tk):
         self.token_entry = ttk.Entry(connect_frame, width=42, show="*", state="normal")
         self.token_entry.grid(row=1, column=1, columnspan=2, sticky="we", padx=6, pady=4)
 
+        self.verify_tls_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(
+            connect_frame,
+            text="Weryfikuj certyfikat SSL (odznacz dla self-signed)",
+            variable=self.verify_tls_var,
+        ).grid(row=2, column=0, columnspan=3, sticky="w", padx=6, pady=2)
+
         self.connect_button = ttk.Button(
             connect_frame, text="Zapisz i połącz", command=self._on_connect_clicked,
         )
-        self.connect_button.grid(row=2, column=0, columnspan=3, pady=(4, 6))
+        self.connect_button.grid(row=3, column=0, columnspan=3, pady=(4, 6))
 
         scan_frame = ttk.LabelFrame(self, text="Skanowanie")
         scan_frame.pack(fill="x", **pad)
@@ -235,6 +242,7 @@ class AgentGui(tk.Tk):
             try:
                 save_config(
                     DEFAULT_CONFIG_PATH, backend_url=backend_url, enrollment_token=token,
+                    verify_tls=self.verify_tls_var.get(),
                     log_path=str(DEFAULT_STATE_PATH.parent / "agent.log"),
                 )
                 cfg = AgentConfig(backend_url=backend_url.rstrip("/"), enrollment_token=token)
