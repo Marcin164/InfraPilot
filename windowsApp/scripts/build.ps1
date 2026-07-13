@@ -60,9 +60,14 @@ try {
         agent\main.py
 
     Write-Host "Building infrapilot-agent-gui.exe..." -ForegroundColor Cyan
+    # --collect-data customtkinter -- CTk ships its own theme JSONs + font
+    # files as package data (not .py), which PyInstaller's import scan
+    # doesn't pick up on its own; without this the frozen exe launches with
+    # unstyled/fallback widgets or missing fonts.
     Invoke-Native $Python -m PyInstaller `
         --noconfirm --onefile --windowed --uac-admin `
         --name infrapilot-agent-gui `
+        --collect-data customtkinter `
         -p . `
         agent\gui.py
 
