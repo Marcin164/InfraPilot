@@ -7,8 +7,10 @@ WORKDIR /app
 # Vite inlines VITE_* vars at build time, so they must be present here.
 ARG VITE_API_URL
 ARG VITE_AUTH_URL
+ARG VITE_WS_URL
 ENV VITE_API_URL=$VITE_API_URL \
-    VITE_AUTH_URL=$VITE_AUTH_URL
+    VITE_AUTH_URL=$VITE_AUTH_URL \
+    VITE_WS_URL=$VITE_WS_URL
 
 COPY package.json package-lock.json ./
 RUN npm ci
