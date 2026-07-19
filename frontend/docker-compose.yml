@@ -6,6 +6,7 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL}
         VITE_AUTH_URL: ${VITE_AUTH_URL}
+        VITE_WS_URL: ${VITE_WS_URL}
     restart: unless-stopped
     ports:
       - "127.0.0.1:8080:80"

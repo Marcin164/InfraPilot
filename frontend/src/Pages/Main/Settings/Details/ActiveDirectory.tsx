@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlug,
@@ -66,8 +67,13 @@ const ActiveDirectory = () => {
         queryClient.invalidateQueries({ queryKey: ["ad-status"] });
         setForm({ url: "", baseDN: "", username: "", password: "" });
         setTestResult(null);
+        toast.success(data.message || t("toast.success.adConnected"));
+      } else {
+        toast.error(data.message || t("toast.error.adConnectFailed"));
       }
     },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? t("toast.error.adConnectFailed")),
   });
 
   const disconnectMutation = useMutation({
@@ -78,36 +84,58 @@ const ActiveDirectory = () => {
         setDisconnectModalOpen(false);
         setDisconnectPassword("");
         setDisconnectError(null);
+        toast.success(data.message || t("toast.success.adDisconnected"));
       } else {
         setDisconnectError(data.message);
+        toast.error(data.message || t("toast.error.adDisconnectFailed"));
       }
     },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? t("toast.error.adDisconnectFailed")),
   });
 
   const testMutation = useMutation({
     mutationFn: testAdConnection,
-    onSuccess: (data) => setTestResult(data),
+    onSuccess: (data) => {
+      setTestResult(data);
+      if (data.success) toast.success(data.message || t("toast.success.adTestOk"));
+      else toast.error(data.message || t("toast.error.adTestFailed"));
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? t("toast.error.adTestFailed")),
   });
 
   const syncMutation = useMutation({
     mutationFn: syncAdUsers,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["ad-status"] });
+      if (data.success) toast.success(data.message || t("toast.success.adSynced"));
+      else toast.error(data.message || t("toast.error.adSyncFailed"));
     },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? t("toast.error.adSyncFailed")),
   });
 
   const certUploadMutation = useMutation({
     mutationFn: uploadAdCertificate,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["ad-status"] });
+      if (data.success) toast.success(data.message || t("toast.success.adCertUploaded"));
+      else toast.error(data.message || t("toast.error.adCertUploadFailed"));
     },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? t("toast.error.adCertUploadFailed")),
   });
 
   const certDeleteMutation = useMutation({
     mutationFn: deleteAdCertificate,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["ad-status"] });
+      if (data.success) toast.success(data.message || t("toast.success.adCertDeleted"));
+      else toast.error(data.message || t("toast.error.adCertDeleteFailed"));
     },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? t("toast.error.adCertDeleteFailed")),
   });
 
   const status = statusQuery.data;
