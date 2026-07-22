@@ -29,7 +29,7 @@ const AccountSettings = ({ isOpen, closeModal }: Props) => {
           <NavLink
             onClick={closeModal}
             className="text-[#535353] text-[16px] px-4 py-2 block hover:text-[#2B9AE9] hoverbg-[#D7EEFF]/50"
-            to="https://3187297.propelauthtest.com/account/settings"
+            to={`${import.meta.env.VITE_AUTH_URL}/account/settings`}
           >
             <div className="my-2">
               <FontAwesomeIcon icon={faUser} />
