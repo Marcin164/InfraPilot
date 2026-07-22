@@ -69,7 +69,7 @@ services:
       PORT: "3000"
     volumes:
       - uploads:/app/uploads
-      - ./certs:/app/certs:ro
+      - ./certs:/app/certs
     ports:
       - "127.0.0.1:3000:3000"
 

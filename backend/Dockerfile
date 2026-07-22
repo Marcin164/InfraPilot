@@ -36,8 +36,8 @@ COPY --from=prod-deps --chown=app:app /app/node_modules ./node_modules
 COPY --from=build     --chown=app:app /app/dist         ./dist
 COPY --chown=app:app package.json ./
 
-# Writable uploads dir — mount a volume here in compose / EFS on AWS.
-RUN mkdir -p /app/uploads && chown -R app:app /app/uploads
+# Writable uploads/certs dirs — mount a volume here in compose / EFS on AWS.
+RUN mkdir -p /app/uploads /app/certs && chown -R app:app /app/uploads /app/certs
 
 USER app
 EXPOSE 3000

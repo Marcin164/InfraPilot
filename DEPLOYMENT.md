@@ -176,6 +176,7 @@ services:
       PORT: "3000"
     volumes:
       - uploads:/app/uploads
+      - certs:/app/certs
     ports:
       - "127.0.0.1:3000:3000"
 
@@ -194,6 +195,7 @@ services:
 volumes:
   pgdata:
   uploads:
+  certs:
 ```
 
 > **Ważne — dlaczego `127.0.0.1:3000:3000`, nie `3000:3000`:** publikowanie
