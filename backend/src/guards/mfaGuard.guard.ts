@@ -44,14 +44,9 @@ export class MfaGuard implements CanActivate {
     let hasMfa = false;
     try {
       const methods = await fetchUserMfaMethods(userId);
-      hasMfa = Boolean(
-        methods &&
-          ((methods as any).backupCodesEnabled ||
-            (methods as any).totpEnabled ||
-            (methods as any).smsEnabled ||
-            (Array.isArray((methods as any).methods) &&
-              (methods as any).methods.length > 0)),
-      );
+      // SDK response shape is `{ mfaSetup: MfaTotpType | MfaPhoneType | null }`
+      // — non-null means the user has TOTP or a phone number enrolled.
+      hasMfa = Boolean(methods && (methods as any).mfaSetup != null);
     } catch (err) {
       this.logger.warn(
         `Failed to fetch MFA methods for ${userId}; failing closed`,

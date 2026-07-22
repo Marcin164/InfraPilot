@@ -61,32 +61,22 @@ describe('MfaGuard', () => {
       await expect(guard.canActivate(ctx)).rejects.toThrow(ForbiddenException);
     });
 
-    it('returns true when user has totpEnabled', async () => {
-      mockFetchUserMfaMethods.mockResolvedValue({ totpEnabled: true });
+    it('returns true when user has TOTP enrolled', async () => {
+      mockFetchUserMfaMethods.mockResolvedValue({ mfaSetup: { type: 'Totp' } });
       const result = await guard.canActivate(makeCtx('user-totp'));
       expect(result).toBe(true);
     });
 
-    it('returns true when user has backupCodesEnabled', async () => {
-      mockFetchUserMfaMethods.mockResolvedValue({ backupCodesEnabled: true });
-      const result = await guard.canActivate(makeCtx('user-backup'));
+    it('returns true when user has a phone number enrolled', async () => {
+      mockFetchUserMfaMethods.mockResolvedValue({
+        mfaSetup: { type: 'Phone', phone_numbers: [{ mfa_phone_id: '1', mfa_phone_number_suffix: '1234' }] },
+      });
+      const result = await guard.canActivate(makeCtx('user-phone'));
       expect(result).toBe(true);
     });
 
-    it('returns true when user has smsEnabled', async () => {
-      mockFetchUserMfaMethods.mockResolvedValue({ smsEnabled: true });
-      const result = await guard.canActivate(makeCtx('user-sms'));
-      expect(result).toBe(true);
-    });
-
-    it('returns true when user has non-empty methods array', async () => {
-      mockFetchUserMfaMethods.mockResolvedValue({ methods: ['totp'] });
-      const result = await guard.canActivate(makeCtx('user-methods'));
-      expect(result).toBe(true);
-    });
-
-    it('throws ForbiddenException when user has no MFA methods', async () => {
-      mockFetchUserMfaMethods.mockResolvedValue({});
+    it('throws ForbiddenException when mfaSetup is null', async () => {
+      mockFetchUserMfaMethods.mockResolvedValue({ mfaSetup: null });
       await expect(guard.canActivate(makeCtx('user-nomfa'))).rejects.toThrow(
         ForbiddenException,
       );
@@ -100,7 +90,7 @@ describe('MfaGuard', () => {
     });
 
     it('uses cache on second call and does not re-fetch', async () => {
-      mockFetchUserMfaMethods.mockResolvedValue({ totpEnabled: true });
+      mockFetchUserMfaMethods.mockResolvedValue({ mfaSetup: { type: 'Totp' } });
       const userId = 'user-cached-' + Date.now();
 
       await guard.canActivate(makeCtx(userId));
@@ -110,7 +100,7 @@ describe('MfaGuard', () => {
     });
 
     it('resolves userId from req.user.id when userId property is absent', async () => {
-      mockFetchUserMfaMethods.mockResolvedValue({ totpEnabled: true });
+      mockFetchUserMfaMethods.mockResolvedValue({ mfaSetup: { type: 'Totp' } });
       const ctx = {
         switchToHttp: () => ({
           getRequest: () => ({ user: { id: 'user-id-field' } }),
