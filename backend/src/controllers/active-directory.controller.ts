@@ -18,6 +18,7 @@ import {
   AdDisconnectDto,
 } from 'src/services/active-directory.service';
 import { UsersService } from 'src/services/users.service';
+import { describeAdError } from 'src/helpers/adErrorMessage';
 
 @UseGuards(AuthGuard, MfaGuard)
 @Roles(Role.Admin)
@@ -62,7 +63,7 @@ export class ActiveDirectoryController {
     } catch (error: any) {
       return {
         success: false,
-        message: `Synchronizacja nieudana: ${error.message || error}`,
+        message: `Synchronizacja nieudana: ${describeAdError(error)}`,
       };
     }
   }

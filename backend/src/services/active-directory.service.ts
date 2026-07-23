@@ -9,6 +9,7 @@ import { encrypt, decrypt } from 'src/helpers/crypto';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import * as fs from 'fs';
 import * as path from 'path';
+import { describeAdError } from 'src/helpers/adErrorMessage';
 
 const CERT_DIR = path.join(process.cwd(), 'certs');
 const CERT_PATH = path.join(CERT_DIR, 'ad-ca.cer');
@@ -188,7 +189,7 @@ export class ActiveDirectoryService implements OnModuleInit {
       this.logger.error(`AD connection failed: ${error}`);
       return {
         success: false,
-        message: `Nie udało się połączyć: ${error.message || error}`,
+        message: `Nie udało się połączyć: ${describeAdError(error)}`,
       };
     }
   }
@@ -230,7 +231,7 @@ export class ActiveDirectoryService implements OnModuleInit {
     } catch (error: any) {
       return {
         success: false,
-        message: `Test nieudany: ${error.message || error}`,
+        message: `Test nieudany: ${describeAdError(error)}`,
       };
     }
   }
@@ -244,9 +245,13 @@ export class ActiveDirectoryService implements OnModuleInit {
       this.loadCertificate();
       return { success: true, message: 'Certyfikat zapisany' };
     } catch (error: any) {
+      const detail =
+        error?.code === 'EACCES'
+          ? `brak uprawnień do zapisu na serwerze (${error.message})`
+          : error.message;
       return {
         success: false,
-        message: `Błąd zapisu certyfikatu: ${error.message}`,
+        message: `Błąd zapisu certyfikatu: ${detail}`,
       };
     }
   }
