@@ -368,14 +368,29 @@ export class ActiveDirectoryService implements OnModuleInit {
     if (!record?.value) return null;
 
     const config = record.value as any;
+
+    // Anything saveConfig() ever wrote went through encrypt(), so a stored
+    // password always looks like `gcm:...` or the legacy `ivHex:dataHex`
+    // format — never plaintext. Only treat it as pre-encryption legacy data
+    // if it genuinely doesn't match either shape; otherwise a decrypt
+    // failure means ENCRYPTION_KEY changed since it was saved, and using
+    // the raw ciphertext as a password would silently bind with garbage.
+    const looksEncrypted =
+      typeof config.password === 'string' &&
+      (config.password.startsWith('gcm:') || /^[0-9a-f]{32}:[0-9a-f]+$/i.test(config.password));
+
+    if (!looksEncrypted) return config;
+
     try {
       return {
         ...config,
         password: decrypt(config.password),
       };
     } catch {
-      // Fallback for unencrypted legacy data
-      return config;
+      this.logger.error(
+        'Failed to decrypt saved AD password — ENCRYPTION_KEY likely changed since it was saved. Reconnect via Settings > Active Directory to re-save it.',
+      );
+      return null;
     }
   }
 

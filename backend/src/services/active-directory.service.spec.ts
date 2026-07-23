@@ -6,9 +6,14 @@ import { AdminSettings } from 'src/entities/adminSettings.entity';
 
 jest.mock('activedirectory2');
 jest.mock('src/helpers/crypto', () => ({
-  encrypt: jest.fn((v: string) => `enc:${v}`),
-  decrypt: jest.fn((v: string) => v.replace('enc:', '')),
+  encrypt: jest.fn((v: string) => `gcm:enc:${v}`),
+  decrypt: jest.fn((v: string) => {
+    if (!v.startsWith('gcm:enc:')) throw new Error('bad key');
+    return v.replace('gcm:enc:', '');
+  }),
 }));
+
+import { decrypt as decryptMock } from 'src/helpers/crypto';
 jest.mock('fs', () => {
   const actual = jest.requireActual('fs');
   return {
@@ -83,15 +88,44 @@ describe('ActiveDirectoryService', () => {
 
   describe('disconnect', () => {
     it('returns error when password is wrong', async () => {
-      settingsRepo.findOne.mockResolvedValue({ value: { url: 'ldap://example.com', baseDN: 'DC=example,DC=com', username: 'admin', password: 'enc:correct' } });
+      settingsRepo.findOne.mockResolvedValue({ value: { url: 'ldap://example.com', baseDN: 'DC=example,DC=com', username: 'admin', password: 'gcm:enc:correct' } });
       const result = await service.disconnect('wrong');
       expect(result.success).toBe(false);
     });
 
     it('disconnects successfully with correct password', async () => {
-      settingsRepo.findOne.mockResolvedValue({ value: { url: 'ldap://example.com', baseDN: 'DC=example,DC=com', username: 'admin', password: 'enc:correct' } });
+      settingsRepo.findOne.mockResolvedValue({ value: { url: 'ldap://example.com', baseDN: 'DC=example,DC=com', username: 'admin', password: 'gcm:enc:correct' } });
       const result = await service.disconnect('correct');
       expect(result.success).toBe(true);
+    });
+
+    it('falls back to env AD_PASSWORD instead of using undecryptable ciphertext as the password', async () => {
+      // Simulates ENCRYPTION_KEY having changed since this row was saved —
+      // the stored value still looks encrypted (gcm: prefix) but decrypt()
+      // fails. Regression test for the bug where the raw ciphertext blob
+      // was silently used as the password, permanently locking admins out.
+      settingsRepo.findOne.mockResolvedValue({
+        value: { url: 'ldap://example.com', baseDN: 'DC=example,DC=com', username: 'admin', password: 'gcm:some-blob-from-a-different-key' },
+      });
+      (decryptMock as jest.Mock).mockImplementationOnce(() => {
+        throw new Error('Unsupported state or unable to authenticate data');
+      });
+      configService.get.mockImplementation((key: string) =>
+        key === 'ad.password' ? 'env-password' : null,
+      );
+
+      const wrongResult = await service.disconnect('gcm:some-blob-from-a-different-key');
+      expect(wrongResult.success).toBe(false);
+
+      settingsRepo.findOne.mockResolvedValue({
+        value: { url: 'ldap://example.com', baseDN: 'DC=example,DC=com', username: 'admin', password: 'gcm:some-blob-from-a-different-key' },
+      });
+      (decryptMock as jest.Mock).mockImplementationOnce(() => {
+        throw new Error('Unsupported state or unable to authenticate data');
+      });
+
+      const rightResult = await service.disconnect('env-password');
+      expect(rightResult.success).toBe(true);
     });
   });
 
