@@ -11,7 +11,11 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self' data:",
-  `connect-src 'self' https: wss:${apiUrl ? ` ${apiUrl}` : ''}`,
+  // ws: (not just wss:) is required for on-prem installs running over
+  // plain HTTP without TLS in front (see DEPLOYMENT.md) — CSP treats ws:
+  // and wss: as distinct schemes, 'self' doesn't reliably cover the
+  // upgrade in every browser.
+  `connect-src 'self' https: wss: ws:${apiUrl ? ` ${apiUrl}` : ''}`,
   "frame-src https:",
   "object-src 'none'",
   "base-uri 'self'",
