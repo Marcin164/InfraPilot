@@ -172,6 +172,12 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: "5432"
+      # Sourced from the root .env (same file db: uses below) so DB
+      # credentials have one source of truth — these override whatever
+      # DB_USERNAME/DB_PASSWORD/DB_NAME happen to be in backend/.env.
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
       NODE_ENV: production
       PORT: "3000"
     volumes:
