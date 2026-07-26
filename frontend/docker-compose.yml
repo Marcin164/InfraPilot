@@ -4,9 +4,11 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL}
+        # VITE_API_URL/VITE_WS_URL intentionally omitted — the app falls
+        # back to same-origin (nginx proxies /api and /socket.io there), so
+        # one built image works at any customer's IP/domain. Only set these
+        # if the API is ever served from a different origin than the SPA.
         VITE_AUTH_URL: ${VITE_AUTH_URL}
-        VITE_WS_URL: ${VITE_WS_URL}
     restart: unless-stopped
     ports:
       - "127.0.0.1:8080:80"

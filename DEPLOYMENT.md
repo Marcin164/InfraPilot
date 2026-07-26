@@ -185,8 +185,11 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://192.168.1.41/api
-        VITE_WS_URL: http://192.168.1.41
+        # VITE_API_URL/VITE_WS_URL celowo pominięte — apka w runtime sama
+        # wylicza adres backendu z originu strony (Nginx serwuje / i /api
+        # pod tym samym adresem), więc ten sam zbudowany obraz działa pod
+        # dowolnym IP/domeną bez rebuildu. Zostaw tylko jeśli API kiedyś
+        # będzie serwowane z innego originu niż SPA.
         VITE_AUTH_URL: ${VITE_AUTH_URL:-}
     restart: unless-stopped
     ports:
@@ -210,9 +213,11 @@ volumes:
 > `localhost`, tak jak już robi to dla frontendu. Sekcja 5 pokazuje jak Nginx
 > ma teraz proxować `/api/` i `/socket.io/` do tego portu.
 >
-> **Uwaga:** `VITE_API_URL` i `VITE_WS_URL` są wbudowane w bundle JavaScript
-> podczas buildu. Jeśli zmienisz IP/domenę serwera, musisz przebudować obraz
-> frontendu (`docker compose up -d --build frontend`).
+> **Uwaga:** `VITE_API_URL`/`VITE_WS_URL` nie są ustawiane — apka wylicza
+> adres backendu z originu strony w runtime, więc zmiana IP/domeny serwera
+> **nie wymaga** rebuildu frontendu. Jedyny wyjątek: jeśli świadomie
+> ustawisz te zmienne (np. API na innym originie niż SPA), wtedy tak,
+> zmiana wymaga `docker compose up -d --build frontend`.
 
 ---
 
@@ -369,8 +374,14 @@ Potem: `docker compose restart api` (bez rebuild).
 
 ### Dane nie ładują się / socket nie łączy po zmianie IP lub domeny serwera
 
-**Przyczyna:** `VITE_API_URL` i `VITE_WS_URL` są baked-in podczas buildu frontendu.  
-**Rozwiązanie:** Zmień oba w `docker-compose.yml` i przebuduj frontend:
+Domyślnie (bez ustawionych `VITE_API_URL`/`VITE_WS_URL`) apka wylicza adres
+backendu z originu strony w runtime — zmiana IP/domeny **nie wymaga** żadnej
+akcji, sam frontend się do niej dostosuje.
+
+**Jeśli mimo to nie działa:** sprawdź czy w `docker-compose.yml` ktoś
+świadomie nie ustawił `VITE_API_URL`/`VITE_WS_URL` na sztywno (np. bo API ma
+być serwowane z innego originu niż SPA) — wtedy te dwie zmienne faktycznie
+są baked-in podczas buildu i zmiana IP/domeny wymaga ich edycji i:
 ```bash
 docker compose up -d --build frontend
 ```
