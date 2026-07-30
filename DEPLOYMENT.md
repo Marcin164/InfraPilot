@@ -34,14 +34,19 @@ newgrp docker
 
 ```
 /opt/infrapilot/
-├── docker-compose.yml        ← główny plik (frontend + backend + db)
-├── .env                      ← zmienne DB i VITE dla docker-compose
+├── docker-compose.yml        ← w repo, nie edytujemy per-instalację
+├── .env                      ← JEDYNY plik do skonfigurowania (skopiowany z .env.example)
 ├── backend/
-│   ├── .env                  ← zmienne backendu (DB, CORS, klucze)
 │   └── src/...
 └── frontend/
     └── src/...
 ```
+
+Jeden `.env` w roocie to jedyne miejsce konfiguracji — jest jednocześnie plikiem, z
+którego Compose podstawia `${ZMIENNE}` w samym `docker-compose.yml` (build-argi,
+konfiguracja `db:`), i plikiem wstrzykiwanym do kontenera `api` w runtime
+(`env_file:`). `docker-compose.yml` jest częścią repo i nie wymaga ręcznej edycji —
+jedyne co edytujesz per-instalację to `.env`.
 
 Skopiuj projekt:
 ```bash
@@ -54,31 +59,27 @@ git clone <repo-url> /opt/infrapilot
 
 ## 3. Konfiguracja
 
-### `/opt/infrapilot/.env` (zmienne dla docker-compose na poziomie root)
-
-```env
-DB_USERNAME=infrapilot
-DB_PASSWORD=<silne-haslo>
-DB_NAME=InfraPilot
-VITE_AUTH_URL=https://<tenant>.propelauthtest.com
+```bash
+cd /opt/infrapilot
+cp .env.example .env
+nano .env
 ```
 
-### `/opt/infrapilot/backend/.env`
-
 > **Pierwszy deploy:** ustaw `ADMIN_EMAIL` na swój email z PropelAuth. Przy starcie aplikacja automatycznie stworzy konto admina jeśli baza jest pusta. Po pierwszym uruchomieniu możesz tę wartość usunąć.
+
+Kluczowe wartości do wypełnienia w `.env` (pełna lista z komentarzami jest w
+`.env.example` — poniżej tylko te, które naprawdę musisz zmienić na starcie):
 
 ```env
 # PropelAuth
 PROPELAUTH_AUTH_URL=https://<tenant>.propelauthtest.com
 PROPELAUTH_API_KEY=<klucz>
+VITE_AUTH_URL=https://<tenant>.propelauthtest.com
 
 # Baza danych
-DB_HOST=localhost
-DB_PORT=5432
 DB_USERNAME=infrapilot
 DB_PASSWORD=<silne-haslo>
 DB_NAME=InfraPilot
-DB_SCHEMA=public
 
 # Szyfrowanie — wygeneruj: openssl rand -hex 32
 # Zgubienie tego klucza = trwała utrata dostępu do wszystkich zaszyfrowanych
@@ -86,49 +87,14 @@ DB_SCHEMA=public
 # (menedżer haseł), nie tylko w tym pliku na serwerze.
 ENCRYPTION_KEY=<32-znakowy-hex>
 
-# CORS — origin, z którego przeglądarka serwuje frontend (bez trailing
-# slash, bez portu — Nginx teraz proxuje wszystko pod jednym originem,
-# więc to i tak głównie obrona w głąb dla wywołań spoza przeglądarki)
+# Origin, pod którym otwierasz apkę w przeglądarce — bez trailing slash, bez portu
 CORS_ORIGINS=http://192.168.1.41
-
-# Ufaj nagłówkowi X-Forwarded-For tylko dlatego, że Nginx faktycznie stoi
-# przed tą apką jako reverse proxy (sekcja 5). Bez tego rate-limiting i
-# logi widziałyby jeden IP (Nginx) dla wszystkich requestów; z tym ustawione
-# na 'true' bez realnego proxy przed apką ktoś mógłby podszyć się pod IP
-# nagłówkiem i ominąć limity — więc włączaj tylko razem z Nginx z sekcji 5.
-TRUST_PROXY=true
-
-# Baza URL wpiekana w każdy snippet instalacyjny agenta (Windows/macOS/
-# Linux) z Settings > Agent. Musi wskazywać na Nginx (ten sam origin co
-# CORS_ORIGINS) + prefiks /api — bo agenci też teraz idą przez proxy, nie
-# bezpośrednio na :3000. Bez tego URL bierze się z nagłówka Host żądania
-# admina — ryzyko wpieczenia złego/nieTLS adresu przez pomyłkę.
 AGENT_PUBLIC_BASE_URL=http://192.168.1.41/api
 
-# Wymuszaj MFA na wrażliwych modułach (eksport audytu, RODO, legal hold,
-# retencja, sync AD, SMTP, M365, compliance, CVE, fleet). Zostawienie
-# puste/inne niż 'true' wyłącza wymuszanie MFA w całej apce.
+TRUST_PROXY=true
 MFA_REQUIRED=true
-
-# TypeORM — true tylko przy pierwszym deployu na świeżą bazę,
-# potem zmień na false i używaj migracji
 TYPEORM_SYNCHRONIZE=true
-
-# Pierwszy admin — email musi zgadzać się z kontem w PropelAuth.
-# Po pierwszym uruchomieniu można usunąć (działa tylko gdy users jest pusta).
 ADMIN_EMAIL=twoj@email.com
-
-# Serwer
-PORT=3000
-NODE_ENV=production
-
-# SMTP (opcjonalne)
-SMTP_HOST=
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=
-SMTP_PASS=
-MAIL_FROM_ADDRESS=infrapilot@localhost
 ```
 
 Generowanie ENCRYPTION_KEY:
@@ -138,74 +104,13 @@ openssl rand -hex 32
 
 ---
 
-## 4. Docker Compose (root)
+## 4. Docker Compose
 
-Plik `/opt/infrapilot/docker-compose.yml`:
-
-```yaml
-services:
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  api:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    env_file:
-      - ./backend/.env
-    environment:
-      DB_HOST: db
-      DB_PORT: "5432"
-      # Sourced from the root .env (same file db: uses below) so DB
-      # credentials have one source of truth — these override whatever
-      # DB_USERNAME/DB_PASSWORD/DB_NAME happen to be in backend/.env.
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
-      NODE_ENV: production
-      PORT: "3000"
-    volumes:
-      - uploads:/app/uploads
-      - certs:/app/certs
-    ports:
-      - "127.0.0.1:3000:3000"
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        # VITE_API_URL/VITE_WS_URL celowo pominięte — apka w runtime sama
-        # wylicza adres backendu z originu strony (Nginx serwuje / i /api
-        # pod tym samym adresem), więc ten sam zbudowany obraz działa pod
-        # dowolnym IP/domeną bez rebuildu. Zostaw tylko jeśli API kiedyś
-        # będzie serwowane z innego originu niż SPA.
-        VITE_AUTH_URL: ${VITE_AUTH_URL:-}
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:8080:80"
-
-volumes:
-  pgdata:
-  uploads:
-  certs:
-```
+`docker-compose.yml` jest w repo (`/opt/infrapilot/docker-compose.yml`) — nie trzeba
+go ręcznie tworzyć ani edytować przy zwykłym wdrożeniu. Zawiera `db`, `api`,
+`frontend` oraz opcjonalny stack obserwowalności (`postgres_exporter`,
+`prometheus`, `grafana` — jeśli ich nie chcesz, po prostu zignoruj te porty, albo
+usuń te serwisy z pliku).
 
 > **Ważne — dlaczego `127.0.0.1:3000:3000`, nie `3000:3000`:** publikowanie
 > portu kontenera na `0.0.0.0` (czyli sam `3000:3000`) wystawia backend
@@ -367,7 +272,7 @@ ls /etc/nginx/sites-enabled/
 
 ### CORS błędy w przeglądarce
 
-**Przyczyna:** `CORS_ORIGINS` w `backend/.env` ustawione na `*` lub złą domenę — albo
+**Przyczyna:** `CORS_ORIGINS` w `.env` ustawione na `*` lub złą domenę — albo
 frontend i API nie są już tym samym originem (np. ktoś otworzył apkę bezpośrednio
 po `:8080`, z pominięciem Nginx).  
 **Rozwiązanie:** Ustaw dokładny origin, pod którym faktycznie otwierasz apkę w
@@ -404,13 +309,26 @@ dostaje 400/502 zamiast przejść.
 
 ### Agent (Windows/macOS/Linux) nie może się zarejestrować po zmianie architektury
 
-**Przyczyna:** `AGENT_PUBLIC_BASE_URL` w `backend/.env` nadal wskazuje bezpośrednio
+**Przyczyna:** `AGENT_PUBLIC_BASE_URL` w `.env` nadal wskazuje bezpośrednio
 na `:3000` zamiast na Nginx + `/api`. Snippet instalacyjny generowany w Settings >
 Agent ma wtedy zaszyty zły adres.  
 **Rozwiązanie:** Ustaw `AGENT_PUBLIC_BASE_URL=http://192.168.1.41/api`,
 `docker compose restart api`, i wygeneruj nowy snippet/token (stare snippety mają
 stary adres zaszyty na stałe, wygenerowane wcześniej pliki instalacyjne trzeba
 pobrać na nowo).
+
+### Requesty XHR blokowane przez CSP mimo `'self'` w `connect-src`
+
+**Objaw:** w konsoli przeglądarki (zwłaszcza Edge) `Connecting to 'http://IP/api/...'
+violates the following Content Security Policy directive: "connect-src 'self'
+https: wss: ws: http://IP/api"` — mimo że `'self'` teoretycznie powinno pokrywać
+każdy request do tego samego originu.  
+**Przyczyna:** ktoś ręcznie dopisał `VITE_API_URL`/`VITE_WS_URL` jako build-arg w
+`docker-compose.yml` (domyślnie ich tam nie ma, sekcja 4). Jawny wpis hosta ze
+ścieżką bez końcowego `/` w `connect-src` obok `'self'` potrafi wywołać taki
+błąd w niektórych przeglądarkach.  
+**Rozwiązanie:** usuń `VITE_API_URL`/`VITE_WS_URL` z `docker-compose.yml`
+(nie są potrzebne — patrz sekcja 4), `docker compose up -d --build frontend`.
 
 ---
 

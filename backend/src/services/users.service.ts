@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { Users } from 'src/entities/users.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
 import { validateSod } from 'src/config/sod';
@@ -209,10 +209,16 @@ export class UsersService {
     const linkCandidates: string[] = [];
 
     for (const user of users) {
-      const existing = user.distinguishedName
-        ? await this.usersRepository.findOneBy({
-            distinguishedName: user.distinguishedName,
-          })
+      // Match by distinguishedName first (AD's own identity), falling back
+      // to email — a user synced from M365 before ever being synced from
+      // AD has no distinguishedName yet, so without this fallback AD sync
+      // would create a duplicate row instead of enriching the existing one.
+      const where: Record<string, any>[] = [];
+      if (user.distinguishedName) where.push({ distinguishedName: user.distinguishedName });
+      if (user.email) where.push({ email: ILike(user.email) });
+
+      const existing = where.length
+        ? await this.usersRepository.findOne({ where })
         : null;
 
       if (existing) {
@@ -493,11 +499,22 @@ export class UsersService {
   }> {
     const user = await this.usersRepository.findOneBy({ id: userId });
     if (!user) throw new NotFoundException(`User ${userId} not found`);
-    if (!user.email) {
+    const email = user.email?.trim();
+    if (!email) {
       throw new BadRequestException(
         'User has no email — cannot create PropelAuth account',
       );
     }
+    // Catches malformed values from AD/M365 sync (stray whitespace, a
+    // username instead of an email, missing domain) before PropelAuth's
+    // API rejects them with an opaque CreateUserException — this way the
+    // admin sees exactly which value is wrong instead of a raw stack trace.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new BadRequestException(
+        `Adres email użytkownika ("${email}") nie jest poprawny — popraw go w danych użytkownika przed utworzeniem konta PropelAuth.`,
+      );
+    }
+    user.email = email;
     if (user.authUserId) {
       return {
         authUserId: user.authUserId,

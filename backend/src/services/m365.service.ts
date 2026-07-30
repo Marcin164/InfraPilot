@@ -204,10 +204,23 @@ export class M365Service {
   async syncUsers(): Promise<SyncResult> {
     const token = await this.getToken();
 
-    // Fetch Entra users (with signInActivity — requires AuditLog.Read.All)
-    const entraUsers = await this.graphGet<any>(token,
-      `${GRAPH}/users?$select=id,displayName,givenName,surname,mail,userPrincipalName,accountEnabled,signInActivity,department,jobTitle,officeLocation,city,country,postalCode,streetAddress,mobilePhone&$top=999`
-    );
+    // Fetch Entra users (with signInActivity — requires AuditLog.Read.All
+    // AND Entra ID Premium P1/P2 on the tenant; Graph rejects the *whole*
+    // request, not just that field, on tenants without premium licensing).
+    const BASE_SELECT = 'id,displayName,givenName,surname,mail,userPrincipalName,accountEnabled,department,jobTitle,officeLocation,city,country,postalCode,streetAddress,mobilePhone';
+    let entraUsers: any[];
+    try {
+      entraUsers = await this.graphGet<any>(token,
+        `${GRAPH}/users?$select=${BASE_SELECT},signInActivity&$top=999`
+      );
+    } catch (err: any) {
+      if (String(err?.message).includes('NonPremiumTenantOrB2CTenant')) {
+        this.logger.warn('Tenant lacks Entra ID Premium — syncing users without last sign-in data.');
+        entraUsers = await this.graphGet<any>(token, `${GRAPH}/users?$select=${BASE_SELECT}&$top=999`);
+      } else {
+        throw err;
+      }
+    }
 
     // Fetch MFA registration details (requires Reports.Read.All)
     let mfaMap: Map<string, boolean> = new Map();

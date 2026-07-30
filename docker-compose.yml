@@ -8,6 +8,8 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
@@ -23,8 +25,9 @@ services:
       db:
         condition: service_healthy
     env_file:
-      - ./backend/.env
+      - .env
     environment:
+      # Fixed by this compose topology, not user-configurable — not in .env.
       DB_HOST: db
       DB_PORT: "5432"
       NODE_ENV: production
@@ -33,20 +36,64 @@ services:
       - uploads:/app/uploads
       - certs:/app/certs
     ports:
-      - "3000:3000"     # dostępny z całej sieci
+      - "127.0.0.1:3000:3000"
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://192.168.1.41:3000
+        # VITE_API_URL/VITE_WS_URL intentionally omitted — the app infers
+        # the backend's address from the page's own origin at runtime
+        # (Nginx serves / and /api on the same origin), so this one image
+        # works at any customer's IP/domain with no rebuild. Only add them
+        # back as explicit args if the API is ever served from a different
+        # origin than the SPA.
         VITE_AUTH_URL: ${VITE_AUTH_URL:-}
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8080:80"   # tylko dla hosta Nginx
+      - "127.0.0.1:8080:80"
+
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${DB_USERNAME}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable"
+    ports:
+      - "127.0.0.1:9187:9187"
+
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    depends_on:
+      - api
+      - postgres_exporter
+    volumes:
+      - ./backend/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./backend/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "127.0.0.1:3001:3000"
 
 volumes:
   pgdata:
   uploads:
   certs:
+  prometheus_data:
+  grafana_data:

@@ -1,9 +1,10 @@
-import { Body, Controller, Delete, Get, Post, Param, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Post, Param, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { M365Service } from 'src/services/m365.service';
 import { SaveM365ConfigDto, M365LicenseActionDto } from 'src/dto/m365.dto';
+import { describeGraphError } from 'src/helpers/graphErrorMessage';
 
 @UseGuards(AuthGuard, MfaGuard)
 @Roles(Role.Admin)
@@ -63,11 +64,19 @@ export class M365Controller {
 
   @Post('/sync/users')
   async syncUsers() {
-    return this.m365.syncUsers();
+    try {
+      return await this.m365.syncUsers();
+    } catch (err: any) {
+      throw new BadRequestException(describeGraphError(err));
+    }
   }
 
   @Post('/sync/devices')
   async syncDevices() {
-    return this.m365.syncDeviceCompliance();
+    try {
+      return await this.m365.syncDeviceCompliance();
+    } catch (err: any) {
+      throw new BadRequestException(describeGraphError(err));
+    }
   }
 }
