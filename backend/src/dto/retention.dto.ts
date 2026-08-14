@@ -15,3 +15,7 @@ export class UpdateRetentionPolicyDto {
   @IsOptional() @IsIn(RETENTION_ACTIONS) action?: (typeof RETENTION_ACTIONS)[number];
   @IsOptional() @IsBoolean() enabled?: boolean;
 }
+
+export class SaveArchivePathDto {
+  @IsString() archivePath: string;
+}

@@ -12,7 +12,14 @@ const UserInfo = ({ data }: Props) => {
     <div className="w-full bg-[#FFFFFF] shadow-xl rounded-[10px] p-4">
       <UserDetails data={data} />
       <UserPrivileges
-        data={{ isApprover: data?.isApprover, isAdmin: data?.isAdmin }}
+        data={{
+          isAdmin: Boolean(data?.isAdmin),
+          isApprover: Boolean(data?.isApprover),
+          isAuditor: Boolean(data?.isAuditor),
+          isCompliance: Boolean(data?.isCompliance),
+          isHelpdesk: Boolean(data?.isHelpdesk),
+          isDpo: Boolean(data?.isDpo),
+        }}
       />
       <UserGroups memberOf={data?.memberOf} />
       <UserForms />

@@ -8,6 +8,23 @@ import {
 } from 'typeorm';
 import { TicketType } from './tickets.entity';
 
+export type CustomFieldType =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'select'
+  | 'checkbox'
+  | 'date';
+
+export type CustomFieldDef = {
+  id: string;
+  label: string;
+  type: CustomFieldType;
+  required: boolean;
+  /** Only meaningful for type 'select'. */
+  options?: string[];
+};
+
 /**
  * Rich ticket category. The `tickets.category` column on the ticket
  * itself stays a plain string (free-form) for backwards compatibility;
@@ -37,6 +54,13 @@ export class TicketCategory {
 
   @Column({ type: 'uuid', nullable: true })
   workflowId: string | null;
+
+  // Extra fields the ticket-creation form asks for when this category is
+  // picked (e.g. "System name" for an Access request). Kept in jsonb, same
+  // reasoning as TicketWorkflow.steps -- the editor can add/reorder/remove
+  // fields without DDL.
+  @Column({ type: 'jsonb', default: [] })
+  customFields: CustomFieldDef[];
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;

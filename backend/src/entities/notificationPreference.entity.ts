@@ -31,12 +31,29 @@ export const NOTIFICATION_EVENTS = [
 
 export type NotificationEvent = (typeof NOTIFICATION_EVENTS)[number];
 
-export type NotificationChannel = 'inapp' | 'email' | 'sms';
+export type NotificationChannel = 'inapp' | 'email';
+
+/**
+ * Events that aren't tied to any one user (infra/ops alerts) -- these skip
+ * the per-user preference matrix and are configured globally instead (which
+ * channels are on, and which email address(es) receive them) in Settings >
+ * Notifications, admin-only (see OpsNotificationsService /
+ * NotificationDispatcherService.dispatchOpsAlert).
+ */
+export const OPS_ROUTED_EVENTS: NotificationEvent[] = [
+  'compliance_failing',
+  'workflow_step_failed',
+  'license_expiring',
+  'license_expired',
+  'warranty_expiring',
+  'device_down',
+  'config_backup_failed',
+  'ip_conflict_detected',
+];
 
 /**
  * One row per (user, event, channel). Defaulted on the fly: missing rows
- * mean "use the channel's default" (in-app on, email off for most, SMS
- * off for everything except SLA breach + critical CVE).
+ * mean "use the channel's default" (in-app on, email off for most).
  */
 @Entity()
 @Index(['userId', 'event', 'channel'], { unique: true })

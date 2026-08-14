@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cron } from '@nestjs/schedule';
 import { Devices } from 'src/entities/devices.entity';
-import { Users } from 'src/entities/users.entity';
 import { NotificationDispatcherService } from 'src/services/notificationDispatcher.service';
 
 @Injectable()
@@ -13,8 +12,6 @@ export class WarrantyAlertWorker {
   constructor(
     @InjectRepository(Devices)
     private readonly devices: Repository<Devices>,
-    @InjectRepository(Users)
-    private readonly users: Repository<Users>,
     private readonly dispatcher: NotificationDispatcherService,
   ) {}
 
@@ -22,9 +19,6 @@ export class WarrantyAlertWorker {
   @Cron('15 8 * * *')
   async handle() {
     try {
-      const adminIds = await this.getAdminIds();
-      if (adminIds.length === 0) return;
-
       const now = new Date();
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() + 30);
@@ -45,28 +39,14 @@ export class WarrantyAlertWorker {
             (1000 * 60 * 60 * 24),
         );
         const name = device.assetName ?? device.serialNumber ?? device.id;
-        await this.dispatcher.dispatch({
-          recipientIds: adminIds,
+        await this.dispatcher.dispatchOpsAlert({
           event: 'warranty_expiring',
           title: `Warranty expiring in ${days} day${days === 1 ? '' : 's'}`,
           body: `Device "${name}" warranty expires on ${device.warrantyEnd}.`,
-          url: `/admin/devices/${device.id}/lifecycle`,
-          entityType: 'DEVICE',
-          entityId: device.id,
         });
       }
     } catch (err) {
       this.logger.warn(`Warranty alert failed: ${(err as Error).message}`);
     }
-  }
-
-  private async getAdminIds(): Promise<string[]> {
-    const admins = await this.users
-      .createQueryBuilder('u')
-      .select('u.id')
-      .where('u.isAdmin = true')
-      .andWhere('u.erasedAt IS NULL')
-      .getMany();
-    return admins.map((u) => u.id);
   }
 }

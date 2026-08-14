@@ -34,8 +34,6 @@ export interface UserSettings {
   filterPresets?: Record<string, FilterPreset[]>;
   lastLogonThresholds?: LastLogonThreshold[];
   lastLogonDefaultColor?: string;
-  notifEmail?: string | null;
-  notifPhone?: string | null;
 }
 
 export interface LastLogonThreshold {

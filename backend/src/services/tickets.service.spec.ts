@@ -13,6 +13,7 @@ import { TicketActivity } from 'src/entities/ticketActivity.entity';
 import { AdminSettings } from 'src/entities/adminSettings.entity';
 import { TicketCategory } from 'src/entities/ticketCategory.entity';
 import { SlaInstance } from 'src/entities/slaInstance.entity';
+import { Users } from 'src/entities/users.entity';
 import { TicketsGateway } from 'src/gateways/tickets.gateway';
 import { SlaEngineService } from './slaEngine.service';
 import { AuditService } from './audit.service';
@@ -88,6 +89,7 @@ describe('TicketsService', () => {
   let adminSettingsRepo: jest.Mocked<any>;
   let ticketCategoryRepo: jest.Mocked<any>;
   let slaInstanceRepo: jest.Mocked<any>;
+  let usersRepo: jest.Mocked<any>;
   let gateway: jest.Mocked<any>;
   let slaEngine: jest.Mocked<any>;
   let auditService: jest.Mocked<any>;
@@ -143,6 +145,10 @@ describe('TicketsService', () => {
       createQueryBuilder: jest.fn(() => buildQueryBuilder()),
     };
 
+    usersRepo = {
+      find: jest.fn().mockResolvedValue([]),
+    };
+
     gateway = {
       emitNewComment: jest.fn(),
       emitTicketActivity: jest.fn(),
@@ -185,6 +191,7 @@ describe('TicketsService', () => {
         { provide: getRepositoryToken(AdminSettings), useValue: adminSettingsRepo },
         { provide: getRepositoryToken(TicketCategory), useValue: ticketCategoryRepo },
         { provide: getRepositoryToken(SlaInstance), useValue: slaInstanceRepo },
+        { provide: getRepositoryToken(Users), useValue: usersRepo },
         { provide: TicketsGateway, useValue: gateway },
         { provide: SlaEngineService, useValue: slaEngine },
         { provide: AuditService, useValue: auditService },
@@ -613,23 +620,34 @@ describe('TicketsService', () => {
   // ─────────────────────────────────────────
 
   describe('getTicketCategories', () => {
-    it('returns default categories when no row exists in settings', async () => {
-      adminSettingsRepo.findOne.mockResolvedValue(null);
+    it('returns empty Incident/Service arrays when no categories exist', async () => {
+      ticketCategoryRepo.find.mockResolvedValue([]);
 
       const result = await service.getTicketCategories();
 
-      expect(result).toHaveProperty('Incident');
-      expect(result).toHaveProperty('Service');
-      expect(Array.isArray(result.Incident)).toBe(true);
+      expect(result).toEqual({ Incident: [], Service: [] });
     });
 
-    it('returns stored categories from admin settings', async () => {
-      const custom = { Incident: ['Custom Incident'], Service: ['Custom Service'] };
-      adminSettingsRepo.findOne.mockResolvedValue({ key: 'ticket_categories', value: custom });
+    it('splits categories by ticketType and includes custom fields', async () => {
+      ticketCategoryRepo.find.mockResolvedValue([
+        { name: 'Hardware issue', color: '#F00', ticketType: 'Incident', customFields: [] },
+        { name: 'Access request', color: '#0F0', ticketType: 'Service', customFields: [{ id: 'f1' }] },
+        { name: 'Untyped legacy category', color: '#00F', ticketType: null, customFields: [] },
+      ]);
 
       const result = await service.getTicketCategories();
 
-      expect(result).toEqual(custom);
+      expect(result.Incident.map((c) => c.name)).toEqual([
+        'Hardware issue',
+        'Untyped legacy category',
+      ]);
+      expect(result.Service.map((c) => c.name)).toEqual([
+        'Access request',
+        'Untyped legacy category',
+      ]);
+      expect(result.Service.find((c) => c.name === 'Access request')?.customFields).toEqual([
+        { id: 'f1' },
+      ]);
     });
   });
 
@@ -638,31 +656,14 @@ describe('TicketsService', () => {
   // ─────────────────────────────────────────
 
   describe('updateTicketCategories', () => {
-    it('creates a new settings row when it does not exist', async () => {
-      adminSettingsRepo.findOne.mockResolvedValue(null);
-      const newValue = { Incident: ['A'], Service: ['B'] };
-      adminSettingsRepo.save.mockResolvedValue({ value: newValue });
+    it('is a no-op kept for backward compat -- categories are now managed via Workflows > Categories', async () => {
+      ticketCategoryRepo.find.mockResolvedValue([]);
 
-      const result = await service.updateTicketCategories(newValue);
+      const result = await service.updateTicketCategories({ Incident: ['A'] });
 
-      expect(adminSettingsRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ key: 'ticket_categories', value: newValue }),
-      );
-      expect(adminSettingsRepo.save).toHaveBeenCalled();
-    });
-
-    it('updates existing row when it already exists', async () => {
-      const existing = { id: '1', key: 'ticket_categories', value: { Incident: [], Service: [] } };
-      adminSettingsRepo.findOne.mockResolvedValue(existing);
-      const newValue = { Incident: ['Updated'], Service: ['Updated'] };
-      adminSettingsRepo.save.mockResolvedValue({ ...existing, value: newValue });
-
-      await service.updateTicketCategories(newValue);
-
+      expect(result).toEqual({ Incident: [], Service: [] });
+      expect(adminSettingsRepo.save).not.toHaveBeenCalled();
       expect(adminSettingsRepo.create).not.toHaveBeenCalled();
-      expect(adminSettingsRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ value: newValue }),
-      );
     });
   });
 

@@ -11,11 +11,28 @@ export type NotificationEvent =
   | "scan_completed"
   | "compliance_failing"
   | "workflow_step_failed"
+  | "license_expiring"
+  | "license_expired"
+  | "warranty_expiring"
   | "device_down"
   | "config_backup_failed"
   | "ip_conflict_detected";
 
-export type NotificationChannel = "inapp" | "email" | "sms";
+export type NotificationChannel = "inapp" | "email";
+
+// Infra/ops alerts -- not tied to a specific user, configured globally
+// (admin-only) in the "Ops alert settings" card instead of the per-user
+// matrix. Keep in sync with backend OPS_ROUTED_EVENTS.
+export const OPS_ROUTED_EVENTS: NotificationEvent[] = [
+  "compliance_failing",
+  "workflow_step_failed",
+  "license_expiring",
+  "license_expired",
+  "warranty_expiring",
+  "device_down",
+  "config_backup_failed",
+  "ip_conflict_detected",
+];
 
 export type PreferenceRow = {
   event: NotificationEvent;
@@ -41,8 +58,6 @@ export type TestResult = {
   inapp: boolean;
   email: boolean;
   emailAddress: string | null;
-  sms: boolean;
-  phone: string | null;
 };
 
 export const testNotification = async (): Promise<TestResult> => {
@@ -61,6 +76,9 @@ export const EVENT_LABELS: Record<NotificationEvent, string> = {
   scan_completed: "Device scan completed",
   compliance_failing: "Compliance check failing",
   workflow_step_failed: "Workflow step failed",
+  license_expiring: "License expiring soon",
+  license_expired: "License expired",
+  warranty_expiring: "Device warranty expiring soon",
   device_down: "Device unreachable",
   config_backup_failed: "Config backup failed",
   ip_conflict_detected: "IP conflict detected",

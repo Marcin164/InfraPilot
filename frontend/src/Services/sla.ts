@@ -23,6 +23,11 @@ export const patchCalendar = async (data: Partial<SlaCalendar> & { id: string })
   return result;
 };
 
+export const deleteCalendar = async (id: string): Promise<void> => {
+  const { data } = await api.delete(`/sla/calendars/${id}`);
+  return data;
+};
+
 export const postCalendarHoliday = async (data: SlaHoliday & { id: string }): Promise<SlaHoliday> => {
   const { data: result } = await api.post(
     `/sla/calendars/${data.id}/holidays`,

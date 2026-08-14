@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import Filter from "../../../Components/Filter";
 import Search from "../../../Components/Inputs/Search";
 import { useTranslation } from "react-i18next";
@@ -85,6 +86,12 @@ const Index = () => {
     queryFn: () => getTickets(queryString),
     placeholderData: (prev) => prev,
   });
+
+  useEffect(() => {
+    if (helpdeskQuery.error) {
+      toast.error(t("toast.error.ticketsLoad"));
+    }
+  }, [helpdeskQuery.error, t]);
 
   const userSettings = useQuery({
     queryKey: ["userSettings"],

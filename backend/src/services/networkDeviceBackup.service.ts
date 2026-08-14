@@ -16,7 +16,6 @@ import {
 import { NetworkDeviceCredential } from 'src/entities/networkDeviceCredential.entity';
 import { NetworkDeviceConfigBackup } from 'src/entities/networkDeviceConfigBackup.entity';
 import { Devices } from 'src/entities/devices.entity';
-import { Users } from 'src/entities/users.entity';
 import { encrypt, decrypt } from 'src/helpers/crypto';
 import { uuidv4 } from 'src/helpers/uuidv4';
 import { AuditService } from './audit.service';
@@ -74,8 +73,6 @@ export class NetworkDeviceBackupService {
     private readonly backups: Repository<NetworkDeviceConfigBackup>,
     @InjectRepository(Devices)
     private readonly devices: Repository<Devices>,
-    @InjectRepository(Users)
-    private readonly users: Repository<Users>,
     private readonly auditService: AuditService,
     private readonly dispatcher: NotificationDispatcherService,
   ) {}
@@ -224,27 +221,11 @@ export class NetworkDeviceBackupService {
   }
 
   private async notifyFailure(device: Devices, errorMessage: string) {
-    const adminIds = await this.getAdminIds();
-    if (adminIds.length === 0) return;
     const name = device.assetName || device.model || device.id;
-    await this.dispatcher.dispatch({
-      recipientIds: adminIds,
+    await this.dispatcher.dispatchOpsAlert({
       event: 'config_backup_failed',
       title: `Config backup failed for ${name}`,
       body: `Could not back up the configuration of ${name} (${device.managementIp}): ${errorMessage}`,
-      url: `/admin/devices/${device.id}/backup`,
-      entityType: 'DEVICE',
-      entityId: device.id,
     });
-  }
-
-  private async getAdminIds(): Promise<string[]> {
-    const admins = await this.users
-      .createQueryBuilder('u')
-      .select('u.id')
-      .where('u.isAdmin = true')
-      .andWhere('u.erasedAt IS NULL')
-      .getMany();
-    return admins.map((u) => u.id);
   }
 }

@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as ping from 'ping';
 import { Devices } from 'src/entities/devices.entity';
-import { Users } from 'src/entities/users.entity';
 import { NotificationDispatcherService } from 'src/services/notificationDispatcher.service';
 
 /** Confirmed transitions only after this many consecutive opposite results -- absorbs a single dropped packet without flapping the status. */
@@ -17,8 +16,6 @@ export class PingMonitorWorker {
   constructor(
     @InjectRepository(Devices)
     private readonly devices: Repository<Devices>,
-    @InjectRepository(Users)
-    private readonly users: Repository<Users>,
     private readonly dispatcher: NotificationDispatcherService,
   ) {}
 
@@ -75,31 +72,14 @@ export class PingMonitorWorker {
   }
 
   private async notifyStatusChange(device: Devices, status: 'up' | 'down') {
-    const adminIds = await this.getAdminIds();
-    if (adminIds.length === 0) return;
-
     const name = device.assetName || device.model || device.id;
-    await this.dispatcher.dispatch({
-      recipientIds: adminIds,
+    await this.dispatcher.dispatchOpsAlert({
       event: 'device_down',
       title: status === 'down' ? `${name} is unreachable` : `${name} is back online`,
       body:
         status === 'down'
           ? `No response from ${device.managementIp} (${name}).`
           : `${name} (${device.managementIp}) is responding to ping again.`,
-      url: `/admin/devices/${device.id}/overview`,
-      entityType: 'DEVICE',
-      entityId: device.id,
     });
-  }
-
-  private async getAdminIds(): Promise<string[]> {
-    const admins = await this.users
-      .createQueryBuilder('u')
-      .select('u.id')
-      .where('u.isAdmin = true')
-      .andWhere('u.erasedAt IS NULL')
-      .getMany();
-    return admins.map((u) => u.id);
   }
 }

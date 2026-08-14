@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsBoolean,
   IsArray,
+  IsObject,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import {
@@ -13,8 +14,16 @@ import {
   TicketPriority,
   TicketUrgency,
   TicketType,
+  TicketState,
 } from 'src/entities/tickets.entity';
 import { CommentType } from 'src/entities/ticketsComments.entity';
+
+// Multi-select filter checkboxes on the frontend always send these as
+// arrays, but a single selection serializes to one bare query param
+// (e.g. `priority=High`) instead of `priority[]=High` -- normalize both
+// shapes to an array so `@IsEnum(..., { each: true })` can validate it.
+const toArray = ({ value }: { value: unknown }) =>
+  value === undefined ? value : Array.isArray(value) ? value : [value];
 
 export class GetTicketsQueryDto {
   @IsOptional()
@@ -38,23 +47,37 @@ export class GetTicketsQueryDto {
   requester?: string;
 
   @IsOptional()
-  @IsEnum(TicketType)
-  type?: TicketType;
+  @Transform(toArray)
+  @IsArray()
+  @IsEnum(TicketType, { each: true })
+  type?: TicketType[];
 
   @IsOptional()
-  @IsEnum(TicketPriority)
-  priority?: TicketPriority;
+  @Transform(toArray)
+  @IsArray()
+  @IsEnum(TicketPriority, { each: true })
+  priority?: TicketPriority[];
 
   @IsOptional()
   assignmentGroup?: string;
 
   @IsOptional()
-  @IsEnum(TicketImpact)
-  impact?: TicketImpact;
+  @Transform(toArray)
+  @IsArray()
+  @IsEnum(TicketImpact, { each: true })
+  impact?: TicketImpact[];
 
   @IsOptional()
-  @IsEnum(TicketUrgency)
-  urgency?: TicketUrgency;
+  @Transform(toArray)
+  @IsArray()
+  @IsEnum(TicketUrgency, { each: true })
+  urgency?: TicketUrgency[];
+
+  @IsOptional()
+  @Transform(toArray)
+  @IsArray()
+  @IsEnum(TicketState, { each: true })
+  state?: TicketState[];
 
   // 🔥 DODAJ TO
   @IsOptional()
@@ -175,4 +198,11 @@ export class CreateTicketDto {
   @IsOptional()
   @IsString()
   deviceId?: string;
+
+  @IsOptional()
+  @IsObject()
+  customFieldValues?: Record<
+    string,
+    { label: string; type: string; value: unknown }
+  >;
 }

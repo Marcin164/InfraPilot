@@ -1,12 +1,14 @@
-import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import HeadlessTable from "./HeadlessTable";
 
 type Props = {
   data: any[];
   onEdit: (row: any) => void;
+  onDelete: (row: any) => void;
 };
 
-const SlaRulesTable = ({ data, onEdit }: Props) => {
+const SlaRulesTable = ({ data, onEdit, onDelete }: Props) => {
   const parsePriorityClassName = (priority: string) => {
     switch (priority) {
       case "Low":
@@ -40,6 +42,21 @@ const SlaRulesTable = ({ data, onEdit }: Props) => {
     {
       name: "Definition",
       selector: (row: any) => row.slaDefinition?.name,
+    },
+    {
+      width: "50px",
+      selector: (row: any) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(row);
+          }}
+          className="text-[#F3606E] hover:text-[#C0392B] cursor-pointer"
+        >
+          <FontAwesomeIcon icon={faTrash} />
+        </button>
+      ),
     },
   ];
   return <HeadlessTable columns={columns} data={data} onRowClicked={onEdit} />;

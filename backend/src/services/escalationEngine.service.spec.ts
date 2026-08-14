@@ -80,7 +80,11 @@ describe('EscalationEngineService', () => {
 
       await service.processDueEscalations();
 
-      expect(actionService.execute).toHaveBeenCalledWith(esc);
+      // Must run inside the same transaction/connection as the outer
+      // pessimistic_write lock -- see project_audit_lock_deadlock memory --
+      // otherwise action-service writes on a separate connection can
+      // deadlock against the escalation lock this query holds.
+      expect(actionService.execute).toHaveBeenCalledWith(esc, qr.manager);
       expect(esc.triggered).toBe(true);
       expect(esc.triggeredAt).toBeInstanceOf(Date);
       expect(qr.manager.save).toHaveBeenCalled();

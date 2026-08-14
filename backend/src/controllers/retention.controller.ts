@@ -12,7 +12,11 @@ import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { RetentionService } from 'src/services/retention.service';
-import { CreateRetentionPolicyDto, UpdateRetentionPolicyDto } from 'src/dto/retention.dto';
+import {
+  CreateRetentionPolicyDto,
+  SaveArchivePathDto,
+  UpdateRetentionPolicyDto,
+} from 'src/dto/retention.dto';
 
 @UseGuards(AuthGuard, MfaGuard)
 @Roles(Role.Admin, Role.Compliance)
@@ -23,6 +27,17 @@ export class RetentionController {
   @Get('supported')
   supported() {
     return this.retentionService.supportedEntityTypes();
+  }
+
+  @Get('archive-path')
+  async getArchivePath() {
+    return { archivePath: await this.retentionService.getArchivePath() };
+  }
+
+  @Post('archive-path')
+  async setArchivePath(@Body() body: SaveArchivePathDto) {
+    await this.retentionService.setArchivePath(body.archivePath);
+    return { success: true };
   }
 
   @Get()

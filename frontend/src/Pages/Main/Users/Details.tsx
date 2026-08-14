@@ -44,7 +44,14 @@ const Details = () => {
         <div className="flex flex-col gap-4">
           <UserDetails data={userQuery.data} />
           <UserPrivileges
-            data={{ isApprover: userQuery.data.isApprover, isAdmin: userQuery.data.isAdmin }}
+            data={{
+              isAdmin: Boolean(userQuery.data.isAdmin),
+              isApprover: Boolean(userQuery.data.isApprover),
+              isAuditor: Boolean(userQuery.data.isAuditor),
+              isCompliance: Boolean(userQuery.data.isCompliance),
+              isHelpdesk: Boolean(userQuery.data.isHelpdesk),
+              isDpo: Boolean(userQuery.data.isDpo),
+            }}
           />
           <UserGroups memberOf={userQuery.data.memberOf} />
         </div>

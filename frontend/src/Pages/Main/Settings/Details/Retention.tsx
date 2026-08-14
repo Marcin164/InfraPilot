@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -9,6 +9,8 @@ import {
   faPlay,
   faFileZipper,
   faShield,
+  faCheck,
+  faFolderOpen,
 } from "@fortawesome/free-solid-svg-icons";
 
 import {
@@ -16,9 +18,11 @@ import {
   RetentionPolicy,
   createRetentionPolicy,
   deleteRetentionPolicy,
+  getRetentionArchivePath,
   listRetentionPolicies,
   listSupportedEntities,
   runRetentionPolicy,
+  saveRetentionArchivePath,
   updateRetentionPolicy,
 } from "../../../../Services/retention";
 import { downloadEvidencePack, EvidenceInclude } from "../../../../Services/evidence";
@@ -46,6 +50,31 @@ const RetentionPoliciesSection = () => {
     queryKey: ["retention-policies"],
     queryFn: listRetentionPolicies,
   });
+
+  const archivePathQuery = useQuery({
+    queryKey: ["retention-archive-path"],
+    queryFn: getRetentionArchivePath,
+  });
+
+  const [archivePath, setArchivePath] = useState("");
+
+  useEffect(() => {
+    if (archivePathQuery.data !== undefined) {
+      setArchivePath(archivePathQuery.data ?? "");
+    }
+  }, [archivePathQuery.data]);
+
+  const archivePathMutation = useMutation({
+    mutationFn: (value: string) => saveRetentionArchivePath(value),
+    onSuccess: () => {
+      toast.success(t("toast.success.settingsSaved"));
+      queryClient.invalidateQueries({ queryKey: ["retention-archive-path"] });
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? t("toast.error.settingsSave")),
+  });
+
+  const archivePathDirty = archivePath.trim() !== (archivePathQuery.data ?? "");
 
   const supportedQuery = useQuery({
     queryKey: ["retention-supported"],
@@ -244,6 +273,35 @@ const RetentionPoliciesSection = () => {
         </div>
       )}
 
+      <div className="mt-4 rounded-[10px] border border-[#E0E0E0] bg-[#FAFAFA] p-4">
+        <div className="flex items-center gap-2 mb-1">
+          <FontAwesomeIcon icon={faFolderOpen} className="text-[#535353]" />
+          <span className="text-[14px] font-bold text-[#3C3C3C]">
+            {t("settings.retention.archivePath.title")}
+          </span>
+        </div>
+        <p className="text-[13px] text-[#7a7a7a] mb-3">
+          {t("settings.retention.archivePath.help")}
+        </p>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-[320px] flex-1">
+            <Input
+              label={t("settings.retention.archivePath.label")}
+              value={archivePath}
+              onChange={(e: any) => setArchivePath(e.target.value)}
+              placeholder={t("settings.retention.archivePath.placeholder")}
+            />
+          </div>
+          <ButtonPrimary
+            className="h-[42px]"
+            icon={faCheck}
+            text={archivePathMutation.isPending ? t("common.saving") : t("common.save")}
+            onClick={() => archivePathMutation.mutate(archivePath.trim())}
+            disabled={archivePathMutation.isPending || !archivePathDirty}
+          />
+        </div>
+      </div>
+
       <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
         <SelectSecondary
           label={t("settings.retention.column.entity")}
@@ -265,6 +323,7 @@ const RetentionPoliciesSection = () => {
           onSelect={(opt: any) => setAction((opt?.value ?? "purge") as RetentionAction)}
         />
         <ButtonPrimary
+          className="h-[42px]"
           icon={faPlus}
           text={t("common.add")}
           onClick={() => {

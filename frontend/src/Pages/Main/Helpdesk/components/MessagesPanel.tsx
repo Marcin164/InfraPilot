@@ -1,6 +1,7 @@
 import ApprovalDecision from "./ApprovalDecision";
 import Comment from "./Comment";
 import ActivityEntry from "./ActivityEntry";
+import SystemNote from "./SystemNote";
 
 type Props = { comments: any[] };
 
@@ -12,7 +13,14 @@ const MessagesPanel = ({ comments }: Props) => {
       case "activity":
         return <ActivityEntry key={item.id} {...item} />;
       default:
-        return <Comment key={item.id} {...item} />;
+        // A comment with no author is system/workflow-generated (create_comment,
+        // add_attachment, or the manager-approval fallback note) -- render it
+        // like the other system entries instead of a human chat bubble.
+        return item?.author ? (
+          <Comment key={item.id} {...item} />
+        ) : (
+          <SystemNote key={item.id} {...item} />
+        );
     }
   };
 

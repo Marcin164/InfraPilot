@@ -58,7 +58,31 @@ describe('EscalationActionService', () => {
       const ticket = { id: 'ticket-1', priority: 'Low' };
       ticketsRepo.findOneBy.mockResolvedValue(ticket);
       await service.execute(makeEscalation('PRIORITY_UP', { to: 'High' }));
-      expect(slaEngine.handlePriorityChange).toHaveBeenCalledWith(ticket);
+      // No manager passed in by the caller here -> forwarded through as
+      // undefined, so this falls back to the default (non-transactional)
+      // repository. See the next test for the transactional path.
+      expect(slaEngine.handlePriorityChange).toHaveBeenCalledWith(ticket, undefined);
+    });
+
+    it('threads a passed-in manager through to the ticket repo and slaEngine call', async () => {
+      // Reusing the same connection/transaction as the caller (e.g. the
+      // escalation engine's queryRunner) is what avoids the self-deadlock
+      // documented in project_audit_lock_deadlock: this action must not open
+      // a second connection while the caller's transaction still holds a
+      // lock the action's writes would need.
+      const ticket = { id: 'ticket-1', priority: 'Low' };
+      const managerTicketsRepo = {
+        findOneBy: jest.fn().mockResolvedValue(ticket),
+        save: jest.fn().mockResolvedValue(undefined),
+      };
+      const manager = { getRepository: jest.fn().mockReturnValue(managerTicketsRepo) };
+
+      await service.execute(makeEscalation('PRIORITY_UP', { to: 'High' }), manager as any);
+
+      expect(manager.getRepository).toHaveBeenCalledWith(Tickets);
+      expect(managerTicketsRepo.findOneBy).toHaveBeenCalled();
+      expect(ticketsRepo.findOneBy).not.toHaveBeenCalled();
+      expect(slaEngine.handlePriorityChange).toHaveBeenCalledWith(ticket, manager);
     });
 
     it('does not trigger SLA re-evaluation when priority unchanged', async () => {

@@ -8,7 +8,6 @@ import {
   faTrash,
   faVial,
   faCloud,
-  faUserGroup,
   faKey,
   faArrowsRotate,
   faShieldHalved,
@@ -27,9 +26,6 @@ import {
   deleteM365Config,
   testM365Connection,
   getM365Skus,
-  getM365Users,
-  assignM365License,
-  removeM365License,
   getM365SyncStatus,
   syncM365Users,
   syncM365Devices,
@@ -59,7 +55,6 @@ const M365Settings = () => {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(emptyForm);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
-  const [assignState, setAssignState] = useState<{ userId: string; skuId: string } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const configQuery = useQuery({ queryKey: ["m365-config"], queryFn: getM365Config });
@@ -68,7 +63,6 @@ const M365Settings = () => {
   const isConnected = !!configQuery.data?.tenantId && configQuery.data.hasSecret;
 
   const skusQuery = useQuery({ queryKey: ["m365-skus"], queryFn: getM365Skus, enabled: isConnected, retry: false });
-  const usersQuery = useQuery({ queryKey: ["m365-users"], queryFn: getM365Users, enabled: isConnected, retry: false });
 
   useEffect(() => {
     if (configQuery.data) {
@@ -84,7 +78,6 @@ const M365Settings = () => {
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["m365-config"] });
     queryClient.invalidateQueries({ queryKey: ["m365-skus"] });
-    queryClient.invalidateQueries({ queryKey: ["m365-users"] });
     queryClient.invalidateQueries({ queryKey: ["m365-sync-status"] });
   };
 
@@ -100,23 +93,6 @@ const M365Settings = () => {
   const syncDevicesMutation = useMutation({
     mutationFn: syncM365Devices,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["m365-sync-status"] }),
-  });
-
-  const assignMutation = useMutation({
-    mutationFn: ({ userId, skuId }: { userId: string; skuId: string }) => assignM365License(userId, skuId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["m365-users"] });
-      queryClient.invalidateQueries({ queryKey: ["m365-skus"] });
-      setAssignState(null);
-    },
-  });
-
-  const removeMutation = useMutation({
-    mutationFn: ({ userId, skuId }: { userId: string; skuId: string }) => removeM365License(userId, skuId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["m365-users"] });
-      queryClient.invalidateQueries({ queryKey: ["m365-skus"] });
-    },
   });
 
   const isLoading = saveMutation.isPending || deleteMutation.isPending || testMutation.isPending;
@@ -323,78 +299,6 @@ const M365Settings = () => {
         </div>
       )}
 
-      {/* ─── M365 Users ─────────────────────────────────────────────────── */}
-      {isConnected && (
-        <div className="bg-white shadow-xl rounded-[10px] p-4">
-          <div className="flex items-center justify-between mb-3">
-            <CardHeader text="Użytkownicy M365 i ich licencje" icon={faUserGroup} />
-            <button onClick={() => { queryClient.invalidateQueries({ queryKey: ["m365-users"] }); queryClient.invalidateQueries({ queryKey: ["m365-skus"] }); }} className="text-[13px] text-[#7a7a7a] hover:text-[#3C3C3C] flex items-center gap-1">
-              <FontAwesomeIcon icon={faArrowsRotate} /> Odśwież
-            </button>
-          </div>
-          {usersQuery.isLoading && <div className="flex items-center gap-2 text-[13px] text-[#7a7a7a] py-4"><FontAwesomeIcon icon={faSpinner} className="animate-spin" /> Ładowanie użytkowników...</div>}
-          {usersQuery.isError && <div className="flex items-center gap-2 text-[13px] text-red-500 py-4"><FontAwesomeIcon icon={faCircleXmark} /> Nie można pobrać użytkowników — sprawdź uprawnienia.</div>}
-          {usersQuery.data && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-[13px]">
-                <thead>
-                  <tr className="border-b border-[#E0E0E0] text-[#7a7a7a]">
-                    <th className="text-left py-2 pr-4 font-medium">Użytkownik</th>
-                    <th className="text-left py-2 pr-4 font-medium">UPN</th>
-                    <th className="text-left py-2 pr-4 font-medium">Przypisane licencje</th>
-                    <th className="text-right py-2 font-medium">Akcje</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {usersQuery.data.map((user) => (
-                    <tr key={user.id} className="border-b border-[#F5F5F5] hover:bg-[#FAFAFA]">
-                      <td className="py-2 pr-4 font-medium text-[#3C3C3C]">{user.displayName}</td>
-                      <td className="py-2 pr-4 text-[#7a7a7a]">{user.userPrincipalName}</td>
-                      <td className="py-2 pr-4">
-                        {user.assignedLicenses.length === 0 ? (
-                          <span className="text-[#9a9a9a] italic">Brak</span>
-                        ) : (
-                          <div className="flex flex-wrap gap-1">
-                            {user.assignedLicenses.map((lic) => {
-                              const sku = skusQuery.data?.find((s) => s.skuId === lic.skuId);
-                              const label = sku ? skuLabel(sku) : lic.skuId;
-                              return (
-                                <span key={lic.skuId} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[11px] px-2 py-0.5 rounded-full border border-blue-200">
-                                  {label}
-                                  <button onClick={() => removeMutation.mutate({ userId: user.id, skuId: lic.skuId })} className="ml-0.5 hover:text-red-500" title="Usuń licencję">×</button>
-                                </span>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-2 text-right">
-                        {assignState?.userId === user.id ? (
-                          <div className="flex items-center justify-end gap-2">
-                            <select className="text-[12px] border border-[#E0E0E0] rounded-[6px] px-2 py-1 outline-none" value={assignState.skuId} onChange={(e) => setAssignState({ userId: user.id, skuId: e.target.value })}>
-                              <option value="">Wybierz plan...</option>
-                              {(skusQuery.data ?? []).filter((s) => s.capabilityStatus === "Enabled" && s.prepaidUnits.enabled > s.consumedUnits).map((s) => (
-                                <option key={s.skuId} value={s.skuId}>{skuLabel(s)}</option>
-                              ))}
-                            </select>
-                            <button onClick={() => { if (assignState.skuId) assignMutation.mutate({ userId: user.id, skuId: assignState.skuId }); }} disabled={!assignState.skuId || assignMutation.isPending} className="text-[12px] bg-[#3B82F6] text-white px-3 py-1 rounded-[6px] hover:bg-[#2563EB] disabled:opacity-50">
-                              {assignMutation.isPending ? "..." : "Przypisz"}
-                            </button>
-                            <button onClick={() => setAssignState(null)} className="text-[12px] text-[#7a7a7a] hover:text-[#3C3C3C]">Anuluj</button>
-                          </div>
-                        ) : (
-                          <button onClick={() => setAssignState({ userId: user.id, skuId: "" })} className="text-[12px] text-blue-600 hover:text-blue-800">+ Przypisz licencję</button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* ─── Setup guide ────────────────────────────────────────────────── */}
       <div className="bg-white shadow-xl rounded-[10px] p-4">
         <CardHeader text="Jak skonfigurować aplikację w Microsoft Entra ID" icon={faCloud} />
@@ -402,8 +306,7 @@ const M365Settings = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
           {[
             ["Organization.Read.All", "Test połączenia"],
-            ["User.Read.All", "Lista użytkowników"],
-            ["User.ReadWrite.All", "Przypisywanie licencji M365"],
+            ["User.Read.All", "Lista użytkowników i synchronizacja"],
             ["Directory.Read.All", "Dane katalogowe"],
             ["AuditLog.Read.All", "Ostatnie logowanie użytkowników"],
             ["Reports.Read.All", "Status MFA użytkowników"],

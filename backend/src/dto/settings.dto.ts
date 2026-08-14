@@ -38,8 +38,6 @@ export class UpdateUserSettingsDto {
   }>;
 
   @IsOptional() @IsString() lastLogonDefaultColor?: string;
-  @IsOptional() @IsString() notifEmail?: string | null;
-  @IsOptional() @IsString() notifPhone?: string | null;
 
   @IsOptional() @IsObject() filterPresets?: Record<
     string,

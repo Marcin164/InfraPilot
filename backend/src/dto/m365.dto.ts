@@ -7,7 +7,3 @@ export class SaveM365ConfigDto {
   // see M365Service.saveConfig, which falls back to the existing value.
   @IsOptional() @IsString() clientSecret?: string;
 }
-
-export class M365LicenseActionDto {
-  @IsNotEmpty() @IsString() skuId: string;
-}

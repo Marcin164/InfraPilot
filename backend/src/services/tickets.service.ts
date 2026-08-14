@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Tickets } from 'src/entities/tickets.entity';
 import { EVENTS } from 'src/events/events.constants';
@@ -12,13 +12,15 @@ import {
   UpdateTicketDto,
 } from 'src/dto/tickets.dto';
 import { TicketsGateway } from 'src/gateways/tickets.gateway';
-import { TicketsComments } from 'src/entities/ticketsComments.entity';
+import { TicketsComments, CommentType } from 'src/entities/ticketsComments.entity';
+import { Role, userHasAnyRole } from 'src/decorators/roles.decorator';
 import { TicketsApprovals } from 'src/entities/ticketsApprovals.entity';
 import { SlaEngineService } from './slaEngine.service';
 import { TicketActivity } from 'src/entities/ticketActivity.entity';
 import { AdminSettings } from 'src/entities/adminSettings.entity';
 import { SlaInstance } from 'src/entities/slaInstance.entity';
 import { TicketCategory } from 'src/entities/ticketCategory.entity';
+import type { CustomFieldDef } from 'src/entities/ticketCategory.entity';
 import { TicketAutoTagService } from './ticketAutoTag.service';
 import { TicketWorkflowService } from './ticketWorkflow.service';
 import { NotificationService } from './notification.service';
@@ -86,6 +88,9 @@ export class TicketsService {
     @InjectRepository(TicketCategory)
     private ticketCategoryRepository: Repository<TicketCategory>,
 
+    @InjectRepository(Users)
+    private usersRepository: Repository<Users>,
+
     private readonly ticketsGateway: TicketsGateway,
     private readonly slaEngine: SlaEngineService,
     private readonly auditService: AuditService,
@@ -126,6 +131,29 @@ export class TicketsService {
       }
     }
 
+    // Only validate when the caller explicitly picked a category -- an
+    // auto-suggested one was never shown to the requester, so its custom
+    // fields couldn't have been filled in.
+    if ((dto as any).category) {
+      const category = await this.ticketCategoryRepository.findOne({
+        where: { name: (dto as any).category },
+      });
+      const values = (dto as any).customFieldValues ?? {};
+      const missing = (category?.customFields ?? []).filter((f) => {
+        if (!f.required) return false;
+        const v = values[f.id]?.value;
+        // A required checkbox must be ticked -- "false" is a real answer for
+        // an optional one, but for a required one it means unchecked.
+        if (f.type === 'checkbox') return v !== true;
+        return v === undefined || v === null || v === '';
+      });
+      if (missing.length > 0) {
+        throw new BadRequestException(
+          `Missing required field(s): ${missing.map((f) => f.label).join(', ')}`,
+        );
+      }
+    }
+
     const ticket = this.ticketsRepository.create({
       ...dto,
       ...(suggestedCategory ? { category: suggestedCategory } : {}),
@@ -161,6 +189,7 @@ export class TicketsService {
     } catch (err) {
       this.logger.warn(
         `Workflow runOnCreate failed for ticket ${saved.id}: ${(err as Error).message}`,
+        (err as Error).stack,
       );
     }
 
@@ -173,7 +202,8 @@ export class TicketsService {
    * ======================
    */
   async updateTicket(id: string, dto: UpdateTicketDto, userId?: string) {
-    return this.ticketsRepository.manager.transaction(async (manager: any) => {
+    const { updated, previousState, previousPriority, previousAssignee } =
+      await this.ticketsRepository.manager.transaction(async (manager: any) => {
       const ticket = await manager.findOne(Tickets, {
         where: { id },
       });
@@ -198,7 +228,20 @@ export class TicketsService {
         }
       }
 
-      Object.assign(ticket, dto);
+      // class-transformer (via ValidationPipe) instantiates UpdateTicketDto
+      // for every request, so with `target: ES2023` in tsconfig (class
+      // fields default to defined, not just declared) every declared field
+      // becomes an *own* property set to `undefined` even when the request
+      // body never included it. A plain `Object.assign(ticket, dto)` would
+      // copy those `undefined`s too, silently blanking out fields (e.g.
+      // `category`) that this particular PATCH never meant to touch. Only
+      // merge keys the request actually sent -- explicit `null` (e.g.
+      // reopen() clearing closureCode) is preserved, only `undefined` is
+      // filtered out.
+      const definedUpdates = Object.fromEntries(
+        Object.entries(dto).filter(([, value]) => value !== undefined),
+      );
+      Object.assign(ticket, definedUpdates);
 
       const updated = await manager.save(ticket);
 
@@ -232,6 +275,28 @@ export class TicketsService {
         );
       }
 
+      // Resolve assignee ids to display names before pushing over the
+      // socket -- same reason as in getTicketById(), just for the live path.
+      const assigneeIds = new Set<string>();
+      for (const a of savedActivities) {
+        if (a.field !== 'assignee') continue;
+        if (a.oldValue) assigneeIds.add(a.oldValue);
+        if (a.newValue) assigneeIds.add(a.newValue);
+      }
+      if (assigneeIds.size > 0) {
+        const assigneeUsers = await this.usersRepository.find({
+          where: { id: In(Array.from(assigneeIds)) },
+        });
+        const nameById = new Map(
+          assigneeUsers.map((u) => [u.id, u.distinguishedName]),
+        );
+        for (const a of savedActivities) {
+          if (a.field !== 'assignee') continue;
+          if (a.oldValue) a.oldValue = nameById.get(a.oldValue) ?? a.oldValue;
+          if (a.newValue) a.newValue = nameById.get(a.newValue) ?? a.newValue;
+        }
+      }
+
       // emit activities via websocket
       for (const activity of savedActivities) {
         this.ticketsGateway.emitTicketActivity(id, activity);
@@ -248,86 +313,97 @@ export class TicketsService {
         await this.slaEngine.handleResolved(updated, manager);
       }
 
-      // Notify on assignment / state change. Best-effort, post-commit-ish.
-      try {
-        const ticketUrl = `/admin/helpdesk/${updated.id}`;
-
-        // Assignment changed → dispatch through preferences (in-app + email + SMS as configured).
-        if (dto.assignee && dto.assignee !== previousAssignee) {
-          await this.dispatcher.dispatch({
-            recipientIds: [dto.assignee],
-            event: 'ticket_assigned',
-            title: `Ticket #${updated.number} assigned to you`,
-            body: `You've been assigned ticket #${updated.number}.\n${
-              updated.description?.slice(0, 400) ?? ''
-            }`,
-            smsBody: `Ticket #${updated.number} assigned to you`,
-            url: ticketUrl,
-            entityType: 'Ticket',
-            entityId: updated.id,
-            actorId: userId ?? null,
-          });
-        }
-
-        // State change → notify requester (channels per preference).
-        if (dto.state && dto.state !== previousState && updated.requesterId) {
-          await this.dispatcher.dispatch({
-            recipientIds: [updated.requesterId as any],
-            event: 'ticket_state_changed',
-            title: `Ticket #${updated.number} status: ${dto.state}`,
-            body: `Your ticket has moved from "${previousState}" to "${dto.state}".`,
-            smsBody: `Ticket #${updated.number}: ${dto.state}`,
-            url: ticketUrl,
-            entityType: 'Ticket',
-            entityId: updated.id,
-            actorId: userId ?? null,
-          });
-        }
-      } catch (err) {
-        // notifications/mail are best-effort — never block the ticket
-        // update on a downstream failure, just record it.
-        this.logger.warn(
-          `Notify/mail post-update failed for ticket ${updated.id}: ${(err as Error).message}`,
-        );
-      }
-
-      // Fire event-driven workflows. Best-effort — never block the update.
-      try {
-        if (dto.state && dto.state !== previousState) {
-          await this.workflows.runForTicket(updated, 'on_state_change');
-          if (dto.state === 'Resolved' || dto.state === 'Closed') {
-            await this.workflows.runForTicket(updated, 'on_close');
-          }
-        }
-        if (dto.assignee && dto.assignee !== previousAssignee) {
-          await this.workflows.runForTicket(updated, 'on_assign');
-        }
-        if (dto.priority && dto.priority !== previousPriority) {
-          await this.workflows.runForTicket(updated, 'on_priority_change');
-        }
-      } catch (err) {
-        this.logger.warn(
-          `Workflow post-update failed for ticket ${updated.id}: ${(err as Error).message}`,
-        );
-      }
-
-      // Publish to the app-wide event bus for cross-entity automation
-      // (e.g. device lifecycle sync on close). Best-effort, never blocks.
-      if (dto.state && dto.state !== previousState) {
-        try {
-          this.eventEmitter.emit(
-            EVENTS.TICKET_STATE_CHANGED,
-            new TicketStateChangedEvent(updated, previousState, dto.state, userId),
-          );
-        } catch (err) {
-          this.logger.warn(
-            `Event emit failed for ticket ${updated.id}: ${(err as Error).message}`,
-          );
-        }
-      }
-
-      return updated;
+      return { updated, previousState, previousPriority, previousAssignee };
     });
+
+    // Everything below reads the ticket's own connection back out of the
+    // pool (audit logging, workflow steps, etc. all default to a fresh
+    // transaction when no manager is passed in). Running it after the
+    // transaction above has committed means none of it can contend for a
+    // lock the transaction is still holding -- e.g. workflow-triggered
+    // audit.log() calls used to fight the field_change audit.log() call
+    // above for the same global advisory lock while *this* transaction
+    // was still open waiting on them, deadlocking the whole ticket table
+    // until the query timed out (or never did).
+
+    // Notify on assignment / state change. Best-effort.
+    try {
+      const ticketUrl = `/admin/helpdesk/${updated.id}`;
+
+      // Assignment changed → dispatch through preferences (in-app + email as configured).
+      if (dto.assignee && dto.assignee !== previousAssignee) {
+        await this.dispatcher.dispatch({
+          recipientIds: [dto.assignee],
+          event: 'ticket_assigned',
+          title: `Ticket #${updated.number} assigned to you`,
+          body: `You've been assigned ticket #${updated.number}.\n${
+            updated.description?.slice(0, 400) ?? ''
+          }`,
+          url: ticketUrl,
+          entityType: 'Ticket',
+          entityId: updated.id,
+          actorId: userId ?? null,
+        });
+      }
+
+      // State change → notify requester (channels per preference).
+      if (dto.state && dto.state !== previousState && updated.requesterId) {
+        await this.dispatcher.dispatch({
+          recipientIds: [updated.requesterId as any],
+          event: 'ticket_state_changed',
+          title: `Ticket #${updated.number} status: ${dto.state}`,
+          body: `Your ticket has moved from "${previousState}" to "${dto.state}".`,
+          url: ticketUrl,
+          entityType: 'Ticket',
+          entityId: updated.id,
+          actorId: userId ?? null,
+        });
+      }
+    } catch (err) {
+      // notifications/mail are best-effort — never block the ticket
+      // update on a downstream failure, just record it.
+      this.logger.warn(
+        `Notify/mail post-update failed for ticket ${updated.id}: ${(err as Error).message}`,
+      );
+    }
+
+    // Fire event-driven workflows. Best-effort — never block the update.
+    try {
+      if (dto.state && dto.state !== previousState) {
+        await this.workflows.runForTicket(updated, 'on_state_change');
+        if (dto.state === 'Resolved' || dto.state === 'Closed') {
+          await this.workflows.runForTicket(updated, 'on_close');
+        }
+      }
+      if (dto.assignee && dto.assignee !== previousAssignee) {
+        await this.workflows.runForTicket(updated, 'on_assign');
+      }
+      if (dto.priority && dto.priority !== previousPriority) {
+        await this.workflows.runForTicket(updated, 'on_priority_change');
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Workflow post-update failed for ticket ${updated.id}: ${(err as Error).message}`,
+        (err as Error).stack,
+      );
+    }
+
+    // Publish to the app-wide event bus for cross-entity automation
+    // (e.g. device lifecycle sync on close). Best-effort, never blocks.
+    if (dto.state && dto.state !== previousState) {
+      try {
+        this.eventEmitter.emit(
+          EVENTS.TICKET_STATE_CHANGED,
+          new TicketStateChangedEvent(updated, previousState, dto.state, userId),
+        );
+      } catch (err) {
+        this.logger.warn(
+          `Event emit failed for ticket ${updated.id}: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    return updated;
   }
 
   /*
@@ -675,8 +751,39 @@ export class TicketsService {
     return { id: ticket.id, parentTicketId };
   }
 
-  async getTicketById(id: string) {
-    return await this.ticketsRepository
+  // Worknotes are internal-only comments (support staff coordinating on a
+  // ticket) that the requester/end user must never see, over REST or the
+  // live websocket feed. "Staff" here means any of the app's elevated
+  // roles, not just admin/helpdesk -- matches the RBAC roles already
+  // surfaced in Settings -> Admin.
+  private async isStaffUser(userId?: string): Promise<boolean> {
+    if (!userId) return false;
+    const user = await this.usersRepository.findOneBy({ id: userId });
+    return userHasAnyRole(user, [
+      Role.Admin,
+      Role.Approver,
+      Role.Auditor,
+      Role.Compliance,
+      Role.Helpdesk,
+      Role.Dpo,
+    ]);
+  }
+
+  // Worknote comments should only ever be created by staff -- silently
+  // downgrade to Public if a non-staff caller (or a stale/spoofed dto)
+  // requests Worknote, rather than trusting the client.
+  private async resolveCommentType(
+    authorId: string | undefined,
+    requestedType: unknown,
+  ): Promise<CommentType> {
+    if (requestedType !== CommentType.WORKNOTE) return CommentType.PUBLIC;
+    return (await this.isStaffUser(authorId))
+      ? CommentType.WORKNOTE
+      : CommentType.PUBLIC;
+  }
+
+  async getTicketById(id: string, requesterUserId?: string) {
+    const ticket = await this.ticketsRepository
       .createQueryBuilder('ticket')
       .leftJoinAndSelect('ticket.requester', 'requester')
       .leftJoinAndSelect('ticket.device', 'device')
@@ -691,6 +798,40 @@ export class TicketsService {
       .where('ticket.id = :id', { id })
       .orderBy('comments.createdAt', 'ASC')
       .getOne();
+
+    if (ticket?.comments?.length && !(await this.isStaffUser(requesterUserId))) {
+      ticket.comments = ticket.comments.filter(
+        (c) => c.type !== CommentType.WORKNOTE,
+      );
+    }
+
+    // `assignee` activity entries store raw user ids (they track a field
+    // change generically) -- resolve them to display names here so the
+    // timeline reads like the state/priority entries instead of showing
+    // a bare uuid.
+    if (ticket?.activities?.length) {
+      const assigneeIds = new Set<string>();
+      for (const a of ticket.activities) {
+        if (a.field !== 'assignee') continue;
+        if (a.oldValue) assigneeIds.add(a.oldValue);
+        if (a.newValue) assigneeIds.add(a.newValue);
+      }
+      if (assigneeIds.size > 0) {
+        const assignees = await this.usersRepository.find({
+          where: { id: In(Array.from(assigneeIds)) },
+        });
+        const nameById = new Map(
+          assignees.map((u) => [u.id, u.distinguishedName]),
+        );
+        for (const a of ticket.activities) {
+          if (a.field !== 'assignee') continue;
+          if (a.oldValue) a.oldValue = nameById.get(a.oldValue) ?? a.oldValue;
+          if (a.newValue) a.newValue = nameById.get(a.newValue) ?? a.newValue;
+        }
+      }
+    }
+
+    return ticket;
   }
 
   /*
@@ -700,11 +841,12 @@ export class TicketsService {
    * ======================
    */
   async createComment(ticketId: any, authorId: any, dto: any) {
+    const resolvedType = await this.resolveCommentType(authorId, dto.type);
     const comment = this.ticketsCommentsRepository.create({
       ticketId,
       authorId,
       content: dto.content,
-      type: dto.type,
+      type: resolvedType,
     });
 
     const saved = await this.ticketsCommentsRepository.save(comment);
@@ -727,7 +869,7 @@ export class TicketsService {
       });
       const url = `/admin/helpdesk/${ticketId}`;
 
-      // Mentions — fan out via dispatcher so SMS/email obey preferences.
+      // Mentions — fan out via dispatcher so email obeys preferences.
       const mentionRecipients = mentions
         .map((m) => m.userId)
         .filter((id) => id !== authorId);
@@ -737,7 +879,6 @@ export class TicketsService {
           event: 'ticket_mention',
           title: `Mentioned on ticket #${ticket?.number ?? ''}`,
           body: (dto.content ?? '').slice(0, 400),
-          smsBody: `Mentioned on ticket #${ticket?.number ?? ''}`,
           url,
           entityType: 'Ticket',
           entityId: ticketId,
@@ -747,7 +888,7 @@ export class TicketsService {
 
       // Public comment from someone other than the requester → notify them.
       if (
-        dto.type === 'Public' &&
+        resolvedType === CommentType.PUBLIC &&
         ticket?.requester?.id &&
         ticket.requester.id !== authorId &&
         !(dto.content ?? '').startsWith('__autoFollowup_reminded')
@@ -757,7 +898,6 @@ export class TicketsService {
           event: 'ticket_comment',
           title: `New update on your ticket #${ticket.number}`,
           body: (dto.content ?? '').slice(0, 800),
-          smsBody: `New update on ticket #${ticket.number}`,
           url,
           entityType: 'Ticket',
           entityId: ticketId,
@@ -785,6 +925,8 @@ export class TicketsService {
       throw new BadRequestException(`Unsupported file type: ${file.mimetype}`);
     }
 
+    const resolvedType = await this.resolveCommentType(authorId, dto?.type);
+
     const id = randomUUID();
     const ext = path.extname(file.originalname) || '';
     const storedName = `${id}${ext}`;
@@ -795,7 +937,7 @@ export class TicketsService {
       ticketId,
       authorId,
       content: dto?.content ?? undefined,
-      type: (dto?.type as any) ?? 'Public',
+      type: resolvedType,
       attachmentName: file.originalname,
       attachmentPath: filePath,
       attachmentMimetype: file.mimetype,
@@ -883,15 +1025,19 @@ export class TicketsService {
    */
 
   async getTicketCategories(): Promise<{
-    Incident: { name: string; color: string }[];
-    Service: { name: string; color: string }[];
+    Incident: { name: string; color: string; customFields: CustomFieldDef[] }[];
+    Service: { name: string; color: string; customFields: CustomFieldDef[] }[];
   }> {
     const all = await this.ticketCategoryRepository.find({
       where: { enabled: true },
       order: { name: 'ASC' as any },
     });
 
-    const toItem = (c: TicketCategory) => ({ name: c.name, color: c.color });
+    const toItem = (c: TicketCategory) => ({
+      name: c.name,
+      color: c.color,
+      customFields: c.customFields ?? [],
+    });
     return {
       Incident: all
         .filter((c) => !c.ticketType || c.ticketType === 'Incident')
@@ -929,9 +1075,21 @@ export class TicketsService {
       decidedAt: new Date(),
     });
 
-    return this.ticketsApprovalsRepository.findOne({
+    const updated = await this.ticketsApprovalsRepository.findOne({
       where: { id },
       relations: ['approver'],
     });
+
+    if (updated && (dto.decision === 'approved' || dto.decision === 'rejected')) {
+      try {
+        await this.workflows.resumeAfterApproval(updated, dto.decision);
+      } catch (err: any) {
+        this.logger.warn(
+          `Workflow resume after approval ${id} failed: ${err?.message}`,
+        );
+      }
+    }
+
+    return updated;
   }
 }

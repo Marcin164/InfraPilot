@@ -4,7 +4,14 @@ import { DataSource } from 'typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { RetentionService } from './retention.service';
 import { RetentionPolicy } from 'src/entities/retentionPolicy.entity';
+import { AdminSettings } from 'src/entities/adminSettings.entity';
 import { AuditService } from './audit.service';
+
+jest.mock('fs', () => ({
+  mkdirSync: jest.fn(),
+  writeFileSync: jest.fn(),
+}));
+const mockedFs = jest.requireMock('fs');
 
 const makePolicy = (overrides: Partial<RetentionPolicy> = {}): RetentionPolicy =>
   ({
@@ -21,16 +28,23 @@ const makePolicy = (overrides: Partial<RetentionPolicy> = {}): RetentionPolicy =
 describe('RetentionService', () => {
   let service: RetentionService;
   let repo: jest.Mocked<any>;
+  let adminSettingsRepo: jest.Mocked<any>;
   let dataSource: jest.Mocked<any>;
   let audit: jest.Mocked<AuditService>;
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     repo = {
       find: jest.fn().mockResolvedValue([]),
       findOneBy: jest.fn().mockResolvedValue(null),
       create: jest.fn().mockImplementation((dto: any) => dto),
       save: jest.fn(async (p: any) => ({ id: 'policy-1', ...p })),
       delete: jest.fn().mockResolvedValue({ affected: 1 }),
+    };
+    adminSettingsRepo = {
+      findOne: jest.fn().mockResolvedValue(null),
+      save: jest.fn().mockResolvedValue(undefined),
+      insert: jest.fn().mockResolvedValue(undefined),
     };
     dataSource = {
       query: jest.fn().mockResolvedValue([[], 0]),
@@ -41,6 +55,7 @@ describe('RetentionService', () => {
       providers: [
         RetentionService,
         { provide: getRepositoryToken(RetentionPolicy), useValue: repo },
+        { provide: getRepositoryToken(AdminSettings), useValue: adminSettingsRepo },
         { provide: DataSource, useValue: dataSource },
         { provide: AuditService, useValue: audit },
       ],
@@ -183,6 +198,101 @@ describe('RetentionService', () => {
         'row-1',
         'archived',
         expect.any(Object),
+      );
+    });
+
+    it('does not write a file when no archive path is configured (unchanged legacy behavior)', async () => {
+      const rows = [{ id: 'row-1', createdAt: new Date() }];
+      dataSource.query.mockResolvedValueOnce(rows).mockResolvedValueOnce([null, 1]);
+
+      await service.runPolicy(makePolicy({ action: 'archive' as any }));
+
+      expect(mockedFs.writeFileSync).not.toHaveBeenCalled();
+    });
+
+    it('writes a JSON dump to the configured archive path before deleting', async () => {
+      adminSettingsRepo.findOne.mockResolvedValue({ value: { path: '/mnt/archive' } });
+      const rows = [{ id: 'row-1', createdAt: new Date() }];
+      dataSource.query.mockResolvedValueOnce(rows).mockResolvedValueOnce([null, 1]);
+
+      await service.runPolicy(makePolicy({ action: 'archive' as any }));
+
+      expect(mockedFs.mkdirSync).toHaveBeenCalledWith('/mnt/archive', { recursive: true });
+      expect(mockedFs.writeFileSync).toHaveBeenCalledWith(
+        expect.stringContaining('Ticket_'),
+        expect.stringContaining('row-1'),
+        'utf8',
+      );
+    });
+
+    it('aborts the run (no delete) when the configured archive path cannot be written', async () => {
+      adminSettingsRepo.findOne.mockResolvedValue({ value: { path: '/mnt/archive' } });
+      mockedFs.mkdirSync.mockImplementation(() => {
+        throw new Error('EACCES: permission denied');
+      });
+      const rows = [{ id: 'row-1', createdAt: new Date() }];
+      dataSource.query.mockResolvedValueOnce(rows);
+
+      await expect(
+        service.runPolicy(makePolicy({ action: 'archive' as any })),
+      ).rejects.toThrow('EACCES');
+
+      // Only the SELECT ran -- the DELETE must not have been reached.
+      expect(dataSource.query).toHaveBeenCalledTimes(1);
+    });
+
+    it('skips the archive-file write entirely when there are no rows to archive', async () => {
+      adminSettingsRepo.findOne.mockResolvedValue({ value: { path: '/mnt/archive' } });
+      dataSource.query.mockResolvedValueOnce([]).mockResolvedValueOnce([null, 0]);
+
+      const count = await service.runPolicy(makePolicy({ action: 'archive' as any }));
+
+      expect(count).toBe(0);
+      expect(mockedFs.writeFileSync).not.toHaveBeenCalled();
+    });
+  });
+
+  // ─────────────────────────────────────────
+  // archive path config
+  // ─────────────────────────────────────────
+
+  describe('getArchivePath / setArchivePath', () => {
+    it('returns null when nothing is configured', async () => {
+      adminSettingsRepo.findOne.mockResolvedValue(null);
+      expect(await service.getArchivePath()).toBeNull();
+    });
+
+    it('returns the stored path', async () => {
+      adminSettingsRepo.findOne.mockResolvedValue({ value: { path: '/mnt/archive' } });
+      expect(await service.getArchivePath()).toBe('/mnt/archive');
+    });
+
+    it('creates a new settings row when none exists', async () => {
+      adminSettingsRepo.findOne.mockResolvedValue(null);
+      await service.setArchivePath('/mnt/archive');
+      expect(adminSettingsRepo.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          key: 'retention_archive_path',
+          value: { path: '/mnt/archive' },
+        }),
+      );
+    });
+
+    it('updates the existing settings row', async () => {
+      const existing = { id: 'row-1', key: 'retention_archive_path', value: { path: '/old' } };
+      adminSettingsRepo.findOne.mockResolvedValue(existing);
+      await service.setArchivePath('/mnt/archive');
+      expect(adminSettingsRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ value: { path: '/mnt/archive' } }),
+      );
+      expect(adminSettingsRepo.insert).not.toHaveBeenCalled();
+    });
+
+    it('trims whitespace', async () => {
+      adminSettingsRepo.findOne.mockResolvedValue(null);
+      await service.setArchivePath('  /mnt/archive  ');
+      expect(adminSettingsRepo.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ value: { path: '/mnt/archive' } }),
       );
     });
   });

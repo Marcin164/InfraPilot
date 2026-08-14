@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   faFile,
   faFilePdf,
   faFileWord,
   faTrash,
+  faPlus,
   faArrowUpRightFromSquare,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -11,7 +13,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import { toast } from "react-toastify";
 import CardHeader from "../../../../Components/Headers/CardHeader";
+import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import AddFormModal from "../../../../Components/Modals/AddFormModal";
 import {
+  addForm,
   deleteForm,
   getForm,
   getUserForms,
@@ -22,6 +27,7 @@ const UserForms = () => {
   const { t } = useTranslation();
   const { id } = useParams();
   const queryClient = useQueryClient();
+  const [isAddFormModalOpen, setIsAddFormModalOpen] = useState(false);
 
   const { data: forms = [] } = useQuery<FormItem[]>({
     queryKey: ["forms", id],
@@ -64,7 +70,15 @@ const UserForms = () => {
 
   return (
     <div className="bg-white shadow-xl rounded-[10px] p-4">
-      <CardHeader text={t("users.forms")} icon={faFile} />
+      <div className="flex items-center justify-between gap-2">
+        <CardHeader text={t("users.forms")} icon={faFile} />
+        <ButtonPrimary
+          icon={faPlus}
+          text={t("users.actions.addForm")}
+          onClick={() => setIsAddFormModalOpen(true)}
+          className="flex-shrink-0 text-[13px] px-3 py-1"
+        />
+      </div>
       {forms.length === 0 ? (
         <div className="mt-3 text-[13px] text-[#9a9a9a]">{t("users.forms.empty")}</div>
       ) : (
@@ -100,6 +114,20 @@ const UserForms = () => {
           ))}
         </div>
       )}
+      <AddFormModal
+        isModalOpen={isAddFormModalOpen}
+        onCloseModal={() => setIsAddFormModalOpen(false)}
+        onSubmit={async (file) => {
+          if (!id) return;
+          try {
+            await addForm(file, id);
+            toast.success(t("toast.success.formAdded"));
+            queryClient.invalidateQueries({ queryKey: ["forms", id] });
+          } catch {
+            toast.error(t("toast.error.formAddFailed"));
+          }
+        }}
+      />
     </div>
   );
 };

@@ -1,9 +1,13 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
+
 type Props = {
   data?: any;
   onEdit: (row: any) => void;
+  onDelete: (row: any) => void;
 };
 
-const EscalationsList = ({ data, onEdit }: Props) => {
+const EscalationsList = ({ data, onEdit, onDelete }: Props) => {
   if (!data) return null;
 
   return data.map((row: any) => (
@@ -13,24 +17,38 @@ const EscalationsList = ({ data, onEdit }: Props) => {
       {row?.escalations?.map((escalation: any) => (
         <div
           key={escalation?.id}
-          className="gap-4 pl-4 my-1 hover:bg-[#F3F4F6] cursor-pointer"
-          onClick={() =>
-            onEdit({
-              ...escalation,
-              slaDefinitionId: row?.slaDefinitionId,
-              slaDefinitionName: row?.slaDefinitionName,
-            })
-          }
+          className="flex items-center justify-between gap-4 pl-4 pr-2 my-1 rounded hover:bg-[#F3F4F6]"
         >
-          <span className="text-[#6B7280] mr-4">
-            Trigger:{" "}
-            <span className="font-bold text-[#3C3C3C]">
-              {escalation?.triggerPercentage}%
+          <div
+            className="flex flex-1 flex-wrap gap-4 cursor-pointer"
+            onClick={() =>
+              onEdit({
+                ...escalation,
+                slaDefinitionId: row?.slaDefinitionId,
+                slaDefinitionName: row?.slaDefinitionName,
+              })
+            }
+          >
+            <span className="text-[#6B7280]">
+              Trigger:{" "}
+              <span className="font-bold text-[#3C3C3C]">
+                {escalation?.triggerPercentage}%
+              </span>
             </span>
-          </span>
-          <span className="text-[#3C3C3C]">
-            Action: <span className="font-bold">{escalation?.actionType}</span>
-          </span>
+            <span className="text-[#3C3C3C]">
+              Action: <span className="font-bold">{escalation?.actionType}</span>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(escalation);
+            }}
+            className="text-[#F3606E] hover:text-[#C0392B] cursor-pointer"
+          >
+            <FontAwesomeIcon icon={faTrash} />
+          </button>
         </div>
       ))}
     </div>

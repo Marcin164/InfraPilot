@@ -2,12 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Users } from 'src/entities/users.entity';
-import { UserSettings } from 'src/entities/userSettings.entity';
 import { NotificationEvent } from 'src/entities/notificationPreference.entity';
 import { NotificationService } from './notification.service';
 import { NotificationPreferencesService } from './notificationPreferences.service';
 import { MailService } from './mail.service';
-import { SmsService } from './sms.service';
+import { OpsNotificationsService } from './opsNotifications.service';
 
 export type DispatchInput = {
   recipientIds: string[];
@@ -18,15 +17,18 @@ export type DispatchInput = {
   entityType?: string | null;
   entityId?: string | null;
   actorId?: string | null;
-  smsBody?: string | null;
+};
+
+export type OpsDispatchInput = {
+  event: NotificationEvent;
+  title: string;
+  body: string;
 };
 
 export type TestResult = {
   inapp: boolean;
   email: boolean;
   emailAddress: string | null;
-  sms: boolean;
-  phone: string | null;
 };
 
 @Injectable()
@@ -36,25 +38,71 @@ export class NotificationDispatcherService {
   constructor(
     @InjectRepository(Users)
     private readonly users: Repository<Users>,
-    @InjectRepository(UserSettings)
-    private readonly settings: Repository<UserSettings>,
     private readonly inApp: NotificationService,
     private readonly prefs: NotificationPreferencesService,
     private readonly mail: MailService,
-    private readonly sms: SmsService,
+    private readonly opsNotifications: OpsNotificationsService,
   ) {}
 
-  /** Resolve the effective notification email for a user.
-   *  notifEmail from UserSettings takes precedence over Users.email. */
-  private async resolveEmail(userId: string, adEmail: string | null): Promise<string | null> {
-    const s = await this.settings.findOne({ where: { userId } });
-    return s?.notifEmail?.trim() || adEmail || null;
+  /**
+   * Infra/ops alerts (device down, backup failed, IP conflict, etc.) aren't
+   * addressed to a user -- fan out to admins in-app and/or email the fixed
+   * ops address(es), per the global per-event channel toggles in
+   * OpsNotificationsService, instead of going through the per-user
+   * preference matrix.
+   */
+  async dispatchOpsAlert(input: OpsDispatchInput): Promise<void> {
+    const channels = await this.opsNotifications.getChannelsForEvent(input.event);
+
+    if (channels.inapp) {
+      const adminIds = await this.getAdminIds();
+      for (const adminId of adminIds) {
+        try {
+          await this.inApp.create({
+            recipientId: adminId,
+            type: this.mapToInAppType(input.event),
+            title: input.title,
+            body: input.body,
+            url: null,
+            entityType: null,
+            entityId: null,
+            actorId: null,
+          });
+        } catch (err) {
+          this.logger.warn(
+            `Ops in-app dispatch failed for ${adminId}: ${(err as Error).message}`,
+          );
+        }
+      }
+    }
+
+    if (channels.email) {
+      const { emails } = await this.opsNotifications.getConfig();
+      for (const to of emails) {
+        try {
+          await this.mail.send({
+            to,
+            subject: input.title,
+            body: input.body,
+            category: input.event,
+          });
+        } catch (err) {
+          this.logger.warn(
+            `Ops email dispatch failed for ${to}: ${(err as Error).message}`,
+          );
+        }
+      }
+    }
   }
 
-  /** Resolve the effective notification phone for a user. */
-  private async resolvePhone(userId: string, adPhone: string | null): Promise<string | null> {
-    const s = await this.settings.findOne({ where: { userId } });
-    return s?.notifPhone?.trim() || adPhone || null;
+  private async getAdminIds(): Promise<string[]> {
+    const admins = await this.users
+      .createQueryBuilder('u')
+      .select('u.id')
+      .where('u.isAdmin = true')
+      .andWhere('u.erasedAt IS NULL')
+      .getMany();
+    return admins.map((u) => u.id);
   }
 
   async dispatch(input: DispatchInput): Promise<void> {
@@ -87,7 +135,9 @@ export class NotificationDispatcherService {
       }
 
       try {
-        const emailTo = await this.resolveEmail(userId, u.email ?? null);
+        // Notification email is always the account's own login/directory
+        // email -- no separate per-user override anymore.
+        const emailTo = u.email ?? null;
         if (emailTo && (await this.prefs.isEnabled(userId, input.event, 'email'))) {
           await this.mail.send({
             to: emailTo,
@@ -99,30 +149,14 @@ export class NotificationDispatcherService {
       } catch (err) {
         this.logger.warn(`Email dispatch failed for ${userId}: ${(err as Error).message}`);
       }
-
-      try {
-        const phoneTo = await this.resolvePhone(userId, u.phone ?? null);
-        if (phoneTo && (await this.prefs.isEnabled(userId, input.event, 'sms'))) {
-          await this.sms.send({
-            to: phoneTo,
-            body: input.smsBody ?? `${input.title}\n${input.body}`,
-            category: input.event,
-          });
-        }
-      } catch (err) {
-        this.logger.warn(`SMS dispatch failed for ${userId}: ${(err as Error).message}`);
-      }
     }
   }
 
   async test(userId: string): Promise<TestResult> {
-    const userSettings = await this.settings.findOne({ where: { userId } });
     const userRecord = await this.users.findOne({ where: { id: userId } });
+    const emailTo = userRecord?.email || null;
 
-    const emailTo = userSettings?.notifEmail?.trim() || userRecord?.email || null;
-    const phoneTo = userSettings?.notifPhone?.trim() || userRecord?.phone || null;
-
-    const result: TestResult = { inapp: false, email: false, emailAddress: emailTo, sms: false, phone: phoneTo };
+    const result: TestResult = { inapp: false, email: false, emailAddress: emailTo };
 
     try {
       await this.inApp.create({
@@ -151,19 +185,6 @@ export class NotificationDispatcherService {
         result.email = true;
       } catch (err) {
         this.logger.warn(`Test email failed for ${userId}: ${(err as Error).message}`);
-      }
-    }
-
-    if (phoneTo) {
-      try {
-        await this.sms.send({
-          to: phoneTo,
-          body: 'InfraPilot test: SMS channel is configured correctly.',
-          category: 'test',
-        });
-        result.sms = true;
-      } catch (err) {
-        this.logger.warn(`Test SMS failed for ${userId}: ${(err as Error).message}`);
       }
     }
 

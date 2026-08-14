@@ -18,7 +18,8 @@ export type WorkflowStepType =
   | 'notify'
   | 'set_field'
   | 'assign_to'
-  | 'create_comment';
+  | 'create_comment'
+  | 'add_attachment';
 
 export type WorkflowStep = {
   id: string;

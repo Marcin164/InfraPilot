@@ -1,9 +1,9 @@
-import { BadRequestException, Body, Controller, Delete, Get, Post, Param, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { M365Service } from 'src/services/m365.service';
-import { SaveM365ConfigDto, M365LicenseActionDto } from 'src/dto/m365.dto';
+import { SaveM365ConfigDto } from 'src/dto/m365.dto';
 import { describeGraphError } from 'src/helpers/graphErrorMessage';
 
 @UseGuards(AuthGuard, MfaGuard)
@@ -38,23 +38,6 @@ export class M365Controller {
   @Get('/skus')
   async getSkus() {
     return this.m365.getSubscribedSkus();
-  }
-
-  @Get('/users')
-  async getUsers() {
-    return this.m365.getUsersWithLicenses();
-  }
-
-  @Post('/users/:id/assign')
-  async assignLicense(@Param('id') id: string, @Body() body: M365LicenseActionDto) {
-    await this.m365.assignLicense(id, body.skuId);
-    return { success: true };
-  }
-
-  @Post('/users/:id/remove')
-  async removeLicense(@Param('id') id: string, @Body() body: M365LicenseActionDto) {
-    await this.m365.removeLicense(id, body.skuId);
-    return { success: true };
   }
 
   @Get('/sync/status')

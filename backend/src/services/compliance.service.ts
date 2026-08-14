@@ -53,32 +53,34 @@ export const BUILTIN_RULES: Array<
 > = [
   {
     key: 'bitlocker-enabled',
-    name: 'BitLocker enabled on system drive',
-    description: 'OS disk must be encrypted with BitLocker.',
+    name: 'BitLocker enabled on at least one drive',
+    description:
+      'At least one BitLocker volume reports ProtectionStatus On. Does not verify the OS drive specifically -- the agent reports all volumes as a flat list with no reliable "this is the system drive" flag exposed to the rule engine.',
     category: 'security',
-    jsonPath: 'security.bitlocker.enabled',
+    jsonPath: 'security.bitlocker[].ProtectionStatus',
     operator: 'eq',
-    expected: true,
+    expected: 1,
     severity: 'HIGH',
   },
   {
     key: 'firewall-on',
     name: 'Windows Firewall active',
-    description: 'At least one firewall profile must report enabled.',
+    description: 'At least one firewall profile (Domain/Private/Public) reports enabled.',
     category: 'security',
-    jsonPath: 'security.firewall.enabled',
+    jsonPath: 'security.firewall_profile[].Enabled',
     operator: 'eq',
-    expected: true,
+    expected: 1,
     severity: 'HIGH',
   },
   {
     key: 'antivirus-running',
-    name: 'Antivirus service running',
-    description: 'An active AV product must be reported.',
+    name: 'Antivirus product registered',
+    description:
+      'An AV product is registered with Windows Security Center. Does not verify it is actively running/up to date -- that requires decoding the undocumented productState bitmask, which this rule engine does not attempt.',
     category: 'security',
-    jsonPath: 'security.antivirus.running',
-    operator: 'eq',
-    expected: true,
+    jsonPath: 'security.antivirus[].displayName',
+    operator: 'exists',
+    expected: null,
     severity: 'HIGH',
   },
   {
@@ -93,10 +95,10 @@ export const BUILTIN_RULES: Array<
   },
   {
     key: 'tpm-present',
-    name: 'TPM module present',
-    description: 'Device must expose a TPM 2.0 module.',
+    name: 'TPM module present and enabled',
+    description: 'Device must expose an enabled TPM module.',
     category: 'security',
-    jsonPath: 'security.tpm.present',
+    jsonPath: 'security.tpm.IsEnabled_InitialValue',
     operator: 'eq',
     expected: true,
     severity: 'MEDIUM',
@@ -112,6 +114,28 @@ function readPath(obj: any, path: string): any {
     cur = cur[p];
   }
   return cur;
+}
+
+/**
+ * Most agent-reported fields (bitlocker volumes, firewall profiles, AV
+ * products) are arrays with no single scalar to compare -- `[]` marks the
+ * array boundary in a jsonPath, e.g. `security.bitlocker[].ProtectionStatus`
+ * reads `.ProtectionStatus` off every element. evaluateDevice() then checks
+ * whether *any* element satisfies the rule (existential, not universal --
+ * matches the common "at least one X is on" phrasing of these checks).
+ */
+function isArrayPath(path: string): boolean {
+  return path.includes('[]');
+}
+
+function readArrayPath(obj: any, path: string): any[] | undefined {
+  const markerIndex = path.indexOf('[]');
+  const arrayPath = path.slice(0, markerIndex);
+  const elementPath = path.slice(markerIndex + 2).replace(/^\./, '');
+  const arr = readPath(obj, arrayPath);
+  if (!Array.isArray(arr)) return undefined;
+  if (!elementPath) return arr;
+  return arr.map((item) => readPath(item, elementPath));
 }
 
 function evaluate(
@@ -192,11 +216,33 @@ export class ComplianceService {
     private readonly devicesRepo: Repository<Devices>,
   ) {}
 
+  /**
+   * Inserts missing built-ins and re-syncs the *definition* (name,
+   * description, jsonPath, operator, expected, severity, category) of ones
+   * that already exist, so a jsonPath fix shipped in a later version reaches
+   * installs that seeded the old rule long ago -- otherwise the corrected
+   * BUILTIN_RULES entries never take effect on an existing database, since
+   * the old seeding logic only inserted rows that didn't already exist by
+   * key. `enabled` is deliberately left untouched: an admin's decision to
+   * turn a built-in rule off must survive a definition sync.
+   */
   async seedBuiltins(): Promise<number> {
     let inserted = 0;
     for (const r of BUILTIN_RULES) {
       const existing = await this.rulesRepo.findOneBy({ key: r.key });
-      if (existing) continue;
+      if (existing) {
+        Object.assign(existing, {
+          name: r.name,
+          description: r.description,
+          category: r.category,
+          jsonPath: r.jsonPath,
+          operator: r.operator,
+          expected: r.expected,
+          severity: r.severity,
+        });
+        await this.rulesRepo.save(existing);
+        continue;
+      }
       const row = this.rulesRepo.create({
         ...r,
         enabled: r.enabled ?? true,
@@ -229,9 +275,6 @@ export class ComplianceService {
   async deleteRule(key: string) {
     const existing = await this.rulesRepo.findOneBy({ key });
     if (!existing) return;
-    if (existing.builtin) {
-      throw new Error('Cannot delete built-in rule; disable it instead.');
-    }
     await this.rulesRepo.delete({ key });
   }
 
@@ -244,8 +287,25 @@ export class ComplianceService {
     const out: ComplianceResult[] = [];
 
     for (const rule of rules) {
-      const actual = readPath(device, rule.jsonPath);
-      const { passed, message } = evaluate(rule.operator, actual, rule.expected);
+      let actual: any;
+      let passed: boolean;
+      let message: string | null;
+
+      if (isArrayPath(rule.jsonPath)) {
+        const values = readArrayPath(device, rule.jsonPath);
+        actual = values ?? [];
+        if (!values || values.length === 0) {
+          passed = false;
+          message = 'no array elements found';
+        } else {
+          const results = values.map((v) => evaluate(rule.operator, v, rule.expected));
+          passed = results.some((r) => r.passed);
+          message = passed ? null : `no element matched (checked ${values.length})`;
+        }
+      } else {
+        actual = readPath(device, rule.jsonPath);
+        ({ passed, message } = evaluate(rule.operator, actual, rule.expected));
+      }
 
       let row = await this.resultsRepo.findOne({
         where: { deviceId, ruleKey: rule.key },

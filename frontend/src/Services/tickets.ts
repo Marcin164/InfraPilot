@@ -1,12 +1,18 @@
 import api from "../lib/api";
 import type { Ticket, UpdateTicketData, Comment, Approval, ApprovalDecision, TicketType, TicketPriority, TicketImpact, TicketUrgency } from "../Types";
+import type { CustomFieldDef } from "./ticketWorkflows";
 
 export const getTickets = async (query: string): Promise<{ data: Ticket[]; total: number }> => {
   const { data } = await api.get(`/tickets?${query}`);
   return data;
 };
 
-export type TicketCategoryItem = { name: string; color: string };
+export type TicketCategoryItem = { name: string; color: string; customFields: CustomFieldDef[] };
+
+export type CustomFieldValueMap = Record<
+  string,
+  { label: string; type: string; value: unknown }
+>;
 
 export type TicketCategoryMap = {
   Incident: TicketCategoryItem[];
@@ -56,6 +62,7 @@ export type CreateTicketPayload = {
   priority?: TicketPriority;
   impact?: TicketImpact;
   urgency?: TicketUrgency;
+  customFieldValues?: CustomFieldValueMap;
 };
 
 export const createTicket = async (

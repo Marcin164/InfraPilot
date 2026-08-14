@@ -7,7 +7,6 @@ import { IpAllocation, IpAllocationSource, IpAllocationStatus } from 'src/entiti
 import { Subnet } from 'src/entities/subnet.entity';
 import { Devices } from 'src/entities/devices.entity';
 import { AdminSettings } from 'src/entities/adminSettings.entity';
-import { Users } from 'src/entities/users.entity';
 import { decrypt } from 'src/helpers/crypto';
 import { uuidv4 } from 'src/helpers/uuidv4';
 import { isIpInCidr } from 'src/helpers/cidr';
@@ -34,8 +33,6 @@ export class LeaseSyncService {
     private readonly devices: Repository<Devices>,
     @InjectRepository(AdminSettings)
     private readonly adminSettings: Repository<AdminSettings>,
-    @InjectRepository(Users)
-    private readonly users: Repository<Users>,
     private readonly auditService: AuditService,
     private readonly ipamService: IpamService,
     private readonly dispatcher: NotificationDispatcherService,
@@ -130,29 +127,13 @@ export class LeaseSyncService {
     }
 
     if (newConflicts.length === 0) return;
-    const adminIds = await this.getAdminIds();
-    if (adminIds.length === 0) return;
 
     for (const conflict of newConflicts) {
-      await this.dispatcher.dispatch({
-        recipientIds: adminIds,
+      await this.dispatcher.dispatchOpsAlert({
         event: 'ip_conflict_detected',
         title: `IP conflict on ${conflict.ip}`,
         body: `Multiple owners claim ${conflict.ip}: ${conflict.owners.map((o) => o.label).join(', ')}.`,
-        url: '/admin/ipam',
-        entityType: 'IP_ALLOCATION',
-        entityId: conflict.ip,
       });
     }
-  }
-
-  private async getAdminIds(): Promise<string[]> {
-    const admins = await this.users
-      .createQueryBuilder('u')
-      .select('u.id')
-      .where('u.isAdmin = true')
-      .andWhere('u.erasedAt IS NULL')
-      .getMany();
-    return admins.map((u) => u.id);
   }
 }

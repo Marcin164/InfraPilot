@@ -7,8 +7,11 @@ import {
   Post,
   Put,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import {
@@ -68,5 +71,14 @@ export class TicketWorkflowController {
   async deleteWorkflow(@Param('id') id: string) {
     await this.service.deleteWorkflow(id);
     return { ok: true };
+  }
+
+  // ---- Step attachments (template file for the `add_attachment` step) ----
+
+  @Roles(Role.Admin, Role.Helpdesk)
+  @Post('steps/attachment')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }))
+  async uploadStepAttachment(@UploadedFile() file: any) {
+    return this.service.uploadStepAttachment(file);
   }
 }

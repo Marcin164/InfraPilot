@@ -1,3 +1,18 @@
+import type { CustomFieldDef } from "../Services/ticketWorkflows";
+
+export const isCustomFieldMissing = (field: CustomFieldDef, value: unknown) => {
+  if (!field.required) return false;
+  // A required checkbox must be ticked -- "false" is a real answer for an
+  // optional one, but for a required one it means the box isn't checked yet.
+  if (field.type === "checkbox") return value !== true;
+  return value === undefined || value === null || value === "";
+};
+
+export const customFieldsAreValid = (
+  fields: CustomFieldDef[],
+  values: Record<string, unknown>,
+) => fields.every((f) => !isCustomFieldMissing(f, values[f.id]));
+
 export const parseWorkdays = (workdays: number[]) => {
   const sortedWorkdays = workdays
     .sort((a, b) => a - b)

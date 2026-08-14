@@ -19,11 +19,6 @@ export type SubscribedSku = {
   consumedUnits: number; prepaidUnits: { enabled: number; warning: number; suspended: number };
 };
 
-export type M365User = {
-  id: string; displayName: string; mail: string | null;
-  userPrincipalName: string; assignedLicenses: { skuId: string }[];
-};
-
 export type SyncResult = {
   synced: number; created: number; skipped: number; lastSyncAt: string;
 };
@@ -139,42 +134,6 @@ export class M365Service {
   async getSubscribedSkus(): Promise<SubscribedSku[]> {
     const token = await this.getToken();
     return this.graphGet<SubscribedSku>(token, `${GRAPH}/subscribedSkus`);
-  }
-
-  // ─── Users with licenses ─────────────────────────────────────────────────
-
-  async getUsersWithLicenses(): Promise<M365User[]> {
-    const token = await this.getToken();
-    return this.graphGet<M365User>(token,
-      `${GRAPH}/users?$select=id,displayName,mail,userPrincipalName,assignedLicenses&$top=999`);
-  }
-
-  // ─── Assign / remove license ─────────────────────────────────────────────
-
-  async assignLicense(m365UserId: string, skuId: string): Promise<void> {
-    const token = await this.getToken();
-    const res = await fetch(`${GRAPH}/users/${m365UserId}/assignLicense`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ addLicenses: [{ skuId }], removeLicenses: [] }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error((err as any).error?.message ?? `Assign failed: ${res.status}`);
-    }
-  }
-
-  async removeLicense(m365UserId: string, skuId: string): Promise<void> {
-    const token = await this.getToken();
-    const res = await fetch(`${GRAPH}/users/${m365UserId}/assignLicense`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ addLicenses: [], removeLicenses: [skuId] }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error((err as any).error?.message ?? `Remove failed: ${res.status}`);
-    }
   }
 
   // ─── Sync status ─────────────────────────────────────────────────────────

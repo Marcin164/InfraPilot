@@ -130,6 +130,16 @@ export class Tickets {
   @Column({ nullable: true })
   category: string;
 
+  // Snapshot of the category's custom fields as filled in on the creation
+  // form -- keyed by field id, each entry carries its own label/type so the
+  // ticket still displays correctly if the category's fields are edited or
+  // removed later. Null when the category had no custom fields.
+  @Column({ type: 'jsonb', nullable: true })
+  customFieldValues: Record<
+    string,
+    { label: string; type: string; value: unknown }
+  > | null;
+
   @Column({ nullable: true })
   closureCode: string;
 

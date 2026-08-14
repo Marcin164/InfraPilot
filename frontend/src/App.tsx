@@ -13,7 +13,6 @@ import Software from "./Pages/Main/Devices/Details/Software";
 import Network from "./Pages/Main/Devices/Details/Network";
 import Security from "./Pages/Main/Devices/Details/Security";
 import Compliance from "./Pages/Main/Devices/Details/Compliance";
-import FleetHealth from "./Pages/Main/Fleet";
 import Cves from "./Pages/Main/Devices/Details/Cves";
 import Lifecycle from "./Pages/Main/Devices/Details/Lifecycle";
 import Tasks from "./Pages/Main/Devices/Details/Tasks";
@@ -43,6 +42,7 @@ import ComplianceRules from "./Pages/Main/Settings/Details/ComplianceRules";
 import TicketTemplates from "./Pages/Main/Settings/Details/TicketTemplates";
 import NotificationPreferences from "./Pages/Main/Settings/Details/NotificationPreferences";
 import Workflows from "./Pages/Main/Settings/Details/Workflows";
+import Categories from "./Pages/Main/Settings/Details/Categories";
 import WindowsAgent from "./Pages/Main/Settings/Details/WindowsAgent";
 import SmtpSettings from "./Pages/Main/Settings/Details/Smtp";
 import M365Settings from "./Pages/Main/Settings/Details/M365Settings";
@@ -103,7 +103,6 @@ function App() {
                   path="users/:id/equipmentedit"
                   element={<EditEquipment />}
                 />
-                <Route path="fleet" element={<FleetHealth />} />
                 <Route path="topology" element={<Topology />} />
                 <Route path="ipam" element={<Ipam />} />
                 <Route path="devices" element={<Devices />} />
@@ -156,6 +155,7 @@ function App() {
                   />
                   <Route path="sla" element={<Sla />} />
                   <Route path="workflows" element={<Workflows />} />
+                  <Route path="categories" element={<Categories />} />
                   <Route
                     path="notifications"
                     element={<NotificationPreferences />}

@@ -13,6 +13,7 @@ import { TicketTemplate } from 'src/entities/ticketTemplate.entity';
 import { TicketAutoTagRule } from 'src/entities/ticketAutoTagRule.entity';
 import { TicketCategory } from 'src/entities/ticketCategory.entity';
 import { TicketWorkflow } from 'src/entities/ticketWorkflow.entity';
+import { Users } from 'src/entities/users.entity';
 import { TicketWorkflowService } from 'src/services/ticketWorkflow.service';
 import { TicketWorkflowController } from 'src/controllers/ticketWorkflow.controller';
 import { SlaModule } from './sla.module';
@@ -38,6 +39,7 @@ import { Logger, OnModuleInit } from '@nestjs/common';
       TicketAutoTagRule,
       TicketCategory,
       TicketWorkflow,
+      Users,
     ]),
     SlaModule,
     AuditModule,

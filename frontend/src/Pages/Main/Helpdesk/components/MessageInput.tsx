@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { twMerge } from "tailwind-merge";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import {
+  faComment,
   faFile,
+  faLock,
   faMicrophone,
   faPlus,
   faShare,
@@ -25,6 +28,10 @@ import type { Comment } from "../../../../Types";
 type Props = {
   ticketId: string;
   onOptimisticComment: (comment: Partial<Comment>) => void;
+  // Only staff-facing views (admin/helpdesk) should ever pass this --
+  // Worknotes must never be composable from the end-user ticket portal,
+  // which reuses this same component.
+  allowWorknote?: boolean;
 };
 
 const ACCEPTED_TYPES = ".mp3,.mp4,.png,.jpg,.jpeg,.pdf,.wav,.webm,.ogg";
@@ -43,7 +50,7 @@ const ACCEPTED_MIMES = new Set([
   "application/pdf",
 ]);
 
-const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
+const MessageInput = ({ ticketId, onOptimisticComment, allowWorknote }: Props) => {
   const { t } = useTranslation();
   const { user }: any = useAuthInfo();
   const ticketQuery = useQuery({
@@ -53,6 +60,7 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
     staleTime: 30000,
   });
   const [message, setMessage] = useState("");
+  const [noteType, setNoteType] = useState<"Public" | "Worknote">("Public");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(
     null,
@@ -204,10 +212,12 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
   const send = () => {
     if (isPending) return;
 
+    const type = allowWorknote ? noteType : "Public";
+
     if (pendingFile) {
       fileMutation.mutate({
         content: message.trim() || undefined,
-        type: "Public",
+        type,
         file: pendingFile,
       });
       return;
@@ -224,14 +234,14 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
       });
       fileMutation.mutate({
         content: message.trim() || undefined,
-        type: "Public",
+        type,
         file,
       });
       return;
     }
 
     if (!message.trim()) return;
-    textMutation.mutate({ content: message, type: "Public" });
+    textMutation.mutate({ content: message, type });
   };
 
   const canSend =
@@ -272,6 +282,42 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
         </div>
       )}
 
+      {allowWorknote && (
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setNoteType("Public")}
+            className={twMerge(
+              "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-bold transition-colors cursor-pointer",
+              noteType === "Public"
+                ? "bg-[#2B9AE9] text-white"
+                : "bg-[#F0F0F0] text-[#7a7a7a] hover:bg-[#E5E5E5]",
+            )}
+          >
+            <FontAwesomeIcon icon={faComment} />
+            {t("helpdesk.publicReply")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setNoteType("Worknote")}
+            className={twMerge(
+              "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-bold transition-colors cursor-pointer",
+              noteType === "Worknote"
+                ? "bg-[#F1C40F] text-[#3C3C3C]"
+                : "bg-[#F0F0F0] text-[#7a7a7a] hover:bg-[#E5E5E5]",
+            )}
+          >
+            <FontAwesomeIcon icon={faLock} />
+            {t("helpdesk.workNote")}
+          </button>
+          {noteType === "Worknote" && (
+            <span className="text-[11px] text-[#9a9a9a]">
+              {t("helpdesk.workNoteHint")}
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="flex items-end gap-2">
         <input
           ref={fileInputRef}
@@ -286,26 +332,29 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
               icon={faPlus}
               onClick={() => setAttachOpen((v) => !v)}
               disabled={isPending}
-              className="shrink-0"
+              className="shrink-0 h-[44px] w-[44px] px-0 py-0 justify-center"
             />
             {isRecording && (
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#E74C3C] rounded-full animate-pulse pointer-events-none" />
             )}
           </div>
           {attachOpen && (
-            <div className="absolute bottom-[52px] left-0 z-50 flex flex-col gap-1 p-2 bg-white rounded-[10px] shadow-xl border border-[#E0E0E0]">
+            <div className="absolute bottom-[52px] left-0 z-50 w-[220px] flex flex-col gap-0.5 p-1.5 bg-white rounded-[12px] shadow-xl border border-[#EFEFEF]">
               <ButtonPrimary
+                color="white"
                 icon={faFile}
+                text={t("helpdesk.attachFile")}
                 onClick={() => { handleFilePick(); setAttachOpen(false); }}
                 disabled={isPending || isRecording}
-                title={t("helpdesk.attachFile")}
+                className="h-[38px] text-[14px] w-full text-left shadow-none justify-start"
               />
               <ButtonPrimary
+                color={isRecording ? "red" : "white"}
                 icon={isRecording ? faStop : faMicrophone}
-                color={isRecording ? "red" : "blue"}
-                onClick={isRecording ? () => { stopRecording(); setAttachOpen(false); } : () => { startRecording(); setAttachOpen(false); }}
+                text={isRecording ? t("helpdesk.stopRecording") : t("helpdesk.startRecording")}
+                onClick={isRecording ? () => { stopRecording(); setAttachOpen(false); } : () => startRecording()}
                 disabled={isPending}
-                title={isRecording ? t("helpdesk.stopRecording") : t("helpdesk.startRecording")}
+                className="h-[38px] text-[14px] w-full text-left shadow-none justify-start"
               />
               <TemplatePicker
                 ticket={ticketQuery.data}
@@ -322,8 +371,19 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
         <textarea
           value={message}
           rows={1}
-          placeholder={isRecording ? "Recording..." : "Write a message..."}
-          className="flex-1 resize-none border border-[#EFEFEF] rounded-[10px] px-3 py-2 text-[14px] outline-none focus:border-[#2B9AE9] min-h-[44px] max-h-[200px] shadow-xl"
+          placeholder={
+            isRecording
+              ? t("helpdesk.recording")
+              : allowWorknote && noteType === "Worknote"
+                ? t("helpdesk.workNotePlaceholder")
+                : t("helpdesk.messagePlaceholder")
+          }
+          className={twMerge(
+            "flex-1 resize-none border rounded-[10px] px-3 py-2 text-[14px] outline-none min-h-[44px] max-h-[200px] shadow-xl",
+            allowWorknote && noteType === "Worknote"
+              ? "border-[#F1C40F] bg-[#FFFBEA] focus:border-[#F1C40F]"
+              : "border-[#EFEFEF] focus:border-[#2B9AE9]",
+          )}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
@@ -335,9 +395,10 @@ const MessageInput = ({ ticketId, onOptimisticComment }: Props) => {
 
         <ButtonPrimary
           icon={faShare}
+          color={allowWorknote && noteType === "Worknote" ? "yellow" : "blue"}
           onClick={send}
           disabled={!canSend}
-          className="shrink-0"
+          className="shrink-0 h-[44px] w-[44px] px-0 py-0 justify-center"
         />
       </div>
     </div>

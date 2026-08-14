@@ -5,8 +5,10 @@ import { TicketWorkflowService } from './ticketWorkflow.service';
 import { TicketWorkflow } from 'src/entities/ticketWorkflow.entity';
 import { TicketCategory } from 'src/entities/ticketCategory.entity';
 import { Tickets } from 'src/entities/tickets.entity';
+import { TicketActivity } from 'src/entities/ticketActivity.entity';
 import { TicketsApprovals } from 'src/entities/ticketsApprovals.entity';
 import { TicketsComments } from 'src/entities/ticketsComments.entity';
+import { Users } from 'src/entities/users.entity';
 import { AuditService } from './audit.service';
 import { NotificationDispatcherService } from './notificationDispatcher.service';
 
@@ -34,8 +36,10 @@ describe('TicketWorkflowService', () => {
   let workflowsRepo: jest.Mocked<any>;
   let categoriesRepo: jest.Mocked<any>;
   let ticketsRepo: jest.Mocked<any>;
+  let activitiesRepo: jest.Mocked<any>;
   let approvalsRepo: jest.Mocked<any>;
   let commentsRepo: jest.Mocked<any>;
+  let usersRepo: jest.Mocked<any>;
   let audit: jest.Mocked<any>;
   let dispatcher: jest.Mocked<any>;
 
@@ -58,14 +62,22 @@ describe('TicketWorkflowService', () => {
     };
     ticketsRepo = {
       update: jest.fn().mockResolvedValue(undefined),
+      findOneBy: jest.fn().mockResolvedValue(null),
+    };
+    activitiesRepo = {
+      save: jest.fn().mockResolvedValue(undefined),
     };
     approvalsRepo = {
       create: jest.fn().mockImplementation((dto: any) => dto),
       save: jest.fn().mockResolvedValue(undefined),
+      find: jest.fn().mockResolvedValue([]),
     };
     commentsRepo = {
       create: jest.fn().mockImplementation((dto: any) => dto),
       save: jest.fn().mockResolvedValue(undefined),
+    };
+    usersRepo = {
+      findOneBy: jest.fn().mockResolvedValue(null),
     };
     audit = { log: jest.fn().mockResolvedValue(undefined) };
     dispatcher = { dispatch: jest.fn().mockResolvedValue(undefined) };
@@ -76,8 +88,10 @@ describe('TicketWorkflowService', () => {
         { provide: getRepositoryToken(TicketWorkflow), useValue: workflowsRepo },
         { provide: getRepositoryToken(TicketCategory), useValue: categoriesRepo },
         { provide: getRepositoryToken(Tickets), useValue: ticketsRepo },
+        { provide: getRepositoryToken(TicketActivity), useValue: activitiesRepo },
         { provide: getRepositoryToken(TicketsApprovals), useValue: approvalsRepo },
         { provide: getRepositoryToken(TicketsComments), useValue: commentsRepo },
+        { provide: getRepositoryToken(Users), useValue: usersRepo },
         { provide: AuditService, useValue: audit },
         { provide: NotificationDispatcherService, useValue: dispatcher },
       ],

@@ -35,13 +35,17 @@ export interface Ticket {
   approvals: Approval[];
   closureCode?: ClosureCode;
   closureNotes?: string;
+  customFieldValues?: Record<
+    string,
+    { label: string; type: string; value: unknown }
+  > | null;
 }
 
 export interface Comment {
   id: string;
   type: string;
   createdAt: string;
-  author: { id: string; distinguishedName: string };
+  author: { id: string; distinguishedName: string } | null;
   content?: string;
   attachmentName?: string;
   attachmentMimetype?: string;

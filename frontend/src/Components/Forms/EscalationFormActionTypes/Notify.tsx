@@ -10,7 +10,6 @@ const Notify = ({ form }: Props) => {
   const { t } = useTranslation();
   const channelOptions = [
     { value: "email", label: t("form.notify.email") },
-    { value: "sms", label: t("form.notify.sms") },
     { value: "teams", label: t("form.notify.teams") },
     // { value: "discord", label: "Discord" },
     // { value: "slack", label: "Slack" },

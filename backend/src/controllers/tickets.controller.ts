@@ -116,8 +116,9 @@ export class TicketsController {
   }
 
   @Get(':id')
-  async getTicket(@Param('id') id: string) {
-    return this.ticketsService.getTicketById(id);
+  async getTicket(@Param('id') id: string, @Req() req: any) {
+    const userId = req?.user?.properties?.metadata?.id;
+    return this.ticketsService.getTicketById(id, userId);
   }
 
   @Roles(Role.Admin, Role.Helpdesk)

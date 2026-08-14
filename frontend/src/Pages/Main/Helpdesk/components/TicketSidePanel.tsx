@@ -1,14 +1,27 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import CardHeader from "../../../../Components/Headers/CardHeader";
+import CollapsibleSection from "../../../../Components/Layout/CollapsibleSection";
 import ClosureNotesForm from "../../../../Components/Forms/ClosureNotesForm";
 import SLA from "./SLA";
 import Approvals from "./Approvals";
+import DeviceContextPanel from "./DeviceContextPanel";
+import TicketDiagnostics from "./TicketDiagnostics";
+import PreviousTicketsPanel from "./PreviousTicketsPanel";
+import LinkTicketPanel from "./LinkTicketPanel";
+import SuggestionsPanel from "./SuggestionsPanel";
+import AIAssistPanel from "./AIAssistPanel";
 import type { Approval, ClosureCode } from "../../../../Types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark } from "@fortawesome/free-solid-svg-icons";
+import {
+  faFlagCheckered,
+  faStopwatch,
+  faToolbox,
+  faUserCheck,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
 
 interface TicketSidePanelProps {
+  ticket: any;
   closureCode?: ClosureCode;
   closureNotes?: string;
   requesterId: string;
@@ -18,6 +31,7 @@ interface TicketSidePanelProps {
 }
 
 const TicketSidePanel = ({
+  ticket,
   closureCode,
   closureNotes,
   requesterId,
@@ -35,10 +49,43 @@ const TicketSidePanel = ({
       >
         <FontAwesomeIcon icon={faXmark} />
       </button>
-      <CardHeader text={t("helpdesk.closureNotes")} />
-      <ClosureNotesForm closureCode={closureCode} closureNotes={closureNotes} />
-      <SLA />
-      <Approvals requesterId={requesterId} approvals={approvals} />
+      <CollapsibleSection
+        title={t("helpdesk.closureNotes")}
+        icon={faFlagCheckered}
+        defaultOpen
+        className="mt-0 pt-0 border-t-0"
+      >
+        <ClosureNotesForm closureCode={closureCode} closureNotes={closureNotes} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title={t("helpdesk.sla")} icon={faStopwatch} defaultOpen>
+        <SLA />
+      </CollapsibleSection>
+
+      <CollapsibleSection title={t("helpdesk.approvals")} icon={faUserCheck} defaultOpen>
+        <Approvals requesterId={requesterId} approvals={approvals} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title={t("helpdesk.contextAndTools")} icon={faToolbox}>
+        <DeviceContextPanel
+          deviceId={ticket?.device?.id ?? null}
+          ticketId={ticket?.id}
+        />
+
+        {ticket?.device?.id && (
+          <TicketDiagnostics ticketId={ticket.id} deviceId={ticket.device.id} />
+        )}
+
+        <PreviousTicketsPanel
+          ticketId={ticket?.id}
+          requesterId={ticket?.requester?.id ?? null}
+          deviceId={ticket?.device?.id ?? null}
+        />
+
+        <LinkTicketPanel ticket={ticket} />
+        <SuggestionsPanel ticket={ticket} />
+        <AIAssistPanel ticket={ticket} />
+      </CollapsibleSection>
     </div>
   );
 };

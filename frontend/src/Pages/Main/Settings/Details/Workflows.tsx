@@ -1,5 +1,4 @@
 import { useState } from "react";
-import ColorPicker from "../../../../Components/Inputs/ColorPicker";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -12,9 +11,8 @@ import {
   faCircleCheck,
   faCommentDots,
   faGears,
-  faLayerGroup,
+  faPaperclip,
   faPaperPlane,
-  faPen,
   faPlus,
   faTrash,
   faUser,
@@ -29,18 +27,17 @@ import Checkbox from "../../../../Components/Inputs/Checkbox";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
 import {
-  TicketCategory,
   TicketWorkflow,
   WorkflowStep,
   WorkflowStepType,
   listTicketCategories,
-  upsertTicketCategory,
-  deleteTicketCategory,
-  listWorkflows,
   upsertWorkflow,
   deleteWorkflow,
+  listWorkflows,
+  uploadWorkflowStepAttachment,
 } from "../../../../Services/ticketWorkflows";
 import { getUsers } from "../../../../Services/users";
+import { getAssignmentGroups } from "../../../../Services/assignmentGroups";
 import type { User } from "../../../../Types";
 
 const TRIGGER_OPTIONS: { value: TicketWorkflow["trigger"]; labelKey: string }[] = [
@@ -63,7 +60,7 @@ const STEP_DEFS: {
     labelKey: "settings.workflow.step.request_approval",
     icon: faCircleCheck,
     color: "#30A712",
-    defaultConfig: { approverIds: [], message: "" },
+    defaultConfig: { approverType: "specific", approverIds: [], message: "", required: false },
   },
   {
     type: "notify",
@@ -91,7 +88,21 @@ const STEP_DEFS: {
     labelKey: "settings.workflow.step.create_comment",
     icon: faCommentDots,
     color: "#6B7280",
-    defaultConfig: { content: "", type: "Worknotes" },
+    defaultConfig: { content: "", type: "Worknote" },
+  },
+  {
+    type: "add_attachment",
+    labelKey: "settings.workflow.step.add_attachment",
+    icon: faPaperclip,
+    color: "#C0392B",
+    defaultConfig: {
+      attachmentName: "",
+      attachmentPath: "",
+      attachmentMimetype: "",
+      attachmentSize: 0,
+      message: "",
+      type: "Public",
+    },
   },
 ];
 
@@ -116,16 +127,10 @@ const Workflows = () => {
     queryFn: listWorkflows,
   });
 
-  const categoriesQuery = useQuery({
-    queryKey: ["ticket-categories"],
-    queryFn: listTicketCategories,
-  });
-
   const [editing, setEditing] = useState<TicketWorkflow | null>(null);
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["ticket-workflows"] });
-    queryClient.invalidateQueries({ queryKey: ["ticket-categories"] });
   };
 
   const saveMutation = useMutation({
@@ -173,12 +178,6 @@ const Workflows = () => {
   return (
     <div className="m-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div className="lg:col-span-1 space-y-4">
-        <CategoriesPanel
-          categories={categoriesQuery.data ?? []}
-          workflows={workflowsQuery.data ?? []}
-          onChanged={invalidateAll}
-        />
-
         <div className="bg-white shadow-xl rounded-[10px] p-4">
           <div className="flex items-center justify-between">
             <CardHeader text={t("settings.workflow.title")} icon={faBolt} />
@@ -254,222 +253,6 @@ const Workflows = () => {
             </div>
           </div>
         )}
-      </div>
-      <ConfirmationModal
-        isModalOpen={confirmState.open}
-        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
-        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
-        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
-        message={confirmState.message}
-      />
-    </div>
-  );
-};
-
-// ───────────────────────── Categories ─────────────────────────
-
-const CategoriesPanel = ({
-  categories,
-  workflows,
-  onChanged,
-}: {
-  categories: TicketCategory[];
-  workflows: TicketWorkflow[];
-  onChanged: () => void;
-}) => {
-  const { t } = useTranslation();
-  const [name, setName] = useState("");
-  const [color, setColor] = useState("#2B9AE9");
-  const [ticketType, setTicketType] = useState<"Incident" | "Service" | "">(
-    "",
-  );
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
-  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
-
-  const upsertMutation = useMutation({
-    mutationFn: (c: Partial<TicketCategory> & { name: string }) =>
-      upsertTicketCategory(c),
-    onSuccess: () => {
-      toast.success(t("settings.workflow.categories.saved"));
-      setName("");
-      setColor("#2B9AE9");
-      setTicketType("");
-      setEditingId(null);
-      onChanged();
-    },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? t("settings.workflow.saveFailed")),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteTicketCategory(id),
-    onSuccess: () => {
-      toast.success(t("settings.workflow.categories.deleted"));
-      onChanged();
-    },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? t("settings.workflow.deleteFailed")),
-  });
-
-  const submit = () => {
-    if (!name.trim()) {
-      toast.error(t("toast.error.nameRequired"));
-      return;
-    }
-    upsertMutation.mutate({
-      id: editingId ?? undefined,
-      name: name.trim(),
-      color,
-      ticketType: ticketType || null,
-      enabled: true,
-    });
-  };
-
-  return (
-    <div className="bg-white shadow-xl rounded-[10px] p-4">
-      <CardHeader text={t("settings.workflow.categories")} icon={faLayerGroup} />
-      <p className="text-[12px] text-[#7a7a7a] mt-2">
-        {t("settings.workflow.categories.help")}
-      </p>
-
-      <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
-        <Input
-          className="md:col-span-2 pt-0"
-          value={name}
-          handleChange={setName}
-          placeholder={t("settings.workflow.categories.namePlaceholder")}
-        />
-        <div className="flex items-end pb-[5px]">
-          <ColorPicker value={color} onChange={setColor} />
-        </div>
-      </div>
-      <div className="mt-2 flex items-center gap-2 flex-wrap">
-        <div className="min-w-[180px]">
-          <SelectSecondary
-            options={[
-              { value: "", label: t("settings.workflow.categories.anyType") },
-              { value: "Incident", label: t("form.ticketType.incident") },
-              { value: "Service", label: t("form.ticketType.service") },
-            ]}
-            value={
-              ticketType
-                ? {
-                    value: ticketType,
-                    label:
-                      ticketType === "Incident"
-                        ? t("form.ticketType.incident")
-                        : t("form.ticketType.service"),
-                  }
-                : { value: "", label: t("settings.workflow.categories.anyType") }
-            }
-            onSelect={(opt: any) => setTicketType((opt?.value ?? "") as any)}
-          />
-        </div>
-        <ButtonPrimary
-          icon={editingId ? faCheck : faPlus}
-          text={editingId ? t("settings.workflow.categories.update") : t("settings.workflow.categories.add")}
-          onClick={submit}
-          disabled={upsertMutation.isPending}
-        />
-        {editingId && (
-          <ButtonPrimary
-            color="white"
-            text={t("common.cancel")}
-            onClick={() => {
-              setEditingId(null);
-              setName("");
-              setColor("#2B9AE9");
-              setTicketType("");
-            }}
-          />
-        )}
-      </div>
-
-      <div className="mt-3 space-y-1 max-h-[320px] overflow-y-auto pr-1">
-        {categories.length === 0 && (
-          <div className="text-[13px] text-[#7a7a7a]">{t("settings.workflow.categories.empty")}</div>
-        )}
-        {categories.map((c) => {
-          const wf = workflows.find((w) => w.id === c.workflowId);
-          return (
-            <div
-              key={c.id}
-              className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-[6px] border border-[#E8E8E8] px-2 py-2"
-            >
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <span
-                  className="w-[10px] h-[10px] rounded-full shrink-0"
-                  style={{ backgroundColor: c.color }}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-bold text-[#3C3C3C] truncate">
-                    {c.name}
-                  </div>
-                  <div className="text-[11px] text-[#9a9a9a]">
-                    {c.ticketType ?? t("settings.workflow.categories.any")}
-                    {wf && (
-                      <>
-                        {" · "}
-                        <span className="text-[#2B9AE9]">↳ {wf.name}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingId(c.id);
-                    setName(c.name);
-                    setColor(c.color);
-                    setTicketType(c.ticketType ?? "");
-                  }}
-                  className="text-[#2B9AE9] cursor-pointer"
-                  title={t("common.edit")}
-                >
-                  <FontAwesomeIcon icon={faPen} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => askConfirm(() => deleteMutation.mutate(c.id), t("settings.workflow.categories.confirmDelete", { name: c.name }))}
-                  className="text-[#F3606E] cursor-pointer"
-                  title={t("common.delete")}
-                >
-                  <FontAwesomeIcon icon={faTrash} />
-                </button>
-              </div>
-              <div className="w-full sm:w-auto sm:min-w-[160px]">
-                <SelectSecondary
-                  options={[
-                    { value: "", label: t("settings.workflow.categories.noWorkflow") },
-                    ...workflows.map((w) => ({ value: w.id, label: w.name })),
-                  ]}
-                  value={
-                    c.workflowId
-                      ? {
-                          value: c.workflowId,
-                          label:
-                            workflows.find((w) => w.id === c.workflowId)?.name ??
-                            "—",
-                        }
-                      : { value: "", label: t("settings.workflow.categories.noWorkflow") }
-                  }
-                  onSelect={(opt: any) => {
-                    // createdAt/updatedAt are server-managed -- strip them so
-                    // we don't send a whole loaded TicketCategory object
-                    // (incl. read-only fields UpsertCategoryDto doesn't
-                    // declare) back to the PUT endpoint.
-                    const { createdAt, updatedAt, ...input } = c;
-                    return upsertTicketCategory({
-                      ...input,
-                      workflowId: opt?.value || null,
-                    }).then(onChanged);
-                  }}
-                />
-              </div>
-            </div>
-          );
-        })}
       </div>
       <ConfirmationModal
         isModalOpen={confirmState.open}
@@ -792,22 +575,59 @@ const StepConfig = ({
     onChange({ config: { ...step.config, [k]: v } });
 
   switch (step.type) {
-    case "request_approval":
+    case "request_approval": {
+      const approverType = step.config.approverType ?? "specific";
+      const approvers = users.filter((u) => u.isApprover);
       return (
         <div className="mt-2 grid grid-cols-1 gap-2">
-          <UserMultiPicker
-            label={t("settings.workflow.config.approverIds")}
-            ids={step.config.approverIds ?? []}
-            users={users}
-            onChange={(ids) => setCfg("approverIds", ids)}
+          <SelectField
+            label={t("settings.workflow.config.approverType")}
+            value={approverType}
+            options={[
+              { value: "specific", label: t("settings.workflow.config.approverType.specific") },
+              { value: "requesterManager", label: t("settings.workflow.config.approverType.requesterManager") },
+            ]}
+            onChange={(v) => setCfg("approverType", v)}
           />
+          {approverType === "specific" ? (
+            <>
+              <UserMultiPicker
+                label={t("settings.workflow.config.approverIds")}
+                ids={step.config.approverIds ?? []}
+                users={approvers}
+                onChange={(ids) => setCfg("approverIds", ids)}
+              />
+              {approvers.length === 0 && (
+                <p className="text-[11px] text-[#C07C0F]">
+                  {t("settings.workflow.config.noApprovers")}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-[11px] text-[#7a7a7a]">
+              {t("settings.workflow.config.approverType.requesterManagerHint")}
+            </p>
+          )}
           <Input
             label={t("settings.workflow.config.message")}
             value={step.config.message ?? ""}
             handleChange={(v: string) => setCfg("message", v)}
           />
+          <Checkbox
+            id={`step-${step.id}-required`}
+            checked={step.config.required === true}
+            color="#30A712"
+            handleChange={(v: boolean) => setCfg("required", v)}
+            label={t("settings.workflow.config.required")}
+          />
+          <p className="text-[11px] text-[#7a7a7a]">
+            {step.config.required
+              ? t("settings.workflow.config.requiredHint")
+              : t("settings.workflow.config.notRequiredHint")}
+          </p>
         </div>
       );
+    }
 
     case "notify":
       return (
@@ -848,26 +668,7 @@ const StepConfig = ({
       );
 
     case "set_field":
-      return (
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          <SelectField
-            label={t("settings.workflow.config.field")}
-            value={step.config.field ?? "priority"}
-            options={[
-              { value: "priority", label: "priority" },
-              { value: "urgency", label: "urgency" },
-              { value: "impact", label: "impact" },
-              { value: "assignmentGroup", label: "assignmentGroup" },
-            ]}
-            onChange={(v) => setCfg("field", v)}
-          />
-          <Input
-            label={t("settings.workflow.config.value")}
-            value={step.config.value ?? ""}
-            handleChange={(v: string) => setCfg("value", v)}
-          />
-        </div>
-      );
+      return <SetFieldStepConfig step={step} onChange={onChange} />;
 
     case "assign_to":
       return (
@@ -886,9 +687,9 @@ const StepConfig = ({
         <div className="mt-2 grid grid-cols-1 gap-2">
           <SelectField
             label={t("settings.workflow.config.commentType")}
-            value={step.config.type ?? "Worknotes"}
+            value={step.config.type ?? "Worknote"}
             options={[
-              { value: "Worknotes", label: t("settings.workflow.config.commentType.worknotes") },
+              { value: "Worknote", label: t("settings.workflow.config.commentType.worknotes") },
               { value: "Public", label: t("settings.workflow.config.commentType.public") },
             ]}
             onChange={(v) => setCfg("type", v)}
@@ -905,9 +706,189 @@ const StepConfig = ({
         </div>
       );
 
+    case "add_attachment":
+      return <AttachmentStepConfig step={step} onChange={onChange} />;
+
     default:
       return null;
   }
+};
+
+// ───────────────────────── Set-field step config ─────────────────────────
+
+// Fields with a fixed set of valid values get a dropdown instead of free
+// text -- avoids typos that would fail silently at run time (e.g. "high"
+// vs "High"). assignmentGroup/category aren't listed here because their
+// valid values come from live data (assignment groups / categories), not a
+// fixed enum -- see dynamicValueOptions below.
+const SET_FIELD_STATIC_OPTIONS: Record<string, string[]> = {
+  priority: ["Low", "Medium", "High", "Critical"],
+  urgency: ["Low", "Medium", "High"],
+  impact: ["Single user", "Multiple users", "Whole company"],
+  state: [
+    "New",
+    "Assigned",
+    "In progress",
+    "Awaiting for user",
+    "Awaiting for vendor",
+    "Resolved",
+    "Closed",
+    "Cancelled",
+  ],
+  closureCode: [
+    "Solved Permanently",
+    "Solved temporarily",
+    "Not actioned",
+    "No reply",
+    "Workaround",
+  ],
+};
+
+const SET_FIELD_OPTIONS = [
+  { value: "priority", label: "priority" },
+  { value: "urgency", label: "urgency" },
+  { value: "impact", label: "impact" },
+  { value: "assignmentGroup", label: "assignmentGroup" },
+  { value: "state", label: "state" },
+  { value: "category", label: "category" },
+  { value: "closureCode", label: "closureCode" },
+  { value: "closureNotes", label: "closureNotes" },
+];
+
+const SetFieldStepConfig = ({
+  step,
+  onChange,
+}: {
+  step: WorkflowStep;
+  onChange: (patch: Partial<WorkflowStep>) => void;
+}) => {
+  const { t } = useTranslation();
+  const field = step.config.field ?? "priority";
+
+  const groupsQuery = useQuery({
+    queryKey: ["assignment-groups"],
+    queryFn: getAssignmentGroups,
+  });
+  const categoriesQuery = useQuery({
+    queryKey: ["ticket-categories"],
+    queryFn: listTicketCategories,
+  });
+
+  const dynamicValueOptions: Record<string, string[]> = {
+    assignmentGroup: (groupsQuery.data ?? []).map((g) => g.name),
+    category: (categoriesQuery.data ?? []).map((c) => c.name),
+  };
+
+  const valueOptions = SET_FIELD_STATIC_OPTIONS[field] ?? dynamicValueOptions[field];
+
+  const handleFieldChange = (newField: string) => {
+    const staticOptions = SET_FIELD_STATIC_OPTIONS[newField];
+    onChange({ config: { field: newField, value: staticOptions ? staticOptions[0] : "" } });
+  };
+
+  return (
+    <div className="mt-2 grid grid-cols-2 gap-2">
+      <SelectField
+        label={t("settings.workflow.config.field")}
+        value={field}
+        options={SET_FIELD_OPTIONS}
+        onChange={handleFieldChange}
+      />
+      {valueOptions ? (
+        <SelectField
+          label={t("settings.workflow.config.value")}
+          value={step.config.value ?? ""}
+          options={valueOptions.map((v) => ({ value: v, label: v }))}
+          onChange={(v) => onChange({ config: { ...step.config, value: v } })}
+        />
+      ) : (
+        <Input
+          label={t("settings.workflow.config.value")}
+          value={step.config.value ?? ""}
+          handleChange={(v: string) =>
+            onChange({ config: { ...step.config, value: v } })
+          }
+        />
+      )}
+    </div>
+  );
+};
+
+// ───────────────────────── Attachment step config ─────────────────────────
+
+const AttachmentStepConfig = ({
+  step,
+  onChange,
+}: {
+  step: WorkflowStep;
+  onChange: (patch: Partial<WorkflowStep>) => void;
+}) => {
+  const { t } = useTranslation();
+  const setCfg = (k: string, v: any) =>
+    onChange({ config: { ...step.config, [k]: v } });
+
+  const uploadMutation = useMutation({
+    mutationFn: (file: File) => uploadWorkflowStepAttachment(file),
+    onSuccess: (result) => {
+      onChange({ config: { ...step.config, ...result } });
+      toast.success(t("settings.workflow.config.attachmentUploaded"));
+    },
+    onError: (err: any) =>
+      toast.error(
+        err?.response?.data?.message ??
+          t("settings.workflow.config.attachmentUploadFailed"),
+      ),
+  });
+
+  return (
+    <div className="mt-2 grid grid-cols-1 gap-2">
+      <div>
+        <label className="font-bold text-[#3C3C3C] text-[14px]">
+          {t("settings.workflow.config.attachmentFile")}
+        </label>
+        <div className="mt-1 flex items-center gap-2 flex-wrap">
+          <input
+            type="file"
+            id={`step-${step.id}-attachment`}
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) uploadMutation.mutate(file);
+              e.target.value = "";
+            }}
+          />
+          <label
+            htmlFor={`step-${step.id}-attachment`}
+            className="inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[12px] font-semibold cursor-pointer border border-[#D0D0D0] text-[#3C3C3C] hover:bg-[#F5F5F5]"
+          >
+            <FontAwesomeIcon icon={faPaperclip} className="text-[11px]" />
+            {uploadMutation.isPending
+              ? t("settings.workflow.config.uploading")
+              : t("settings.workflow.config.uploadFile")}
+          </label>
+          {step.config.attachmentName && (
+            <span className="text-[12px] text-[#3C3C3C]">
+              {step.config.attachmentName}
+            </span>
+          )}
+        </div>
+      </div>
+      <SelectField
+        label={t("settings.workflow.config.commentType")}
+        value={step.config.type ?? "Public"}
+        options={[
+          { value: "Public", label: t("settings.workflow.config.commentType.public") },
+          { value: "Worknote", label: t("settings.workflow.config.commentType.worknotes") },
+        ]}
+        onChange={(v) => setCfg("type", v)}
+      />
+      <Input
+        label={t("settings.workflow.config.message")}
+        value={step.config.message ?? ""}
+        handleChange={(v: string) => setCfg("message", v)}
+      />
+    </div>
+  );
 };
 
 export default Workflows;

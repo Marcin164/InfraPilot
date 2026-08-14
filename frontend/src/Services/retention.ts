@@ -50,3 +50,12 @@ export const runRetentionPolicy = async (id: string): Promise<{ affected: number
   const { data } = await api.post(`/retention/${id}/run`);
   return data;
 };
+
+export const getRetentionArchivePath = async (): Promise<string | null> => {
+  const { data } = await api.get("/retention/archive-path");
+  return data.archivePath ?? null;
+};
+
+export const saveRetentionArchivePath = async (archivePath: string): Promise<void> => {
+  await api.post("/retention/archive-path", { archivePath });
+};

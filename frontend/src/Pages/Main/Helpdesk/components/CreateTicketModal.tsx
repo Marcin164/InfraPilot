@@ -8,10 +8,13 @@ import { faTicket, faXmark, faCheck } from "@fortawesome/free-solid-svg-icons";
 
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
+import CustomFieldsForm from "../../../../Components/Forms/CustomFieldsForm";
+import { customFieldsAreValid } from "../../../../Helpers/forms";
 import {
   createTicket,
   getTicketCategories,
   type CreateTicketPayload,
+  type CustomFieldValueMap,
 } from "../../../../Services/tickets";
 import { getUsers } from "../../../../Services/users";
 import { getDevicesByOwner } from "../../../../Services/devices";
@@ -43,6 +46,8 @@ const CreateTicketModal = ({ onClose, onCreated }: Props) => {
   const [urgency, setUrgency] = useState<{ value: TicketUrgency; label: string } | null>(null);
   const [device, setDevice] = useState<{ value: string; label: string } | null>(null);
   const [description, setDescription] = useState("");
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, unknown>>({});
+  const [showFieldErrors, setShowFieldErrors] = useState(false);
 
   const usersQuery = useQuery({ queryKey: ["users-all"], queryFn: getUsers });
   const categoriesQuery = useQuery({
@@ -69,6 +74,14 @@ const CreateTicketModal = ({ onClose, onCreated }: Props) => {
     return (categoriesQuery.data[type] ?? []).map((c) => ({ value: c.name, label: c.name }));
   }, [type, categoriesQuery.data]);
 
+  const selectedCategoryFields = useMemo(() => {
+    if (!type || !category || !categoriesQuery.data) return [];
+    return (
+      categoriesQuery.data[type]?.find((c) => c.name === category.value)
+        ?.customFields ?? []
+    );
+  }, [type, category, categoriesQuery.data]);
+
   const deviceOptions = useMemo(
     () =>
       (devicesQuery.data ?? []).map((d) => ({
@@ -80,6 +93,14 @@ const CreateTicketModal = ({ onClose, onCreated }: Props) => {
 
   const createMutation = useMutation({
     mutationFn: () => {
+      const customFieldSnapshot: CustomFieldValueMap = {};
+      for (const f of selectedCategoryFields) {
+        customFieldSnapshot[f.id] = {
+          label: f.label,
+          type: f.type,
+          value: customFieldValues[f.id] ?? null,
+        };
+      }
       const payload: CreateTicketPayload = {
         type: type!,
         description: description.trim(),
@@ -89,6 +110,8 @@ const CreateTicketModal = ({ onClose, onCreated }: Props) => {
         priority: priority?.value,
         impact: impact?.value,
         urgency: urgency?.value,
+        customFieldValues:
+          selectedCategoryFields.length > 0 ? customFieldSnapshot : undefined,
       };
       return createTicket(payload);
     },
@@ -103,6 +126,14 @@ const CreateTicketModal = ({ onClose, onCreated }: Props) => {
 
   const canSubmit =
     Boolean(requester) && Boolean(type) && description.trim().length > 0 && !createMutation.isPending;
+
+  const handleSubmit = () => {
+    if (!customFieldsAreValid(selectedCategoryFields, customFieldValues)) {
+      setShowFieldErrors(true);
+      return;
+    }
+    createMutation.mutate();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -140,12 +171,23 @@ const CreateTicketModal = ({ onClose, onCreated }: Props) => {
               label={t("helpdesk.newTicket.category")}
               options={categoryOptions}
               value={category}
-              onSelect={(opt: any) => setCategory(opt)}
+              onSelect={(opt: any) => {
+                setCategory(opt);
+                setCustomFieldValues({});
+                setShowFieldErrors(false);
+              }}
               placeholder={t("helpdesk.newTicket.categoryPlaceholder")}
               isDisabled={!type}
               isClearable
             />
           </div>
+
+          <CustomFieldsForm
+            fields={selectedCategoryFields}
+            values={customFieldValues}
+            onChange={(id, v) => setCustomFieldValues((prev) => ({ ...prev, [id]: v }))}
+            showErrors={showFieldErrors}
+          />
 
           <div className="grid grid-cols-3 gap-3">
             <SelectSecondary
@@ -200,7 +242,7 @@ const CreateTicketModal = ({ onClose, onCreated }: Props) => {
           <ButtonPrimary
             icon={faCheck}
             text={createMutation.isPending ? t("helpdesk.newTicket.creating") : t("helpdesk.newTicket.create")}
-            onClick={() => createMutation.mutate()}
+            onClick={handleSubmit}
             disabled={!canSubmit}
           />
         </div>

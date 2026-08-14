@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuthInfo } from "@propelauth/react";
 import { toast } from "react-toastify";
-import { faBell, faCheck, faEnvelope, faFlask, faPhone } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBell, faCheck, faFlask, faPaperPlane } from "@fortawesome/free-solid-svg-icons";
 
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
@@ -16,10 +16,17 @@ import {
   EVENT_LABELS,
   NotificationChannel,
   NotificationEvent,
+  OPS_ROUTED_EVENTS,
   PreferenceRow,
   type TestResult,
 } from "../../../../Services/notificationPreferences";
-import { getUserSettings, updateUserSettings } from "../../../../Services/settings";
+import { getUser } from "../../../../Services/users";
+import {
+  getOpsNotificationConfig,
+  saveOpsNotificationConfig,
+  type OpsEventChannels,
+  type OpsNotificationConfig,
+} from "../../../../Services/opsNotifications";
 
 const TestBadge = ({
   label,
@@ -57,15 +64,24 @@ const CHANNEL_KEYS: {
 }[] = [
   { key: "inapp", labelKey: "settings.notif.channel.inapp", hintKey: "settings.notif.channel.inapp.hint", color: "#2B9AE9" },
   { key: "email", labelKey: "settings.notif.channel.email", hintKey: "settings.notif.channel.email.hint", color: "#16A085" },
-  { key: "sms", labelKey: "settings.notif.channel.sms", hintKey: "settings.notif.channel.sms.hint", color: "#F1C40F" },
 ];
 
 const NotificationPreferences = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const authInfo: any = useAuthInfo();
+  const currentUserId = authInfo?.user?.metadata?.id;
   const CHANNELS = CHANNEL_KEYS.map((c) => ({ ...c, label: t(c.labelKey), hint: t(c.hintKey) }));
 
-  // ── Notification matrix ──────────────────────────────────────────
+  const currentUserQuery = useQuery({
+    queryKey: ["current-user", currentUserId],
+    queryFn: () => getUser(currentUserId),
+    enabled: Boolean(currentUserId),
+  });
+  const isAdmin = Boolean(currentUserQuery.data?.isAdmin);
+  const loginEmail = currentUserQuery.data?.email ?? null;
+
+  // ── Notification matrix (per-user events only) ───────────────────
   const prefsQuery = useQuery({
     queryKey: ["notification-preferences"],
     queryFn: listNotificationPreferences,
@@ -113,40 +129,7 @@ const NotificationPreferences = () => {
     new Set((prefsQuery.data ?? []).map((r) => r.event)),
   ) as NotificationEvent[];
 
-  // ── Contact details ──────────────────────────────────────────────
-  const settingsQuery = useQuery({
-    queryKey: ["settings"],
-    queryFn: getUserSettings,
-  });
-
-  const [notifEmail, setNotifEmail] = useState("");
-  const [notifPhone, setNotifPhone] = useState("");
-
-  useEffect(() => {
-    if (settingsQuery.data) {
-      setNotifEmail(settingsQuery.data.notifEmail ?? "");
-      setNotifPhone(settingsQuery.data.notifPhone ?? "");
-    }
-  }, [settingsQuery.data]);
-
-  const contactMutation = useMutation({
-    mutationFn: () =>
-      updateUserSettings({
-        notifEmail: notifEmail.trim() || null,
-        notifPhone: notifPhone.trim() || null,
-      }),
-    onSuccess: (updated) => {
-      queryClient.setQueryData(["settings"], updated);
-      toast.success(t("toast.success.preferencesSaved"));
-    },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? t("users.auth.saveFailed")),
-  });
-
-  const contactDirty =
-    (notifEmail.trim() || null) !== (settingsQuery.data?.notifEmail ?? null) ||
-    (notifPhone.trim() || null) !== (settingsQuery.data?.notifPhone ?? null);
-
+  // ── Test ──────────────────────────────────────────────────────────
   const [testResult, setTestResult] = useState<TestResult | null>(null);
 
   const testMutation = useMutation({
@@ -159,40 +142,68 @@ const NotificationPreferences = () => {
       toast.error(err?.response?.data?.message ?? t("settings.notif.test.failed")),
   });
 
+  // ── Ops alert settings (admin only) ──────────────────────────────
+  const opsConfigQuery = useQuery({
+    queryKey: ["ops-notification-config"],
+    queryFn: getOpsNotificationConfig,
+    enabled: isAdmin,
+  });
+
+  const [opsEmailsText, setOpsEmailsText] = useState("");
+  const [opsChannels, setOpsChannels] = useState<
+    Record<NotificationEvent, OpsEventChannels>
+  >({} as any);
+
+  useEffect(() => {
+    if (opsConfigQuery.data) {
+      setOpsEmailsText(opsConfigQuery.data.emails.join(", "));
+      setOpsChannels(opsConfigQuery.data.channels);
+    }
+  }, [opsConfigQuery.data]);
+
+  const toggleOpsChannel = (event: NotificationEvent, channel: NotificationChannel) => {
+    setOpsChannels((prev) => ({
+      ...prev,
+      [event]: {
+        inapp: prev[event]?.inapp ?? true,
+        email: prev[event]?.email ?? true,
+        [channel]: !(prev[event]?.[channel] ?? true),
+      },
+    }));
+  };
+
+  const opsConfigMutation = useMutation({
+    mutationFn: (config: OpsNotificationConfig) => saveOpsNotificationConfig(config),
+    onSuccess: () => {
+      toast.success(t("toast.success.preferencesSaved"));
+      queryClient.invalidateQueries({ queryKey: ["ops-notification-config"] });
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? t("users.auth.saveFailed")),
+  });
+
+  const saveOpsConfig = () => {
+    const emails = opsEmailsText
+      .split(",")
+      .map((e) => e.trim())
+      .filter(Boolean);
+    opsConfigMutation.mutate({ emails, channels: opsChannels });
+  };
+
   return (
     <div className="m-4 space-y-4">
 
-      {/* Contact details card */}
+      {/* Contact / test card */}
       <div className="bg-white shadow-xl rounded-[10px] p-4">
         <CardHeader text={t("settings.notif.contacts.title")} icon={faBell} />
-        <p className="text-[13px] text-[#9a9a9a] mt-1 mb-4">
+        <p className="text-[13px] text-[#9a9a9a] mt-1">
           {t("settings.notif.contacts.help")}
         </p>
-
-        <div className="flex flex-col gap-1 max-w-[420px]">
-          <Input
-            label={t("settings.notif.contacts.email")}
-            name="notifEmail"
-            value={notifEmail}
-            handleChange={setNotifEmail}
-            placeholder={t("settings.notif.contacts.emailPlaceholder")}
-          />
-          <Input
-            label={t("settings.notif.contacts.phone")}
-            name="notifPhone"
-            value={notifPhone}
-            handleChange={setNotifPhone}
-            placeholder={t("settings.notif.contacts.phonePlaceholder")}
-          />
-        </div>
+        <p className="text-[14px] font-bold text-[#3C3C3C] mt-2">
+          {loginEmail ?? "—"}
+        </p>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <ButtonPrimary
-            icon={faCheck}
-            text={contactMutation.isPending ? t("common.saving") : t("common.save")}
-            onClick={() => contactMutation.mutate()}
-            disabled={contactMutation.isPending || !contactDirty}
-          />
           <ButtonPrimary
             icon={faFlask}
             color="white"
@@ -214,11 +225,6 @@ const NotificationPreferences = () => {
               ok={testResult.email}
               detail={testResult.emailAddress}
             />
-            <TestBadge
-              label={t("settings.notif.channel.sms")}
-              ok={testResult.sms}
-              detail={testResult.phone}
-            />
           </div>
         )}
       </div>
@@ -227,7 +233,7 @@ const NotificationPreferences = () => {
       <div className="bg-white shadow-xl rounded-[10px] p-4">
         <CardHeader text={t("settings.notif.title")} icon={faBell} />
         <p className="text-[12px] text-[#7a7a7a] mt-2">
-          {t("settings.notif.helpSms")}
+          {t("settings.notif.helpOps")}
         </p>
 
         {prefsQuery.isLoading ? (
@@ -286,6 +292,78 @@ const NotificationPreferences = () => {
           />
         </div>
       </div>
+
+      {/* Ops alert settings card (admin only) */}
+      {isAdmin && (
+        <div className="bg-white shadow-xl rounded-[10px] p-4">
+          <CardHeader text={t("settings.notif.ops.title")} icon={faPaperPlane} />
+          <p className="text-[13px] text-[#9a9a9a] mt-1 mb-4">
+            {t("settings.notif.ops.help")}
+          </p>
+
+          <div className="flex flex-col gap-1 max-w-[520px]">
+            <Input
+              label={t("settings.notif.ops.emails")}
+              name="opsEmails"
+              value={opsEmailsText}
+              handleChange={setOpsEmailsText}
+              placeholder={t("settings.notif.ops.emailsPlaceholder")}
+            />
+          </div>
+
+          {opsConfigQuery.isLoading ? (
+            <div className="mt-4 text-[13px] text-[#7a7a7a]">{t("common.loading")}</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="mt-4 w-full text-[13px]">
+                <thead>
+                  <tr className="text-left text-[11px] uppercase text-[#9a9a9a]">
+                    <th className="py-2">{t("settings.notif.event")}</th>
+                    {CHANNELS.map((c) => (
+                      <th key={c.key} className="py-2 text-center w-[110px]">
+                        {c.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {OPS_ROUTED_EVENTS.map((event) => (
+                    <tr key={event} className="border-t border-[#F0F0F0]">
+                      <td className="py-2 text-[#3C3C3C]">
+                        {t(`notif.event.${event}`, { defaultValue: EVENT_LABELS[event] ?? event })}
+                      </td>
+                      {CHANNELS.map((c) => {
+                        const on = opsChannels[event]?.[c.key] ?? true;
+                        return (
+                          <td key={c.key} className="py-2">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                id={`ops:${event}:${c.key}`}
+                                checked={on}
+                                color={c.color}
+                                handleChange={() => toggleOpsChannel(event, c.key)}
+                              />
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="mt-4">
+            <ButtonPrimary
+              icon={faCheck}
+              text={opsConfigMutation.isPending ? t("common.saving") : t("common.save")}
+              onClick={saveOpsConfig}
+              disabled={opsConfigMutation.isPending}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

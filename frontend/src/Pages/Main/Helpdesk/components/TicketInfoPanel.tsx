@@ -6,13 +6,7 @@ import { faClock, faDesktop, faUser, faXmark } from "@fortawesome/free-solid-svg
 import { Link } from "react-router";
 import moment from "moment";
 import UpdateTicketForm from "../../../../Components/Forms/UpdateTicketForm";
-import DeviceContextPanel from "./DeviceContextPanel";
 import QuickActions from "./QuickActions";
-import TicketDiagnostics from "./TicketDiagnostics";
-import PreviousTicketsPanel from "./PreviousTicketsPanel";
-import LinkTicketPanel from "./LinkTicketPanel";
-import SuggestionsPanel from "./SuggestionsPanel";
-import AIAssistPanel from "./AIAssistPanel";
 
 interface TicketInfoPanelProps {
   ticket: {
@@ -85,29 +79,25 @@ const TicketInfoPanel = ({ ticket, isOpen = false, onClose }: TicketInfoPanelPro
         </span>
       </div>
 
-      <DeviceContextPanel
-        deviceId={ticket.device?.id ?? null}
-        ticketId={ticket.id}
-      />
-
-      {ticket.device?.id && (
-        <TicketDiagnostics
-          ticketId={ticket.id}
-          deviceId={ticket.device.id}
-        />
+      {ticket.customFieldValues && Object.keys(ticket.customFieldValues).length > 0 && (
+        <div className="py-2 mt-2 border-t border-[#F0F0F0]">
+          <div className="text-[12px] font-bold text-[#9a9a9a] uppercase mb-1">
+            {t("helpdesk.customFields")}
+          </div>
+          {Object.values(ticket.customFieldValues).map((f: any, i: number) => (
+            <div key={i} className="flex items-center justify-between gap-2 py-[3px] text-[13px]">
+              <span className="text-[#8A8A8A]">{f.label}</span>
+              <span className="font-semibold text-[#3C3C3C] text-right">
+                {f.type === "checkbox"
+                  ? f.value
+                    ? t("common.yes")
+                    : t("common.no")
+                  : (f.value ?? "—") || "—"}
+              </span>
+            </div>
+          ))}
+        </div>
       )}
-
-      <PreviousTicketsPanel
-        ticketId={ticket.id}
-        requesterId={ticket.requester?.id ?? null}
-        deviceId={ticket.device?.id ?? null}
-      />
-
-      <LinkTicketPanel ticket={ticket} />
-
-      <SuggestionsPanel ticket={ticket} />
-
-      <AIAssistPanel ticket={ticket} />
 
       <div className="py-1 mt-3">
         <FontAwesomeIcon icon={faClock} className="w-[20px]" />

@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faFileLines,
   faDownload,
+  faLock,
   faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import { fetchAttachmentBlob } from "../../../../Services/tickets";
@@ -20,6 +21,7 @@ type Props = {
   attachmentMimetype?: string;
   attachmentSize?: number;
   optimistic?: boolean;
+  type?: string;
 };
 
 const formatSize = (bytes?: number) => {
@@ -61,7 +63,7 @@ const useAttachmentUrl = (commentId?: string, hasMime?: boolean) => {
   return { blobUrl, loading };
 };
 
-const AttachmentRenderer = ({
+export const AttachmentRenderer = ({
   id,
   name,
   mime,
@@ -143,8 +145,11 @@ const Comment = ({
   attachmentMimetype,
   attachmentSize,
   optimistic,
+  type,
 }: Props) => {
+  const { t } = useTranslation();
   const { user }: any = useAuthInfo();
+  const isWorknote = type === "Worknote";
 
   return (
     <div
@@ -153,11 +158,20 @@ const Comment = ({
         author?.id === user?.metadata?.id &&
           "ml-[52%] border-2 border-[#2B9AE9]",
         optimistic && "opacity-60",
+        isWorknote && "w-full ml-0 bg-[#FFFBEA] border-2 border-[#F1C40F]",
       )}
     >
-      <div className="text-[14px] font-light">{`${
-        author?.distinguishedName
-      } - ${moment(createdAt).format("DD/MM/YYYY, HH:mm")}`}</div>
+      <div className="flex items-center gap-2 text-[14px] font-light">
+        <span>{`${
+          author?.distinguishedName
+        } - ${moment(createdAt).format("DD/MM/YYYY, HH:mm")}`}</span>
+        {isWorknote && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#F1C40F] text-[#3C3C3C] px-2 py-[1px] text-[10px] font-bold uppercase">
+            <FontAwesomeIcon icon={faLock} />
+            {t("helpdesk.workNote")}
+          </span>
+        )}
+      </div>
       {content && <div className="font-bold text-ellipsis">{content}</div>}
       {attachmentName && attachmentMimetype && !optimistic && (
         <div className={content ? "mt-2" : ""}>

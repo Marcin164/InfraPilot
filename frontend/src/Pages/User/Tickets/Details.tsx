@@ -41,13 +41,15 @@ const Row = ({
   </div>
 );
 
-const convertApprovalsToComments = (approvals: Approval[]) =>
+const convertApprovalsToComments = (approvals: Approval[], requesterName?: string) =>
   approvals.map((a) => ({
     id: a.id,
     type: "decision",
     createdAt: a.createdAt,
     decidedAt: a.decidedAt,
     author: a.approver.distinguishedName,
+    approverId: a.approver.id,
+    requesterName,
     decision: a.decision,
   }));
 
@@ -104,7 +106,7 @@ const TicketDetails = () => {
 
   const allComments = [
     ...comments,
-    ...convertApprovalsToComments(ticket.approvals || []),
+    ...convertApprovalsToComments(ticket.approvals || [], ticket.requester?.distinguishedName),
     ...convertActivitiesToEntries(activities),
   ];
 
@@ -168,6 +170,20 @@ const TicketDetails = () => {
             value={ticket.assignmentGroup || "—"}
           />
           <Row label="Assignee" value={ticket.assignee || "—"} />
+          {ticket.customFieldValues &&
+            Object.values(ticket.customFieldValues).map((f, i) => (
+              <Row
+                key={i}
+                label={f.label}
+                value={
+                  f.type === "checkbox"
+                    ? f.value
+                      ? "Yes"
+                      : "No"
+                    : ((f.value as any) ?? "—") || "—"
+                }
+              />
+            ))}
         </div>
       </div>
 

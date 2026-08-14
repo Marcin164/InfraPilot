@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import Dropdown from "./Components/Dropdown";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import {
@@ -21,6 +22,7 @@ import type { User } from "../../Types";
 type Props = { data: User };
 
 const UserDetailsDropdown = ({ data }: Props) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
@@ -55,7 +57,7 @@ const UserDetailsDropdown = ({ data }: Props) => {
         data-cy="edit-user-btn"
         color="white"
         icon={faPen}
-        text="Edit"
+        text={t("common.edit")}
         className="h-[34px] text-[16px] w-full my-1 text-left shadow-none"
         onClick={toggleEditUserModalOpen}
       />
@@ -63,7 +65,7 @@ const UserDetailsDropdown = ({ data }: Props) => {
         data-cy="delete-user-btn"
         color="white"
         icon={faTrash}
-        text="Delete"
+        text={t("common.delete")}
         className="h-[34px] text-[16px] w-full my-1 text-left text-[#BC0E0E] shadow-none"
         onClick={toggleConfirmationModalOpen}
       />
@@ -71,7 +73,7 @@ const UserDetailsDropdown = ({ data }: Props) => {
         data-cy="edit-equipment-btn"
         color="white"
         icon={faComputer}
-        text="Edit equipment"
+        text={t("users.actions.editEquipment")}
         className="h-[34px] text-[16px] w-full my-1 text-left shadow-none"
         onClick={() => navigate(`/admin/users/${id}/equipmentedit`)}
       />
@@ -79,7 +81,7 @@ const UserDetailsDropdown = ({ data }: Props) => {
         data-cy="add-form-btn"
         color="white"
         icon={faFile}
-        text="Add form"
+        text={t("users.actions.addForm")}
         className="h-[34px] text-[16px] w-full my-1 text-left shadow-none"
         onClick={toggleAddFormModalOpen}
       />

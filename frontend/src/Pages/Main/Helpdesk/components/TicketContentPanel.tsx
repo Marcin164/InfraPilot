@@ -12,6 +12,7 @@ interface TicketContentPanelProps {
   onOptimisticComment: (comment: any) => void;
   onInfoToggle: () => void;
   onSideToggle: () => void;
+  allowWorknote?: boolean;
 }
 
 const TicketContentPanel = ({
@@ -21,6 +22,7 @@ const TicketContentPanel = ({
   onOptimisticComment,
   onInfoToggle,
   onSideToggle,
+  allowWorknote,
 }: TicketContentPanelProps) => {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -66,6 +68,7 @@ const TicketContentPanel = ({
         <MessageInput
           ticketId={ticketId}
           onOptimisticComment={onOptimisticComment}
+          allowWorknote={allowWorknote}
         />
       </div>
     </div>

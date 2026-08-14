@@ -14,13 +14,15 @@ import TicketInfoPanel from "./components/TicketInfoPanel";
 import TicketContentPanel from "./components/TicketContentPanel";
 import TicketSidePanel from "./components/TicketSidePanel";
 
-const convertApprovalsToComments = (approvals: Approval[]) => {
+const convertApprovalsToComments = (approvals: Approval[], requesterName?: string) => {
   return approvals.map((approval) => ({
     id: approval.id,
     type: "decision",
     createdAt: approval.createdAt,
     decidedAt: approval.decidedAt,
     author: approval.approver.distinguishedName,
+    approverId: approval.approver.id,
+    requesterName,
     decision: approval.decision,
   }));
 };
@@ -112,7 +114,7 @@ const Details = () => {
 
   const allComments = [
     ...comments,
-    ...convertApprovalsToComments(ticket?.approvals || []),
+    ...convertApprovalsToComments(ticket?.approvals || [], ticket?.requester?.distinguishedName),
     ...convertActivitiesToEntries(activities),
   ];
 
@@ -146,9 +148,11 @@ const Details = () => {
         }
         onInfoToggle={openInfo}
         onSideToggle={openSide}
+        allowWorknote
       />
 
       <TicketSidePanel
+        ticket={ticket}
         closureCode={ticket.closureCode}
         closureNotes={ticket.closureNotes}
         requesterId={ticket.requester.id}

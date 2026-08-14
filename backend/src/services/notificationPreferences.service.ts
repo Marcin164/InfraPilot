@@ -6,13 +6,19 @@ import {
   NotificationChannel,
   NotificationEvent,
   NotificationPreference,
+  OPS_ROUTED_EVENTS,
 } from 'src/entities/notificationPreference.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
 
+// Events routed straight to the fixed ops-alert email (see OPS_ROUTED_EVENTS)
+// never show up in a per-user preference matrix.
+const PER_USER_EVENTS = NOTIFICATION_EVENTS.filter(
+  (e) => !OPS_ROUTED_EVENTS.includes(e),
+);
+
 /**
  * Defaults applied when no preference row exists for the (event, channel)
- * pair. In-app gets everything; email is sane subset; SMS is reserved
- * for high-urgency events that justify a phone buzz.
+ * pair. In-app gets everything; email is a sane subset.
  */
 const DEFAULTS: Record<NotificationChannel, Set<NotificationEvent>> = {
   inapp: new Set(NOTIFICATION_EVENTS),
@@ -24,12 +30,7 @@ const DEFAULTS: Record<NotificationChannel, Set<NotificationEvent>> = {
     'ticket_sla_breach',
     'ticket_auto_followup',
     'cve_critical',
-    'compliance_failing',
-    'device_down',
-    'config_backup_failed',
-    'ip_conflict_detected',
   ]),
-  sms: new Set(['ticket_sla_breach', 'cve_critical', 'device_down', 'ip_conflict_detected']),
 };
 
 export type PreferenceRow = {
@@ -51,8 +52,8 @@ export class NotificationPreferencesService {
     for (const r of stored) map.set(`${r.event}:${r.channel}`, r);
 
     const out: PreferenceRow[] = [];
-    for (const event of NOTIFICATION_EVENTS) {
-      for (const channel of ['inapp', 'email', 'sms'] as NotificationChannel[]) {
+    for (const event of PER_USER_EVENTS) {
+      for (const channel of ['inapp', 'email'] as NotificationChannel[]) {
         const row = map.get(`${event}:${channel}`);
         out.push({
           event,

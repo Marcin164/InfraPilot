@@ -6,6 +6,7 @@ import {
   faXmarkCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthInfo } from "@propelauth/react";
 import { updateApproval } from "../../../../Services/tickets";
 import { twMerge } from "tailwind-merge";
 import moment from "moment";
@@ -15,6 +16,8 @@ import { toast } from "react-toastify";
 type Props = {
   id: string;
   author: string;
+  approverId?: string;
+  requesterName?: string;
   decision?: "approved" | "rejected";
   createdAt: any;
   decidedAt?: any;
@@ -23,11 +26,16 @@ type Props = {
 const ApprovalDecision = ({
   id,
   author,
+  approverId,
+  requesterName,
   decision,
   createdAt,
   decidedAt,
 }: Props) => {
   const { t } = useTranslation();
+  const { user }: any = useAuthInfo();
+  const myId = user?.metadata?.id ?? user?.userId ?? null;
+  const isMyApproval = Boolean(approverId) && approverId === myId;
   const params = useParams();
   const queryClient = useQueryClient();
   const mutation = useMutation({
@@ -55,12 +63,13 @@ const ApprovalDecision = ({
     <div
       className={twMerge(
         "w-[50%] bg-[#FFFFFF] shadow-xl rounded-[10px] p-4 ml-[25%] my-4 border-2 border-[#535353]",
-        decision === "approved" ? "border-[#30A712]" : "border-[#F3606E]",
+        decision === "approved" && "border-[#30A712]",
+        decision === "rejected" && "border-[#F3606E]",
       )}
     >
       <div className="text-[14px] font-light">
         {!decision ? (
-          t("helpdesk.requestingApproval", { author })
+          t("helpdesk.requestingApproval", { requester: requesterName, approver: author })
         ) : (
           t("helpdesk.hasDecided", {
             author,
@@ -72,7 +81,7 @@ const ApprovalDecision = ({
         )}
       </div>
       <div className="font-bold">{t("helpdesk.approveReplacement")}</div>
-      {!decision && (
+      {!decision && isMyApproval && (
         <div className="pt-2">
           <ButtonPrimary
             text={t("helpdesk.approve")}

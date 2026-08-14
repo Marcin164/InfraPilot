@@ -1,10 +1,13 @@
+import { useRef } from "react";
 import AsyncCreatableSelect from "react-select/async-creatable";
 import { searchTickets } from "../../Services/tickets";
+import type { Ticket } from "../../Types/ticket";
 
 type Props = {
   label?: string;
   value: string;
   onChange: (value: string) => void;
+  onTicketLoaded?: (ticket: Ticket | null) => void;
   errors?: string;
   className?: string;
 };
@@ -12,16 +15,6 @@ type Props = {
 type TicketOption = {
   label: string;
   value: string;
-};
-
-const loadOptions = async (inputValue: string): Promise<TicketOption[]> => {
-  if (inputValue.length < 3) return [];
-
-  const tickets = await searchTickets(inputValue);
-  return tickets.map((t) => ({
-    label: `${t.type} ${t.number} — ${t.description?.slice(0, 50) || ""}`,
-    value: String(t.number),
-  }));
 };
 
 const styles: any = {
@@ -58,10 +51,23 @@ const TicketSelect = ({
   label = "Ticket",
   value,
   onChange,
+  onTicketLoaded,
   errors,
   className = "",
 }: Props) => {
   const selectedOption = value ? { label: value, value } : null;
+  const ticketsByNumber = useRef<Map<string, Ticket>>(new Map());
+
+  const loadOptions = async (inputValue: string): Promise<TicketOption[]> => {
+    if (inputValue.length < 3) return [];
+
+    const tickets = await searchTickets(inputValue);
+    tickets.forEach((t) => ticketsByNumber.current.set(String(t.number), t));
+    return tickets.map((t) => ({
+      label: `${t.type} ${t.number} — ${t.description?.slice(0, 50) || ""}`,
+      value: String(t.number),
+    }));
+  };
 
   return (
     <div className={`pt-2 ${className}`}>
@@ -70,8 +76,14 @@ const TicketSelect = ({
         defaultOptions={false}
         loadOptions={loadOptions}
         value={selectedOption}
-        onChange={(opt) => onChange(opt?.value ?? "")}
-        onCreateOption={(inputValue) => onChange(inputValue)}
+        onChange={(opt) => {
+          onChange(opt?.value ?? "");
+          onTicketLoaded?.(opt?.value ? (ticketsByNumber.current.get(opt.value) ?? null) : null);
+        }}
+        onCreateOption={(inputValue) => {
+          onChange(inputValue);
+          onTicketLoaded?.(null);
+        }}
         styles={styles}
         isClearable
         filterOption={null}

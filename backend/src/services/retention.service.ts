@@ -6,11 +6,17 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   RetentionAction,
   RetentionPolicy,
 } from 'src/entities/retentionPolicy.entity';
+import { AdminSettings } from 'src/entities/adminSettings.entity';
+import { uuidv4 } from 'src/helpers/uuidv4';
 import { AuditService } from './audit.service';
+
+const ARCHIVE_PATH_KEY = 'retention_archive_path';
 
 const ENTITY_TABLE_MAP: Record<string, { table: string; dateCol: string }> = {
   // Helpdesk
@@ -38,12 +44,39 @@ export class RetentionService {
   constructor(
     @InjectRepository(RetentionPolicy)
     private readonly repo: Repository<RetentionPolicy>,
+    @InjectRepository(AdminSettings)
+    private readonly adminSettings: Repository<AdminSettings>,
     private readonly dataSource: DataSource,
     private readonly auditService: AuditService,
   ) {}
 
   list() {
     return this.repo.find({ order: { entityType: 'ASC' } });
+  }
+
+  async getArchivePath(): Promise<string | null> {
+    const record = await this.adminSettings.findOne({
+      where: { key: ARCHIVE_PATH_KEY },
+    });
+    const value = (record?.value as { path?: string })?.path;
+    return value?.trim() || null;
+  }
+
+  async setArchivePath(archivePath: string): Promise<void> {
+    const trimmed = archivePath.trim();
+    const existing = await this.adminSettings.findOne({
+      where: { key: ARCHIVE_PATH_KEY },
+    });
+    if (existing) {
+      existing.value = { path: trimmed };
+      await this.adminSettings.save(existing);
+    } else {
+      await this.adminSettings.insert({
+        id: uuidv4(),
+        key: ARCHIVE_PATH_KEY,
+        value: { path: trimmed } as any,
+      });
+    }
   }
 
   async create(input: {
@@ -148,14 +181,24 @@ export class RetentionService {
         [cutoff],
       );
       affected = rows.length;
-      for (const row of rows) {
-        await this.auditService.log(
-          policy.entityType,
-          String(row.id ?? row.uuid ?? 'unknown'),
-          'archived',
-          { snapshot: row, policyId: policy.id },
-        );
+
+      if (rows.length > 0) {
+        // Written before the audit-log snapshot / delete below, and left
+        // to throw on failure -- if an archive destination is configured,
+        // a write failure there must abort the run rather than silently
+        // deleting rows the admin explicitly asked to keep a copy of.
+        await this.writeArchiveFile(policy.entityType, rows);
+
+        for (const row of rows) {
+          await this.auditService.log(
+            policy.entityType,
+            String(row.id ?? row.uuid ?? 'unknown'),
+            'archived',
+            { snapshot: row, policyId: policy.id },
+          );
+        }
       }
+
       await this.dataSource.query(
         `DELETE FROM "${table}" WHERE "${dateCol}" < $1`,
         [cutoff],
@@ -175,6 +218,19 @@ export class RetentionService {
     });
 
     return affected;
+  }
+
+  /** No-op if no archive destination is configured -- the audit-log
+   *  snapshot in runPolicy() remains the only record, same as before this
+   *  setting existed. */
+  private async writeArchiveFile(entityType: string, rows: any[]): Promise<void> {
+    const archivePath = await this.getArchivePath();
+    if (!archivePath) return;
+
+    fs.mkdirSync(archivePath, { recursive: true });
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filePath = path.join(archivePath, `${entityType}_${timestamp}.json`);
+    fs.writeFileSync(filePath, JSON.stringify(rows, null, 2), 'utf8');
   }
 
   private assertSupported(entityType: string) {

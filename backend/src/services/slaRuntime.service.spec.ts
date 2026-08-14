@@ -4,6 +4,7 @@ import { NotFoundException } from '@nestjs/common';
 import { SlaRuntimeService } from './slaRuntime.service';
 import { SlaInstance } from 'src/entities/slaInstance.entity';
 import { SlaEscalationInstance } from 'src/entities/slaEscalationInstance.entity';
+import { SlaPause } from 'src/entities/slaPause.entity';
 import { BusinessTimeService } from './businessTime.service';
 
 const calendar = { id: 'cal-1' } as any;
@@ -28,10 +29,12 @@ const makeInstance = (overrides: Partial<SlaInstance> = {}): SlaInstance =>
 describe('SlaRuntimeService', () => {
   let service: SlaRuntimeService;
   let slaRepo: jest.Mocked<any>;
+  let pauseRepo: jest.Mocked<any>;
   let businessTime: jest.Mocked<BusinessTimeService>;
 
   beforeEach(async () => {
     slaRepo = { find: jest.fn().mockResolvedValue([]) };
+    pauseRepo = { findOne: jest.fn().mockResolvedValue(null) };
     businessTime = {
       calculateBusinessMinutesBetween: jest.fn().mockResolvedValue(60),
     } as any;
@@ -41,6 +44,7 @@ describe('SlaRuntimeService', () => {
         SlaRuntimeService,
         { provide: getRepositoryToken(SlaInstance), useValue: slaRepo },
         { provide: getRepositoryToken(SlaEscalationInstance), useValue: {} },
+        { provide: getRepositoryToken(SlaPause), useValue: pauseRepo },
         { provide: BusinessTimeService, useValue: businessTime },
       ],
     }).compile();
@@ -74,6 +78,30 @@ describe('SlaRuntimeService', () => {
       const result = await service.getForTicket('ticket-1');
       const inst = result.instances[0];
       expect(inst.status).toBe('PAUSED');
+    });
+
+    it('freezes remainingMinutes at the pause timestamp, not now', async () => {
+      const pausedAt = new Date('2026-01-01T10:00:00Z');
+      pauseRepo.findOne.mockResolvedValue({ pausedAt, resumedAt: null });
+      slaRepo.find.mockResolvedValue([makeInstance({ paused: true })]);
+
+      await service.getForTicket('ticket-1');
+
+      expect(businessTime.calculateBusinessMinutesBetween).toHaveBeenCalledWith(
+        pausedAt,
+        expect.any(Date),
+        calendar,
+      );
+    });
+
+    it('falls back to now for a paused instance with no open pause row', async () => {
+      pauseRepo.findOne.mockResolvedValue(null);
+      slaRepo.find.mockResolvedValue([makeInstance({ paused: true })]);
+
+      await service.getForTicket('ticket-1');
+
+      const [start] = businessTime.calculateBusinessMinutesBetween.mock.calls[0];
+      expect(Date.now() - (start as Date).getTime()).toBeLessThan(1000);
     });
 
     it('includes usedPercentage capped at 100', async () => {

@@ -6,7 +6,7 @@ export class MarkNotificationsReadDto {
   @IsArray() @IsString({ each: true }) ids: string[];
 }
 
-const NOTIFICATION_CHANNELS: NotificationChannel[] = ['inapp', 'email', 'sms'];
+const NOTIFICATION_CHANNELS: NotificationChannel[] = ['inapp', 'email'];
 
 export class PreferenceRowDto {
   @IsIn(NOTIFICATION_EVENTS) event: (typeof NOTIFICATION_EVENTS)[number];

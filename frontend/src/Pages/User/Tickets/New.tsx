@@ -21,11 +21,14 @@ import {
   createTicket,
   getTicketCategories,
   type TicketCategoryItem,
+  type CustomFieldValueMap,
 } from "../../../Services/tickets";
 import { getDevicesByOwner } from "../../../Services/devices";
 import type { Device, TicketType } from "../../../Types";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
 import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
+import CustomFieldsForm from "../../../Components/Forms/CustomFieldsForm";
+import { customFieldsAreValid } from "../../../Helpers/forms";
 
 type Step = "type" | "category" | "details";
 
@@ -147,6 +150,8 @@ const NewTicket = () => {
   const [deviceId, setDeviceId] = useState<string>("");
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, unknown>>({});
+  const [showFieldErrors, setShowFieldErrors] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const categoriesQuery = useQuery({
@@ -164,6 +169,11 @@ const NewTicket = () => {
     if (!type || !categoriesQuery.data) return [];
     return categoriesQuery.data[type] ?? [];
   }, [type, categoriesQuery.data]);
+
+  const selectedCategoryFields = useMemo(
+    () => categories.find((c) => c.name === category)?.customFields ?? [],
+    [categories, category],
+  );
 
   const devices: Device[] = useMemo(
     () => (devicesQuery.data ?? []).filter((d) => d.userId === currentUserId),
@@ -196,12 +206,22 @@ const NewTicket = () => {
   const submitMutation = useMutation({
     mutationFn: async () => {
       setSubmitting(true);
+      const customFieldSnapshot: CustomFieldValueMap = {};
+      for (const f of selectedCategoryFields) {
+        customFieldSnapshot[f.id] = {
+          label: f.label,
+          type: f.type,
+          value: customFieldValues[f.id] ?? null,
+        };
+      }
       const ticket = await createTicket({
         type: type!,
         description: description.trim(),
         requesterId: currentUserId,
         category: category || undefined,
         deviceId: deviceId || undefined,
+        customFieldValues:
+          selectedCategoryFields.length > 0 ? customFieldSnapshot : undefined,
       });
 
       for (const file of files) {
@@ -227,6 +247,14 @@ const NewTicket = () => {
 
   const canSubmit =
     type && category && description.trim().length > 5 && !submitting;
+
+  const handleSubmit = () => {
+    if (!customFieldsAreValid(selectedCategoryFields, customFieldValues)) {
+      setShowFieldErrors(true);
+      return;
+    }
+    submitMutation.mutate();
+  };
 
   return (
     <PageMotion>
@@ -328,7 +356,11 @@ const NewTicket = () => {
                   <button
                     key={c.name}
                     type="button"
-                    onClick={() => setCategory(c.name)}
+                    onClick={() => {
+                      setCategory(c.name);
+                      setCustomFieldValues({});
+                      setShowFieldErrors(false);
+                    }}
                     className="flex cursor-pointer items-center gap-2 rounded-[10px] border px-4 py-2 text-[14px] font-semibold transition-all"
                     style={
                       selected
@@ -377,6 +409,17 @@ const NewTicket = () => {
                 {category}
               </span>
             </div>
+
+            {selectedCategoryFields.length > 0 && (
+              <div className="pb-4">
+                <CustomFieldsForm
+                  fields={selectedCategoryFields}
+                  values={customFieldValues}
+                  onChange={(id, v) => setCustomFieldValues((prev) => ({ ...prev, [id]: v }))}
+                  showErrors={showFieldErrors}
+                />
+              </div>
+            )}
 
             {/* Device picker */}
             <div className="pb-4">
@@ -506,7 +549,7 @@ const NewTicket = () => {
                 text={submitting ? "Creating…" : "Create ticket"}
                 color="blue"
                 disabled={!canSubmit}
-                onClick={() => submitMutation.mutate()}
+                onClick={handleSubmit}
               />
             </div>
           </div>

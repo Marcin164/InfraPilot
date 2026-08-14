@@ -17,16 +17,58 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
+import * as fs from 'fs';
+import * as path from 'path';
 import { TicketCategory } from 'src/entities/ticketCategory.entity';
+import type { CustomFieldType } from 'src/entities/ticketCategory.entity';
 import { TicketType } from 'src/entities/tickets.entity';
 import { TicketWorkflow, WorkflowStep } from 'src/entities/ticketWorkflow.entity';
 import type { WorkflowStepType, WorkflowTrigger } from 'src/entities/ticketWorkflow.entity';
 import { Tickets } from 'src/entities/tickets.entity';
+import { TicketActivity } from 'src/entities/ticketActivity.entity';
 import { TicketsApprovals } from 'src/entities/ticketsApprovals.entity';
 import { TicketsComments } from 'src/entities/ticketsComments.entity';
+import { Users } from 'src/entities/users.entity';
 import { AuditService } from './audit.service';
 import { NotificationDispatcherService } from './notificationDispatcher.service';
 import { uuidv4 } from 'src/helpers/uuidv4';
+
+const STEP_ATTACHMENT_DIR = path.resolve(process.cwd(), 'uploads', 'workflow-attachments');
+
+// Kept in sync with TicketsService's ALLOWED_ATTACHMENT_MIME -- not imported
+// from there to avoid a circular module dependency (TicketsService already
+// depends on TicketWorkflowService for the workflow-on-update hook).
+const ALLOWED_STEP_ATTACHMENT_MIME = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'application/pdf',
+  'video/mp4',
+  'audio/mpeg',
+  'audio/mp4',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/wave',
+  'audio/webm',
+  'audio/ogg',
+]);
+
+export class CustomFieldDto {
+  @IsString() @IsNotEmpty()
+  id: string;
+
+  @IsString() @IsNotEmpty()
+  label: string;
+
+  @IsIn(['text', 'textarea', 'number', 'select', 'checkbox', 'date'])
+  type: CustomFieldType;
+
+  @IsBoolean()
+  required: boolean;
+
+  @IsOptional() @IsArray() @IsString({ each: true })
+  options?: string[];
+}
 
 export class UpsertCategoryDto {
   @IsOptional() @IsString()
@@ -49,6 +91,12 @@ export class UpsertCategoryDto {
 
   @IsOptional() @IsString()
   workflowId?: string | null;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CustomFieldDto)
+  customFields?: CustomFieldDto[];
 }
 
 export class WorkflowStepDto {
@@ -58,7 +106,7 @@ export class WorkflowStepDto {
   @IsOptional() @IsNumber()
   order?: number;
 
-  @IsIn(['request_approval', 'notify', 'set_field', 'assign_to', 'create_comment'])
+  @IsIn(['request_approval', 'notify', 'set_field', 'assign_to', 'create_comment', 'add_attachment'])
   type: WorkflowStepType;
 
   @IsOptional() @IsString()
@@ -102,10 +150,14 @@ export class TicketWorkflowService {
     private readonly categories: Repository<TicketCategory>,
     @InjectRepository(Tickets)
     private readonly tickets: Repository<Tickets>,
+    @InjectRepository(TicketActivity)
+    private readonly activities: Repository<TicketActivity>,
     @InjectRepository(TicketsApprovals)
     private readonly approvals: Repository<TicketsApprovals>,
     @InjectRepository(TicketsComments)
     private readonly comments: Repository<TicketsComments>,
+    @InjectRepository(Users)
+    private readonly users: Repository<Users>,
     private readonly audit: AuditService,
     private readonly dispatcher: NotificationDispatcherService,
   ) {}
@@ -271,14 +323,97 @@ export class TicketWorkflowService {
     const ordered = [...(workflow.steps ?? [])].sort(
       (a, b) => a.order - b.order,
     );
-    for (const step of ordered) {
+    const paused = await this.runSteps(ticket, workflow, ordered);
+    if (!paused) {
+      await this.audit.log('TicketWorkflow', workflow.id, 'finished', {
+        ticketId: ticket.id,
+      });
+    }
+  }
+
+  /**
+   * Called from TicketsService.updateApproval once a *required*
+   * `request_approval` step's approval has been decided. Rejecting stops the
+   * workflow where it paused; approving resumes with the steps after it.
+   *
+   * Multiple approvers can be assigned to the same required step -- whichever
+   * approver decides first resolves it (and resumes/stops the workflow);
+   * later decisions from the remaining approvers on that same step are
+   * recorded but don't trigger a second resume.
+   */
+  async resumeAfterApproval(
+    approval: TicketsApprovals,
+    decision: 'approved' | 'rejected',
+  ): Promise<void> {
+    if (!approval.workflowId || !approval.workflowStepId) return;
+
+    const siblings = await this.approvals.find({
+      where: {
+        ticketId: approval.ticketId,
+        workflowId: approval.workflowId,
+        workflowStepId: approval.workflowStepId,
+      },
+    });
+    const alreadyResolved = siblings.some(
+      (s) => s.id !== approval.id && s.decidedAt,
+    );
+    if (alreadyResolved) return;
+
+    const workflow = await this.workflows.findOneBy({ id: approval.workflowId });
+    if (!workflow) return;
+
+    await this.audit.log('TicketWorkflow', workflow.id, 'approval_decided', {
+      ticketId: approval.ticketId,
+      stepId: approval.workflowStepId,
+      decision,
+    });
+
+    if (decision === 'rejected') {
+      await this.audit.log('TicketWorkflow', workflow.id, 'finished', {
+        ticketId: approval.ticketId,
+        reason: 'approval_rejected',
+      });
+      return;
+    }
+
+    const ticket = await this.tickets.findOneBy({ id: approval.ticketId });
+    if (!ticket) return;
+
+    const ordered = [...(workflow.steps ?? [])].sort(
+      (a, b) => a.order - b.order,
+    );
+    const stepIndex = ordered.findIndex((s) => s.id === approval.workflowStepId);
+    const remaining = stepIndex >= 0 ? ordered.slice(stepIndex + 1) : [];
+
+    const paused = await this.runSteps(ticket, workflow, remaining);
+    if (!paused) {
+      await this.audit.log('TicketWorkflow', workflow.id, 'finished', {
+        ticketId: ticket.id,
+      });
+    }
+  }
+
+  /** Runs steps in order; stops early (returns true) at a paused approval. */
+  private async runSteps(
+    ticket: Tickets,
+    workflow: TicketWorkflow,
+    steps: WorkflowStep[],
+  ): Promise<boolean> {
+    for (const step of steps) {
       try {
-        await this.runStep(ticket, step);
+        const pauseHere = await this.runStep(ticket, step, workflow.id);
         await this.audit.log('TicketWorkflow', workflow.id, 'step_ok', {
           ticketId: ticket.id,
           stepId: step.id,
           stepType: step.type,
         });
+        if (pauseHere) {
+          await this.audit.log('TicketWorkflow', workflow.id, 'paused', {
+            ticketId: ticket.id,
+            stepId: step.id,
+          });
+          return true;
+        }
       } catch (err) {
         this.logger.warn(
           `Workflow ${workflow.id} step ${step.id} (${step.type}) failed for ticket ${ticket.id}: ${(err as Error).message}`,
@@ -291,22 +426,55 @@ export class TicketWorkflowService {
         });
       }
     }
-
-    await this.audit.log('TicketWorkflow', workflow.id, 'finished', {
-      ticketId: ticket.id,
-    });
+    return false;
   }
 
-  private async runStep(ticket: Tickets, step: WorkflowStep): Promise<void> {
+  /**
+   * Runs a single step. Returns true if the workflow should pause here (only
+   * ever true for a `request_approval` step with `config.required: true`) --
+   * everything else runs fire-and-forget as before.
+   */
+  private async runStep(
+    ticket: Tickets,
+    step: WorkflowStep,
+    workflowId: string,
+  ): Promise<boolean> {
     const cfg = step.config ?? {};
     const url = `/admin/helpdesk/${ticket.id}`;
 
     switch (step.type) {
       case 'request_approval': {
-        const approverIds: string[] = Array.isArray(cfg.approverIds)
-          ? cfg.approverIds.filter((s: any) => typeof s === 'string')
-          : [];
-        if (approverIds.length === 0) return;
+        const approverIds: string[] =
+          cfg.approverType === 'requesterManager'
+            ? await this.resolveRequesterManagerId(ticket).then((id) =>
+                id ? [id] : [],
+              )
+            : Array.isArray(cfg.approverIds)
+              ? cfg.approverIds.filter((s: any) => typeof s === 'string')
+              : [];
+        if (approverIds.length === 0) {
+          if (cfg.approverType === 'requesterManager') {
+            this.logger.warn(
+              `Workflow step ${step.id}: could not resolve requester's manager for ticket ${ticket.id}`,
+            );
+            // Can't actually request the approval (no manager on file to
+            // send it to) -- leave a visible note instead of failing silent,
+            // so the requester/agent knows this ticket still needs manager
+            // sign-off and has to be handled manually.
+            const note = this.comments.create({
+              id: uuidv4(),
+              ticketId: ticket.id,
+              authorId: null,
+              content:
+                "This ticket requires approval from your manager, but no manager is on file for your account. Please contact an administrator to get this ticket approved.",
+              type: 'Public',
+            } as any);
+            await this.comments.save(note);
+          }
+          return false;
+        }
+
+        const required = cfg.required === true;
 
         for (const approverId of approverIds) {
           const approval = this.approvals.create({
@@ -314,7 +482,8 @@ export class TicketWorkflowService {
             ticketId: ticket.id,
             requesterId: ticket.requesterId,
             approverId,
-            decision: 'pending',
+            workflowId: required ? workflowId : null,
+            workflowStepId: required ? step.id : null,
           } as any);
           await this.approvals.save(approval);
         }
@@ -326,42 +495,62 @@ export class TicketWorkflowService {
           body:
             cfg.message?.toString() ??
             `You've been asked to approve ticket #${ticket.number}.`,
-          smsBody: `Approval needed on #${ticket.number}`,
           url,
           entityType: 'Ticket',
           entityId: ticket.id,
         });
-        return;
+        return required;
       }
 
       case 'notify': {
         const recipientIds: string[] = this.resolveRecipients(ticket, cfg);
-        if (recipientIds.length === 0) return;
+        if (recipientIds.length === 0) return false;
         await this.dispatcher.dispatch({
           recipientIds,
           event: cfg.event ?? 'ticket_state_changed',
           title: cfg.title ?? `Ticket #${ticket.number} update`,
           body: cfg.body ?? '',
-          smsBody: cfg.smsBody ?? null,
           url,
           entityType: 'Ticket',
           entityId: ticket.id,
         });
-        return;
+        return false;
       }
 
       case 'set_field': {
-        const allowed = ['priority', 'urgency', 'impact', 'assignmentGroup'];
+        const allowed = [
+          'priority',
+          'urgency',
+          'impact',
+          'assignmentGroup',
+          'state',
+          'category',
+          'closureCode',
+          'closureNotes',
+        ];
         if (!allowed.includes(cfg.field)) {
           throw new Error(`field '${cfg.field}' not allowed`);
         }
+        const oldValue = (ticket as any)[cfg.field] ?? null;
         await this.tickets.update(
           { id: ticket.id },
           { [cfg.field]: cfg.value },
         );
         // Reflect into the in-memory ticket too so later steps see the new value.
         (ticket as any)[cfg.field] = cfg.value;
-        return;
+        // set_field wrote the ticket row directly, bypassing updateTicket()'s
+        // change-tracking loop -- log it ourselves so it shows up in the
+        // ticket timeline the same way a manually-edited field would.
+        if (oldValue !== cfg.value) {
+          await this.activities.save({
+            ticketId: ticket.id,
+            userId: null,
+            field: cfg.field,
+            oldValue,
+            newValue: cfg.value,
+          } as any);
+        }
+        return false;
       }
 
       case 'assign_to': {
@@ -375,30 +564,81 @@ export class TicketWorkflowService {
           event: 'ticket_assigned',
           title: `Ticket #${ticket.number} assigned to you`,
           body: ticket.description?.slice(0, 400) ?? '',
-          smsBody: `Ticket #${ticket.number} assigned to you`,
           url,
           entityType: 'Ticket',
           entityId: ticket.id,
         });
-        return;
+        return false;
       }
 
       case 'create_comment': {
-        if (!cfg.content) return;
+        if (!cfg.content) return false;
         const comment = this.comments.create({
           id: uuidv4(),
           ticketId: ticket.id,
           authorId: cfg.authorId ?? null,
           content: String(cfg.content),
-          type: cfg.type === 'Worknotes' ? 'Worknotes' : 'Public',
+          type: cfg.type === 'Worknote' ? 'Worknote' : 'Public',
         } as any);
         await this.comments.save(comment);
-        return;
+        return false;
+      }
+
+      case 'add_attachment': {
+        if (!cfg.attachmentPath || !cfg.attachmentName) return false;
+        const comment = this.comments.create({
+          id: uuidv4(),
+          ticketId: ticket.id,
+          authorId: cfg.authorId ?? null,
+          content: cfg.message ? String(cfg.message) : null,
+          type: cfg.type === 'Worknote' ? 'Worknote' : 'Public',
+          attachmentName: String(cfg.attachmentName),
+          attachmentPath: String(cfg.attachmentPath),
+          attachmentMimetype: cfg.attachmentMimetype ?? null,
+          attachmentSize: cfg.attachmentSize ?? null,
+        } as any);
+        await this.comments.save(comment);
+        return false;
       }
 
       default:
         throw new Error(`unknown step type: ${step.type}`);
     }
+  }
+
+  /**
+   * Stores a step's template file on disk once, at editor-config time --
+   * every ticket the `add_attachment` step later fires for reuses the same
+   * stored copy (path saved into the step's `config`), it isn't re-uploaded
+   * per run.
+   */
+  uploadStepAttachment(file: any): {
+    attachmentName: string;
+    attachmentPath: string;
+    attachmentMimetype: string;
+    attachmentSize: number;
+  } {
+    if (!file) throw new BadRequestException('No file provided');
+    if (!ALLOWED_STEP_ATTACHMENT_MIME.has(file.mimetype)) {
+      throw new BadRequestException(`Unsupported file type: ${file.mimetype}`);
+    }
+
+    if (!fs.existsSync(STEP_ATTACHMENT_DIR)) {
+      fs.mkdirSync(STEP_ATTACHMENT_DIR, { recursive: true });
+    }
+
+    const id = uuidv4();
+    const ext = path.extname(file.originalname) || '';
+    const storedName = `${id}${ext}`;
+    const filePath = path.join(STEP_ATTACHMENT_DIR, storedName);
+    fs.writeFileSync(filePath, file.buffer);
+
+    return {
+      attachmentName: file.originalname,
+      attachmentPath: filePath,
+      attachmentMimetype: file.mimetype,
+      attachmentSize: file.size,
+    };
   }
 
   private resolveRecipients(ticket: Tickets, cfg: any): string[] {
@@ -412,5 +652,23 @@ export class TicketWorkflowService {
       }
     }
     return Array.from(out);
+  }
+
+  /**
+   * `Users.manager` is the raw AD `manager` attribute (a distinguished name),
+   * which lines up with `Users.distinguishedName` for AD-synced accounts --
+   * so the requester's manager is just another Users row with a matching DN.
+   * Returns null (no error) if the requester has no manager on file or the
+   * manager hasn't been synced into InfraPilot as a user yet -- e.g. M365-only
+   * tenants without AD sync never populate `manager` at all.
+   */
+  private async resolveRequesterManagerId(ticket: Tickets): Promise<string | null> {
+    if (!ticket.requesterId) return null;
+    const requester = await this.users.findOneBy({ id: ticket.requesterId });
+    if (!requester?.manager) return null;
+    const manager = await this.users.findOneBy({
+      distinguishedName: requester.manager,
+    });
+    return manager?.id ?? null;
   }
 }

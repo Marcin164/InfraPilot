@@ -32,7 +32,10 @@ const ClosureNotesForm = ({ closureCode, closureNotes }: Props) => {
   });
 
   const form = useForm({
-    defaultValues: {},
+    defaultValues: {
+      closureCode: closureCode ?? "",
+      closureNotes: closureNotes ?? "",
+    },
     onSubmit: ({ value }) => {
       mutation.mutate(value);
     },
@@ -54,7 +57,7 @@ const ClosureNotesForm = ({ closureCode, closureNotes }: Props) => {
           <SelectSecondary
             label={t("form.field.closureCode")}
             options={trClosure}
-            value={trClosure.find((opt) => opt.value === closureCode)}
+            value={trClosure.find((opt) => opt.value === field.state.value)}
             onSelect={(opt: any) => handleSelect(opt, field)}
           />
         )}
@@ -62,7 +65,12 @@ const ClosureNotesForm = ({ closureCode, closureNotes }: Props) => {
       <form.Field
         name="closureNotes"
         children={(field) => (
-          <Input {...field} label={t("form.field.closureNotes")} defaultValue={closureNotes} />
+          <Input
+            name={field.name}
+            value={field.state.value}
+            onChange={(e: any) => field.handleChange(e.target.value)}
+            label={t("form.field.closureNotes")}
+          />
         )}
       />
       <ButtonPrimary type="submit" text={t("common.save")} className="mt-4 mb-2" />

@@ -43,6 +43,17 @@ export class TicketsApprovals {
   @Column({ nullable: true })
   details: string;
 
+  // Set only when this approval came from a `request_approval` workflow
+  // step with `config.required: true` -- lets `updateApproval` resume the
+  // paused workflow (continue on approve, stop on reject). Left null for
+  // manually-created approvals and optional/non-blocking workflow steps,
+  // which behave exactly as before (purely informational, no resume).
+  @Column({ nullable: true })
+  workflowId: string;
+
+  @Column({ nullable: true })
+  workflowStepId: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

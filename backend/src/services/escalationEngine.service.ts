@@ -34,7 +34,7 @@ export class EscalationEngineService {
 
       for (const esc of escalations) {
         // wykonanie akcji
-        await this.actionService.execute(esc);
+        await this.actionService.execute(esc, queryRunner.manager);
 
         // AUDYT
         await this.audit.log(

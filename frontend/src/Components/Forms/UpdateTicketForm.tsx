@@ -1,5 +1,5 @@
 import { useForm, useStore } from "@tanstack/react-form";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { updateTicketDefaultValues } from "../../Constants/defaultValues";
 import SelectSecondary from "../Inputs/SelectSecondary";
@@ -9,7 +9,7 @@ import {
   ticketStateOptions,
   ticketUrgencyOptions,
 } from "../../Constants/options";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { updateTicket } from "../../Services/tickets";
 import {
   getAssignmentGroups,
@@ -56,14 +56,17 @@ const UpdateTicketForm = ({
     }),
     [t],
   );
-  const mutation = useMutation({
-    mutationFn: async (values: UpdateTicketData) => {
-      return updateTicket(id, values);
-    },
+  const queryClient = useQueryClient();
 
+  const mutation = useMutation({
+    mutationFn: async (values: UpdateTicketData) => updateTicket(id, values),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ticket", id] });
+      queryClient.invalidateQueries({ queryKey: ["helpdesk"] });
       toast.success(t("toast.success.ticketUpdated"));
     },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? t("toast.error.ticketUpdate")),
   });
 
   const form = useForm({
@@ -77,6 +80,21 @@ const UpdateTicketForm = ({
     },
   });
 
+  // @tanstack/react-form only re-syncs a field from `defaultValues` while the
+  // form is untouched -- select an option once (e.g. change State) and the
+  // whole form is marked touched forever, so it stops picking up fresh
+  // server values after that (e.g. a workflow silently bumping priority on
+  // save). Sync explicitly instead of relying on that.
+  useEffect(() => {
+    form.setFieldValue("state", state);
+    form.setFieldValue("priority", priority);
+    form.setFieldValue("impact", impact);
+    form.setFieldValue("urgency", urgency);
+    form.setFieldValue("assignee", assignee ?? "");
+    form.setFieldValue("assignmentGroup", assignmentGroup ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, priority, impact, urgency, assignee, assignmentGroup]);
+
   const selectedGroup = useStore(
     form.store,
     (s: any) => s.values.assignmentGroup as string,
@@ -85,6 +103,10 @@ const UpdateTicketForm = ({
     form.store,
     (s: any) => s.values.assignee as string,
   );
+  const selectedState = useStore(form.store, (s: any) => s.values.state as string);
+  const selectedPriority = useStore(form.store, (s: any) => s.values.priority as string);
+  const selectedImpact = useStore(form.store, (s: any) => s.values.impact as string);
+  const selectedUrgency = useStore(form.store, (s: any) => s.values.urgency as string);
 
   const groupsQuery = useQuery({
     queryKey: ["assignment-groups"],
@@ -165,7 +187,7 @@ const UpdateTicketForm = ({
           <SelectSecondary
             label={t("device.state")}
             options={trOpts.states}
-            value={trOpts.states.find((option) => option.value === state)}
+            value={trOpts.states.find((option) => option.value === selectedState)}
             onSelect={(opt: any) => handleSelect(opt, field)}
           />
         )}
@@ -177,7 +199,7 @@ const UpdateTicketForm = ({
             label={t("form.priority")}
             options={trOpts.priorities}
             value={trOpts.priorities.find(
-              (option) => option.value === priority
+              (option) => option.value === selectedPriority
             )}
             onSelect={(opt: any) => handleSelect(opt, field)}
           />
@@ -190,7 +212,7 @@ const UpdateTicketForm = ({
             label={t("form.field.impact", "Impact")}
             options={trOpts.impacts}
             value={trOpts.impacts.find(
-              (option) => option.value === impact
+              (option) => option.value === selectedImpact
             )}
             onSelect={(opt: any) => handleSelect(opt, field)}
           />
@@ -203,7 +225,7 @@ const UpdateTicketForm = ({
             label={t("form.field.urgency", "Urgency")}
             options={trOpts.urgencies}
             value={trOpts.urgencies.find(
-              (option) => option.value === urgency
+              (option) => option.value === selectedUrgency
             )}
             onSelect={(opt: any) => handleSelect(opt, field)}
           />

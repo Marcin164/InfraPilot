@@ -38,6 +38,7 @@ export class UserSettings {
       'lastLogon',
       'department',
       'office',
+      'mfa',
     ],
   })
   usersTableColumnOrder: string[];
@@ -73,12 +74,6 @@ export class UserSettings {
 
   @Column({ default: '#8A8A8A' })
   lastLogonDefaultColor: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true, default: null })
-  notifEmail: string | null;
-
-  @Column({ type: 'varchar', length: 32, nullable: true, default: null })
-  notifPhone: string | null;
 
   @Column({ type: 'jsonb', default: {} })
   filterPresets: Record<

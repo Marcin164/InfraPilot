@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import CardHeader from "../../../../Components/Headers/CardHeader";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -84,7 +83,6 @@ const Approvals = ({ requesterId, approvals }: Props) => {
 
   return (
     <div>
-      <CardHeader text={t("helpdesk.approvals")} />
       <SelectSecondary
         label={t("helpdesk.approver")}
         onSelect={handleApproverSelect}

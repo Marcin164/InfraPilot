@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { SlaEscalationInstance } from 'src/entities/slaEscalationInstance.entity';
 import { SlaInstance } from 'src/entities/slaInstance.entity';
-import { Repository } from 'typeorm';
+import { SlaPause } from 'src/entities/slaPause.entity';
 import { BusinessTimeService } from './businessTime.service';
 
 @Injectable()
@@ -13,6 +14,9 @@ export class SlaRuntimeService {
 
     @InjectRepository(SlaEscalationInstance)
     private readonly escalationRepo: Repository<SlaEscalationInstance>,
+
+    @InjectRepository(SlaPause)
+    private readonly pauseRepo: Repository<SlaPause>,
 
     private readonly businessTime: BusinessTimeService,
   ) {}
@@ -39,8 +43,14 @@ export class SlaRuntimeService {
         if (instance.breached) {
           remainingMinutes = 0;
         } else if (instance.paused) {
+          // Freeze the clock at the moment it was paused -- dueAt only
+          // moves forward on resume (slaPause.service.ts), so measuring
+          // from `now` here would keep counting down a "paused" SLA.
+          const openPause = await this.pauseRepo.findOne({
+            where: { slaInstance: { id: instance.id }, resumedAt: IsNull() },
+          });
           remainingMinutes = await this.businessTime.calculateBusinessMinutesBetween(
-            now,
+            openPause?.pausedAt ?? now,
             instance.dueAt,
             calendar,
           );

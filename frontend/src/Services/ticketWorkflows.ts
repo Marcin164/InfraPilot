@@ -5,7 +5,8 @@ export type WorkflowStepType =
   | "notify"
   | "set_field"
   | "assign_to"
-  | "create_comment";
+  | "create_comment"
+  | "add_attachment";
 
 export type WorkflowStep = {
   id: string;
@@ -27,6 +28,23 @@ export type TicketWorkflow = {
   updatedAt: string;
 };
 
+export type CustomFieldType =
+  | "text"
+  | "textarea"
+  | "number"
+  | "select"
+  | "checkbox"
+  | "date";
+
+export type CustomFieldDef = {
+  id: string;
+  label: string;
+  type: CustomFieldType;
+  required: boolean;
+  /** Only meaningful for type 'select'. */
+  options?: string[];
+};
+
 export type TicketCategory = {
   id: string;
   name: string;
@@ -35,6 +53,7 @@ export type TicketCategory = {
   color: string;
   enabled: boolean;
   workflowId: string | null;
+  customFields: CustomFieldDef[];
   createdAt: string;
   updatedAt: string;
 };
@@ -74,4 +93,22 @@ export const upsertTicketCategory = async (
 
 export const deleteTicketCategory = async (id: string): Promise<void> => {
   await api.delete(`/ticket-workflows/categories/${id}`);
+};
+
+export type WorkflowStepAttachment = {
+  attachmentName: string;
+  attachmentPath: string;
+  attachmentMimetype: string;
+  attachmentSize: number;
+};
+
+export const uploadWorkflowStepAttachment = async (
+  file: File,
+): Promise<WorkflowStepAttachment> => {
+  const form = new FormData();
+  form.append("file", file);
+  const { data } = await api.post("/ticket-workflows/steps/attachment", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
 };

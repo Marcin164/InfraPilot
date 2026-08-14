@@ -1,11 +1,14 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import HeadlessTable from "./HeadlessTable";
 
 type Props = {
   data: any[];
   onEdit: (row: any) => void;
+  onDelete: (row: any) => void;
 };
 
-const SLaDefinitionsTable = ({ data, onEdit }: Props) => {
+const SLaDefinitionsTable = ({ data, onEdit, onDelete }: Props) => {
   const columns = [
     {
       name: "Name",
@@ -24,6 +27,21 @@ const SLaDefinitionsTable = ({ data, onEdit }: Props) => {
     {
       name: "Calendar",
       selector: (row: any) => row.calendar?.name || "N/A",
+    },
+    {
+      width: "50px",
+      selector: (row: any) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(row);
+          }}
+          className="text-[#F3606E] hover:text-[#C0392B] cursor-pointer"
+        >
+          <FontAwesomeIcon icon={faTrash} />
+        </button>
+      ),
     },
   ];
   return <HeadlessTable columns={columns} data={data} onRowClicked={onEdit} />;

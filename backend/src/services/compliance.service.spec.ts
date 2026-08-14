@@ -79,6 +79,22 @@ describe('ComplianceService', () => {
     it('includes tpm rule', () => {
       expect(BUILTIN_RULES.find((r) => r.key === 'tpm-present')).toBeDefined();
     });
+
+    it('uses the [] array-existential syntax for the array-shaped agent fields', () => {
+      // bitlocker/firewall_profile/antivirus are arrays in the agent's real
+      // payload (see windowsApp/agent/scanner/security.py) -- a plain dot
+      // path into them can never match, which was the original bug.
+      const arrayKeys = ['bitlocker-enabled', 'firewall-on', 'antivirus-running'];
+      for (const key of arrayKeys) {
+        const rule = BUILTIN_RULES.find((r) => r.key === key)!;
+        expect(rule.jsonPath).toContain('[]');
+      }
+    });
+
+    it('tpm and os-version rules stay scalar paths (those fields are objects/strings, not arrays)', () => {
+      expect(BUILTIN_RULES.find((r) => r.key === 'tpm-present')!.jsonPath).not.toContain('[]');
+      expect(BUILTIN_RULES.find((r) => r.key === 'os-version-present')!.jsonPath).not.toContain('[]');
+    });
   });
 
   describe('seedBuiltins', () => {
@@ -89,11 +105,34 @@ describe('ComplianceService', () => {
       expect(rulesRepo.save).toHaveBeenCalledTimes(BUILTIN_RULES.length);
     });
 
-    it('skips rules that already exist', async () => {
+    it('does not count already-existing rules as newly inserted', async () => {
       rulesRepo.findOneBy.mockResolvedValue({ key: 'bitlocker-enabled' });
       const count = await service.seedBuiltins();
       expect(count).toBe(0);
-      expect(rulesRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('re-syncs the definition of an existing built-in row to the current BUILTIN_RULES entry', async () => {
+      // Simulates an install that seeded the rule back when it had the
+      // broken pre-fix jsonPath -- the sync must bring it up to date so the
+      // fix actually reaches databases that already have a row for this key.
+      const staleRow: any = {
+        key: 'bitlocker-enabled',
+        name: 'old name',
+        jsonPath: 'security.bitlocker.enabled', // the old, broken path
+        operator: 'eq',
+        expected: true,
+        severity: 'HIGH',
+        enabled: false, // admin had disabled it -- must survive the sync
+      };
+      rulesRepo.findOneBy.mockImplementation(async ({ key }: { key: string }) =>
+        key === 'bitlocker-enabled' ? staleRow : null,
+      );
+      await service.seedBuiltins();
+
+      const current = BUILTIN_RULES.find((r) => r.key === 'bitlocker-enabled')!;
+      expect(rulesRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ jsonPath: current.jsonPath, name: current.name, enabled: false }),
+      );
     });
   });
 
@@ -129,9 +168,10 @@ describe('ComplianceService', () => {
       expect(rulesRepo.delete).not.toHaveBeenCalled();
     });
 
-    it('throws when attempting to delete a builtin rule', async () => {
+    it('deletes a built-in rule too (no longer restricted -- disable is for "keep but off", delete is permanent removal)', async () => {
       rulesRepo.findOneBy.mockResolvedValue({ key: 'bitlocker-enabled', builtin: true });
-      await expect(service.deleteRule('bitlocker-enabled')).rejects.toThrow('Cannot delete built-in rule');
+      await service.deleteRule('bitlocker-enabled');
+      expect(rulesRepo.delete).toHaveBeenCalledWith({ key: 'bitlocker-enabled' });
     });
 
     it('deletes custom rule successfully', async () => {
@@ -172,6 +212,83 @@ describe('ComplianceService', () => {
     it('evaluates gte operator correctly', async () => {
       devicesRepo.findOneBy.mockResolvedValue(makeDevice({ security: { score: 90 } }));
       rulesRepo.findBy.mockResolvedValue([makeRule({ key: 'score', jsonPath: 'security.score', operator: 'gte', expected: 80 })]);
+      const results = await service.evaluateDevice('dev-1');
+      expect(results[0].passed).toBe(true);
+    });
+
+    // ── [] array-existential paths, verified against the real agent shape ──
+    // (windowsApp/agent/scanner/security.py: bitlocker/firewall_profile/
+    // antivirus are all arrays -- this is what the BUILTIN_RULES fix relies on)
+
+    it('passes an [] array rule when at least one element matches (bitlocker, realistic agent payload)', async () => {
+      devicesRepo.findOneBy.mockResolvedValue(makeDevice({
+        security: {
+          bitlocker: [
+            { MountPoint: 'D:', ProtectionStatus: 0 },
+            { MountPoint: 'C:', ProtectionStatus: 1 },
+          ],
+        },
+      }));
+      rulesRepo.findBy.mockResolvedValue([
+        makeRule({ key: 'bitlocker-enabled', jsonPath: 'security.bitlocker[].ProtectionStatus', operator: 'eq', expected: 1 }),
+      ]);
+      const results = await service.evaluateDevice('dev-1');
+      expect(results[0].passed).toBe(true);
+      expect(results[0].actual).toEqual([0, 1]);
+    });
+
+    it('fails an [] array rule when no element matches', async () => {
+      devicesRepo.findOneBy.mockResolvedValue(makeDevice({
+        security: { bitlocker: [{ MountPoint: 'C:', ProtectionStatus: 0 }] },
+      }));
+      rulesRepo.findBy.mockResolvedValue([
+        makeRule({ key: 'bitlocker-enabled', jsonPath: 'security.bitlocker[].ProtectionStatus', operator: 'eq', expected: 1 }),
+      ]);
+      const results = await service.evaluateDevice('dev-1');
+      expect(results[0].passed).toBe(false);
+    });
+
+    it('fails an [] array rule when the array is empty (e.g. no AV product registered)', async () => {
+      devicesRepo.findOneBy.mockResolvedValue(makeDevice({ security: { antivirus: [] } }));
+      rulesRepo.findBy.mockResolvedValue([
+        makeRule({ key: 'antivirus-running', jsonPath: 'security.antivirus[].displayName', operator: 'exists', expected: null }),
+      ]);
+      const results = await service.evaluateDevice('dev-1');
+      expect(results[0].passed).toBe(false);
+    });
+
+    it('fails an [] array rule when the path does not resolve to an array at all', async () => {
+      devicesRepo.findOneBy.mockResolvedValue(makeDevice({ security: {} }));
+      rulesRepo.findBy.mockResolvedValue([
+        makeRule({ key: 'antivirus-running', jsonPath: 'security.antivirus[].displayName', operator: 'exists', expected: null }),
+      ]);
+      const results = await service.evaluateDevice('dev-1');
+      expect(results[0].passed).toBe(false);
+      expect(results[0].actual).toEqual([]);
+    });
+
+    it('passes the real firewall-on builtin rule against a realistic multi-profile payload', async () => {
+      const rule = BUILTIN_RULES.find((r) => r.key === 'firewall-on')!;
+      devicesRepo.findOneBy.mockResolvedValue(makeDevice({
+        security: {
+          firewall_profile: [
+            { Name: 'Domain', Enabled: 1 },
+            { Name: 'Private', Enabled: 0 },
+            { Name: 'Public', Enabled: 0 },
+          ],
+        },
+      }));
+      rulesRepo.findBy.mockResolvedValue([rule as any]);
+      const results = await service.evaluateDevice('dev-1');
+      expect(results[0].passed).toBe(true);
+    });
+
+    it('passes the real tpm-present builtin rule against a realistic TPM payload', async () => {
+      const rule = BUILTIN_RULES.find((r) => r.key === 'tpm-present')!;
+      devicesRepo.findOneBy.mockResolvedValue(makeDevice({
+        security: { tpm: { IsEnabled_InitialValue: true, IsOwned_InitialValue: true } },
+      }));
+      rulesRepo.findBy.mockResolvedValue([rule as any]);
       const results = await service.evaluateDevice('dev-1');
       expect(results[0].passed).toBe(true);
     });

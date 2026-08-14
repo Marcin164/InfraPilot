@@ -30,6 +30,9 @@ import StaleAgents from "./components/StaleAgents";
 import NetworkBackupStatus from "./components/NetworkBackupStatus";
 import RetentionLegalHold from "./components/RetentionLegalHold";
 import ProcurementPipeline from "./components/ProcurementPipeline";
+import NewDevicesThisWeek from "./components/NewDevicesThisWeek";
+import DeviceLifecycle from "./components/DeviceLifecycle";
+import StaleAgentsList from "./components/StaleAgentsList";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDashboard, deleteDashboard, getDashboards, updateDashboardCards } from "../../../Services/dashboards";
 import type { Dashboard } from "../../../Types";
@@ -74,6 +77,9 @@ const componentMap: any = {
   NetworkBackupStatus,
   RetentionLegalHold,
   ProcurementPipeline,
+  NewDevicesThisWeek,
+  DeviceLifecycle,
+  StaleAgentsList,
 };
 
 const Index = () => {

@@ -24,7 +24,8 @@ import {
   updateAssignmentGroup,
 } from "../../../../Services/assignmentGroups";
 import { getUser, getUsers, getUsersTable, updateUser } from "../../../../Services/users";
-import { getSodMatrix, type SodPair } from "../../../../Services/rbac";
+import { getSodMatrix } from "../../../../Services/rbac";
+import { ROLE_DEFS, makeRoleLabel, computeRowSoD } from "../../../../Constants/roles";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
@@ -77,21 +78,31 @@ const LastLogonSection = () => {
     onError: () => toast.error(t("toast.error.settingsSave")),
   });
 
-  const save = (next: LastLogonThreshold[], nextDefault: string = defaultColor) => {
-    const sorted = [...next].sort((a, b) => a.maxDays - b.maxDays);
+  // Native <input type="color"> steals focus to the OS picker the moment it
+  // opens (before the user has actually picked anything), so a blur-driven
+  // autosave was saving the *old* color and never firing again once a new
+  // one was chosen. Local-state-only edits + one explicit Save button avoids
+  // depending on blur timing for any of these fields.
+  const isDirty =
+    JSON.stringify([...thresholds].sort((a, b) => a.maxDays - b.maxDays)) !==
+      JSON.stringify(settingsQuery.data?.lastLogonThresholds ?? DEFAULT_THRESHOLDS) ||
+    defaultColor !== (settingsQuery.data?.lastLogonDefaultColor ?? "#8A8A8A");
+
+  const handleSave = () => {
+    const sorted = [...thresholds].sort((a, b) => a.maxDays - b.maxDays);
     setThresholds(sorted);
-    mutation.mutate({ lastLogonThresholds: sorted, lastLogonDefaultColor: nextDefault });
+    mutation.mutate({ lastLogonThresholds: sorted, lastLogonDefaultColor: defaultColor });
   };
 
   const updateThreshold = (idx: number, field: keyof LastLogonThreshold, value: string | number) => {
     setThresholds((prev) => prev.map((t, i) => (i === idx ? { ...t, [field]: value } : t)));
   };
 
-  const removeThreshold = (idx: number) => save(thresholds.filter((_, i) => i !== idx));
+  const removeThreshold = (idx: number) => setThresholds((prev) => prev.filter((_, i) => i !== idx));
 
   const addThreshold = () => {
     const maxExisting = thresholds.length ? Math.max(...thresholds.map((t) => t.maxDays)) : 0;
-    save([...thresholds, { maxDays: maxExisting + 30, color: "#535353", label: "New" }]);
+    setThresholds((prev) => [...prev, { maxDays: maxExisting + 30, color: "#535353", label: "New" }]);
   };
 
   const getDaysSinceText = (maxDays: number, idx: number) => {
@@ -115,7 +126,6 @@ const LastLogonSection = () => {
             <ColorPicker
               value={threshold.color}
               onChange={(c) => updateThreshold(idx, "color", c)}
-              onBlur={() => save(thresholds)}
               size={36}
             />
 
@@ -123,7 +133,6 @@ const LastLogonSection = () => {
               type="text"
               value={threshold.label}
               onChange={(e) => updateThreshold(idx, "label", e.target.value)}
-              onBlur={() => save(thresholds)}
               className="h-[36px] w-[120px] rounded-[8px] border border-[#535353] px-2 text-[14px] font-bold text-[#3C3C3C] outline-none focus:border-[#2B9AE9]"
               placeholder={t("settings.admin.colors.label")}
             />
@@ -135,7 +144,6 @@ const LastLogonSection = () => {
                 min={1}
                 value={threshold.maxDays}
                 onChange={(e) => updateThreshold(idx, "maxDays", parseInt(e.target.value) || 1)}
-                onBlur={() => save(thresholds)}
                 className="h-[36px] w-[70px] rounded-[8px] border border-[#535353] px-2 text-center text-[14px] font-bold text-[#3C3C3C] outline-none focus:border-[#2B9AE9]"
               />
               <span className="text-[13px] text-[#535353]">{t("settings.admin.colors.days")}</span>
@@ -172,12 +180,20 @@ const LastLogonSection = () => {
         <ColorPicker
           value={defaultColor}
           onChange={setDefaultColor}
-          onBlur={() => save(thresholds, defaultColor)}
           size={36}
         />
         <span className="text-[13px] text-[#8A8A8A]">
           {t("settings.admin.colors.defaultRange", { days: thresholds.length ? thresholds[thresholds.length - 1].maxDays : 0 })}
         </span>
+      </div>
+
+      <div className="mt-6">
+        <ButtonPrimary
+          icon={faCheck}
+          text={mutation.isPending ? t("common.saving") : t("common.save")}
+          onClick={handleSave}
+          disabled={mutation.isPending || !isDirty}
+        />
       </div>
 
       <div className="mt-6">
@@ -479,74 +495,6 @@ const AssignmentGroupsSection = () => {
 
 /* ─────────────────────── Roles Section ──────────────────────── */
 
-type RoleKey =
-  | "isAdmin"
-  | "isApprover"
-  | "isAuditor"
-  | "isCompliance"
-  | "isHelpdesk"
-  | "isDpo";
-
-const ROLE_DEFS: { key: RoleKey; labelKey: string; color: string; role: string }[] = [
-  { key: "isAdmin", labelKey: "settings.admin.roles.role.admin", color: "#F3606E", role: "admin" },
-  { key: "isApprover", labelKey: "settings.admin.roles.role.approver", color: "#2B9AE9", role: "approver" },
-  { key: "isAuditor", labelKey: "settings.admin.roles.role.auditor", color: "#8E44AD", role: "auditor" },
-  { key: "isCompliance", labelKey: "settings.admin.roles.role.compliance", color: "#16A085", role: "compliance" },
-  { key: "isHelpdesk", labelKey: "settings.admin.roles.role.helpdesk", color: "#F1C40F", role: "helpdesk" },
-  { key: "isDpo", labelKey: "settings.admin.roles.role.dpo", color: "#E67E22", role: "dpo" },
-];
-
-const ROLE_BY_NAME: Record<string, RoleKey> = ROLE_DEFS.reduce(
-  (acc, def) => ({ ...acc, [def.role]: def.key }),
-  {} as Record<string, RoleKey>,
-);
-
-const makeRoleLabel = (t: (k: string) => string) => (name: string) => {
-  const def = ROLE_DEFS.find((d) => d.role === name);
-  return def ? t(def.labelKey) : name;
-};
-
-/**
- * For each role checkbox on this row, return `{ disabled, reason }`.
- * A currently-ON role is never disabled (user must be able to clear it).
- * An OFF role is disabled when enabling it would trigger any SoD pair with a
- * currently-ON role.
- */
-const computeRowSoD = (
-  row: any,
-  pairs: SodPair[],
-  t: (k: string, opts?: any) => string,
-): Record<RoleKey, { disabled: boolean; reason: string | null }> => {
-  const roleLabel = makeRoleLabel(t);
-  const result = {} as Record<RoleKey, { disabled: boolean; reason: string | null }>;
-  for (const def of ROLE_DEFS) {
-    if (row[def.key]) {
-      result[def.key] = { disabled: false, reason: null };
-      continue;
-    }
-    const conflict = pairs.find((p) => {
-      const aKey = ROLE_BY_NAME[p.a];
-      const bKey = ROLE_BY_NAME[p.b];
-      if (p.a === def.role && bKey && row[bKey]) return true;
-      if (p.b === def.role && aKey && row[aKey]) return true;
-      return false;
-    });
-    if (conflict) {
-      const other = conflict.a === def.role ? conflict.b : conflict.a;
-      result[def.key] = {
-        disabled: true,
-        reason: t("settings.admin.roles.sodConflict", {
-          other: roleLabel(other),
-          reason: conflict.reason,
-        }),
-      };
-    } else {
-      result[def.key] = { disabled: false, reason: null };
-    }
-  }
-  return result;
-};
-
 const RolesSection = () => {
   const { t } = useTranslation();
   const roleLabel = makeRoleLabel(t);
@@ -557,6 +505,8 @@ const RolesSection = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(15);
   const debouncedSearch = useDebounce(searchValue, 400);
+  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
+  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
   const currentUserQuery = useQuery({
     queryKey: ["current-user", currentUserId],
@@ -645,10 +595,19 @@ const RolesSection = () => {
             color={r.color}
             onClick={(e) => e.stopPropagation()}
             handleChange={(checked: boolean) =>
-              updateMutation.mutate({
-                id: row.id,
-                patch: { [r.key]: checked } as Partial<User>,
-              })
+              askConfirm(
+                () =>
+                  updateMutation.mutate({
+                    id: row.id,
+                    patch: { [r.key]: checked } as Partial<User>,
+                  }),
+                t(
+                  checked
+                    ? "settings.admin.roles.confirmGrant"
+                    : "settings.admin.roles.confirmRevoke",
+                  { role: t(r.labelKey), user: `${row.name} ${row.surname}` },
+                ),
+              )
             }
           />
         </div>
@@ -706,6 +665,13 @@ const RolesSection = () => {
           progressPending={usersQuery.isFetching}
         />
       </div>
+      <ConfirmationModal
+        isModalOpen={confirmState.open}
+        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
+        message={confirmState.message}
+      />
     </div>
   );
 };

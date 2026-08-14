@@ -1,11 +1,12 @@
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { faComputer, faFileWord } from "@fortawesome/free-solid-svg-icons";
+import { faComputer, faFileWord, faPen } from "@fortawesome/free-solid-svg-icons";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import EquipmentItem from "../../../../Components/Lists/EquipmentItem";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import Dropdown from "../../../../Components/Dropdowns/Components/Dropdown";
 import { downloadUserHandoverForm } from "../../../../Services/devices";
 
 type Props = { devices: any };
@@ -13,6 +14,7 @@ type Props = { devices: any };
 const Equipment = ({ devices }: Props) => {
   const { t, i18n } = useTranslation();
   const { id } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const handoverMutation = useMutation({
@@ -61,17 +63,27 @@ const Equipment = ({ devices }: Props) => {
     <div className="bg-white shadow-xl rounded-[10px] p-4">
       <div className="flex items-center justify-between gap-2">
         <CardHeader text={t("users.equipment")} icon={faComputer} />
-        <ButtonPrimary
-          icon={faFileWord}
-          text={
-            handoverMutation.isPending
-              ? t("users.equipment.handoverGenerating")
-              : t("users.equipment.handover")
-          }
-          onClick={() => handoverMutation.mutate()}
-          disabled={handoverMutation.isPending || !hasEquipment}
-          className="flex-shrink-0 text-[13px] px-3 py-1"
-        />
+        <Dropdown>
+          <ButtonPrimary
+            color="white"
+            icon={faPen}
+            text={t("users.actions.editEquipment")}
+            className="h-[34px] text-[16px] w-full my-1 text-left shadow-none"
+            onClick={() => navigate(`/admin/users/${id}/equipmentedit`)}
+          />
+          <ButtonPrimary
+            color="white"
+            icon={faFileWord}
+            text={
+              handoverMutation.isPending
+                ? t("users.equipment.handoverGenerating")
+                : t("users.equipment.handover")
+            }
+            className="h-[34px] text-[16px] w-full my-1 text-left shadow-none"
+            onClick={() => handoverMutation.mutate()}
+            disabled={handoverMutation.isPending || !hasEquipment}
+          />
+        </Dropdown>
       </div>
       <Section label={t("users.equipment.computersOwned")} items={mainDevices} />
       <Section label={t("users.equipment.peripherals")} items={peripherals} />

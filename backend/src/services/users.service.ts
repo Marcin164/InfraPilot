@@ -340,6 +340,7 @@ export class UsersService {
         'users.isCompliance AS "isCompliance"',
         'users.isHelpdesk AS "isHelpdesk"',
         'users.isDpo AS "isDpo"',
+        'users.entraMfaEnabled AS "entraMfaEnabled"',
       ])
       .groupBy('users.id')
       .addGroupBy('users.name')
@@ -361,6 +362,7 @@ export class UsersService {
       .addGroupBy('users.isCompliance')
       .addGroupBy('users.isHelpdesk')
       .addGroupBy('users.isDpo')
+      .addGroupBy('users.entraMfaEnabled')
       .orderBy('users.surname', 'ASC')
       .offset((page - 1) * limit)
       .limit(limit);

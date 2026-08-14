@@ -15,13 +15,13 @@ import {
   faCode,
   faComputer,
   faEnvelope,
-  faGaugeHigh,
   faComputerMouse,
   faDatabase,
   faGear,
   faHardDrive,
   faHistory,
   faKey,
+  faLayerGroup,
   faNetworkWired,
   faPaste,
   faPlay,
@@ -38,6 +38,7 @@ import {
   faUsers,
   faWindowMaximize,
   faWrench,
+  faRetweet,
 } from "@fortawesome/free-solid-svg-icons";
 
 export type NavbarRequirement =
@@ -46,7 +47,8 @@ export type NavbarRequirement =
   | "auditorOrAdmin"
   | "complianceOrAdmin"
   | "helpdeskOrAdmin"
-  | "dpoOrAdmin";
+  | "dpoOrAdmin"
+  | "anyRole";
 
 export type NavbarItem = {
   to: string;
@@ -55,16 +57,50 @@ export type NavbarItem = {
   requires?: NavbarRequirement;
 };
 
+export type RoleFlags = {
+  isAdmin?: boolean;
+  isApprover?: boolean;
+  isAuditor?: boolean;
+  isCompliance?: boolean;
+  isHelpdesk?: boolean;
+  isDpo?: boolean;
+};
+
+export const canSeeItem = (item: NavbarItem, user: RoleFlags | undefined) => {
+  if (!item.requires) return true;
+  if (!user) return false;
+  if (user.isAdmin) return true;
+  switch (item.requires) {
+    case "admin":
+      return false;
+    case "approverOrAdmin":
+      return Boolean(user.isApprover);
+    case "auditorOrAdmin":
+      return Boolean(user.isAuditor);
+    case "complianceOrAdmin":
+      return Boolean(user.isCompliance);
+    case "helpdeskOrAdmin":
+      return Boolean(user.isHelpdesk);
+    case "dpoOrAdmin":
+      return Boolean(user.isDpo);
+    case "anyRole":
+      return Boolean(
+        user.isApprover ||
+          user.isAuditor ||
+          user.isCompliance ||
+          user.isHelpdesk ||
+          user.isDpo,
+      );
+    default:
+      return true;
+  }
+};
+
 export const navbarItems: NavbarItem[] = [
   {
     to: "/admin/dashboards",
     label: "nav.dashboards",
     icon: faChartPie,
-  },
-  {
-    to: "/admin/fleet",
-    label: "nav.fleet.title",
-    icon: faGaugeHigh,
   },
   {
     to: "/admin/users",
@@ -126,26 +162,22 @@ export const navbarItems: NavbarItem[] = [
   },
   {
     to: "/user/account",
-    label: "nav.user",
-    icon: faUser,
-  },
-  {
-    to: "/user/tickets",
-    label: "nav.tickets",
-    icon: faTicket,
-  },
-  {
-    to: "/user/settings",
-    label: "nav.mysettings",
-    icon: faGear,
+    label: "nav.switchToUser",
+    icon: faRetweet,
   },
 ];
 
-export const userNavbarPaths = new Set([
-  "/user/account",
-  "/user/tickets",
-  "/user/settings",
-]);
+// Rendered by the user portal navbar (Pages/User/components/UserNavbar.tsx),
+// which keeps its own item list rather than reading `navbarItems` above.
+// Only shown to users who hold an elevated role (see `canSeeItem`/"anyRole").
+export const userPortalExtraItems: NavbarItem[] = [
+  {
+    to: "/admin/dashboards",
+    label: "nav.switchToAdmin",
+    icon: faGear,
+    requires: "anyRole",
+  },
+];
 
 // `scope` decides which device records get which tab:
 //   "computers"          -- only meaningful with agent scan data (Windows today)
@@ -185,9 +217,11 @@ export const deviceNavbarItems = [
 
 export const settingsNavbarItems = [
   { to: "personal", label: "settings.tab.personal", icon: faAddressBook },
-  { to: "active-directory", label: "settings.tab.activeDirectory", icon: faNetworkWired },
+  { to: "active-directory", label: "settings.tab.activeDirectory", icon: faNetworkWired, requires: "admin" as NavbarRequirement },
+  { to: "m365", label: "settings.tab.m365", icon: faCloud, requires: "admin" as NavbarRequirement },
   { to: "sla", label: "settings.tab.sla", icon: faCalendar },
   { to: "workflows", label: "settings.tab.workflows", icon: faBolt },
+  { to: "categories", label: "settings.tab.categories", icon: faLayerGroup },
   { to: "notifications", label: "settings.tab.notifications", icon: faBell },
   { to: "admin", label: "settings.tab.admin", icon: faShield, requires: "admin" as NavbarRequirement },
   { to: "audit", label: "settings.tab.audit", icon: faBookAtlas, requires: "auditorOrAdmin" as NavbarRequirement },
@@ -199,7 +233,6 @@ export const settingsNavbarItems = [
   { to: "agent", label: "settings.tab.windowsAgent", icon: faWindowMaximize, requires: "admin" as NavbarRequirement },
   { to: "locations", label: "settings.tab.locations", icon: faBuilding, requires: "admin" as NavbarRequirement },
   { to: "smtp", label: "settings.tab.smtp", icon: faEnvelope, requires: "admin" as NavbarRequirement },
-  { to: "m365", label: "settings.tab.m365", icon: faCloud, requires: "admin" as NavbarRequirement },
 ];
 
 import type { ReportCategory } from "../Services/reports";

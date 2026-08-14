@@ -4,7 +4,10 @@ import { NotificationPreferencesService } from './notificationPreferences.servic
 import {
   NOTIFICATION_EVENTS,
   NotificationPreference,
+  OPS_ROUTED_EVENTS,
 } from 'src/entities/notificationPreference.entity';
+
+const PER_USER_EVENT_COUNT = NOTIFICATION_EVENTS.length - OPS_ROUTED_EVENTS.length;
 
 describe('NotificationPreferencesService', () => {
   let service: NotificationPreferencesService;
@@ -56,22 +59,10 @@ describe('NotificationPreferencesService', () => {
       expect(result).toBe(true);
     });
 
-    it('returns false by default for SMS on non-critical event', async () => {
+    it('returns false by default for email on an event not in the email default set', async () => {
       repo.findOne.mockResolvedValue(null);
-      const result = await service.isEnabled('user-1', 'ticket_comment', 'sms');
+      const result = await service.isEnabled('user-1', 'scan_completed', 'email');
       expect(result).toBe(false);
-    });
-
-    it('returns true by default for SMS on ticket_sla_breach', async () => {
-      repo.findOne.mockResolvedValue(null);
-      const result = await service.isEnabled('user-1', 'ticket_sla_breach', 'sms');
-      expect(result).toBe(true);
-    });
-
-    it('returns true by default for SMS on cve_critical', async () => {
-      repo.findOne.mockResolvedValue(null);
-      const result = await service.isEnabled('user-1', 'cve_critical', 'sms');
-      expect(result).toBe(true);
     });
   });
 
@@ -80,10 +71,16 @@ describe('NotificationPreferencesService', () => {
   // ─────────────────────────────────────────
 
   describe('listForUser', () => {
-    it('returns rows for every event × channel combination', async () => {
+    it('returns rows for every non-ops event × channel combination', async () => {
       const result = await service.listForUser('user-1');
-      const expectedCount = NOTIFICATION_EVENTS.length * 3; // inapp, email, sms
-      expect(result.length).toBe(expectedCount);
+      expect(result.length).toBe(PER_USER_EVENT_COUNT * 2); // inapp, email
+    });
+
+    it('excludes ops-routed events entirely (they go to the fixed ops email instead)', async () => {
+      const result = await service.listForUser('user-1');
+      for (const opsEvent of OPS_ROUTED_EVENTS) {
+        expect(result.some((r) => r.event === opsEvent)).toBe(false);
+      }
     });
 
     it('uses stored enabled value when preference row exists', async () => {
@@ -106,10 +103,10 @@ describe('NotificationPreferencesService', () => {
       repo.find.mockResolvedValue([]);
 
       const result = await service.listForUser('user-1');
-      const smsRow = result.find(
-        (r) => r.event === 'ticket_comment' && r.channel === 'sms',
+      const emailRow = result.find(
+        (r) => r.event === 'scan_completed' && r.channel === 'email',
       );
-      expect(smsRow?.enabled).toBe(false);
+      expect(emailRow?.enabled).toBe(false);
     });
   });
 

@@ -90,14 +90,15 @@ const TemplatePicker = ({ ticket, onPick, disabled }: Props) => {
   return (
     <div className="relative" ref={boxRef}>
       <ButtonPrimary
+        color="white"
         icon={faPaste}
-        className="shrink-0"
+        text={t("helpdesk.insertTemplate")}
+        className="h-[38px] text-[14px] w-full text-left shadow-none justify-start"
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
-        title="Insert template"
       />
       {open && (
-        <div className="absolute bottom-[48px] left-0 z-50 w-[360px] max-h-[400px] overflow-y-auto rounded-[10px] bg-white shadow-xl border border-[#E0E0E0]">
+        <div className="absolute bottom-0 left-[calc(100%+8px)] z-50 w-[360px] max-h-[400px] overflow-y-auto rounded-[12px] bg-white shadow-xl border border-[#EFEFEF]">
           <div className="p-2 border-b border-[#F0F0F0]">
             <input
               autoFocus
