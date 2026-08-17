@@ -24,17 +24,6 @@ export const DASHBOARD_WIDGETS: DashboardWidgetConfig[] = [
     maxH: 3,
   },
   {
-    id: "e6c96c89-75be-4bc8-8f3c-1db36214a4ad",
-    label: "widget.activeDevices",
-    component: "ActiveDevices",
-    w: 3,
-    h: 2,
-    minW: 2,
-    minH: 2,
-    maxW: 5,
-    maxH: 3,
-  },
-  {
     id: "a1b2c3d4-1111-4000-8000-000000000001",
     label: "widget.totalUsers",
     component: "TotalUsers",

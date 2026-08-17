@@ -5,20 +5,20 @@ import { useDashboardData } from "../DashboardDataContext";
 
 const BitlockerCompliance = () => {
   const { t } = useTranslation();
-  const data = useDashboardData("security-outside-domain");
+  const data = useDashboardData("security-bitlocker-compliance");
 
-  const joined =
-    data.find((d) => d.label.toLowerCase().includes("joined"))?.value ?? 0;
-  const outside =
-    data.find((d) => d.label.toLowerCase().includes("outside") || d.label.toLowerCase().includes("not"))?.value ?? 0;
-  const total = joined + outside;
-  const pct = total > 0 ? Math.round((joined / total) * 100) : 0;
+  const enabled =
+    data.find((d) => d.label.toLowerCase().includes("enabled"))?.value ?? 0;
+  const disabled =
+    data.find((d) => d.label.toLowerCase().includes("disabled"))?.value ?? 0;
+  const total = enabled + disabled;
+  const pct = total > 0 ? Math.round((enabled / total) * 100) : 0;
 
   const color = pct >= 80 ? "#4CAF50" : pct >= 50 ? "#F1C40F" : "#F44336";
 
   const chartData = [
-    { value: joined, color },
-    { value: outside || (total === 0 ? 1 : 0), color: "#F0F0F0" },
+    { value: enabled, color },
+    { value: disabled || (total === 0 ? 1 : 0), color: "#F0F0F0" },
   ];
 
   return (
@@ -51,12 +51,12 @@ const BitlockerCompliance = () => {
         </div>
         <div className="flex gap-6 text-[13px]">
           <span>
-            <span className="font-bold" style={{ color }}>{joined}</span>{" "}
-            <span className="text-[#8A8A8A]">joined</span>
+            <span className="font-bold" style={{ color }}>{enabled}</span>{" "}
+            <span className="text-[#8A8A8A]">enabled</span>
           </span>
           <span>
-            <span className="font-bold text-[#E74C3C]">{outside}</span>{" "}
-            <span className="text-[#8A8A8A]">outside</span>
+            <span className="font-bold text-[#E74C3C]">{disabled}</span>{" "}
+            <span className="text-[#8A8A8A]">disabled</span>
           </span>
         </div>
       </div>

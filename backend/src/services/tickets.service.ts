@@ -886,7 +886,8 @@ export class TicketsService {
         });
       }
 
-      // Public comment from someone other than the requester → notify them.
+      // Public comment from someone other than the requester → notify them,
+      // and record it as the first staff response for the Response SLA.
       if (
         resolvedType === CommentType.PUBLIC &&
         ticket?.requester?.id &&
@@ -903,6 +904,7 @@ export class TicketsService {
           entityId: ticketId,
           actorId: authorId,
         });
+        await this.slaEngine.handleFirstResponse(ticketId);
       }
     } catch (err) {
       // Comment already committed; downstream notify/mail must not roll back.
@@ -952,6 +954,24 @@ export class TicketsService {
     });
 
     this.ticketsGateway.emitNewComment(ticketId, withAuthor);
+
+    // Same "first staff response" bookkeeping as createComment -- best
+    // effort, must not fail the upload if it errors.
+    if (resolvedType === CommentType.PUBLIC) {
+      try {
+        const ticket = await this.ticketsRepository.findOne({
+          where: { id: ticketId },
+          relations: ['requester'],
+        });
+        if (ticket?.requester?.id && ticket.requester.id !== authorId) {
+          await this.slaEngine.handleFirstResponse(ticketId);
+        }
+      } catch (err) {
+        this.logger.warn(
+          `First-response SLA update failed for ticket ${ticketId}: ${(err as Error).message}`,
+        );
+      }
+    }
 
     return withAuthor;
   }

@@ -25,7 +25,11 @@ export class ReportsController {
     return this.reportsService.list();
   }
 
-  @Roles(Role.Admin, Role.Compliance)
+  // Wider than list/export/generateReport below on purpose: this is what
+  // powers the Dashboards page, which itself has no role gate (see
+  // navigation.ts) -- Reports' other actions (browsing, CSV/PDF export)
+  // stay Admin/Auditor/Compliance-only.
+  @Roles(Role.Admin, Role.Auditor, Role.Compliance, Role.Helpdesk)
   @Post('batch')
   async batch(@Body() body: BatchReportsDto) {
     return this.reportsService.generateBatch(body.types);

@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
+import moment from "moment";
 import {
   faCircleCheck,
   faPause,
@@ -79,11 +80,19 @@ const SLA = (props: Props) => {
             </div>
 
             <div className="mt-1.5 text-[12px] font-semibold text-[#3C3C3C]">
-              {item.breached
-                ? t("helpdesk.sla.breached")
-                : t("helpdesk.sla.remaining", {
-                    time: minutesToDaysHoursMinutes(item.remainingMinutes),
-                  })}
+              {item.breached ? (
+                item.respondedAt ? (
+                  t("helpdesk.sla.respondedLate", {
+                    time: moment(item.respondedAt).format("DD/MM/YYYY, HH:mm"),
+                  })
+                ) : (
+                  t("helpdesk.sla.breached")
+                )
+              ) : (
+                t("helpdesk.sla.remaining", {
+                  time: minutesToDaysHoursMinutes(item.remainingMinutes),
+                })
+              )}
             </div>
           </div>
         );

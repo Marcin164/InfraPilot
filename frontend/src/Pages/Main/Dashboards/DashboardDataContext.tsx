@@ -14,6 +14,7 @@ const ALL_REPORT_KEYS = [
   "tickets-over-time",
   "security-patch-compliance",
   "security-outside-domain",
+  "security-bitlocker-compliance",
   "applications-top-installed",
   "audit-activity-over-time",
   "licenses-expiring-soon",

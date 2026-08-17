@@ -5,7 +5,6 @@ import BitlockerCompliance from "./components/BitlockerCompliance";
 import DashboardTopbar from "../../../Components/Topbar/DashboardTopbar";
 import LastScan from "./components/LastScan";
 import ActiveUsers from "./components/ActiveUsers";
-import ActiveDevices from "./components/ActiveDevices";
 import TotalUsers from "./components/TotalUsers";
 import TotalDevices from "./components/TotalDevices";
 import OpenTickets from "./components/OpenTickets";
@@ -51,7 +50,6 @@ const ReactGridLayout = WidthProvider(RGL);
 const componentMap: any = {
   BitlockerCompliance,
   ActiveUsers,
-  ActiveDevices,
   LastScan,
   TotalUsers,
   TotalDevices,

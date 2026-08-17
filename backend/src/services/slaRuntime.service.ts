@@ -86,6 +86,7 @@ export class SlaRuntimeService {
           status,
           paused: instance.paused,
           breached: instance.breached,
+          respondedAt: instance.respondedAt,
 
           dueAt: instance.dueAt,
           remainingMinutes,

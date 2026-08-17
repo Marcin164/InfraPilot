@@ -42,6 +42,12 @@ export class SlaInstance {
   @Column({ default: false })
   breached: boolean;
 
+  // Set once, the first time staff posts a Public reply to the ticket's
+  // requester -- independent of `breached`, so a late-but-eventual reply
+  // still shows as answered instead of hanging as a bare breach forever.
+  @Column({ type: 'timestamp', nullable: true })
+  respondedAt: Date | null;
+
   @OneToMany(() => SlaPause, (pause: any) => pause.slaInstance)
   pauses: SlaPause[];
 }

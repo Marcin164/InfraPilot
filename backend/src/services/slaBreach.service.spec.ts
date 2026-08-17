@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { SlaBreachService } from './slaBreach.service';
 import { SlaInstance } from 'src/entities/slaInstance.entity';
+import { SlaType } from 'src/entities/slaDefinition.entity';
 import { AuditService } from './audit.service';
 
 const mockSlaInstance = (overrides: Partial<SlaInstance> = {}): SlaInstance =>
@@ -10,7 +11,9 @@ const mockSlaInstance = (overrides: Partial<SlaInstance> = {}): SlaInstance =>
     ticketId: 'ticket-1',
     breached: false,
     paused: false,
+    respondedAt: null,
     dueAt: new Date(Date.now() + 60 * 60 * 1000), // 1h in the future
+    slaDefinition: { type: SlaType.RESPONSE },
     ...overrides,
   } as SlaInstance);
 
@@ -94,6 +97,67 @@ describe('SlaBreachService', () => {
 
       expect(repo.find).not.toHaveBeenCalled();
       expect(managerRepo.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('markFirstResponse', () => {
+    it('sets respondedAt on a Response instance that has not responded yet', async () => {
+      const inst = mockSlaInstance({ breached: true });
+      repo.find.mockResolvedValue([inst]);
+
+      await service.markFirstResponse('ticket-1');
+
+      expect(repo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ respondedAt: expect.any(Date) }),
+      );
+    });
+
+    it('leaves breached untouched -- a late reply does not un-breach', async () => {
+      const inst = mockSlaInstance({ breached: true });
+      repo.find.mockResolvedValue([inst]);
+
+      await service.markFirstResponse('ticket-1');
+
+      expect(repo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ breached: true }),
+      );
+    });
+
+    it('is idempotent -- does not overwrite an already-recorded response', async () => {
+      const firstResponse = new Date('2026-01-01T09:00:00Z');
+      const inst = mockSlaInstance({ respondedAt: firstResponse });
+      repo.find.mockResolvedValue([inst]);
+
+      await service.markFirstResponse('ticket-1');
+
+      expect(repo.save).not.toHaveBeenCalled();
+    });
+
+    it('ignores Resolution-type instances', async () => {
+      const inst = mockSlaInstance({
+        slaDefinition: { type: SlaType.RESOLUTION } as any,
+      });
+      repo.find.mockResolvedValue([inst]);
+
+      await service.markFirstResponse('ticket-1');
+
+      expect(repo.save).not.toHaveBeenCalled();
+    });
+
+    it('handles multiple instances, only updating the matching Response one', async () => {
+      const response = mockSlaInstance({ id: 'sla-response' });
+      const resolution = mockSlaInstance({
+        id: 'sla-resolution',
+        slaDefinition: { type: SlaType.RESOLUTION } as any,
+      });
+      repo.find.mockResolvedValue([response, resolution]);
+
+      await service.markFirstResponse('ticket-1');
+
+      expect(repo.save).toHaveBeenCalledTimes(1);
+      expect(repo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'sla-response' }),
+      );
     });
   });
 });

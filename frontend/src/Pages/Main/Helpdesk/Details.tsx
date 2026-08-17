@@ -146,6 +146,9 @@ const Details = () => {
         onOptimisticComment={(comment: any) =>
           setComments((prev) => [...prev, comment])
         }
+        onCommentSaved={(tempId: string, saved: any) =>
+          setComments((prev) => prev.map((c) => (c.id === tempId ? saved : c)))
+        }
         onInfoToggle={openInfo}
         onSideToggle={openSide}
         allowWorknote

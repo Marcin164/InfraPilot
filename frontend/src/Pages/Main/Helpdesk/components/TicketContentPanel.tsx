@@ -10,6 +10,7 @@ interface TicketContentPanelProps {
   description: string;
   allComments: any[];
   onOptimisticComment: (comment: any) => void;
+  onCommentSaved?: (tempId: string, saved: any) => void;
   onInfoToggle: () => void;
   onSideToggle: () => void;
   allowWorknote?: boolean;
@@ -20,6 +21,7 @@ const TicketContentPanel = ({
   description,
   allComments,
   onOptimisticComment,
+  onCommentSaved,
   onInfoToggle,
   onSideToggle,
   allowWorknote,
@@ -68,6 +70,7 @@ const TicketContentPanel = ({
         <MessageInput
           ticketId={ticketId}
           onOptimisticComment={onOptimisticComment}
+          onCommentSaved={onCommentSaved}
           allowWorknote={allowWorknote}
         />
       </div>

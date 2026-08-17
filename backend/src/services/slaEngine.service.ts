@@ -46,6 +46,15 @@ export class SlaEngineService {
 
   /*
    * ========================
+   * FIRST RESPONSE
+   * ========================
+   */
+  async handleFirstResponse(ticketId: string, manager?: EntityManager) {
+    await this.breachService.markFirstResponse(ticketId, manager);
+  }
+
+  /*
+   * ========================
    * PRIORITY CHANGE
    * ========================
    */

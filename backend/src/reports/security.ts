@@ -37,6 +37,22 @@ export async function devicesOutsideDomainReport({ db }) {
   return result;
 }
 
+// Fleet-wide pass/fail on the built-in `bitlocker-enabled` compliance rule.
+// Only counts devices that have actually been evaluated for this rule
+// (a row exists in compliance_result) -- devices never scanned, or where
+// the rule doesn't apply, contribute to neither bucket.
+export async function devicesBitlockerComplianceReport({ db }) {
+  const result = await db.query(`
+    SELECT
+      CASE WHEN passed = true THEN 'Enabled' ELSE 'Disabled' END as label,
+      COUNT(*)::integer as value
+    FROM compliance_result
+    WHERE "ruleKey" = 'bitlocker-enabled'
+    GROUP BY label
+  `);
+  return result;
+}
+
 export async function devicesWithLocalAdminReport({ db }) {
   const result = await db.query(`
     SELECT assetName as label, COUNT(*)::integer as value

@@ -28,6 +28,11 @@ import type { Comment } from "../../../../Types";
 type Props = {
   ticketId: string;
   onOptimisticComment: (comment: Partial<Comment>) => void;
+  // Called once the REST call actually saves the comment, so the caller can
+  // swap the optimistic placeholder (matched by tempId) for the real record
+  // -- otherwise the websocket-delivered echo (which has no way to know
+  // which optimistic entry it corresponds to) just appends a duplicate.
+  onCommentSaved?: (tempId: string, saved: Partial<Comment>) => void;
   // Only staff-facing views (admin/helpdesk) should ever pass this --
   // Worknotes must never be composable from the end-user ticket portal,
   // which reuses this same component.
@@ -50,7 +55,12 @@ const ACCEPTED_MIMES = new Set([
   "application/pdf",
 ]);
 
-const MessageInput = ({ ticketId, onOptimisticComment, allowWorknote }: Props) => {
+const MessageInput = ({
+  ticketId,
+  onOptimisticComment,
+  onCommentSaved,
+  allowWorknote,
+}: Props) => {
   const { t } = useTranslation();
   const { user }: any = useAuthInfo();
   const ticketQuery = useQuery({
@@ -96,8 +106,24 @@ const MessageInput = ({ ticketId, onOptimisticComment, allowWorknote }: Props) =
     mutationFn: async (payload: { content: string; type: string }) => {
       return createComment(ticketId, user?.metadata?.id, payload);
     },
-    onMutate: () => {
+    onMutate: (payload) => {
+      const tempId = `optimistic-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      onOptimisticComment({
+        id: tempId,
+        content: payload.content,
+        author: {
+          id: user?.metadata?.id,
+          distinguishedName: `${user?.firstName} ${user?.lastName}`,
+        },
+        type: payload.type,
+        createdAt: new Date().toISOString(),
+        optimistic: true,
+      });
       setMessage("");
+      return { tempId };
+    },
+    onSuccess: (saved, _payload, context) => {
+      if (context?.tempId) onCommentSaved?.(context.tempId, saved);
     },
     onError: () => {
       toast.error(t("helpdesk.sendMessageFailed"));
@@ -113,13 +139,16 @@ const MessageInput = ({ ticketId, onOptimisticComment, allowWorknote }: Props) =
       return createCommentWithAttachment(ticketId, user?.metadata?.id, payload);
     },
     onMutate: async (payload) => {
+      const tempId = `optimistic-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       onOptimisticComment({
+        id: tempId,
         content: payload.content,
         author: {
           id: user?.metadata?.id,
           distinguishedName: `${user?.firstName} ${user?.lastName}`,
         },
         type: payload.type,
+        createdAt: new Date().toISOString(),
         attachmentName: payload.file.name,
         attachmentMimetype: payload.file.type,
         attachmentSize: payload.file.size,
@@ -128,6 +157,10 @@ const MessageInput = ({ ticketId, onOptimisticComment, allowWorknote }: Props) =
       setMessage("");
       clearPendingFile();
       clearRecording();
+      return { tempId };
+    },
+    onSuccess: (saved, _payload, context) => {
+      if (context?.tempId) onCommentSaved?.(context.tempId, saved);
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message ?? t("helpdesk.sendAttachmentFailed"));

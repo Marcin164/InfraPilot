@@ -204,6 +204,9 @@ const TicketDetails = () => {
             onOptimisticComment={(c: any) =>
               setComments((prev) => [...prev, c])
             }
+            onCommentSaved={(tempId: string, saved: any) =>
+              setComments((prev) => prev.map((c) => (c.id === tempId ? saved : c)))
+            }
           />
         </div>
       </div>
