@@ -6,7 +6,6 @@ import { faClock, faDesktop, faUser, faXmark } from "@fortawesome/free-solid-svg
 import { Link } from "react-router";
 import moment from "moment";
 import UpdateTicketForm from "../../../../Components/Forms/UpdateTicketForm";
-import QuickActions from "./QuickActions";
 
 interface TicketInfoPanelProps {
   ticket: {
@@ -37,14 +36,6 @@ const TicketInfoPanel = ({ ticket, isOpen = false, onClose }: TicketInfoPanelPro
         <FontAwesomeIcon icon={faXmark} />
       </button>
       <CardHeader text={`${ticket.type} ${ticket.number}`} />
-
-      <QuickActions
-        ticket={{
-          id: ticket.id,
-          state: ticket.state,
-          assignee: ticket.assignee,
-        }}
-      />
 
       <div className="py-1 flex items-center gap-2">
         <FontAwesomeIcon icon={faUser} className="w-[20px]" />
