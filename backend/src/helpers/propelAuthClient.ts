@@ -25,4 +25,5 @@ export const {
   fetchUserMetadataByEmail,
   fetchUserMetadataByUserId,
   createUser,
+  updateUserMetadata,
 } = propelAuth;

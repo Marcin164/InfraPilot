@@ -14,6 +14,7 @@ import {
   fetchUserMetadataByEmail,
   fetchUserMetadataByUserId,
   logoutAllUserSessions,
+  updateUserMetadata,
 } from 'src/helpers/propelAuthClient';
 import { randomBytes } from 'crypto';
 
@@ -455,6 +456,7 @@ export class UsersService {
       return { linked: false, authUserId: null, reason: 'no email on user' };
     }
     if (user.authUserId) {
+      await this.syncAuthMetadataId(user.id, user.authUserId);
       return {
         linked: true,
         authUserId: user.authUserId,
@@ -473,6 +475,7 @@ export class UsersService {
       }
       user.authUserId = auth.userId;
       await this.usersRepository.save(user);
+      await this.syncAuthMetadataId(user.id, auth.userId);
       this.logger.log(
         `Linked user ${userId} to PropelAuth ${auth.userId} via email match`,
       );
@@ -518,6 +521,7 @@ export class UsersService {
     }
     user.email = email;
     if (user.authUserId) {
+      await this.syncAuthMetadataId(user.id, user.authUserId);
       return {
         authUserId: user.authUserId,
         created: false,
@@ -547,6 +551,7 @@ export class UsersService {
       } as any);
       user.authUserId = created.userId;
       await this.usersRepository.save(user);
+      await this.syncAuthMetadataId(user.id, created.userId);
       this.logger.log(
         `Provisioned PropelAuth user ${created.userId} for app user ${userId}`,
       );
@@ -556,6 +561,28 @@ export class UsersService {
         `provisionInAuth failed for ${userId}: ${(err as Error).message}`,
       );
       throw err;
+    }
+  }
+
+  /**
+   * Pushes the app's local user id into PropelAuth's `properties.metadata.id`
+   * so RolesGuard/AdminGuard/HistoryAccessGuard can resolve the local user
+   * straight from the token (their first lookup) instead of falling back to
+   * an authUserId or email match. Best-effort — auth already works via those
+   * fallbacks without this, so a failure here is logged, not thrown.
+   */
+  private async syncAuthMetadataId(
+    localId: string,
+    authUserId: string,
+  ): Promise<void> {
+    try {
+      await updateUserMetadata(authUserId, {
+        properties: { metadata: { id: localId } },
+      });
+    } catch (err) {
+      this.logger.warn(
+        `syncAuthMetadataId failed for user ${localId} -> PropelAuth ${authUserId}: ${(err as Error).message}`,
+      );
     }
   }
 

@@ -37,7 +37,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ close, data }) => {
     },
 
     onSuccess: () => {
-      toast.success(t("user.addSuccess"));
+      toast.success(data ? t("user.editSuccess") : t("user.addSuccess"));
       queryClient.invalidateQueries({ queryKey: ["users"] });
       close();
     },
@@ -164,7 +164,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ close, data }) => {
       />
       <ButtonPrimary
         type="submit"
-        text={t("user.add")}
+        text={data ? t("user.edit") : t("user.add")}
         className="mt-4"
         disabled={!form.state.canSubmit || mutation.isPending}
       />

@@ -24,7 +24,7 @@ const AddUserModal = ({ isModalOpen, onCloseModal, data }: Props) => {
       onClose={onCloseModal}
       center
     >
-      <CardHeader text={t("btn.add.user")} />
+      <CardHeader text={data ? t("user.edit") : t("btn.add.user")} />
       {!data && (
         <div className="pt-2 pb-4">
           <ButtonPrimary
