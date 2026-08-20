@@ -10,5 +10,6 @@ import { ActiveDirectoryModule } from './active-directory.module';
   imports: [TypeOrmModule.forFeature([Users]), ActiveDirectoryModule],
   controllers: [UsersController, RbacController],
   providers: [UsersService],
+  exports: [UsersService],
 })
 export class UsersModule {}

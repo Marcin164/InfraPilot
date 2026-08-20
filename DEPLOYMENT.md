@@ -28,6 +28,28 @@ sudo usermod -aG docker $USER
 newgrp docker
 ```
 
+### Nginx
+
+```bash
+sudo apt update
+sudo apt install -y nginx
+sudo systemctl enable --now nginx
+```
+
+Sprawdź czy działa:
+```bash
+sudo systemctl status nginx
+curl http://localhost   # domyślna strona powitalna Nginx
+```
+
+> Domyślny firewall Ubuntu (`ufw`), jeśli jest włączony, blokuje ruch przychodzący
+> domyślnie — dopuść HTTP/HTTPS:
+> ```bash
+> sudo ufw allow 'Nginx Full'
+> ```
+> Sprawdź stan: `sudo ufw status`. Jeśli `ufw` jest nieaktywny (`inactive`), ten krok
+> nie jest potrzebny.
+
 ---
 
 ## 2. Struktura plików na serwerze
@@ -50,7 +72,7 @@ jedyne co edytujesz per-instalację to `.env`.
 
 Skopiuj projekt:
 ```bash
-git clone <repo-url> /opt/infrapilot
+git clone https://github.com/Marcin164/InfraPilot.git /opt/infrapilot
 # lub rsync z lokalnej maszyny:
 # rsync -avz --exclude node_modules --exclude dist ./  user@server:/opt/infrapilot/
 ```
@@ -133,6 +155,11 @@ usuń te serwisy z pliku).
 ---
 
 ## 5. Nginx
+
+Zakładam, że Nginx jest już zainstalowany (sekcja 1). Jeśli nie:
+```bash
+sudo apt install -y nginx && sudo systemctl enable --now nginx
+```
 
 ```bash
 sudo nano /etc/nginx/sites-available/infrapilot
@@ -236,7 +263,41 @@ Aplikacja dostępna na `http://192.168.1.41`.
 
 ---
 
-## 7. Aktualizacja aplikacji
+## 7. Dodawanie kolejnych użytkowników po pierwszym deployu
+
+Bootstrap z sekcji 3 (`ADMIN_EMAIL`) tworzy dokładnie **jedno** konto — pierwszego
+admina, i tylko raz, przy starcie na pustej tabeli `users`. Dla każdej kolejnej
+osoby samo dodanie jej w PropelAuth **nie wystarczy** — appka nie ma
+auto-provisioningu (JIT). Konto trzeba spiąć w dwóch miejscach: PropelAuth i
+lokalna baza InfraPilot.
+
+**Co się dzieje, jeśli ktoś ma konto w PropelAuth, ale nie ma lokalnego rekordu:**
+- loguje się bez problemu (token PropelAuth jest ważny),
+- część endpointów bez wymogu roli zwróci dane niepoprawnie — po cichu, bez
+  błędu (błędne scope'owanie, bo backend nie może rozwiązać lokalnego id),
+- każda akcja wymagająca uprawnień (admin, historia, itp.) zwróci
+  `403 Forbidden — User context missing`.
+
+**Prawidłowa ścieżka — Settings > Users, dowolna kolejność:**
+1. Dodaj osobę po mailu w Settings > Users. Przy zapisie aplikacja sama
+   próbuje dopasować istniejące konto PropelAuth po tym adresie.
+2. Jeśli konta w PropelAuth jeszcze nie ma — w panelu użytkownika kliknij
+   **Provision**: appka utworzy je automatycznie (tymczasowe hasło) i od razu
+   spina oba konta.
+3. Jeśli konto w PropelAuth już istnieje (dodane wcześniej ręcznie w panelu
+   PropelAuth) — kliknij **Link by email** zamiast Provision.
+4. Status widać w panelu użytkownika: *Not linked* / *Linked* / *Broken* —
+   "Broken" oznacza, że zapisany link wskazuje na konto, które już nie
+   istnieje w PropelAuth (np. usunięte tam ręcznie).
+
+> **Pułapka:** import z AD/M365 (Settings > Active Directory / M365) też tylko
+> **próbuje** dopasować po mailu przy imporcie — jeśli maile się nie zgadzają
+> (inny alias, literówka), link trzeba dopiąć ręcznie jak wyżej, inaczej
+> zaimportowana osoba zostaje z niedziałającym kontem mimo że widnieje w liście.
+
+---
+
+## 8. Aktualizacja aplikacji
 
 ```bash
 cd /opt/infrapilot
@@ -251,7 +312,7 @@ docker compose restart api
 
 ---
 
-## 8. Znane problemy i rozwiązania
+## 9. Znane problemy i rozwiązania
 
 ### Backend nie startuje — `relation does not exist`
 
@@ -332,7 +393,7 @@ błąd w niektórych przeglądarkach.
 
 ---
 
-## 9. Przydatne komendy
+## 10. Przydatne komendy
 
 ```bash
 # Wejście do bazy danych

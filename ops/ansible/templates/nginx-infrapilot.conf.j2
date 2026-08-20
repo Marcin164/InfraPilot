@@ -1,0 +1,49 @@
+# Managed by Ansible (ops/ansible/templates/nginx-infrapilot.conf.j2).
+# Mirrors DEPLOYMENT.md section 5 — edit that file's prose first, then this
+# template, if the topology changes.
+server {
+    listen 80;
+    server_name {{ ([app_domain] + (app_domain_aliases | default([]))) | join(' ') }};
+
+    server_tokens off;
+
+    # Backend allows uploads up to 200MB (agent installer) — Nginx's default
+    # 1MB limit would silently reject larger requests with a 413.
+    client_max_body_size 210m;
+
+    # Socket.IO (ticket live-update) — WebSocket upgrade must come BEFORE the
+    # general /api/, since /socket.io/ doesn't fall under that prefix and the
+    # backend listens on this exact path.
+    location /socket.io/ {
+        proxy_pass         http://127.0.0.1:3000/socket.io/;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade           $http_upgrade;
+        proxy_set_header   Connection        "upgrade";
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_read_timeout 3600s;
+    }
+
+    # Backend API — trailing slash in both places strips the /api/ prefix,
+    # so /api/devices reaches the backend as /devices.
+    location /api/ {
+        proxy_pass         http://127.0.0.1:3000/;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    # Frontend (SPA)
+    location / {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}

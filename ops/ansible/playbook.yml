@@ -1,0 +1,197 @@
+---
+# Provisions a fresh Ubuntu host and deploys InfraPilot via Docker Compose.
+# Mirrors DEPLOYMENT.md 1:1 — that file remains the authoritative procedure;
+# this playbook is its automated form. If DEPLOYMENT.md changes, update here.
+#
+# Usage:
+#   ansible-playbook -i inventory/hosts.ini playbook.yml
+#   ansible-playbook -i inventory/hosts.ini playbook.yml --tags nginx,tls
+#
+# See README.md for inventory/vars setup.
+
+- name: Provision and deploy InfraPilot
+  hosts: infrapilot_servers
+  become: true
+
+  vars:
+    app_dir: "{{ infrapilot_app_dir | default('/opt/infrapilot') }}"
+
+  tasks:
+    # -----------------------------------------------------------------
+    # Docker Engine — DEPLOYMENT.md section 1
+    # -----------------------------------------------------------------
+    - name: Install Docker prerequisites
+      ansible.builtin.apt:
+        name: [ca-certificates, curl, gnupg]
+        state: present
+        update_cache: true
+      tags: [docker]
+
+    - name: Create apt keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+      tags: [docker]
+
+    - name: Download and dearmor Docker's GPG key
+      ansible.builtin.shell: |
+        set -o pipefail
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+      args:
+        creates: /etc/apt/keyrings/docker.gpg
+        executable: /bin/bash
+      tags: [docker]
+
+    - name: Make Docker's GPG key world-readable
+      ansible.builtin.file:
+        path: /etc/apt/keyrings/docker.gpg
+        mode: "0644"
+      tags: [docker]
+
+    - name: Get dpkg architecture
+      ansible.builtin.command: dpkg --print-architecture
+      register: dpkg_arch
+      changed_when: false
+      tags: [docker]
+
+    - name: Add Docker apt repository
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb [arch={{ dpkg_arch.stdout }} signed-by=/etc/apt/keyrings/docker.gpg]
+          https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+        state: present
+        filename: docker
+      tags: [docker]
+
+    - name: Install Docker Engine + Compose plugin
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+      tags: [docker]
+
+    - name: Add deploy user to the docker group
+      ansible.builtin.user:
+        name: "{{ deploy_user | default(ansible_user_id) }}"
+        groups: docker
+        append: true
+      when: (deploy_user | default(ansible_user_id)) != 'root'
+      tags: [docker]
+
+    # -----------------------------------------------------------------
+    # Application checkout — DEPLOYMENT.md section 2
+    # -----------------------------------------------------------------
+    - name: Clone or update the InfraPilot repository
+      ansible.builtin.git:
+        repo: "{{ app_repo_url }}"
+        dest: "{{ app_dir }}"
+        version: "{{ app_git_version | default('master') }}"
+        force: false
+      tags: [app]
+
+    # -----------------------------------------------------------------
+    # .env — DEPLOYMENT.md section 3
+    # -----------------------------------------------------------------
+    - name: Write .env from template
+      ansible.builtin.template:
+        src: templates/env.j2
+        dest: "{{ app_dir }}/.env"
+        mode: "0600"
+      tags: [env]
+      notify: Restart api container
+
+    # -----------------------------------------------------------------
+    # Docker Compose — DEPLOYMENT.md sections 4, 6, 7
+    # -----------------------------------------------------------------
+    - name: Build and start the stack
+      ansible.builtin.command: docker compose up -d --build
+      args:
+        chdir: "{{ app_dir }}"
+      tags: [compose]
+
+    # -----------------------------------------------------------------
+    # Nginx — DEPLOYMENT.md section 5
+    # -----------------------------------------------------------------
+    - name: Install nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+      tags: [nginx]
+
+    - name: Deploy InfraPilot nginx site config
+      ansible.builtin.template:
+        src: templates/nginx-infrapilot.conf.j2
+        dest: /etc/nginx/sites-available/infrapilot
+        mode: "0644"
+      notify: Reload nginx
+      tags: [nginx]
+
+    - name: Enable InfraPilot nginx site
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/infrapilot
+        dest: /etc/nginx/sites-enabled/infrapilot
+        state: link
+      notify: Reload nginx
+      tags: [nginx]
+
+    - name: Disable the default nginx site
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Reload nginx
+      tags: [nginx]
+
+    # -----------------------------------------------------------------
+    # TLS — DEPLOYMENT.md section 5 note (Let's Encrypt via certbot)
+    # -----------------------------------------------------------------
+    - name: Install certbot
+      ansible.builtin.apt:
+        name: [certbot, python3-certbot-nginx]
+        state: present
+      when: enable_tls | default(true)
+      tags: [tls]
+
+    - name: Obtain/renew the Let's Encrypt certificate
+      ansible.builtin.command: >-
+        certbot --nginx
+        {% for d in ([app_domain] + (app_domain_aliases | default([]))) %}-d {{ d }}
+        {% endfor %}
+        --non-interactive --agree-tos -m {{ letsencrypt_email }} --redirect
+      args:
+        creates: "/etc/letsencrypt/live/{{ app_domain }}/fullchain.pem"
+      when: enable_tls | default(true)
+      tags: [tls]
+
+    # -----------------------------------------------------------------
+    # Firewall (optional) — requires the community.general collection
+    # -----------------------------------------------------------------
+    - name: Allow SSH/HTTP/HTTPS through ufw
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop: ["22", "80", "443"]
+      when: manage_firewall | default(false)
+      tags: [firewall]
+
+    - name: Enable ufw
+      community.general.ufw:
+        state: enabled
+        policy: deny
+      when: manage_firewall | default(false)
+      tags: [firewall]
+
+  handlers:
+    - name: Reload nginx
+      ansible.builtin.shell: nginx -t && systemctl reload nginx
+      changed_when: true
+
+    - name: Restart api container
+      ansible.builtin.command: docker compose restart api
+      args:
+        chdir: "{{ app_dir }}"

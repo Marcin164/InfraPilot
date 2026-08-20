@@ -3,8 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Users } from 'src/entities/users.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
-import { createUser as createPropelAuthUser } from 'src/helpers/propelAuthClient';
-import { randomBytes } from 'crypto';
+import { UsersService } from 'src/services/users.service';
 
 @Injectable()
 export class BootstrapService implements OnApplicationBootstrap {
@@ -13,6 +12,7 @@ export class BootstrapService implements OnApplicationBootstrap {
   constructor(
     @InjectRepository(Users)
     private readonly usersRepo: Repository<Users>,
+    private readonly usersService: UsersService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -41,21 +41,21 @@ export class BootstrapService implements OnApplicationBootstrap {
 
     this.logger.log(`Bootstrap: created first admin user (${adminEmail})`);
 
-    // Provision in PropelAuth so the user can actually log in.
+    // Link to an existing PropelAuth account by email first — falls back to
+    // creating a new one only if none exists. Same logic UsersController
+    // uses for every other user, so ADMIN_EMAIL behaves consistently
+    // whether or not you created that PropelAuth account beforehand.
     try {
-      const tempPassword = randomBytes(24).toString('base64');
-      const created = await createPropelAuthUser({
-        email: adminEmail,
-        password: tempPassword,
-        firstName: name ?? undefined,
-        lastName: surname ?? undefined,
-        emailConfirmed: true,
-      } as any);
-
-      await this.usersRepo.update(id, { authUserId: created.userId });
-      this.logger.log(
-        `Bootstrap: provisioned PropelAuth account ${created.userId} for ${adminEmail} — send a password-reset email to let the user set their own password`,
-      );
+      const result = await this.usersService.provisionInAuth(id);
+      if (result.created) {
+        this.logger.log(
+          `Bootstrap: provisioned new PropelAuth account ${result.authUserId} for ${adminEmail} — send a password-reset email to let the user set their own password`,
+        );
+      } else {
+        this.logger.log(
+          `Bootstrap: linked existing PropelAuth account ${result.authUserId} for ${adminEmail}`,
+        );
+      }
     } catch (err) {
       this.logger.warn(
         `Bootstrap: PropelAuth provisioning failed for ${adminEmail}: ${(err as Error).message}. ` +

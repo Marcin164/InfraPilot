@@ -1,0 +1,40 @@
+# Copy to group_vars/all.yml (gitignored — contains secrets) and fill in.
+# Better: `ansible-vault encrypt group_vars/all.yml` once filled in, and run
+# the playbook with --ask-vault-pass or a vault password file.
+
+# ---- Deploy target ----
+deploy_user: root                     # user added to the docker group
+app_repo_url: "git@github.com:you/infrapilot.git"   # or https:// URL
+app_git_version: master               # branch, tag, or commit
+infrapilot_app_dir: /opt/infrapilot
+
+# ---- Domain / TLS ----
+app_domain: infrapilot.example.com
+app_domain_aliases: []                # e.g. ["www.infrapilot.example.com"]
+enable_tls: true                      # runs certbot --nginx
+letsencrypt_email: you@example.com
+
+# ---- Firewall (optional, requires community.general collection) ----
+manage_firewall: false                # set true to have Ansible manage ufw
+
+# ---- Required app secrets (see root .env.example for full docs) ----
+propelauth_auth_url: "https://xxxxxxx.propelauthtest.com"
+propelauth_api_key: "CHANGE_ME"
+# vite_auth_url defaults to propelauth_auth_url — only set if different
+encryption_key: "CHANGE_ME"           # openssl rand -hex 32
+
+db_username: infrapilot
+db_password: "CHANGE_ME"
+db_name: InfraPilot
+db_schema: public
+
+admin_email: you@example.com          # bootstraps the first admin account
+
+# cors_origins / agent_public_base_url default to https://{{ app_domain }}
+# (and .../api) — only set these if you need something different.
+
+# ---- Optional integrations (leave blank to disable) ----
+grafana_admin_password: ""
+smtp_host: ""
+smtp_user: ""
+smtp_pass: ""
