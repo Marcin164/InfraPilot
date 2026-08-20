@@ -44,7 +44,22 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ close, data }) => {
   });
 
   const form = useForm({
-    defaultValues: data ?? addUserDefaultValues,
+    defaultValues: data
+      ? {
+          name: data.name ?? "",
+          surname: data.surname ?? "",
+          username: data.username ?? "",
+          email: data.email ?? "",
+          title: data.title ?? "",
+          department: data.department ?? "",
+          company: data.company ?? "",
+          office: data.office ?? "",
+          streetAddress: data.streetAddress ?? "",
+          city: data.city ?? "",
+          postalCode: data.postalCode ?? "",
+          country: data.country ?? "",
+        }
+      : addUserDefaultValues,
 
     onSubmit: async ({ value }) => {
       await mutation.mutateAsync(value);
