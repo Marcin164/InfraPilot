@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { useParams } from "react-router";
-import { faUniversalAccess } from "@fortawesome/free-solid-svg-icons";
+import { toast } from "react-toastify";
+import { faUniversalAccess, faCheck } from "@fortawesome/free-solid-svg-icons";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import Checkbox from "../../../../Components/Inputs/Checkbox";
 import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
 import { updateUser } from "../../../../Services/users";
-import { getSodMatrix } from "../../../../Services/rbac";
-import { ROLE_DEFS, computeRowSoD, type RoleKey } from "../../../../Constants/roles";
+import { ROLE_DEFS, type RoleKey } from "../../../../Constants/roles";
 
 type Props = {
   data: Record<RoleKey, boolean>;
@@ -22,17 +22,16 @@ const UserPrivileges = ({ data }: Props) => {
   const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
   const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
-  const sodQuery = useQuery({
-    queryKey: ["rbac-sod"],
-    queryFn: getSodMatrix,
-    staleTime: 5 * 60 * 1000,
-  });
-  const sodPairs = sodQuery.data?.pairs ?? [];
-
   const mutation = useMutation({
     mutationFn: (patch: Partial<Record<RoleKey, boolean>>) => updateUser(patch, params.id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user"] });
+    },
+    onError: (err: any) => {
+      // Backend rejected the change (e.g. not an admin) — the checkbox already
+      // flipped optimistically in local form state, so without this the UI
+      // would silently look like the change succeeded.
+      toast.error(err?.response?.data?.message ?? t("settings.admin.roles.updateFailed"));
     },
   });
 
@@ -40,8 +39,6 @@ const UserPrivileges = ({ data }: Props) => {
     defaultValues: data,
     onSubmit: ({ value }) => mutation.mutate(value),
   });
-
-  const sod = computeRowSoD(form.state.values, sodPairs, t);
 
   const handleCheckboxChange = (field: any, roleKey: RoleKey, checked: boolean) => {
     askConfirm(() => {
@@ -62,19 +59,17 @@ const UserPrivileges = ({ data }: Props) => {
             key={def.key}
             name={def.key}
             children={(field) => (
-              <div title={sod[def.key].reason ?? undefined}>
-                <Checkbox
-                  id={`user-privilege-${def.key}`}
-                  label={t(def.labelKey)}
-                  color={def.color}
-                  name={field.name}
-                  checked={field.state.value}
-                  disabled={mutation.isPending || sod[def.key].disabled}
-                  handleChange={(checked: boolean) =>
-                    handleCheckboxChange(field, def.key, checked)
-                  }
-                />
-              </div>
+              <Checkbox
+                id={`user-privilege-${def.key}`}
+                label={t(def.labelKey)}
+                color={def.color}
+                name={field.name}
+                checked={field.state.value}
+                disabled={mutation.isPending}
+                handleChange={(checked: boolean) =>
+                  handleCheckboxChange(field, def.key, checked)
+                }
+              />
             )}
           />
         ))}
@@ -85,6 +80,10 @@ const UserPrivileges = ({ data }: Props) => {
         onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
         onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
         message={confirmState.message}
+        title={t("common.confirm")}
+        confirmText={t("common.confirm")}
+        confirmIcon={faCheck}
+        confirmClassName="bg-[#2B9AE9]"
       />
     </div>
   );

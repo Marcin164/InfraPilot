@@ -1,4 +1,5 @@
 import { faTrash, faWarning, faXmark } from "@fortawesome/free-solid-svg-icons";
+import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -11,6 +12,12 @@ type Props = {
   onCancel: any;
   onDelete: any;
   message?: string;
+  // Overrides for non-destructive confirmations (e.g. "confirm this role
+  // change") that reuse this modal but shouldn't look/read like a delete.
+  title?: string;
+  confirmText?: string;
+  confirmIcon?: IconDefinition;
+  confirmClassName?: string;
 };
 
 const ConfirmationModal = ({
@@ -19,6 +26,10 @@ const ConfirmationModal = ({
   onCancel,
   onDelete,
   message,
+  title,
+  confirmText,
+  confirmIcon,
+  confirmClassName,
 }: Props) => {
   const { t } = useTranslation();
   return (
@@ -30,7 +41,7 @@ const ConfirmationModal = ({
       onClose={handleOnClose}
       center
     >
-      <div className="text-center font-bold text-[24px]">{t("common.dangerous")}</div>
+      <div className="text-center font-bold text-[24px]">{title ?? t("common.dangerous")}</div>
       <div className="text-center py-6">
         <FontAwesomeIcon
           icon={faWarning}
@@ -43,9 +54,9 @@ const ConfirmationModal = ({
       <div className="flex justify-around">
         <ButtonPrimary icon={faXmark} text={t("common.cancel")} onClick={onCancel} />
         <ButtonPrimary
-          icon={faTrash}
-          text={t("common.delete")}
-          className="bg-[#F3606E]"
+          icon={confirmIcon ?? faTrash}
+          text={confirmText ?? t("common.delete")}
+          className={confirmClassName ?? "bg-[#F3606E]"}
           onClick={onDelete}
         />
       </div>

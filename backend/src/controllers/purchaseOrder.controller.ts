@@ -55,7 +55,7 @@ export class PurchaseOrderController {
     return order;
   }
 
-  @Roles(Role.Admin)
+  @Roles(Role.Admin, Role.Approver)
   @Patch(':id/status')
   async updateStatus(@Param('id') id: string, @Body() body: UpdatePurchaseOrderStatusDto) {
     const order = await this.poService.updateStatus(id, body.status);

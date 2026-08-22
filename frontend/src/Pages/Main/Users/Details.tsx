@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import { useEffect } from "react";
+import { useAuthInfo } from "@propelauth/react";
 import { useParser } from "../../../Hooks/useParser";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
 import { getUser } from "../../../Services/users";
@@ -15,6 +16,15 @@ import EquipmentHistory from "./components/EquipmentHistory";
 const Details = () => {
   const params: any = useParams();
   const { setParsers } = useParser();
+
+  const authInfo: any = useAuthInfo();
+  const currentUserId = authInfo?.user?.metadata?.id;
+  const currentUserQuery = useQuery({
+    queryKey: ["current-user", currentUserId],
+    queryFn: () => getUser(currentUserId),
+    enabled: Boolean(currentUserId),
+  });
+  const viewerIsAdmin = Boolean(currentUserQuery.data?.isAdmin);
 
   const userQuery = useQuery({
     queryKey: ["user"],
@@ -43,16 +53,18 @@ const Details = () => {
         {/* Left column: identity */}
         <div className="flex flex-col gap-4">
           <UserDetails data={userQuery.data} />
-          <UserPrivileges
-            data={{
-              isAdmin: Boolean(userQuery.data.isAdmin),
-              isApprover: Boolean(userQuery.data.isApprover),
-              isAuditor: Boolean(userQuery.data.isAuditor),
-              isCompliance: Boolean(userQuery.data.isCompliance),
-              isHelpdesk: Boolean(userQuery.data.isHelpdesk),
-              isDpo: Boolean(userQuery.data.isDpo),
-            }}
-          />
+          {viewerIsAdmin && (
+            <UserPrivileges
+              data={{
+                isAdmin: Boolean(userQuery.data.isAdmin),
+                isApprover: Boolean(userQuery.data.isApprover),
+                isAuditor: Boolean(userQuery.data.isAuditor),
+                isCompliance: Boolean(userQuery.data.isCompliance),
+                isHelpdesk: Boolean(userQuery.data.isHelpdesk),
+                isDpo: Boolean(userQuery.data.isDpo),
+              }}
+            />
+          )}
           <UserGroups memberOf={userQuery.data.memberOf} />
         </div>
 

@@ -8,7 +8,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
 import { Users } from 'src/entities/users.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
-import { validateSod } from 'src/config/sod';
 import {
   createUser as createPropelAuthUser,
   fetchUserMetadataByEmail,
@@ -120,15 +119,6 @@ export class UsersService {
     const existing = await this.usersRepository.findOneBy({ id });
     if (!existing) {
       throw new NotFoundException(`User with id ${id} not found`);
-    }
-
-    const merged = { ...existing, ...dto };
-    const conflicts = validateSod(merged);
-    if (conflicts.length > 0) {
-      throw new BadRequestException({
-        message: 'Role assignment violates segregation of duties',
-        conflicts,
-      });
     }
 
     const user = await this.usersRepository.preload({ id, ...dto });

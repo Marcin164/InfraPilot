@@ -19,7 +19,7 @@ export class SlaRuntimeController {
   }
 
   // ⏸ MANUAL PAUSE
-  @Roles(Role.Admin, Role.Compliance, Role.Auditor)
+  @Roles(Role.Admin, Role.Compliance)
   @Post('ticket/:ticketId/pause')
   async pause(@Param('ticketId') ticketId: string) {
     await this.pauseService.handleManualPause(ticketId);
@@ -27,7 +27,7 @@ export class SlaRuntimeController {
   }
 
   // ▶️ MANUAL RESUME
-  @Roles(Role.Admin, Role.Compliance, Role.Auditor)
+  @Roles(Role.Admin, Role.Compliance)
   @Post('ticket/:ticketId/resume')
   async resume(@Param('ticketId') ticketId: string) {
     await this.pauseService.handleManualResume(ticketId);

@@ -13,18 +13,15 @@ const mockCreatePropelAuthUser = jest.fn();
 const mockFetchUserMetadataByEmail = jest.fn();
 const mockFetchUserMetadataByUserId = jest.fn();
 const mockLogoutAllUserSessions = jest.fn();
-const mockValidateSod = jest.fn().mockReturnValue([]);
+const mockUpdateUserMetadata = jest.fn().mockResolvedValue(true);
 
 jest.mock('src/helpers/propelAuthClient', () => ({
   createUser: (...args: any[]) => mockCreatePropelAuthUser(...args),
   fetchUserMetadataByEmail: (...args: any[]) => mockFetchUserMetadataByEmail(...args),
   fetchUserMetadataByUserId: (...args: any[]) => mockFetchUserMetadataByUserId(...args),
   logoutAllUserSessions: (...args: any[]) => mockLogoutAllUserSessions(...args),
+  updateUserMetadata: (...args: any[]) => mockUpdateUserMetadata(...args),
   propelAuth: {},
-}));
-
-jest.mock('src/config/sod', () => ({
-  validateSod: (...args: any[]) => mockValidateSod(...args),
 }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -53,7 +50,7 @@ describe('UsersService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    mockValidateSod.mockReturnValue([]);
+    mockUpdateUserMetadata.mockResolvedValue(true);
 
     const selectQb: any = {
       leftJoin: jest.fn().mockReturnThis(),
@@ -169,13 +166,6 @@ describe('UsersService', () => {
     it('throws NotFoundException when user does not exist', async () => {
       repo.findOneBy.mockResolvedValue(null);
       await expect(service.update({ name: 'X' }, 'ghost')).rejects.toThrow(NotFoundException);
-    });
-
-    it('throws BadRequestException on SOD violation', async () => {
-      repo.findOneBy.mockResolvedValue(makeUser());
-      mockValidateSod.mockReturnValue([{ role1: 'isAdmin', role2: 'isAuditor' }]);
-
-      await expect(service.update({ isAdmin: true }, 'user-1')).rejects.toThrow(BadRequestException);
     });
 
     it('saves updated user and returns it', async () => {

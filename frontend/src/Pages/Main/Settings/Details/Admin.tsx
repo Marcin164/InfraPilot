@@ -24,8 +24,7 @@ import {
   updateAssignmentGroup,
 } from "../../../../Services/assignmentGroups";
 import { getUser, getUsers, getUsersTable, updateUser } from "../../../../Services/users";
-import { getSodMatrix } from "../../../../Services/rbac";
-import { ROLE_DEFS, makeRoleLabel, computeRowSoD } from "../../../../Constants/roles";
+import { ROLE_DEFS } from "../../../../Constants/roles";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
@@ -497,7 +496,6 @@ const AssignmentGroupsSection = () => {
 
 const RolesSection = () => {
   const { t } = useTranslation();
-  const roleLabel = makeRoleLabel(t);
   const queryClient = useQueryClient();
   const authInfo: any = useAuthInfo();
   const currentUserId = authInfo?.user?.metadata?.id;
@@ -529,15 +527,6 @@ const RolesSection = () => {
     placeholderData: (prev) => prev,
   });
 
-  const sodQuery = useQuery({
-    queryKey: ["rbac-sod"],
-    queryFn: getSodMatrix,
-    enabled: isAdmin,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const sodPairs = sodQuery.data?.pairs ?? [];
-
   const updateMutation = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: Partial<User> }) =>
       updateUser(patch, id),
@@ -548,17 +537,7 @@ const RolesSection = () => {
     },
     onError: (err: any) => {
       const data = err?.response?.data;
-      if (data?.conflicts && Array.isArray(data.conflicts)) {
-        const lines = data.conflicts
-          .map(
-            (c: any) =>
-              `${roleLabel(c.a)} ↔ ${roleLabel(c.b)}: ${c.reason}`,
-          )
-          .join("\n");
-        toast.error(t("settings.admin.roles.sodViolation", { lines }));
-      } else {
-        toast.error(data?.message ?? t("settings.admin.roles.updateFailed"));
-      }
+      toast.error(data?.message ?? t("settings.admin.roles.updateFailed"));
     },
   });
 
@@ -583,36 +562,30 @@ const RolesSection = () => {
     name: t(r.labelKey),
     center: true,
     width: "110px",
-    cell: (row: any) => {
-      const sod = computeRowSoD(row, sodPairs, t)[r.key];
-      const disabled = updateMutation.isPending || sod.disabled;
-      return (
-        <div title={sod.reason ?? undefined}>
-          <Checkbox
-            id={`role-${r.key}-${row.id}`}
-            checked={Boolean(row[r.key])}
-            disabled={disabled}
-            color={r.color}
-            onClick={(e) => e.stopPropagation()}
-            handleChange={(checked: boolean) =>
-              askConfirm(
-                () =>
-                  updateMutation.mutate({
-                    id: row.id,
-                    patch: { [r.key]: checked } as Partial<User>,
-                  }),
-                t(
-                  checked
-                    ? "settings.admin.roles.confirmGrant"
-                    : "settings.admin.roles.confirmRevoke",
-                  { role: t(r.labelKey), user: `${row.name} ${row.surname}` },
-                ),
-              )
-            }
-          />
-        </div>
-      );
-    },
+    cell: (row: any) => (
+      <Checkbox
+        id={`role-${r.key}-${row.id}`}
+        checked={Boolean(row[r.key])}
+        disabled={updateMutation.isPending}
+        color={r.color}
+        onClick={(e) => e.stopPropagation()}
+        handleChange={(checked: boolean) =>
+          askConfirm(
+            () =>
+              updateMutation.mutate({
+                id: row.id,
+                patch: { [r.key]: checked } as Partial<User>,
+              }),
+            t(
+              checked
+                ? "settings.admin.roles.confirmGrant"
+                : "settings.admin.roles.confirmRevoke",
+              { role: t(r.labelKey), user: `${row.name} ${row.surname}` },
+            ),
+          )
+        }
+      />
+    ),
   }));
 
   return (
@@ -621,25 +594,6 @@ const RolesSection = () => {
       <p className="text-[14px] text-[#7a7a7a] mt-2">
         {t("settings.admin.roles.help")}
       </p>
-
-      {sodPairs.length > 0 && (
-        <div className="mt-3 rounded-[8px] border border-[#E0E0E0] bg-[#FAFAFA] p-3">
-          <div className="text-[13px] font-bold text-[#3C3C3C] mb-1">
-            {t("settings.admin.roles.sod")}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {sodPairs.map((p, idx) => (
-              <span
-                key={idx}
-                title={p.reason}
-                className="inline-flex items-center gap-1 rounded-full bg-white border border-[#E0E0E0] px-2 py-0.5 text-[12px] text-[#535353]"
-              >
-                {roleLabel(p.a)} <span className="text-[#9a9a9a]">⊥</span> {roleLabel(p.b)}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="mt-4">
         <Search
@@ -671,6 +625,10 @@ const RolesSection = () => {
         onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
         onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
         message={confirmState.message}
+        title={t("common.confirm")}
+        confirmText={t("common.confirm")}
+        confirmIcon={faCheck}
+        confirmClassName="bg-[#2B9AE9]"
       />
     </div>
   );
