@@ -22,6 +22,8 @@ import {
   type SmtpConfig,
 } from "../../../../Services/smtp";
 import Checkbox from "../../../../Components/Inputs/Checkbox";
+import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
+import { hasRequiredRole } from "../../../../Constants/navigation";
 
 const emptyForm: SmtpConfig = {
   host: "",
@@ -88,6 +90,9 @@ const SmtpSettings = () => {
 
   const isLoading =
     saveMutation.isPending || deleteMutation.isPending || testMutation.isPending;
+
+  const currentUserQuery = useCurrentUser();
+  if (!hasRequiredRole("admin", currentUserQuery.data)) return null;
 
   return (
     <div className="m-4 space-y-4">

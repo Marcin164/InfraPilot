@@ -15,6 +15,8 @@ import {
   createDeviceTag,
   deleteDeviceTag,
 } from "../../../../Services/deviceTags";
+import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
+import { hasRequiredRole } from "../../../../Constants/navigation";
 
 const Tags = () => {
   const { t } = useTranslation();
@@ -63,6 +65,9 @@ const Tags = () => {
     onError: (err: any) =>
       toast.error(err?.response?.data?.message ?? t("settings.tags.deleteFailed")),
   });
+
+  const currentUserQuery = useCurrentUser();
+  if (!hasRequiredRole("admin", currentUserQuery.data)) return null;
 
   return (
     <div className="space-y-4 m-4">

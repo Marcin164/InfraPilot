@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import { useEffect } from "react";
-import { useAuthInfo } from "@propelauth/react";
 import { useParser } from "../../../Hooks/useParser";
+import { useCurrentUser } from "../../../Hooks/useCurrentUser";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
 import { getUser } from "../../../Services/users";
 import { getDevicesByOwner } from "../../../Services/devices";
@@ -17,13 +17,7 @@ const Details = () => {
   const params: any = useParams();
   const { setParsers } = useParser();
 
-  const authInfo: any = useAuthInfo();
-  const currentUserId = authInfo?.user?.metadata?.id;
-  const currentUserQuery = useQuery({
-    queryKey: ["current-user", currentUserId],
-    queryFn: () => getUser(currentUserId),
-    enabled: Boolean(currentUserId),
-  });
+  const currentUserQuery = useCurrentUser();
   const viewerIsAdmin = Boolean(currentUserQuery.data?.isAdmin);
 
   const userQuery = useQuery({

@@ -25,6 +25,8 @@ import {
   type Location,
   type LocationType,
 } from "../../../../Services/locations";
+import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
+import { hasRequiredRole } from "../../../../Constants/navigation";
 
 const LOCATION_TYPES: LocationType[] = ["building", "floor", "room", "rack", "other"];
 
@@ -228,6 +230,9 @@ const Locations = () => {
     onError: (err: any) =>
       toast.error(err?.response?.data?.message ?? t("settings.locations.createFailed")),
   });
+
+  const currentUserQuery = useCurrentUser();
+  if (!hasRequiredRole("admin", currentUserQuery.data)) return null;
 
   return (
     <div className="space-y-4 m-4">

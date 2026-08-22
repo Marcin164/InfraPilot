@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuthInfo } from "@propelauth/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,
@@ -23,8 +22,10 @@ import {
   setAssignmentGroupMembers,
   updateAssignmentGroup,
 } from "../../../../Services/assignmentGroups";
-import { getUser, getUsers, getUsersTable, updateUser } from "../../../../Services/users";
+import { getUsers, getUsersTable, updateUser } from "../../../../Services/users";
 import { ROLE_DEFS } from "../../../../Constants/roles";
+import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
+import { hasRequiredRole } from "../../../../Constants/navigation";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
@@ -224,8 +225,6 @@ const LastLogonSection = () => {
 const AssignmentGroupsSection = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const authInfo: any = useAuthInfo();
-  const currentUserId = authInfo?.user?.metadata?.id;
 
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
@@ -235,11 +234,7 @@ const AssignmentGroupsSection = () => {
   const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
   const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
-  const currentUserQuery = useQuery({
-    queryKey: ["current-user", currentUserId],
-    queryFn: () => getUser(currentUserId),
-    enabled: Boolean(currentUserId),
-  });
+  const currentUserQuery = useCurrentUser();
 
   const isAdmin = Boolean(currentUserQuery.data?.isAdmin);
 
@@ -497,8 +492,6 @@ const AssignmentGroupsSection = () => {
 const RolesSection = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const authInfo: any = useAuthInfo();
-  const currentUserId = authInfo?.user?.metadata?.id;
   const [searchValue, setSearchValue] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(15);
@@ -506,11 +499,7 @@ const RolesSection = () => {
   const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
   const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
-  const currentUserQuery = useQuery({
-    queryKey: ["current-user", currentUserId],
-    queryFn: () => getUser(currentUserId),
-    enabled: Boolean(currentUserId),
-  });
+  const currentUserQuery = useCurrentUser();
 
   const isAdmin = Boolean(currentUserQuery.data?.isAdmin);
 
@@ -637,6 +626,9 @@ const RolesSection = () => {
 /* ──────────────────────── Admin Page ────────────────────────── */
 
 const Admin = () => {
+  const currentUserQuery = useCurrentUser();
+  if (!hasRequiredRole("admin", currentUserQuery.data)) return null;
+
   return (
     <div className="space-y-4 m-4">
       <LastLogonSection />

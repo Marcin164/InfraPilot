@@ -2,12 +2,11 @@ import { motion } from "framer-motion";
 import NavbarLink from "./NavbarLink";
 import { navbarItems, canSeeItem } from "../../Constants/navigation";
 import { useAuthInfo, useLogoutFunction } from "@propelauth/react";
-import { useQuery } from "@tanstack/react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignOut, faTimes } from "@fortawesome/free-solid-svg-icons";
 import Logo from "../../assets/Logo.png";
 import { useTranslation } from "react-i18next";
-import { getUser } from "../../Services/users";
+import { useCurrentUser } from "../../Hooks/useCurrentUser";
 
 type Props = {
   isOpen: boolean;
@@ -24,13 +23,8 @@ const MainNavbar = ({ isOpen, onClose }: Props) => {
   const { t } = useTranslation();
   const authInfo: any = useAuthInfo();
   const accessToken = authInfo?.accessToken;
-  const currentUserId = authInfo?.user?.metadata?.id;
 
-  const currentUserQuery = useQuery({
-    queryKey: ["current-user", currentUserId],
-    queryFn: () => getUser(currentUserId),
-    enabled: Boolean(currentUserId),
-  });
+  const currentUserQuery = useCurrentUser();
 
   const adminItems = navbarItems.filter((item) =>
     canSeeItem(item, currentUserQuery.data),

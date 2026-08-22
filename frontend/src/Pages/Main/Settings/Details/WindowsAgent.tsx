@@ -30,6 +30,8 @@ import {
   revokeEnrollmentToken,
   uploadAgentInstaller,
 } from "../../../../Services/devices";
+import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
+import { hasRequiredRole } from "../../../../Constants/navigation";
 
 const CopyableBox = ({ value }: { value: string }) => {
   const [copied, setCopied] = useState(false);
@@ -456,6 +458,9 @@ const WindowsAgent = () => {
     },
     onError: () => toast.error("Nie udało się wgrać instalatora"),
   });
+
+  const currentUserQuery = useCurrentUser();
+  if (!hasRequiredRole("admin", currentUserQuery.data)) return null;
 
   if (isLoading) {
     return <div className="p-4 text-[#7a7a7a]">Loading...</div>;

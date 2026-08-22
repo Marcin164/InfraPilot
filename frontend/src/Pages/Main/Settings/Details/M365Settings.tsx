@@ -31,6 +31,8 @@ import {
   syncM365Devices,
   type SubscribedSku,
 } from "../../../../Services/m365";
+import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
+import { hasRequiredRole } from "../../../../Constants/navigation";
 
 const SKU_NAMES: Record<string, string> = {
   ENTERPRISEPREMIUM: "Microsoft 365 E5",
@@ -124,6 +126,9 @@ const M365Settings = () => {
       </div>
     );
   };
+
+  const currentUserQuery = useCurrentUser();
+  if (!hasRequiredRole("admin", currentUserQuery.data)) return null;
 
   return (
     <div className="m-4 space-y-4">

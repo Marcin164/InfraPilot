@@ -8,6 +8,8 @@ import { listPrivacyAccessLog } from "../../../../Services/privacy";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import MainTable from "../../../../Components/Tables/MainTable";
 import Input from "../../../../Components/Inputs/Input";
+import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
+import { hasRequiredRole } from "../../../../Constants/navigation";
 
 const Privacy = () => {
   const { t } = useTranslation();
@@ -56,6 +58,9 @@ const Privacy = () => {
     ],
     [t],
   );
+
+  const currentUserQuery = useCurrentUser();
+  if (!hasRequiredRole("dpoOrAdmin", currentUserQuery.data)) return null;
 
   return (
     <div className="space-y-4 m-4">

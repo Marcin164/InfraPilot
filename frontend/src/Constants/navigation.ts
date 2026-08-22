@@ -66,11 +66,17 @@ export type RoleFlags = {
   isDpo?: boolean;
 };
 
-export const canSeeItem = (item: NavbarItem, user: RoleFlags | undefined) => {
-  if (!item.requires) return true;
+// Core check, usable directly on a page component (`hasRequiredRole("admin",
+// currentUser)`) without needing a full NavbarItem — pages don't have a
+// `to`/`label`/`icon` to construct one.
+export const hasRequiredRole = (
+  requires: NavbarRequirement | undefined,
+  user: RoleFlags | undefined,
+): boolean => {
+  if (!requires) return true;
   if (!user) return false;
   if (user.isAdmin) return true;
-  switch (item.requires) {
+  switch (requires) {
     case "admin":
       return false;
     case "approverOrAdmin":
@@ -95,6 +101,9 @@ export const canSeeItem = (item: NavbarItem, user: RoleFlags | undefined) => {
       return true;
   }
 };
+
+export const canSeeItem = (item: NavbarItem, user: RoleFlags | undefined) =>
+  hasRequiredRole(item.requires, user);
 
 export const navbarItems: NavbarItem[] = [
   {

@@ -8,29 +8,21 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { twMerge } from "tailwind-merge";
-import { useAuthInfo } from "@propelauth/react";
-import { useQuery } from "@tanstack/react-query";
 import Badge from "../../../../Components/Badges/Badge";
 import Parameter from "../../../../Components/Lists/Parameter";
 import UserDetailsDropdown from "../../../../Components/Dropdowns/UserDetailsDropdown";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import PrivacyDialog from "../../../../Components/Modals/PrivacyDialog";
-import { getUser } from "../../../../Services/users";
 import AuthLinkPanel from "./AuthLinkPanel";
+import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
 
 type Props = { data: any };
 
 const UserDetails = ({ data }: Props) => {
   const { t } = useTranslation();
   const [privacyOpen, setPrivacyOpen] = useState(false);
-  const authInfo: any = useAuthInfo();
-  const currentUserId = authInfo?.user?.metadata?.id;
 
-  const currentUserQuery = useQuery({
-    queryKey: ["current-user", currentUserId],
-    queryFn: () => getUser(currentUserId),
-    enabled: Boolean(currentUserId),
-  });
+  const currentUserQuery = useCurrentUser();
 
   const canViewAsDpo = Boolean(
     currentUserQuery.data?.isDpo || currentUserQuery.data?.isAdmin,

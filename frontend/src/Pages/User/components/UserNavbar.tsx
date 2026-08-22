@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import { useAuthInfo, useLogoutFunction } from "@propelauth/react";
-import { useQuery } from "@tanstack/react-query";
+import { useLogoutFunction } from "@propelauth/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSignOut,
@@ -12,8 +11,8 @@ import {
 import { useTranslation } from "react-i18next";
 import NavbarLink from "../../../Components/Navbar/NavbarLink";
 import Logo from "../../../assets/Logo.png";
-import { getUser } from "../../../Services/users";
 import { canSeeItem, userPortalExtraItems } from "../../../Constants/navigation";
+import { useCurrentUser } from "../../../Hooks/useCurrentUser";
 
 type Props = {
   isOpen: boolean;
@@ -34,14 +33,8 @@ const navItem = {
 const UserNavbar = ({ isOpen, onClose }: Props) => {
   const logout = useLogoutFunction();
   const { t } = useTranslation();
-  const authInfo: any = useAuthInfo();
-  const currentUserId = authInfo?.user?.metadata?.id;
 
-  const currentUserQuery = useQuery({
-    queryKey: ["current-user", currentUserId],
-    queryFn: () => getUser(currentUserId),
-    enabled: Boolean(currentUserId),
-  });
+  const currentUserQuery = useCurrentUser();
 
   const visibleItems = [
     ...items,

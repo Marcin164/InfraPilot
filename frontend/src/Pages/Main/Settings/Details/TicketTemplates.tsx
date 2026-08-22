@@ -17,6 +17,8 @@ import {
   deleteTicketTemplate,
   TicketTemplate,
 } from "../../../../Services/ticketTemplates";
+import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
+import { hasRequiredRole } from "../../../../Constants/navigation";
 
 const emptyDraft = () => ({
   name: "",
@@ -141,6 +143,9 @@ const TicketTemplates = () => {
   });
 
   const templates = templatesQuery.data ?? [];
+
+  const currentUserQuery = useCurrentUser();
+  if (!hasRequiredRole("helpdeskOrAdmin", currentUserQuery.data)) return null;
 
   return (
     <div className="space-y-4 m-4">
