@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import ReactSelect from "react-select";
+import { useTheme } from "../../Context/ThemeContext";
+import { getReactSelectTheme, selectOptionBg, selectTextColor } from "./reactSelectTheme";
 
 type Props = { options: Array<any>; onSelect: any; value?: any };
 
 const Select = ({ options, onSelect, value }: Props) => {
   const [selectedOption, setSelectedOption] = useState(value);
   const [reload, setReload] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   useEffect(() => {
     setSelectedOption(value);
@@ -29,10 +33,9 @@ const Select = ({ options, onSelect, value }: Props) => {
       ...styles,
       width: "100%",
       fontSize: "14px",
-      color: state.isFocused || state.isSelected ? "#FFFFFF" : "#3C3C3C",
+      color: selectTextColor(isDark, state.isFocused || state.isSelected),
       fontWeight: "400",
-      backgroundColor:
-        state.isFocused || state.isSelected ? "#2B9AE9AA" : "transparent",
+      backgroundColor: selectOptionBg(state.isFocused || state.isSelected),
       cursor: "pointer",
       transition: "background-color 0.2s ease",
     }),
@@ -49,6 +52,7 @@ const Select = ({ options, onSelect, value }: Props) => {
         onChange={handleChange}
         options={options}
         styles={styles}
+        theme={getReactSelectTheme(isDark)}
       />
     </div>
   );

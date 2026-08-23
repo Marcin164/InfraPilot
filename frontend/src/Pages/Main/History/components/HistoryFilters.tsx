@@ -10,6 +10,8 @@ import SearchCombobox from "./SearchCombobox";
 import type { ComboboxOption } from "./SearchCombobox";
 import { getDevices } from "../../../../Services/devices";
 import { getUsersTable } from "../../../../Services/users";
+import { useTheme } from "../../../../Context/ThemeContext";
+import { getReactSelectTheme, selectBorderColor } from "../../../../Components/Inputs/reactSelectTheme";
 
 export type HistoryFiltersState = {
   types: HistoryType[];
@@ -28,18 +30,18 @@ type Props = {
   exporting?: boolean;
 };
 
-const selectStyles: any = {
+const buildSelectStyles = (isDark: boolean): any => ({
   control: (styles: any) => ({
     ...styles,
     minHeight: "42px",
-    borderColor: "#3C3C3C",
+    borderColor: selectBorderColor(isDark),
     borderRadius: "10px",
     fontSize: "14px",
     fontWeight: 600,
     paddingLeft: "4px",
   }),
   menu: (styles: any) => ({ ...styles, zIndex: 20 }),
-};
+});
 
 const fetchDeviceOptions = async (
   search: string,
@@ -77,6 +79,8 @@ const HistoryFilters = ({
   exporting,
 }: Props) => {
   const { t } = useTranslation();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const [searchDraft, setSearchDraft] = useState(value.q);
 
   useEffect(() => {
@@ -121,7 +125,8 @@ const HistoryFilters = ({
             })
           }
           placeholder={t("history.allTypes")}
-          styles={selectStyles}
+          styles={buildSelectStyles(isDark)}
+          theme={getReactSelectTheme(isDark)}
         />
       </div>
 

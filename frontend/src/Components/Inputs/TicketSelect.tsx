@@ -2,6 +2,8 @@ import { useRef } from "react";
 import AsyncCreatableSelect from "react-select/async-creatable";
 import { searchTickets } from "../../Services/tickets";
 import type { Ticket } from "../../Types/ticket";
+import { useTheme } from "../../Context/ThemeContext";
+import { getReactSelectTheme, selectBorderColor, selectOptionBg, selectTextColor } from "./reactSelectTheme";
 
 type Props = {
   label?: string;
@@ -17,14 +19,14 @@ type TicketOption = {
   value: string;
 };
 
-const styles: any = {
+const buildStyles = (isDark: boolean): any => ({
   control: (base: any) => ({
     ...base,
     width: "100%",
     height: "42px",
     fontSize: "16px",
     fontWeight: "700",
-    borderColor: "#3C3C3C",
+    borderColor: selectBorderColor(isDark),
     borderRadius: "10px",
     paddingLeft: "6px",
     outline: "none",
@@ -34,10 +36,9 @@ const styles: any = {
     ...base,
     width: "100%",
     fontSize: "14px",
-    color: state.isFocused || state.isSelected ? "#FFFFFF" : "#3C3C3C",
+    color: selectTextColor(isDark, state.isFocused || state.isSelected),
     fontWeight: "400",
-    backgroundColor:
-      state.isFocused || state.isSelected ? "#2B9AE9AA" : "transparent",
+    backgroundColor: selectOptionBg(state.isFocused || state.isSelected),
     cursor: "pointer",
     transition: "background-color 0.2s ease",
   }),
@@ -45,7 +46,7 @@ const styles: any = {
   input: (base: any) => ({ ...base, width: "100%", outline: "none" }),
   placeholder: (base: any) => ({ ...base }),
   singleValue: (base: any) => ({ ...base, width: "100%" }),
-};
+});
 
 const TicketSelect = ({
   label = "Ticket",
@@ -57,6 +58,8 @@ const TicketSelect = ({
 }: Props) => {
   const selectedOption = value ? { label: value, value } : null;
   const ticketsByNumber = useRef<Map<string, Ticket>>(new Map());
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   const loadOptions = async (inputValue: string): Promise<TicketOption[]> => {
     if (inputValue.length < 3) return [];
@@ -84,7 +87,8 @@ const TicketSelect = ({
           onChange(inputValue);
           onTicketLoaded?.(null);
         }}
-        styles={styles}
+        styles={buildStyles(isDark)}
+        theme={getReactSelectTheme(isDark)}
         isClearable
         filterOption={null}
         placeholder="Type at least 3 characters..."

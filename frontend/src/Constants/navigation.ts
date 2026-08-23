@@ -31,6 +31,7 @@ import {
   faSitemap,
   faShieldHalved,
   faShoppingCart,
+  faSquareCheck,
   faTag,
   faTicket,
   faUser,
@@ -180,6 +181,12 @@ export const navbarItems: NavbarItem[] = [
 // which keeps its own item list rather than reading `navbarItems` above.
 // Only shown to users who hold an elevated role (see `canSeeItem`/"anyRole").
 export const userPortalExtraItems: NavbarItem[] = [
+  {
+    to: "/user/approvals",
+    label: "nav.approvals",
+    icon: faSquareCheck,
+    requires: "approverOrAdmin",
+  },
   {
     to: "/admin/dashboards",
     label: "nav.switchToAdmin",

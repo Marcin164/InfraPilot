@@ -91,3 +91,34 @@
   border-top: 1px solid #e0e0e0;
   margin: 1em 0;
 }
+
+html.dark .tiptap,
+html.dark .article-content {
+  color: #E5E7EB;
+}
+
+html.dark .tiptap p.is-editor-empty:first-child::before {
+  color: #9AA3AE;
+}
+
+html.dark .tiptap blockquote,
+html.dark .article-content blockquote {
+  border-left-color: #50ACED;
+  color: #C8CDD5;
+}
+
+html.dark .tiptap code,
+html.dark .article-content code {
+  background: #1A1F26;
+  color: #E5E7EB;
+}
+
+html.dark .tiptap a,
+html.dark .article-content a {
+  color: #50ACED;
+}
+
+html.dark .tiptap hr,
+html.dark .article-content hr {
+  border-top-color: #2A2F38;
+}

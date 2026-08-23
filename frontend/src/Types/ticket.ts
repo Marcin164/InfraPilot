@@ -61,6 +61,22 @@ export interface Approval {
   approver: { id: string; distinguishedName: string };
 }
 
+// GET /tickets/approve/mine — unlike `Approval` (nested under a known
+// Ticket), this carries its own ticket reference since it's a flat list
+// spanning any ticket the current user is the assigned approver for.
+export interface MyApproval {
+  id: string;
+  createdAt: string;
+  ticket: {
+    id: string;
+    number: string;
+    title?: string;
+    type: TicketType;
+    priority: TicketPriority;
+    requester?: { name?: string; surname?: string; email?: string };
+  };
+}
+
 export interface UpdateTicketData {
   state?: TicketState;
   assignee?: string;

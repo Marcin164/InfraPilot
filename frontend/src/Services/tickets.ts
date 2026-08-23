@@ -1,5 +1,5 @@
 import api from "../lib/api";
-import type { Ticket, UpdateTicketData, Comment, Approval, ApprovalDecision, TicketType, TicketPriority, TicketImpact, TicketUrgency } from "../Types";
+import type { Ticket, UpdateTicketData, Comment, Approval, ApprovalDecision, MyApproval, TicketType, TicketPriority, TicketImpact, TicketUrgency } from "../Types";
 import type { CustomFieldDef } from "./ticketWorkflows";
 
 export const getTickets = async (query: string): Promise<{ data: Ticket[]; total: number }> => {
@@ -170,6 +170,11 @@ export const fetchAttachmentBlob = async (commentId: string): Promise<string> =>
     responseType: "blob",
   });
   return URL.createObjectURL(data);
+};
+
+export const getMyApprovals = async (): Promise<MyApproval[]> => {
+  const { data } = await api.get(`/tickets/approve/mine`);
+  return data;
 };
 
 export const createApproval = async (

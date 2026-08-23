@@ -28,7 +28,7 @@ const AccountSettings = ({ isOpen, closeModal }: Props) => {
         <div>
           <NavLink
             onClick={closeModal}
-            className="text-[#535353] text-[16px] px-4 py-2 block hover:text-[#2B9AE9] hoverbg-[#D7EEFF]/50"
+            className="text-[#535353] text-[16px] px-4 py-2 block hover:text-[#2B9AE9] hover:bg-[#D7EEFF]/50"
             to={`${import.meta.env.VITE_AUTH_URL}/account/settings`}
           >
             <div className="my-2">
@@ -38,7 +38,7 @@ const AccountSettings = ({ isOpen, closeModal }: Props) => {
           </NavLink>
           <NavLink
             onClick={closeModal}
-            className="text-[#535353] text-[16px] px-4 py-1 block hover:text-[#2B9AE9] hoverbg-[#D7EEFF]/50"
+            className="text-[#535353] text-[16px] px-4 py-1 block hover:text-[#2B9AE9] hover:bg-[#D7EEFF]/50"
             to="settings"
           >
             <div className="my-2">
@@ -47,7 +47,7 @@ const AccountSettings = ({ isOpen, closeModal }: Props) => {
             </div>
           </NavLink>
           <button
-            className="text-[#535353] text-[16px] px-4 py-1 block hover:text-[#2B9AE9] hoverbg-[#D7EEFF]/50"
+            className="text-[#535353] text-[16px] px-4 py-1 block hover:text-[#2B9AE9] hover:bg-[#D7EEFF]/50"
             onClick={() => logout(false)}
           >
             <div className="my-2">

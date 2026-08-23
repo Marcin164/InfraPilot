@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import ReactSelect from "react-select";
+import { useTheme } from "../../Context/ThemeContext";
+import { getReactSelectTheme, selectBorderColor, selectOptionBg, selectTextColor } from "./reactSelectTheme";
 
 type Props = {
   label?: string;
@@ -30,6 +32,8 @@ const SelectSecondary = ({
 }: Props) => {
   const [selectedOption, setSelectedOption] = useState(value);
   const [reload, setReload] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   useEffect(() => {
     setSelectedOption(value);
@@ -48,7 +52,7 @@ const SelectSecondary = ({
       minHeight: "42px",
       fontSize: "16px",
       fontWeight: "700",
-      borderColor: "#3C3C3C",
+      borderColor: selectBorderColor(isDark),
       borderRadius: "10px",
       paddingLeft: "6px",
       outline: "none",
@@ -58,10 +62,9 @@ const SelectSecondary = ({
       ...styles,
       width: "100%",
       fontSize: "14px",
-      color: state.isFocused || state.isSelected ? "#FFFFFF" : "#3C3C3C",
+      color: selectTextColor(isDark, state.isFocused || state.isSelected),
       fontWeight: "400",
-      backgroundColor:
-        state.isFocused || state.isSelected ? "#2B9AE9AA" : "transparent",
+      backgroundColor: selectOptionBg(state.isFocused || state.isSelected),
       cursor: "pointer",
       transition: "background-color 0.2s ease",
     }),
@@ -83,6 +86,7 @@ const SelectSecondary = ({
         onChange={handleChange}
         options={options}
         styles={styles}
+        theme={getReactSelectTheme(isDark)}
         isMulti={isMulti}
         isClearable={isClearable}
         isDisabled={isDisabled}

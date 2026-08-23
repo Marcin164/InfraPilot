@@ -68,10 +68,31 @@ import UserTickets from "./Pages/User/Tickets";
 import UserTicketDetails from "./Pages/User/Tickets/Details";
 import NewUserTicket from "./Pages/User/Tickets/New";
 import UserSettings from "./Pages/User/Settings";
+import UserApprovals from "./Pages/User/Approvals";
 import { AnimatePresence } from "framer-motion";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { useAuthSetup } from "./Hooks/useAuthSetup";
-import { ThemeProvider } from "./Context/ThemeContext";
+import { ThemeProvider, useTheme } from "./Context/ThemeContext";
 import Tickets from "./Pages/User/Tickets";
+
+const ThemedToastContainer = () => {
+  const { resolvedTheme } = useTheme();
+  return (
+    <ToastContainer
+      position="bottom-center"
+      autoClose={3000}
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick={false}
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+      theme={resolvedTheme}
+    />
+  );
+};
 
 function App() {
   useAuthSetup();
@@ -79,6 +100,7 @@ function App() {
   return (
     <AnimatePresence mode="wait">
       <ThemeProvider>
+        <ThemedToastContainer />
         <ParseProvider>
           <BrowserRouter>
             <Routes>
@@ -92,6 +114,7 @@ function App() {
                 <Route path="tickets" element={<UserTickets />} />
                 <Route path="tickets/new" element={<NewUserTicket />} />
                 <Route path="tickets/:id" element={<UserTicketDetails />} />
+                <Route path="approvals" element={<UserApprovals />} />
                 <Route path="settings" element={<UserSettings />} />
               </Route>
               <Route path="/admin" element={<Main />}>

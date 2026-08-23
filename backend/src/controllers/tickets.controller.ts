@@ -182,6 +182,12 @@ export class TicketsController {
     stream.pipe(res);
   }
 
+  @Get('/approve/mine')
+  async getMyApprovals(@Req() req: any): Promise<any> {
+    const currentUserId = req?.user?.properties?.metadata?.id;
+    return this.ticketsService.getMyApprovals(currentUserId);
+  }
+
   @Roles(Role.Admin, Role.Helpdesk)
   @Post('/approve/:ticketId/:requesterId/:approverId')
   async createApproval(

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Tickets } from 'src/entities/tickets.entity';
 import { EVENTS } from 'src/events/events.constants';
@@ -1013,6 +1013,20 @@ export class TicketsService {
     });
 
     return this.ticketsApprovalsRepository.save(approval);
+  }
+
+  /**
+   * Approvals assigned to this user that haven't been decided yet — powers
+   * the "Approvals" tab in the end-user portal, so someone with only the
+   * Approver role (no admin panel access) can act on them without opening
+   * a ticket's full detail thread.
+   */
+  async getMyApprovals(approverId: string) {
+    return this.ticketsApprovalsRepository.find({
+      where: { approverId, decision: IsNull() },
+      relations: ['ticket', 'ticket.requester'],
+      order: { createdAt: 'DESC' },
+    });
   }
 
   /*

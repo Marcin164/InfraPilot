@@ -2,6 +2,8 @@ import { forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import DataTable from "react-data-table-component";
+import { useTheme } from "../../Context/ThemeContext";
+import { DATA_TABLE_DARK_THEME } from "./dataTableTheme";
 
 const TableCheckbox = forwardRef<HTMLInputElement, { indeterminate?: boolean; checked?: boolean; [key: string]: any }>(
   ({ indeterminate, checked, ...rest }, ref) => {
@@ -48,6 +50,8 @@ const MainTable = ({
   expandableRowsComponent,
 }: any) => {
   const { t } = useTranslation();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const paginationComponentOptions = {
     rowsPerPageText: t("table.pagination.rowsPerPage"),
     rangeSeparatorText: t("table.pagination.rangeSeparator"),
@@ -65,28 +69,37 @@ const MainTable = ({
     },
     headRow: {
       style: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: isDark ? "#1A1F26" : "#FFFFFF",
+        color: isDark ? "#E5E7EB" : undefined,
         fontWeight: "bold",
         borderRadius: "10px",
         fontSize: "16px",
       },
     },
+    headCells: {
+      style: {
+        color: isDark ? "#E5E7EB" : undefined,
+      },
+    },
     rows: {
       style: {
         minHeight: "48px",
-        borderBottomColor: "#eeeeee",
+        backgroundColor: isDark ? "#1A1F26" : undefined,
+        color: isDark ? "#E5E7EB" : undefined,
+        borderBottomColor: isDark ? "#2A2F38" : "#eeeeee",
         transition: "all 0.2s ease-in-out",
         margin: "5px 0",
         borderRadius: "10px",
         fontSize: "14px",
         "&:hover": {
-          backgroundColor: "#d2ecff",
+          backgroundColor: isDark ? "#1D323F" : "#d2ecff",
         },
       },
     },
     pagination: {
       style: {
         background: "#FFFFFF00",
+        color: isDark ? "#E5E7EB" : undefined,
         borderTop: "0px",
       },
     },
@@ -106,6 +119,7 @@ const MainTable = ({
           columns={columns}
           data={data}
           customStyles={customStyles}
+          theme={isDark ? DATA_TABLE_DARK_THEME : "default"}
           onRowClicked={onRowClicked}
           highlightOnHover
           pointerOnHover
