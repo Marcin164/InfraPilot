@@ -16,13 +16,14 @@ import Notify from "./EscalationFormActionTypes/Notify";
 import Reassign from "./EscalationFormActionTypes/Reassign";
 import PriorityUp from "./EscalationFormActionTypes/PriorityUp";
 
-import type { SlaEscalation, SlaDefinition } from "../../Types";
+import type { SlaEscalation, SlaDefinition, SlaType } from "../../Types";
 
 type Props = { data?: SlaEscalation };
 
-type EscalationForm = {
+type EscalationFormValues = {
   slaDefinitionId: string;
-  triggerPercentage: number;
+  triggerPercentage: number | string;
+  appliesTo: SlaType | "" ;
   actionType: "NOTIFY" | "REASSIGN" | "PRIORITY_UP";
   actionConfig: {
     channel?: string;
@@ -42,8 +43,10 @@ const EditEscalationForm = ({ data }: Props) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (values: any) =>
-      data ? patchSlaEscalation(values) : postSlaEscalation(values),
+    mutationFn: (values: EscalationFormValues) => {
+      const payload = { ...values, appliesTo: values.appliesTo || null };
+      return data ? patchSlaEscalation(data.id, payload) : postSlaEscalation(payload as any);
+    },
 
     onSuccess: async () => {
       toast.success(t("toast.success.escalationUpdated"));
@@ -61,20 +64,20 @@ const EditEscalationForm = ({ data }: Props) => {
   });
 
   const form = useForm({
-    defaultValues: data ?? {
-      slaDefinitionId: "",
-      triggerPercentage: "",
-      actionType: "NOTIFY",
+    defaultValues: {
+      slaDefinitionId: data?.slaDefinitionId ?? "",
+      triggerPercentage: data?.triggerPercentage ?? "",
+      appliesTo: data?.appliesTo ?? "",
+      actionType: data?.actionType ?? "NOTIFY",
       actionConfig: {
-        channel: "",
-        recipients: "",
-        targetPriority: "",
-        targetGroup: "",
+        channel: data?.actionConfig?.channel ?? "",
+        recipients: data?.actionConfig?.recipients ?? "",
+        targetPriority: data?.actionConfig?.targetPriority ?? "",
+        targetGroup: data?.actionConfig?.targetGroup ?? "",
       },
-    },
+    } as EscalationFormValues,
 
     onSubmit: ({ value }) => {
-      console.log(value);
       mutation.mutate(value);
     },
   });
@@ -91,10 +94,15 @@ const EditEscalationForm = ({ data }: Props) => {
     { value: "PRIORITY_UP", label: t("form.action.priorityUp") },
   ];
 
+  const appliesToOptions = [
+    { value: "", label: t("form.appliesTo.both") },
+    { value: "RESPONSE", label: t("form.appliesTo.response") },
+    { value: "RESOLUTION", label: t("form.appliesTo.resolution") },
+  ];
+
   return (
     <form
       onSubmit={(e) => {
-        console.log("Dziala");
         e.preventDefault();
         form.handleSubmit();
       }}
@@ -125,6 +133,17 @@ const EditEscalationForm = ({ data }: Props) => {
             value={String(field.state.value)}
             onChange={(e: any) => field.handleChange(e.target.value)}
             errors={field.state.meta.errors?.join(", ")}
+          />
+        )}
+      </form.Field>
+
+      <form.Field name="appliesTo">
+        {(field) => (
+          <SelectSecondary
+            label={t("form.appliesTo")}
+            options={appliesToOptions}
+            value={appliesToOptions.find((o) => o.value === (field.state.value || ""))}
+            onSelect={(option: any) => field.handleChange(option.value)}
           />
         )}
       </form.Field>

@@ -20,8 +20,10 @@ export interface SlaHoliday {
 export interface SlaDefinition {
   id: string;
   name: string;
-  type: SlaType;
-  targetMinutes: number;
+  // At least one of the two is set -- a single definition can carry both a
+  // response and a resolution target sharing the same calendar.
+  responseMinutes: number | null;
+  resolutionMinutes: number | null;
   calendar?: { id: string; name: string };
   calendarId?: string;
 }
@@ -38,6 +40,8 @@ export interface SlaEscalation {
   id: string;
   slaDefinitionId: string;
   triggerPercentage: number;
+  // null = applies to both RESPONSE and RESOLUTION instances of the definition.
+  appliesTo?: SlaType | null;
   actionType: EscalationActionType;
   actionConfig: {
     channel?: string;

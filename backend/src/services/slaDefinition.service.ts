@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Calendar } from 'src/entities/calendar.entity';
 import { SlaDefinition } from 'src/entities/slaDefinition.entity';
@@ -23,9 +23,16 @@ export class SlaDefinitionService {
 
   async create(dto: {
     name: string;
-    targetMinutes: number;
     calendarId: string;
+    responseMinutes?: number;
+    resolutionMinutes?: number;
   }) {
+    if (!dto.responseMinutes && !dto.resolutionMinutes) {
+      throw new BadRequestException(
+        'At least one of responseMinutes or resolutionMinutes is required',
+      );
+    }
+
     const calendar = await this.calendarRepo.findOne({
       where: { id: dto.calendarId },
     });
@@ -36,7 +43,8 @@ export class SlaDefinitionService {
 
     const sla = this.slaRepo.create({
       name: dto.name,
-      targetMinutes: dto.targetMinutes,
+      responseMinutes: dto.responseMinutes ?? null,
+      resolutionMinutes: dto.resolutionMinutes ?? null,
       calendar,
     });
 
@@ -66,8 +74,14 @@ export class SlaDefinitionService {
     }
 
     if (dto.name !== undefined) sla.name = dto.name;
-    if (dto.targetMinutes !== undefined) sla.targetMinutes = dto.targetMinutes;
-    if (dto.type !== undefined) sla.type = dto.type;
+    if (dto.responseMinutes !== undefined) sla.responseMinutes = dto.responseMinutes;
+    if (dto.resolutionMinutes !== undefined) sla.resolutionMinutes = dto.resolutionMinutes;
+
+    if (!sla.responseMinutes && !sla.resolutionMinutes) {
+      throw new BadRequestException(
+        'At least one of responseMinutes or resolutionMinutes is required',
+      );
+    }
 
     return this.slaRepo.save(sla);
   }

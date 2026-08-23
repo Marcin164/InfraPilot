@@ -8,6 +8,7 @@ import {
   Index,
 } from 'typeorm';
 import { SlaDefinition } from './slaDefinition.entity';
+import { SlaType } from './slaType.enum';
 import { SlaPause } from './slaPause.entity';
 import { Tickets } from './tickets.entity';
 
@@ -27,6 +28,16 @@ export class SlaInstance {
   @ManyToOne(() => SlaDefinition, (sla: any) => sla.instances)
   @JoinColumn({ name: 'sla_definition_id' })
   slaDefinition: SlaDefinition;
+
+  // A single SlaDefinition can carry both a responseMinutes and a
+  // resolutionMinutes target, so each instance snapshots which one it is and
+  // its own target -- decoupling already-created instances from later edits
+  // to the definition.
+  @Column({ type: 'enum', enum: SlaType })
+  type: SlaType;
+
+  @Column({ type: 'int' })
+  targetMinutes: number;
 
   @Column({ type: 'timestamp' })
   startAt: Date;

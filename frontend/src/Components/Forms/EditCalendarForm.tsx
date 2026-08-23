@@ -15,17 +15,18 @@ import type { SlaCalendar } from "../../Types";
 
 type Props = {
   data?: SlaCalendar;
+  onSaved?: (calendar: SlaCalendar) => void;
 };
 
-const EditCalendarForm = ({ data }: Props) => {
+const EditCalendarForm = ({ data, onSaved }: Props) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (values: any) => {
-      data ? patchCalendar(values) : postCalendar(values);
+      return data ? patchCalendar(values) : postCalendar(values);
     },
 
-    onSuccess: async () => {
+    onSuccess: async (result) => {
       toast.success(t("toast.success.calendarChanged"));
 
       await Promise.all([
@@ -33,6 +34,8 @@ const EditCalendarForm = ({ data }: Props) => {
         queryClient.invalidateQueries({ queryKey: ["definitions"] }),
         queryClient.invalidateQueries({ queryKey: ["rules"] }),
       ]);
+
+      onSaved?.(result);
     },
 
     onError: () => {
@@ -72,9 +75,16 @@ const EditCalendarForm = ({ data }: Props) => {
   const intl: any = Intl;
 
   const timezones = useMemo(() => {
+    // Europe/* first (this app's primary audience), then everything else --
+    // both alphabetical -- instead of one flat alphabetical list starting at "Africa/...".
     return intl
       .supportedValuesOf("timeZone")
-      .sort((a: any, b: any) => a.localeCompare(b))
+      .sort((a: string, b: string) => {
+        const aIsEurope = a.startsWith("Europe/");
+        const bIsEurope = b.startsWith("Europe/");
+        if (aIsEurope !== bIsEurope) return aIsEurope ? -1 : 1;
+        return a.localeCompare(b);
+      })
       .map((tz: any) => ({ label: tz, value: tz }));
   }, []);
 

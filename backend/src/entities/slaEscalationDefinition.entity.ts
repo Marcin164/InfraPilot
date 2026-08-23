@@ -7,6 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { SlaDefinition } from './slaDefinition.entity';
+import { SlaType } from './slaType.enum';
 import { SlaEscalationInstance } from './slaEscalationInstance.entity';
 
 enum EscalationActionType {
@@ -31,6 +32,12 @@ export class SlaEscalationDefinition {
 
   @Column()
   triggerPercentage: number;
+
+  // null = applies to both RESPONSE and RESOLUTION instances spawned by the
+  // same definition. Non-null scopes it to only one, since a merged
+  // definition can now spawn both.
+  @Column({ type: 'enum', enum: SlaType, nullable: true })
+  appliesTo: SlaType | null;
 
   @Column({
     type: 'enum',

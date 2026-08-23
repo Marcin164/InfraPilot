@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { DataSource, IsNull } from 'typeorm';
 import { SlaRuleService } from './slaRule.service';
 import { SlaRule } from 'src/entities/slaRule.entity';
 import { SlaDefinition } from 'src/entities/slaDefinition.entity';
@@ -9,12 +10,15 @@ const makeRule = (overrides: any = {}): SlaRule =>
   ({ id: 'rule-1', priority: 'High', ticketType: null, slaDefinition: { id: 'def-1' }, ...overrides } as SlaRule);
 
 const makeDef = (): SlaDefinition =>
-  ({ id: 'def-1', name: 'Response SLA', targetMinutes: 120 } as SlaDefinition);
+  ({ id: 'def-1', name: 'Response SLA', responseMinutes: 120 } as SlaDefinition);
 
 describe('SlaRuleService', () => {
   let service: SlaRuleService;
   let ruleRepo: jest.Mocked<any>;
   let slaRepo: jest.Mocked<any>;
+  let dataSource: jest.Mocked<any>;
+  let txRuleRepo: jest.Mocked<any>;
+  let deleteExecute: jest.Mock;
 
   beforeEach(async () => {
     ruleRepo = {
@@ -27,6 +31,23 @@ describe('SlaRuleService', () => {
     };
     slaRepo = {
       findOne: jest.fn().mockResolvedValue(makeDef()),
+      findBy: jest.fn().mockResolvedValue([makeDef()]),
+    };
+
+    deleteExecute = jest.fn().mockResolvedValue(undefined);
+    txRuleRepo = {
+      createQueryBuilder: jest.fn().mockReturnValue({
+        delete: jest.fn().mockReturnThis(),
+        from: jest.fn().mockReturnThis(),
+        execute: deleteExecute,
+      }),
+      create: jest.fn().mockImplementation((dto: any) => dto),
+      save: jest.fn().mockImplementation(async (rows: any) => rows),
+    };
+    dataSource = {
+      transaction: jest.fn().mockImplementation(async (cb: any) =>
+        cb({ getRepository: jest.fn().mockReturnValue(txRuleRepo) }),
+      ),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -34,6 +55,7 @@ describe('SlaRuleService', () => {
         SlaRuleService,
         { provide: getRepositoryToken(SlaRule), useValue: ruleRepo },
         { provide: getRepositoryToken(SlaDefinition), useValue: slaRepo },
+        { provide: DataSource, useValue: dataSource },
       ],
     }).compile();
 
@@ -55,9 +77,14 @@ describe('SlaRuleService', () => {
       await expect(service.create({ priority: 'High' as any, definitionId: 'ghost' })).rejects.toThrow(NotFoundException);
     });
 
-    it('deletes existing rule for same priority before creating new one', async () => {
+    it('deletes existing rule for the same (priority, ticketType) slot only, before creating new one', async () => {
+      await service.create({ priority: 'High' as any, definitionId: 'def-1', ticketType: 'Incident' as any });
+      expect(ruleRepo.delete).toHaveBeenCalledWith({ priority: 'High', ticketType: 'Incident' });
+    });
+
+    it('scopes the delete to ticketType null when no ticketType is given (does not touch other ticketType rows for the same priority)', async () => {
       await service.create({ priority: 'High' as any, definitionId: 'def-1' });
-      expect(ruleRepo.delete).toHaveBeenCalledWith({ priority: 'High' });
+      expect(ruleRepo.delete).toHaveBeenCalledWith({ priority: 'High', ticketType: IsNull() });
     });
 
     it('creates and saves the new rule', async () => {
@@ -84,6 +111,46 @@ describe('SlaRuleService', () => {
       ruleRepo.findOne.mockResolvedValue(rule);
       await service.update('rule-1', { priority: 'Low' as any, ticketType: 'Incident' as any });
       expect(rule.priority).toBe('Low');
+    });
+  });
+
+  describe('replaceMatrix', () => {
+    it('throws BadRequestException on duplicate (priority, ticketType) entries', async () => {
+      await expect(
+        service.replaceMatrix([
+          { priority: 'High' as any, ticketType: 'Incident' as any, definitionId: 'def-1' },
+          { priority: 'High' as any, ticketType: 'Incident' as any, definitionId: 'def-1' },
+        ]),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws NotFoundException when a referenced definition does not exist', async () => {
+      slaRepo.findBy.mockResolvedValue([]);
+      await expect(
+        service.replaceMatrix([{ priority: 'High' as any, definitionId: 'ghost' }]),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('wipes existing rules and inserts the new set inside a transaction', async () => {
+      await service.replaceMatrix([
+        { priority: 'High' as any, ticketType: 'Incident' as any, definitionId: 'def-1' },
+        { priority: 'Low' as any, definitionId: 'def-1' },
+      ]);
+
+      expect(dataSource.transaction).toHaveBeenCalled();
+      expect(deleteExecute).toHaveBeenCalled();
+      expect(txRuleRepo.save).toHaveBeenCalledWith([
+        expect.objectContaining({ priority: 'High', ticketType: 'Incident' }),
+        expect.objectContaining({ priority: 'Low', ticketType: null }),
+      ]);
+    });
+
+    it('wipes all rules and saves nothing when entries is empty (clearing the whole grid)', async () => {
+      const result = await service.replaceMatrix([]);
+      expect(result).toEqual([]);
+      expect(slaRepo.findBy).not.toHaveBeenCalled();
+      expect(deleteExecute).toHaveBeenCalled();
+      expect(txRuleRepo.save).not.toHaveBeenCalled();
     });
   });
 

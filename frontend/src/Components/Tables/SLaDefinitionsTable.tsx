@@ -8,6 +8,13 @@ type Props = {
   onDelete: (row: any) => void;
 };
 
+const formatMinutes = (minutes: number | null | undefined) => {
+  if (!minutes) return "—";
+  if (minutes % (24 * 60) === 0) return `${minutes / (24 * 60)}d`;
+  if (minutes % 60 === 0) return `${minutes / 60}h`;
+  return `${minutes}m`;
+};
+
 const SLaDefinitionsTable = ({ data, onEdit, onDelete }: Props) => {
   const columns = [
     {
@@ -15,14 +22,14 @@ const SLaDefinitionsTable = ({ data, onEdit, onDelete }: Props) => {
       selector: (row: any) => row.name,
     },
     {
-      name: "Target",
-      selector: (row: any) => row.target || "All",
-      width: "80px",
+      name: "Response",
+      selector: (row: any) => formatMinutes(row.responseMinutes),
+      width: "100px",
     },
     {
-      name: "Time",
-      selector: (row: any) => row.targetMinutes,
-      width: "80px",
+      name: "Resolution",
+      selector: (row: any) => formatMinutes(row.resolutionMinutes),
+      width: "100px",
     },
     {
       name: "Calendar",

@@ -51,11 +51,11 @@ export const postSlaDefinition = async (data: Omit<SlaDefinition, "id">): Promis
   return result;
 };
 
-export const patchSlaDefinition = async (data: Partial<SlaDefinition> & { id: string }): Promise<SlaDefinition> => {
-  const { data: result } = await api.patch(
-    `/sla/definitions/${data.id}`,
-    data,
-  );
+export const patchSlaDefinition = async (
+  id: string,
+  data: Partial<Omit<SlaDefinition, "id">>,
+): Promise<SlaDefinition> => {
+  const { data: result } = await api.patch(`/sla/definitions/${id}`, data);
   return result;
 };
 
@@ -69,18 +69,14 @@ export const getSlaRules = async (): Promise<SlaRule[]> => {
   return data;
 };
 
-export const postSlaRule = async (data: Omit<SlaRule, "id">): Promise<SlaRule> => {
-  const { data: result } = await api.post("/sla/rules", data);
-  return result;
+export type SlaRuleMatrixEntry = {
+  priority: string;
+  ticketType: string | null;
+  definitionId: string;
 };
 
-export const patchSlaRule = async (data: Partial<SlaRule> & { id: string }): Promise<SlaRule> => {
-  const { data: result } = await api.patch(`/sla/rules/${data.id}`, data);
-  return result;
-};
-
-export const deleteSlaRule = async (id: string): Promise<void> => {
-  const { data } = await api.delete(`/sla/rules/${id}`);
+export const putSlaRuleMatrix = async (entries: SlaRuleMatrixEntry[]): Promise<SlaRule[]> => {
+  const { data } = await api.put("/sla/rules/matrix", { entries });
   return data;
 };
 
@@ -94,11 +90,11 @@ export const postSlaEscalation = async (data: Omit<SlaEscalation, "id">): Promis
   return result;
 };
 
-export const patchSlaEscalation = async (data: Partial<SlaEscalation> & { id: string }): Promise<SlaEscalation> => {
-  const { data: result } = await api.patch(
-    `/sla/escalations/${data.id}`,
-    data,
-  );
+export const patchSlaEscalation = async (
+  id: string,
+  data: Partial<Omit<SlaEscalation, "id">>,
+): Promise<SlaEscalation> => {
+  const { data: result } = await api.patch(`/sla/escalations/${id}`, data);
   return result;
 };
 

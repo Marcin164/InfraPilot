@@ -11,10 +11,9 @@ import { SlaRule } from './slaRule.entity';
 import { SlaInstance } from './slaInstance.entity';
 import { SlaEscalationDefinition } from './slaEscalationDefinition.entity';
 
-export enum SlaType {
-  RESPONSE = 'RESPONSE',
-  RESOLUTION = 'RESOLUTION',
-}
+// Re-exported for existing call sites; canonical definition lives in
+// slaType.enum.ts to avoid a circular import (this file <-> slaEscalationDefinition.entity.ts).
+export { SlaType } from './slaType.enum';
 
 @Entity()
 export class SlaDefinition {
@@ -24,15 +23,11 @@ export class SlaDefinition {
   @Column()
   name: string;
 
-  @Column({
-    type: 'enum',
-    enum: SlaType,
-    nullable: true,
-  })
-  type: SlaType;
+  @Column({ type: 'int', nullable: true })
+  responseMinutes: number | null;
 
-  @Column({ type: 'int' })
-  targetMinutes: number;
+  @Column({ type: 'int', nullable: true })
+  resolutionMinutes: number | null;
 
   @ManyToOne(() => Calendar, (calendar) => calendar.slaDefinitions)
   @JoinColumn({ name: 'calendarId' })

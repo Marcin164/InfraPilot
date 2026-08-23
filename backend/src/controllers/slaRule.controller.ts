@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Patch,
   Delete,
   Param,
@@ -11,7 +12,7 @@ import {
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { SlaRuleService } from 'src/services/slaRule.service';
-import { CreateSlaRuleDto, UpdateSlaRuleDto } from 'src/dto/slaRule.dto';
+import { CreateSlaRuleDto, ReplaceSlaRuleMatrixDto, UpdateSlaRuleDto } from 'src/dto/slaRule.dto';
 
 @UseGuards(AuthGuard)
 @Controller('sla/rules')
@@ -21,6 +22,12 @@ export class SlaRuleController {
   @Get()
   getAll() {
     return this.service.getAll();
+  }
+
+  @Roles(Role.Admin)
+  @Put('matrix')
+  replaceMatrix(@Body() dto: ReplaceSlaRuleMatrixDto) {
+    return this.service.replaceMatrix(dto.entries);
   }
 
   @Roles(Role.Admin)

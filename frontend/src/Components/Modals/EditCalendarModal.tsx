@@ -9,9 +9,10 @@ type Props = {
   data: any;
   isModalOpen: boolean;
   handleOnClose: any;
+  onCreated?: (calendar: any) => void;
 };
 
-const EditCalendarModal = ({ data, isModalOpen, handleOnClose }: Props) => {
+const EditCalendarModal = ({ data, isModalOpen, handleOnClose, onCreated }: Props) => {
   const [selectedTab, setSelectedTab] = useState("calendar");
 
   const handleTabSelection = (tab: string) => {
@@ -28,18 +29,32 @@ const EditCalendarModal = ({ data, isModalOpen, handleOnClose }: Props) => {
       center
     >
       <CardHeader text={data ? "Edit calendar" : "Add calendar"} />
-      <div className="flex space-x-2 my-4">
-        <ButtonPrimary
-          text="Calendar"
-          onClick={() => handleTabSelection("calendar")}
+      {!onCreated && (
+        <div className="flex space-x-2 my-4">
+          <ButtonPrimary
+            text="Calendar"
+            onClick={() => handleTabSelection("calendar")}
+          />
+          <ButtonPrimary
+            text="Holidays"
+            onClick={() => handleTabSelection("holidays")}
+          />
+        </div>
+      )}
+      {selectedTab === "calendar" && (
+        <EditCalendarForm
+          data={data}
+          onSaved={
+            onCreated
+              ? (calendar) => {
+                  onCreated(calendar);
+                  handleOnClose();
+                }
+              : undefined
+          }
         />
-        <ButtonPrimary
-          text="Holidays"
-          onClick={() => handleTabSelection("holidays")}
-        />
-      </div>
-      {selectedTab === "calendar" && <EditCalendarForm data={data} />}
-      {selectedTab === "holidays" && (
+      )}
+      {!onCreated && selectedTab === "holidays" && (
         <EditHolidaysForm calendarId={data?.id} holidayDates={data?.holidays} />
       )}
     </Modal>

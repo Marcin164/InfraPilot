@@ -35,7 +35,7 @@ export class SlaRuntimeService {
 
     const result = await Promise.all(
       instances.map(async (instance) => {
-        const totalMinutes = instance.slaDefinition.targetMinutes;
+        const totalMinutes = instance.targetMinutes;
         const calendar = instance.slaDefinition.calendar;
 
         let remainingMinutes: number;
@@ -80,7 +80,7 @@ export class SlaRuntimeService {
         return {
           id: instance.id,
 
-          type: instance.slaDefinition.type,
+          type: instance.type,
           name: instance.slaDefinition.name,
 
           status,

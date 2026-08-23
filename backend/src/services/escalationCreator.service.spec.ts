@@ -13,9 +13,10 @@ const makeSlaInstance = (overrides: Partial<SlaInstance> = {}): SlaInstance =>
     id: 'sla-inst-1',
     startAt: new Date('2024-01-08T09:00:00Z'),
     dueAt: new Date('2024-01-08T11:00:00Z'),
+    type: 'RESPONSE',
+    targetMinutes: 120,
     slaDefinition: {
       id: 'def-1',
-      targetMinutes: 120,
       calendar,
     },
     ...overrides,
@@ -69,6 +70,24 @@ describe('EscalationCreatorService', () => {
       await service.createForSlaInstance(makeSlaInstance());
 
       expect(escalationInstRepo.save).toHaveBeenCalledTimes(2);
+    });
+
+    it('includes definitions with appliesTo null for any instance type', async () => {
+      escalationDefRepo.find.mockResolvedValue([makeEscalationDef({ appliesTo: null })]);
+      await service.createForSlaInstance(makeSlaInstance({ type: 'RESOLUTION' as any }));
+      expect(escalationInstRepo.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('skips a definition scoped to a different instance type', async () => {
+      escalationDefRepo.find.mockResolvedValue([makeEscalationDef({ appliesTo: 'RESOLUTION' })]);
+      await service.createForSlaInstance(makeSlaInstance({ type: 'RESPONSE' as any }));
+      expect(escalationInstRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('includes a definition scoped to the matching instance type', async () => {
+      escalationDefRepo.find.mockResolvedValue([makeEscalationDef({ appliesTo: 'RESPONSE' })]);
+      await service.createForSlaInstance(makeSlaInstance({ type: 'RESPONSE' as any }));
+      expect(escalationInstRepo.save).toHaveBeenCalledTimes(1);
     });
 
     it('calculates triggerAt based on percentage of targetMinutes', async () => {

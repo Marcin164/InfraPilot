@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SlaInstance } from 'src/entities/slaInstance.entity';
-import { SlaType } from 'src/entities/slaDefinition.entity';
+import { SlaType } from 'src/entities/slaType.enum';
 import { Repository } from 'typeorm';
 import { AuditService } from './audit.service';
 
@@ -49,12 +49,11 @@ export class SlaBreachService {
 
     const instances = await repository.find({
       where: { ticketId },
-      relations: ['slaDefinition'],
     });
 
     const now = new Date();
     for (const inst of instances) {
-      if (inst.slaDefinition?.type !== SlaType.RESPONSE) continue;
+      if (inst.type !== SlaType.RESPONSE) continue;
       if (inst.respondedAt) continue;
       inst.respondedAt = now;
       await repository.save(inst);

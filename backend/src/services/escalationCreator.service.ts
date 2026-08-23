@@ -33,9 +33,13 @@ export class EscalationCreatorService {
       },
     });
 
-    for (const def of definitions) {
+    const applicable = definitions.filter(
+      (def) => def.appliesTo == null || def.appliesTo === slaInstance.type,
+    );
+
+    for (const def of applicable) {
       const triggerMinutes =
-        (slaInstance.slaDefinition.targetMinutes * def.triggerPercentage) / 100;
+        (slaInstance.targetMinutes * def.triggerPercentage) / 100;
 
       const triggerAt = await this.businessTime.calculateDueDate(
         slaInstance.startAt,

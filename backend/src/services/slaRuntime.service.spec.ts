@@ -16,11 +16,11 @@ const makeInstance = (overrides: Partial<SlaInstance> = {}): SlaInstance =>
     breached: false,
     paused: false,
     dueAt: new Date(Date.now() + 3600 * 1000),
+    type: 'RESPONSE',
+    targetMinutes: 120,
     slaDefinition: {
       id: 'def-1',
       name: 'Response',
-      type: 'response',
-      targetMinutes: 120,
       calendar,
     },
     ...overrides,

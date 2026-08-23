@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
@@ -8,28 +9,36 @@ import {
 } from "../../Services/sla";
 import { useForm } from "@tanstack/react-form";
 import Input from "../Inputs/Input";
-import SelectSecondary from "../Inputs/SelectSecondary";
+import DurationInput from "../Inputs/DurationInput";
+import SelectWithCreate from "../Inputs/SelectWithCreate";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
-import {
-  requiredNumberValidator,
-  requiredValidator,
-} from "../../Helpers/validators";
+import EditCalendarModal from "../Modals/EditCalendarModal";
+import { requiredValidator } from "../../Helpers/validators";
 
 import type { SlaCalendar, SlaDefinition } from "../../Types";
 
 type Props = {
   data?: SlaDefinition;
+  onSaved?: (definition: SlaDefinition) => void;
 };
 
-const EditDefinitionForm = ({ data }: Props) => {
+type DefinitionFormValues = {
+  name: string;
+  calendarId: string;
+  responseMinutes: number | null;
+  resolutionMinutes: number | null;
+};
+
+const EditDefinitionForm = ({ data, onSaved }: Props) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [isCreateCalendarOpen, setIsCreateCalendarOpen] = useState(false);
   const mutation = useMutation({
-    mutationFn: async (values: any) => {
-      data ? patchSlaDefinition(values) : postSlaDefinition(values);
+    mutationFn: async (values: DefinitionFormValues) => {
+      return data ? patchSlaDefinition(data.id, values) : postSlaDefinition(values);
     },
 
-    onSuccess: async () => {
+    onSuccess: async (result) => {
       toast.success(
         data ? t("toast.success.definitionUpdated") : t("toast.success.definitionCreated"),
       );
@@ -38,6 +47,8 @@ const EditDefinitionForm = ({ data }: Props) => {
         queryClient.invalidateQueries({ queryKey: ["calendars"] }),
         queryClient.invalidateQueries({ queryKey: ["rules"] }),
       ]);
+
+      onSaved?.(result);
     },
 
     onError: () => {
@@ -51,13 +62,14 @@ const EditDefinitionForm = ({ data }: Props) => {
   });
 
   const form = useForm({
-    defaultValues: data ?? {
-      name: "",
-      targetMinutes: 0,
-      type: "",
-      calendarId: "",
-    },
+    defaultValues: {
+      name: data?.name ?? "",
+      calendarId: data?.calendar?.id ?? data?.calendarId ?? "",
+      responseMinutes: data?.responseMinutes ?? null,
+      resolutionMinutes: data?.resolutionMinutes ?? null,
+    } as DefinitionFormValues,
     onSubmit: ({ value }) => {
+      if (!value.responseMinutes && !value.resolutionMinutes) return;
       mutation.mutate(value);
     },
   });
@@ -67,11 +79,6 @@ const EditDefinitionForm = ({ data }: Props) => {
   const calendarOptions = calendarQuery.data.map((calendar: SlaCalendar) => {
     return { value: calendar.id, label: calendar.name };
   });
-
-  const slaTypeOptions = [
-    { value: "RESPONSE", label: t("form.type.response") },
-    { value: "RESOLUTION", label: t("form.type.resolution") },
-  ];
 
   return (
     <form
@@ -95,51 +102,60 @@ const EditDefinitionForm = ({ data }: Props) => {
         )}
       />
       <form.Field
-        name="targetMinutes"
-        validators={{
-          onChange: ({ value }) => requiredNumberValidator(value),
-        }}
-        children={(field) => (
-          <Input
-            {...field}
-            value={field?.state?.value}
-            label={t("form.targetMinutes")}
-            type="number"
-            errors={field.state.meta.errors?.join(", ")}
-          />
-        )}
-      />
-      <form.Field
-        name="type"
-        children={(field) => (
-          <SelectSecondary
-            label={t("form.type")}
-            options={slaTypeOptions}
-            value={slaTypeOptions.find(
-              (option: any) => option.value === data?.type,
-            )}
-            onSelect={(opt: any) => field.handleChange(opt.value)}
-          />
-        )}
-      />
-      <form.Field
         name="calendarId"
         children={(field) => {
           const selectedOption =
-            calendarOptions.find(
-              (option: any) => option.value === data?.calendar?.id,
-            ) ?? null;
+            calendarOptions.find((option: any) => option.value === field.state.value) ?? null;
 
           return (
-            <SelectSecondary
-              label="Calendar"
-              options={calendarOptions}
-              value={selectedOption}
-              onSelect={(opt: any) => field.handleChange(opt.value)}
-            />
+            <>
+              <SelectWithCreate
+                label={t("form.calendar")}
+                options={calendarOptions}
+                value={selectedOption}
+                onSelect={(opt: any) => field.handleChange(opt?.value ?? "")}
+                createLabel={t("settings.calendars.createNew")}
+                onCreateNew={() => setIsCreateCalendarOpen(true)}
+              />
+              <EditCalendarModal
+                data={null}
+                isModalOpen={isCreateCalendarOpen}
+                handleOnClose={() => setIsCreateCalendarOpen(false)}
+                onCreated={(calendar) => field.handleChange(calendar.id)}
+              />
+            </>
           );
         }}
       />
+      <form.Field
+        name="responseMinutes"
+        children={(field) => (
+          <DurationInput
+            label={t("form.responseMinutes")}
+            valueMinutes={field.state.value}
+            onChangeMinutes={field.handleChange}
+          />
+        )}
+      />
+      <form.Field
+        name="resolutionMinutes"
+        children={(field) => (
+          <DurationInput
+            label={t("form.resolutionMinutes")}
+            valueMinutes={field.state.value}
+            onChangeMinutes={field.handleChange}
+          />
+        )}
+      />
+      <form.Subscribe selector={(state) => [state.values.responseMinutes, state.values.resolutionMinutes]}>
+        {([responseMinutes, resolutionMinutes]) =>
+          !responseMinutes && !resolutionMinutes ? (
+            <em role="alert" className="block pt-2 text-[14px] text-[#BC0E0E] font-bold">
+              {t("form.error.atLeastOneDuration")}
+            </em>
+          ) : null
+        }
+      </form.Subscribe>
       <ButtonPrimary
         type="submit"
         text={data ? t("common.update") : t("common.create")}

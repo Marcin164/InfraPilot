@@ -61,6 +61,16 @@ describe('EscalationConfigService', () => {
       expect(escalationRepo.create).toHaveBeenCalled();
       expect(escalationRepo.save).toHaveBeenCalled();
     });
+
+    it('defaults appliesTo to null (applies to both instance types) when not given', async () => {
+      await service.create({ slaDefinitionId: 'def-1', triggerPercentage: 75, actionType: 'NOTIFY' });
+      expect(escalationRepo.create).toHaveBeenCalledWith(expect.objectContaining({ appliesTo: null }));
+    });
+
+    it('persists an explicit appliesTo scope', async () => {
+      await service.create({ slaDefinitionId: 'def-1', triggerPercentage: 75, actionType: 'NOTIFY', appliesTo: 'RESPONSE' as any });
+      expect(escalationRepo.create).toHaveBeenCalledWith(expect.objectContaining({ appliesTo: 'RESPONSE' }));
+    });
   });
 
   describe('update', () => {

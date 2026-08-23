@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { SlaDefinitionService } from './slaDefinition.service';
 import { SlaDefinition } from 'src/entities/slaDefinition.entity';
 import { Calendar } from 'src/entities/calendar.entity';
 
 const makeSlaDef = (overrides: any = {}): SlaDefinition =>
-  ({ id: 'def-1', name: 'Response SLA', targetMinutes: 120, calendar: { id: 'cal-1' }, ...overrides } as SlaDefinition);
+  ({ id: 'def-1', name: 'Response SLA', responseMinutes: 120, resolutionMinutes: null, calendar: { id: 'cal-1' }, ...overrides } as SlaDefinition);
 
 const makeCalendar = (): Calendar =>
   ({ id: 'cal-1', name: 'Default' } as Calendar);
@@ -52,19 +52,23 @@ describe('SlaDefinitionService', () => {
   });
 
   describe('create', () => {
+    it('throws BadRequestException when neither responseMinutes nor resolutionMinutes is set', async () => {
+      await expect(service.create({ name: 'SLA', calendarId: 'cal-1' })).rejects.toThrow(BadRequestException);
+    });
+
     it('throws NotFoundException when calendar not found', async () => {
       calendarRepo.findOne.mockResolvedValue(null);
-      await expect(service.create({ name: 'SLA', targetMinutes: 60, calendarId: 'ghost' })).rejects.toThrow(NotFoundException);
+      await expect(service.create({ name: 'SLA', responseMinutes: 60, calendarId: 'ghost' })).rejects.toThrow(NotFoundException);
     });
 
     it('creates and saves the SLA definition with the resolved calendar', async () => {
       const calendar = makeCalendar();
       calendarRepo.findOne.mockResolvedValue(calendar);
 
-      await service.create({ name: 'SLA', targetMinutes: 60, calendarId: 'cal-1' });
+      await service.create({ name: 'SLA', responseMinutes: 60, resolutionMinutes: 240, calendarId: 'cal-1' });
 
       expect(slaRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'SLA', targetMinutes: 60, calendar }),
+        expect.objectContaining({ name: 'SLA', responseMinutes: 60, resolutionMinutes: 240, calendar }),
       );
       expect(slaRepo.save).toHaveBeenCalled();
     });
@@ -82,13 +86,19 @@ describe('SlaDefinitionService', () => {
       await expect(service.update('def-1', { calendarId: 'ghost' })).rejects.toThrow(NotFoundException);
     });
 
-    it('updates name and targetMinutes', async () => {
+    it('updates name and responseMinutes', async () => {
       const def = makeSlaDef();
       slaRepo.findOne.mockResolvedValue(def);
-      await service.update('def-1', { name: 'Updated', targetMinutes: 240 });
+      await service.update('def-1', { name: 'Updated', responseMinutes: 240 });
       expect(slaRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'Updated', targetMinutes: 240 }),
+        expect.objectContaining({ name: 'Updated', responseMinutes: 240 }),
       );
+    });
+
+    it('throws BadRequestException when the update would leave both minutes fields empty', async () => {
+      const def = makeSlaDef({ responseMinutes: 60, resolutionMinutes: null });
+      slaRepo.findOne.mockResolvedValue(def);
+      await expect(service.update('def-1', { responseMinutes: null })).rejects.toThrow(BadRequestException);
     });
 
     it('replaces calendar when calendarId is provided', async () => {

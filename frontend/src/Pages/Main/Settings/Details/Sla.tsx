@@ -7,7 +7,7 @@ import {
 } from "../../../../Services/sla";
 import SlaCalendar from "../components/SlaCalendar";
 import SlaDefinitions from "../components/SlaDefinitions";
-import SlaRules from "../components/SlaRules";
+import SlaRuleMatrix from "../components/SlaRuleMatrix";
 import Escalations from "../components/Escalations";
 
 const Sla = () => {
@@ -35,7 +35,7 @@ const Sla = () => {
     <div className="space-y-4 m-4">
       <SlaCalendar slaCalendars={calendarsQuery.data} />
       <SlaDefinitions slaDefinitions={definitionsQuery?.data} />
-      <SlaRules slaRules={rulesQuery?.data} />
+      <SlaRuleMatrix slaRules={rulesQuery?.data} />
       <Escalations escalations={escalationsQuery?.data ?? []} />
     </div>
   );

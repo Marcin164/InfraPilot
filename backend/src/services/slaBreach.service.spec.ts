@@ -2,18 +2,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { SlaBreachService } from './slaBreach.service';
 import { SlaInstance } from 'src/entities/slaInstance.entity';
-import { SlaType } from 'src/entities/slaDefinition.entity';
+import { SlaType } from 'src/entities/slaType.enum';
 import { AuditService } from './audit.service';
 
 const mockSlaInstance = (overrides: Partial<SlaInstance> = {}): SlaInstance =>
   ({
     id: 'sla-inst-1',
     ticketId: 'ticket-1',
+    type: SlaType.RESPONSE,
     breached: false,
     paused: false,
     respondedAt: null,
     dueAt: new Date(Date.now() + 60 * 60 * 1000), // 1h in the future
-    slaDefinition: { type: SlaType.RESPONSE },
     ...overrides,
   } as SlaInstance);
 
@@ -134,9 +134,7 @@ describe('SlaBreachService', () => {
     });
 
     it('ignores Resolution-type instances', async () => {
-      const inst = mockSlaInstance({
-        slaDefinition: { type: SlaType.RESOLUTION } as any,
-      });
+      const inst = mockSlaInstance({ type: SlaType.RESOLUTION });
       repo.find.mockResolvedValue([inst]);
 
       await service.markFirstResponse('ticket-1');
@@ -148,7 +146,7 @@ describe('SlaBreachService', () => {
       const response = mockSlaInstance({ id: 'sla-response' });
       const resolution = mockSlaInstance({
         id: 'sla-resolution',
-        slaDefinition: { type: SlaType.RESOLUTION } as any,
+        type: SlaType.RESOLUTION,
       });
       repo.find.mockResolvedValue([response, resolution]);
 

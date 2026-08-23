@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SlaDefinition } from 'src/entities/slaDefinition.entity';
 import { SlaEscalationDefinition } from 'src/entities/slaEscalationDefinition.entity';
+import { SlaType } from 'src/entities/slaType.enum';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -27,6 +28,7 @@ export class EscalationConfigService {
       .select([
         'esc.id',
         'esc.triggerPercentage',
+        'esc.appliesTo',
         'esc.actionType',
         'esc.actionConfig',
         'esc.createdAt',
@@ -54,6 +56,7 @@ export class EscalationConfigService {
       group.escalations.push({
         id: esc.id,
         triggerPercentage: esc.triggerPercentage,
+        appliesTo: esc.appliesTo,
         actionType: esc.actionType,
         actionConfig: esc.actionConfig,
         createdAt: esc.createdAt,
@@ -68,6 +71,7 @@ export class EscalationConfigService {
     triggerPercentage: number;
     actionType: string;
     actionConfig?: Record<string, any>;
+    appliesTo?: SlaType | null;
   }) {
     const slaDefinition = await this.slaDefRepo.findOneBy({
       id: dto.slaDefinitionId,
@@ -80,6 +84,7 @@ export class EscalationConfigService {
       triggerPercentage: dto.triggerPercentage,
       actionType: dto.actionType as any,
       actionConfig: dto.actionConfig,
+      appliesTo: dto.appliesTo ?? null,
     });
 
     return this.escalationRepo.save(escalation);
@@ -92,6 +97,7 @@ export class EscalationConfigService {
       triggerPercentage?: number;
       actionType?: string;
       actionConfig?: Record<string, any>;
+      appliesTo?: SlaType | null;
     },
   ) {
     const escalation = await this.escalationRepo.findOneBy({ id });
@@ -102,6 +108,7 @@ export class EscalationConfigService {
     if (dto.triggerPercentage !== undefined) escalation.triggerPercentage = dto.triggerPercentage;
     if (dto.actionType !== undefined) escalation.actionType = dto.actionType as any;
     if (dto.actionConfig !== undefined) escalation.actionConfig = dto.actionConfig;
+    if (dto.appliesTo !== undefined) escalation.appliesTo = dto.appliesTo;
 
     return this.escalationRepo.save(escalation);
   }

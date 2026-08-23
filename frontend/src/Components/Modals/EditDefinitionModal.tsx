@@ -7,9 +7,10 @@ type Props = {
   data?: any;
   isModalOpen: boolean;
   handleOnClose: () => void;
+  onCreated?: (definition: any) => void;
 };
 
-const EditDefinitionModal = ({ data, isModalOpen, handleOnClose }: Props) => {
+const EditDefinitionModal = ({ data, isModalOpen, handleOnClose, onCreated }: Props) => {
   return (
     <Modal
       classNames={{
@@ -20,7 +21,17 @@ const EditDefinitionModal = ({ data, isModalOpen, handleOnClose }: Props) => {
       center
     >
       <CardHeader text={data ? "Edit definition" : "Add definition"} />
-      <EditDefinitionForm data={data} />
+      <EditDefinitionForm
+        data={data}
+        onSaved={
+          onCreated
+            ? (definition) => {
+                onCreated(definition);
+                handleOnClose();
+              }
+            : undefined
+        }
+      />
     </Modal>
   );
 };

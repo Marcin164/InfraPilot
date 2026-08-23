@@ -12,7 +12,8 @@ const calendar = { id: 'cal-1' } as any;
 
 const makeSlaDefinition = (overrides: any = {}) => ({
   id: 'def-1',
-  targetMinutes: 120,
+  responseMinutes: 120,
+  resolutionMinutes: null,
   calendar,
   ...overrides,
 });
@@ -110,6 +111,28 @@ describe('SlaCreatorService', () => {
       await service.createInstances(makeTicket({ type: 'Incident' }));
 
       expect(slaInstanceRepo.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('creates one instance per non-null target when a definition has both responseMinutes and resolutionMinutes', async () => {
+      slaRuleRepo.find.mockResolvedValue([
+        makeSlaRule({ slaDefinition: makeSlaDefinition({ responseMinutes: 60, resolutionMinutes: 480 }) }),
+      ]);
+
+      await service.createInstances(makeTicket());
+
+      expect(slaInstanceRepo.save).toHaveBeenCalledTimes(2);
+      expect(slaInstanceRepo.save).toHaveBeenCalledWith(expect.objectContaining({ type: 'RESPONSE', targetMinutes: 60 }));
+      expect(slaInstanceRepo.save).toHaveBeenCalledWith(expect.objectContaining({ type: 'RESOLUTION', targetMinutes: 480 }));
+    });
+
+    it('creates zero instances when a matching definition has neither target set', async () => {
+      slaRuleRepo.find.mockResolvedValue([
+        makeSlaRule({ slaDefinition: makeSlaDefinition({ responseMinutes: null, resolutionMinutes: null }) }),
+      ]);
+
+      await service.createInstances(makeTicket());
+
+      expect(slaInstanceRepo.save).not.toHaveBeenCalled();
     });
 
     it('calls escalationCreator for each created instance', async () => {

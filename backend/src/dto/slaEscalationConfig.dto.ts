@@ -1,4 +1,5 @@
-import { IsIn, IsInt, IsNotEmpty, IsObject, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsEnum, IsIn, IsInt, IsNotEmpty, IsObject, IsOptional, IsString, Max, Min } from 'class-validator';
+import { SlaType } from 'src/entities/slaType.enum';
 
 const ESCALATION_ACTION_TYPES = ['NOTIFY', 'REASSIGN', 'PRIORITY_UP'] as const;
 
@@ -7,6 +8,8 @@ export class CreateEscalationConfigDto {
   @IsInt() @Min(1) @Max(100) triggerPercentage: number;
   @IsIn(ESCALATION_ACTION_TYPES) actionType: (typeof ESCALATION_ACTION_TYPES)[number];
   @IsOptional() @IsObject() actionConfig?: Record<string, any>;
+  // null/omitted = applies to both RESPONSE and RESOLUTION instances of the definition.
+  @IsOptional() @IsEnum(SlaType) appliesTo?: SlaType | null;
 }
 
 export class UpdateEscalationConfigDto {
@@ -14,9 +17,5 @@ export class UpdateEscalationConfigDto {
   @IsOptional() @IsInt() @Min(1) @Max(100) triggerPercentage?: number;
   @IsOptional() @IsIn(ESCALATION_ACTION_TYPES) actionType?: (typeof ESCALATION_ACTION_TYPES)[number];
   @IsOptional() @IsObject() actionConfig?: Record<string, any>;
-
-  // EditEscalationForm.tsx's edit branch spreads the whole loaded
-  // SlaEscalation object back into the PATCH body (incl. id) -- not read by
-  // the service, accepted here so the request doesn't 400.
-  @IsOptional() @IsString() id?: string;
+  @IsOptional() @IsEnum(SlaType) appliesTo?: SlaType | null;
 }
