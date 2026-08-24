@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -18,6 +18,7 @@ import {
 } from "../../../../Services/tickets";
 import { getUsers } from "../../../../Services/users";
 import { getDevicesByOwner } from "../../../../Services/devices";
+import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
 import type { TicketType, TicketPriority, TicketImpact, TicketUrgency } from "../../../../Types";
 
 const TYPE_OPTIONS: { value: TicketType; label: string }[] = [
@@ -41,14 +42,24 @@ const CreateTicketModal = ({ onClose, onCreated }: Props) => {
   const [requester, setRequester] = useState<{ value: string; label: string } | null>(null);
   const [type, setType] = useState<TicketType | null>(null);
   const [category, setCategory] = useState<{ value: string; label: string } | null>(null);
-  const [priority, setPriority] = useState<{ value: TicketPriority; label: string } | null>(null);
-  const [impact, setImpact] = useState<{ value: TicketImpact; label: string } | null>(null);
-  const [urgency, setUrgency] = useState<{ value: TicketUrgency; label: string } | null>(null);
+  const [priority, setPriority] = useState<{ value: TicketPriority; label: string } | any>({
+    value: "Medium",
+    label: "Medium",
+  });
+  const [impact, setImpact] = useState<{ value: TicketImpact; label: string } | any>({
+    value: "Single user",
+    label: "Single user",
+  });
+  const [urgency, setUrgency] = useState<{ value: TicketUrgency; label: string } | any>({
+    value: "Medium",
+    label: "Medium",
+  });
   const [device, setDevice] = useState<{ value: string; label: string } | null>(null);
   const [description, setDescription] = useState("");
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, unknown>>({});
   const [showFieldErrors, setShowFieldErrors] = useState(false);
 
+  const currentUserQuery = useCurrentUser();
   const usersQuery = useQuery({ queryKey: ["users-all"], queryFn: getUsers });
   const categoriesQuery = useQuery({
     queryKey: ["ticket-categories"],
@@ -68,6 +79,15 @@ const CreateTicketModal = ({ onClose, onCreated }: Props) => {
       })),
     [usersQuery.data],
   );
+
+  useEffect(() => {
+    if (requester || !currentUserQuery.data) return;
+    const u = currentUserQuery.data;
+    setRequester({
+      value: u.id,
+      label: [u.name, u.surname].filter(Boolean).join(" ") || u.username || u.email || u.id,
+    });
+  }, [currentUserQuery.data, requester]);
 
   const categoryOptions = useMemo(() => {
     if (!type || !categoriesQuery.data) return [];
@@ -125,7 +145,14 @@ const CreateTicketModal = ({ onClose, onCreated }: Props) => {
   });
 
   const canSubmit =
-    Boolean(requester) && Boolean(type) && description.trim().length > 0 && !createMutation.isPending;
+    Boolean(requester) &&
+    Boolean(type) &&
+    Boolean(category) &&
+    Boolean(priority) &&
+    Boolean(impact) &&
+    Boolean(urgency) &&
+    description.trim().length > 0 &&
+    !createMutation.isPending;
 
   const handleSubmit = () => {
     if (!customFieldsAreValid(selectedCategoryFields, customFieldValues)) {
@@ -168,7 +195,7 @@ const CreateTicketModal = ({ onClose, onCreated }: Props) => {
               }}
             />
             <SelectSecondary
-              label={t("helpdesk.newTicket.category")}
+              label={`${t("helpdesk.newTicket.category")} *`}
               options={categoryOptions}
               value={category}
               onSelect={(opt: any) => {
@@ -178,7 +205,6 @@ const CreateTicketModal = ({ onClose, onCreated }: Props) => {
               }}
               placeholder={t("helpdesk.newTicket.categoryPlaceholder")}
               isDisabled={!type}
-              isClearable
             />
           </div>
 
@@ -191,25 +217,22 @@ const CreateTicketModal = ({ onClose, onCreated }: Props) => {
 
           <div className="grid grid-cols-3 gap-3">
             <SelectSecondary
-              label={t("helpdesk.newTicket.priority")}
+              label={`${t("helpdesk.newTicket.priority")} *`}
               options={PRIORITY_OPTIONS.map((p) => ({ value: p, label: p }))}
               value={priority}
               onSelect={(opt: any) => setPriority(opt)}
-              isClearable
             />
             <SelectSecondary
-              label={t("helpdesk.newTicket.impact")}
+              label={`${t("helpdesk.newTicket.impact")} *`}
               options={IMPACT_OPTIONS.map((i) => ({ value: i, label: i }))}
               value={impact}
               onSelect={(opt: any) => setImpact(opt)}
-              isClearable
             />
             <SelectSecondary
-              label={t("helpdesk.newTicket.urgency")}
+              label={`${t("helpdesk.newTicket.urgency")} *`}
               options={URGENCY_OPTIONS.map((u) => ({ value: u, label: u }))}
               value={urgency}
               onSelect={(opt: any) => setUrgency(opt)}
-              isClearable
             />
           </div>
 

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import SettingsNavbar from "../../../Components/Navbar/SettingsNavbar";
-import { Outlet, useNavigate } from "react-router";
+import { Outlet } from "react-router";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
 
 type Props = {};
