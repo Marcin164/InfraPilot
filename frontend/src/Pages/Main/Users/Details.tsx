@@ -12,6 +12,7 @@ import UserGroups from "./components/UserGroups";
 import UserForms from "./components/UserForms";
 import Equipment from "./components/Equipment";
 import EquipmentHistory from "./components/EquipmentHistory";
+import AssignmentsGroups from "./components/AssignmentsGroups";
 
 const Details = () => {
   const params: any = useParams();
@@ -44,7 +45,6 @@ const Details = () => {
   return (
     <PageMotion>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 items-start">
-        {/* Left column: identity */}
         <div className="flex flex-col gap-4">
           <UserDetails data={userQuery.data} />
           {viewerIsAdmin && (
@@ -62,10 +62,10 @@ const Details = () => {
           <UserGroups memberOf={userQuery.data.memberOf} />
         </div>
 
-        {/* Middle column: equipment */}
-        <Equipment devices={userDevices.data} />
-
-        {/* Right column: history + forms */}
+        <div className="flex flex-col gap-4">
+          <Equipment devices={userDevices.data} />
+          <AssignmentsGroups/>
+        </div>
         <div className="flex flex-col gap-4">
           <EquipmentHistory />
           <UserForms />

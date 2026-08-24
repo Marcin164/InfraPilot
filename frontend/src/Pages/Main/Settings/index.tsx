@@ -6,12 +6,6 @@ import PageMotion from "../../../Components/PageMotion/PageMotion";
 type Props = {};
 
 const index = (props: Props) => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    navigate("personal");
-  }, []);
-
   return (
     <PageMotion>
       <div className="w-full p-4">

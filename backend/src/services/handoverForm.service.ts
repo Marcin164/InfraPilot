@@ -23,7 +23,7 @@ const HANDOVER_MIME =
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 type RenderResult = { buffer: Buffer; sha256: string; filename: string };
-type Lang = 'pl' | 'en';
+type Lang = 'pl' | 'en' | 'de' | 'fr' | 'it' | 'es';
 
 const STRINGS: Record<Lang, Record<string, string>> = {
   pl: {
@@ -71,10 +71,107 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     signReceived: 'Date and signature of the recipient',
     dash: '—',
   },
+  de: {
+    title: 'Übergabeprotokoll für Geräte',
+    issuedOn: 'Ausstellungsdatum',
+    employeeSection: 'Angaben zum Mitarbeiter',
+    fullName: 'Vor- und Nachname',
+    position: 'Position',
+    department: 'Abteilung',
+    email: 'E-Mail',
+    phone: 'Telefon',
+    equipmentSection: 'Übergebene Geräte',
+    assetName: 'Bezeichnung',
+    category: 'Kategorie',
+    model: 'Modell',
+    serialNumber: 'Seriennummer',
+    statement:
+      'Hiermit bestätige ich den Erhalt der oben genannten Geräte in gutem technischen Zustand, ' +
+      'vollständig mit allem Zubehör. Ich verpflichte mich, die Geräte bestimmungsgemäß zu nutzen ' +
+      'und sie auf Verlangen des Arbeitgebers oder bei Beendigung des Arbeitsverhältnisses in ' +
+      'unverändertem Zustand zurückzugeben.',
+    signHandedOver: 'Datum und Unterschrift des Übergebenden',
+    signReceived: 'Datum und Unterschrift des Empfängers',
+    dash: '—',
+  },
+  fr: {
+    title: 'Procès-verbal de remise de matériel',
+    issuedOn: "Date d'émission",
+    employeeSection: "Informations sur l'employé",
+    fullName: 'Nom et prénom',
+    position: 'Poste',
+    department: 'Service',
+    email: 'E-mail',
+    phone: 'Téléphone',
+    equipmentSection: 'Matériel remis',
+    assetName: 'Nom du bien',
+    category: 'Catégorie',
+    model: 'Modèle',
+    serialNumber: 'Numéro de série',
+    statement:
+      "Je confirme par la présente avoir reçu le matériel indiqué ci-dessus en bon état " +
+      "technique, complet avec ses accessoires. Je m'engage à l'utiliser conformément à sa " +
+      "destination et à le restituer en bon état à la demande de l'employeur ou en cas de " +
+      "cessation de la relation de travail.",
+    signHandedOver: 'Date et signature de la personne qui remet le matériel',
+    signReceived: 'Date et signature du destinataire',
+    dash: '—',
+  },
+  it: {
+    title: 'Verbale di consegna attrezzatura',
+    issuedOn: 'Data di emissione',
+    employeeSection: 'Dati del dipendente',
+    fullName: 'Nome e cognome',
+    position: 'Posizione',
+    department: 'Reparto',
+    email: 'E-mail',
+    phone: 'Telefono',
+    equipmentSection: 'Attrezzatura consegnata',
+    assetName: 'Nome del bene',
+    category: 'Categoria',
+    model: 'Modello',
+    serialNumber: 'Numero di serie',
+    statement:
+      'Con la presente confermo di aver ricevuto l\'attrezzatura sopra indicata in buone ' +
+      'condizioni tecniche, completa di tutti gli accessori. Mi impegno a utilizzarla secondo la ' +
+      'sua destinazione d\'uso e a restituirla in condizioni immutate su richiesta del datore di ' +
+      'lavoro o in caso di cessazione del rapporto di lavoro.',
+    signHandedOver: 'Data e firma di chi consegna',
+    signReceived: 'Data e firma di chi riceve',
+    dash: '—',
+  },
+  es: {
+    title: 'Acta de entrega de equipos',
+    issuedOn: 'Fecha de emisión',
+    employeeSection: 'Datos del empleado',
+    fullName: 'Nombre y apellidos',
+    position: 'Puesto',
+    department: 'Departamento',
+    email: 'Correo electrónico',
+    phone: 'Teléfono',
+    equipmentSection: 'Equipos entregados',
+    assetName: 'Nombre del activo',
+    category: 'Categoría',
+    model: 'Modelo',
+    serialNumber: 'Número de serie',
+    statement:
+      'Por la presente confirmo la recepción del equipo indicado anteriormente en buen estado ' +
+      'técnico, completo con todos sus accesorios. Me comprometo a utilizarlo según su uso ' +
+      'previsto y a devolverlo en condiciones adecuadas cuando lo solicite el empleador o en caso ' +
+      'de finalización de la relación laboral.',
+    signHandedOver: 'Fecha y firma de quien entrega',
+    signReceived: 'Fecha y firma de quien recibe',
+    dash: '—',
+  },
 };
 
+const SUPPORTED_LANGS: Lang[] = ['pl', 'en', 'de', 'fr', 'it', 'es'];
+
 function resolveLang(lang?: string): Lang {
-  return lang?.toLowerCase().startsWith('en') ? 'en' : 'pl';
+  const short = lang?.toLowerCase().split('-')[0];
+  return (SUPPORTED_LANGS as string[]).includes(short ?? '')
+    ? (short as Lang)
+    : 'pl';
 }
 
 const NO_BORDER = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
@@ -210,9 +307,15 @@ export class HandoverFormService {
     const resolvedLang = resolveLang(lang);
     const s = STRINGS[resolvedLang];
     const employeeName = `${user.name ?? ''} ${user.surname ?? ''}`.trim();
-    const issuedOn = new Date().toLocaleDateString(
-      resolvedLang === 'en' ? 'en-GB' : 'pl-PL',
-    );
+    const DATE_LOCALES: Record<Lang, string> = {
+      pl: 'pl-PL',
+      en: 'en-GB',
+      de: 'de-DE',
+      fr: 'fr-FR',
+      it: 'it-IT',
+      es: 'es-ES',
+    };
+    const issuedOn = new Date().toLocaleDateString(DATE_LOCALES[resolvedLang]);
 
     const doc = new Document({
       sections: [

@@ -27,6 +27,10 @@ import type {
 const LANG_OPTIONS_KEYS = [
   { value: "pl", labelKey: "settings.personal.language.pl" },
   { value: "en", labelKey: "settings.personal.language.en" },
+  { value: "de", labelKey: "settings.personal.language.de" },
+  { value: "fr", labelKey: "settings.personal.language.fr" },
+  { value: "it", labelKey: "settings.personal.language.it" },
+  { value: "es", labelKey: "settings.personal.language.es" },
 ];
 
 const START_PAGE_KEYS: Array<{ value: StartPage; labelKey: string }> = [
