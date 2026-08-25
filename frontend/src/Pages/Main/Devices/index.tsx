@@ -17,6 +17,7 @@ import FilterPresetsBar from "../../../Components/Filter/FilterPresetsBar";
 import TableSettings from "../../../Components/TableSettings";
 import { getUserSettings } from "../../../Services/settings";
 import MassActionBar from "./components/MassActionBar";
+import { useViewportFillHeight } from "../../../Hooks/useViewportFillHeight";
 
 type DeviceFilters = {
   group?: string[];
@@ -40,6 +41,7 @@ const Index = () => {
   const navigate = useNavigate();
   const params = useParams();
   const { t } = useTranslation();
+  const fillHeight = useViewportFillHeight();
 
   const [filters, setFilters] = useState<DeviceFilters>(INITIAL_FILTERS);
   const [isOpen, setIsOpen] = useState(false);
@@ -104,7 +106,10 @@ const Index = () => {
 
   return (
     <PageMotion>
-      <div className="w-full h-[calc(100vh-58px)] px-4">
+      <div
+        className="flex w-full flex-col overflow-hidden px-4"
+        style={{ height: fillHeight }}
+      >
         {/* ── Toolbar ── */}
         <div className="flex flex-wrap items-center gap-2 py-4">
           <Filter
@@ -153,21 +158,23 @@ const Index = () => {
             setClearSelection((x) => x + 1);
           }}
         />
-        <DevicesTable
-          data={devicesQuery.data?.data ?? []}
-          total={devicesQuery.data?.total ?? 0}
-          onPageChange={setPage}
-          onRowsPerPageChange={(newLimit: number) => {
-            setLimit(newLimit);
-            setPage(1);
-          }}
-          isLoading={devicesQuery.isFetching}
-          selectable
-          onSelectedRowsChange={(rows) =>
-            setSelectedIds(rows.map((r: any) => r.id))
-          }
-          clearSelection={Boolean(clearSelection)}
-        />
+        <div className="min-h-0 flex-1">
+          <DevicesTable
+            data={devicesQuery.data?.data ?? []}
+            total={devicesQuery.data?.total ?? 0}
+            onPageChange={setPage}
+            onRowsPerPageChange={(newLimit: number) => {
+              setLimit(newLimit);
+              setPage(1);
+            }}
+            isLoading={devicesQuery.isFetching}
+            selectable
+            onSelectedRowsChange={(rows) =>
+              setSelectedIds(rows.map((r: any) => r.id))
+            }
+            clearSelection={Boolean(clearSelection)}
+          />
+        </div>
       </div>
     </PageMotion>
   );

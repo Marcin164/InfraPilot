@@ -36,6 +36,7 @@ import {
 import { getUser, getUsers } from "../../../Services/users";
 import { getDevicesOptions } from "../../../Services/devices";
 import ConfirmationModal from "../../../Components/Modals/ConfirmationModal";
+import { useViewportFillHeight } from "../../../Hooks/useViewportFillHeight";
 
 const LICENSE_TYPES = ["perpetual", "subscription", "volume", "concurrent"] as const;
 
@@ -410,6 +411,7 @@ const AssignmentsPanel = ({
 
 const Licenses = () => {
   const { t } = useTranslation();
+  const fillHeight = useViewportFillHeight();
   const queryClient = useQueryClient();
   const authInfo: any = useAuthInfo();
   const currentUserId = authInfo?.user?.metadata?.id;
@@ -615,7 +617,10 @@ const Licenses = () => {
 
   return (
     <PageMotion>
-      <div className="h-[calc(100vh-58px)] w-full px-4">
+      <div
+        className="flex w-full flex-col overflow-hidden px-4"
+        style={{ height: fillHeight }}
+      >
         {expiringSoon.length > 0 && (
           <div className="mt-4 bg-[#FFF3CD] border border-[#F1C40F] rounded-[8px] px-4 py-3 text-[13px] text-[#7D6608]">
             <FontAwesomeIcon icon={faKey} className="mr-2" />
@@ -647,16 +652,19 @@ const Licenses = () => {
           </div>
         </div>
 
-        {query.isLoading ? (
-          <DataLoader />
-        ) : (
-          <MainTable
-            columns={filterColumns()}
-            data={licenses}
-            progressPending={query.isFetching}
-            onRowClicked={isAdmin ? (row: SoftwareLicense) => setEditingLicense(row) : undefined}
-          />
-        )}
+        <div className="min-h-0 flex-1">
+          {query.isLoading ? (
+            <DataLoader />
+          ) : (
+            <MainTable
+              columns={filterColumns()}
+              data={licenses}
+              progressPending={query.isFetching}
+              onRowClicked={isAdmin ? (row: SoftwareLicense) => setEditingLicense(row) : undefined}
+              fillHeight
+            />
+          )}
+        </div>
 
         {createOpen && (
           <LicenseModal

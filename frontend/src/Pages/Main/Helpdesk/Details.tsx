@@ -13,6 +13,7 @@ import { useParser } from "../../../Hooks/useParser";
 import TicketInfoPanel from "./components/TicketInfoPanel";
 import TicketContentPanel from "./components/TicketContentPanel";
 import TicketSidePanel from "./components/TicketSidePanel";
+import { useViewportFillHeight } from "../../../Hooks/useViewportFillHeight";
 
 const convertApprovalsToComments = (approvals: Approval[], requesterName?: string) => {
   return approvals.map((approval) => ({
@@ -41,6 +42,7 @@ const convertActivitiesToEntries = (activities: any[]) => {
 
 const Details = () => {
   const { t } = useTranslation();
+  const fillHeight = useViewportFillHeight();
   const params = useParams();
   const { setParsers } = useParser();
   const { user }: any = useAuthInfo();
@@ -123,7 +125,10 @@ const Details = () => {
   const otherViewers = viewers.filter((v) => v.userId !== myId);
 
   return (
-    <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-58px)] relative">
+    <div
+      className="flex flex-col lg:flex-row lg:h-[var(--tb-fill-h)] relative"
+      style={{ ["--tb-fill-h" as any]: fillHeight }}
+    >
       {otherViewers.length > 0 && (
         <div className="absolute top-2 right-2 z-30 rounded-full bg-[#3C3C3C] text-white px-3 py-1 text-[11px] font-bold shadow">
           👁 {t("helpdesk.alsoViewing", { users: otherViewers.map((v) => v.label).join(", ") })}

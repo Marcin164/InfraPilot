@@ -15,6 +15,7 @@ import { buildQuery } from "../../../Helpers/queries";
 import { useDebounce } from "../../../Hooks/useDebounce";
 import { useFilterPresets } from "../../../Hooks/useFilterPresets";
 import FilterPresetsBar from "../../../Components/Filter/FilterPresetsBar";
+import { useViewportFillHeight } from "../../../Hooks/useViewportFillHeight";
 
 export type FilterKey =
   | "department"
@@ -43,6 +44,7 @@ const INITIAL_FILTERS: FilterOptions = {
 
 const UsersPage = () => {
   const { t } = useTranslation();
+  const fillHeight = useViewportFillHeight();
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>(INITIAL_FILTERS);
   const [searchValue, setSearchValue] = useState("");
@@ -98,7 +100,10 @@ const UsersPage = () => {
 
   return (
     <PageMotion>
-      <div className="h-[calc(100vh-58px)] w-full px-4">
+      <div
+        className="flex w-full flex-col overflow-hidden px-4"
+        style={{ height: fillHeight }}
+      >
         {/* ── Toolbar ── */}
         <div className="flex flex-wrap items-center gap-2 py-4">
           <Filter
@@ -144,16 +149,18 @@ const UsersPage = () => {
           onActivate={presets.activatePreset}
           onDelete={presets.deletePreset}
         />
-        <UsersTable
-          data={usersQuery.data?.data ?? []}
-          total={usersQuery.data?.total ?? 0}
-          onPageChange={setPage}
-          onRowsPerPageChange={(newLimit: number) => {
-            setLimit(newLimit);
-            setPage(1);
-          }}
-          isLoading={usersQuery.isFetching}
-        />
+        <div className="min-h-0 flex-1">
+          <UsersTable
+            data={usersQuery.data?.data ?? []}
+            total={usersQuery.data?.total ?? 0}
+            onPageChange={setPage}
+            onRowsPerPageChange={(newLimit: number) => {
+              setLimit(newLimit);
+              setPage(1);
+            }}
+            isLoading={usersQuery.isFetching}
+          />
+        </div>
       </div>
     </PageMotion>
   );

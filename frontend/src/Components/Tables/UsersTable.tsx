@@ -162,6 +162,7 @@ const UsersTable = ({
       onChangePage={onPageChange}
       onChangeRowsPerPage={onRowsPerPageChange}
       progressPending={isLoading}
+      fillHeight
     />
   );
 };

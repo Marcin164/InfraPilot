@@ -17,6 +17,7 @@ import { useFilterPresets } from "../../../Hooks/useFilterPresets";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
 import FilterPresetsBar from "../../../Components/Filter/FilterPresetsBar";
 import CreateTicketModal from "./components/CreateTicketModal";
+import { useViewportFillHeight } from "../../../Hooks/useViewportFillHeight";
 
 type TicketFilters = {
   type?: string[];
@@ -33,6 +34,7 @@ const Index = () => {
   const authInfo: any = useAuthInfo();
   const myId = authInfo?.user?.metadata?.id ?? authInfo?.user?.userId ?? null;
   const queryClient = useQueryClient();
+  const fillHeight = useViewportFillHeight();
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(30);
@@ -119,7 +121,10 @@ const Index = () => {
 
   return (
     <PageMotion>
-      <div className="w-full h-[calc(100vh-58px)] px-4">
+      <div
+        className="flex w-full flex-col overflow-hidden px-4"
+        style={{ height: fillHeight }}
+      >
         {/* ── Toolbar ── */}
         <div className="flex flex-wrap items-center gap-2 py-4">
           <Filter
@@ -178,16 +183,18 @@ const Index = () => {
           onActivate={presets.activatePreset}
           onDelete={presets.deletePreset}
         />
-        <TicketsTable
-          data={helpdeskQuery.data?.data ?? []}
-          total={helpdeskQuery.data?.total ?? 0}
-          onPageChange={setPage}
-          onRowsPerPageChange={(newLimit: any) => {
-            setLimit(newLimit);
-            setPage(1);
-          }}
-          isLoading={helpdeskQuery.isFetching}
-        />
+        <div className="min-h-0 flex-1">
+          <TicketsTable
+            data={helpdeskQuery.data?.data ?? []}
+            total={helpdeskQuery.data?.total ?? 0}
+            onPageChange={setPage}
+            onRowsPerPageChange={(newLimit: any) => {
+              setLimit(newLimit);
+              setPage(1);
+            }}
+            isLoading={helpdeskQuery.isFetching}
+          />
+        </div>
       </div>
       {createOpen && (
         <CreateTicketModal

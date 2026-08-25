@@ -9,11 +9,13 @@ import { useDebounce } from "../../../Hooks/useDebounce";
 import AddSpaceModal from "../../../Components/Modals/AddSpaceModal";
 import { getSpaces } from "../../../Services/knowledge";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
+import { useViewportFillHeight } from "../../../Hooks/useViewportFillHeight";
 
 type Props = {};
 
 const index = (props: Props) => {
   const { t } = useTranslation();
+  const fillHeight = useViewportFillHeight();
   const [searchValue, setSearchValue] = useState("");
   const [isAddSpaceModalOpen, setIsAddSpaceModalOpen] = useState(false);
   const debouncedSearch = useDebounce(searchValue, 500);
@@ -39,7 +41,10 @@ const index = (props: Props) => {
 
   return (
     <PageMotion>
-    <div className="w-full h-[calc(100vh-58px)] px-4">
+    <div
+      className="flex w-full flex-col overflow-hidden px-4"
+      style={{ height: fillHeight }}
+    >
       <div className="flex flex-wrap items-center gap-2 py-4">
         <Search
           onChange={handleSearchChange}
@@ -53,7 +58,9 @@ const index = (props: Props) => {
           className="ml-auto"
         />
       </div>
-      <SpacesTable data={filteredSpaces} isLoading={isLoading} />
+      <div className="min-h-0 flex-1">
+        <SpacesTable data={filteredSpaces} isLoading={isLoading} fillHeight />
+      </div>
 
       <AddSpaceModal
         isModalOpen={isAddSpaceModalOpen}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import MainNavbar from "../../Components/Navbar/MainNavbar";
 import Topbar from "../../Components/Topbar";
 import { Outlet } from "react-router";
@@ -6,8 +6,15 @@ import { Outlet } from "react-router";
 const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sidebarOpen]);
+
   return (
-    <div className="h-screen overflow-hidden bg-[#F6F6F6]">
+    <div className="min-h-screen bg-[#F6F6F6]">
       <MainNavbar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       {sidebarOpen && (
         <div
@@ -17,9 +24,7 @@ const MainLayout = () => {
       )}
       <div className="lg:ml-[240px]">
         <Topbar onMenuToggle={() => setSidebarOpen((o) => !o)} />
-        <div className="h-[calc(100vh-58px)] overflow-y-auto">
-          <Outlet />
-        </div>
+        <Outlet />
       </div>
     </div>
   );

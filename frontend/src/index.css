@@ -77,11 +77,6 @@ body {
   font-family: "Lato", sans-serif;
 }
 
-.rdtTable,
-.fycQKg {
-  height: calc(100vh - 180px) !important;
-}
-
 .rdt_Pagination {
   border: none !important ;
   background-color: transparent !important ;
@@ -145,10 +140,6 @@ html.dark .scrollbar-nav {
 @media (min-width: 1920px) {
   body {
     font-size: 17px;
-  }
-  .rdtTable,
-  .fycQKg {
-    height: calc(100vh - 200px) !important;
   }
 }
 

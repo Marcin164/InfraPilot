@@ -12,7 +12,6 @@ import {
   getUserSettings,
   updateUserSettings,
 } from "../../../../Services/settings";
-import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { twMerge } from "tailwind-merge";
 import { toast } from "react-toastify";
@@ -135,19 +134,10 @@ const Personal = () => {
     queryFn: getUserSettings,
   });
 
-  const [draft, setDraft] = useState<Partial<UserSettings>>({});
-
-  const merged: Partial<UserSettings> = useMemo(
-    () => ({ ...(data ?? {}), ...draft }),
-    [data, draft],
-  );
-
   const mutation = useMutation({
     mutationFn: updateUserSettings,
     onSuccess: (updated) => {
       queryClient.setQueryData(["settings"], updated);
-      setDraft({});
-      toast.success(t("toast.success.settingsSaved"));
     },
     onError: () => {
       toast.error(t("toast.error.settingsSave"));
@@ -158,10 +148,8 @@ const Personal = () => {
     key: K,
     value: UserSettings[K],
   ) => {
-    setDraft((prev) => ({ ...prev, [key]: value }));
+     mutation.mutate({[key]: value })
   };
-
-  const isDirty = Object.keys(draft).length > 0;
 
   if (isLoading) {
     return (
@@ -171,10 +159,10 @@ const Personal = () => {
     );
   }
 
-  const theme = (merged.theme ?? "system") as ThemeSetting;
+  const theme = (data?.theme ?? "system") as ThemeSetting;
 
   return (
-    <div className="m-4 space-y-6 rounded-[10px] bg-white p-6 shadow-xl">
+    <div className="mt-4 mx-4 space-y-6 rounded-[10px] bg-white p-6 shadow-xl">
       <Section
         title={t("settings.personal.theme")}
         description={t("settings.personal.theme.desc")}
@@ -208,7 +196,7 @@ const Personal = () => {
         <SelectSecondary
           label=""
           options={LANG_OPTIONS}
-          value={findOption(LANG_OPTIONS, merged.language as string)}
+          value={findOption(LANG_OPTIONS, data?.language as string)}
           onSelect={(opt: { value: string }) =>
             update("language", opt?.value ?? "en")
           }
@@ -223,7 +211,7 @@ const Personal = () => {
         <SelectSecondary
           label=""
           options={START_PAGE_OPTIONS}
-          value={findOption(START_PAGE_OPTIONS, merged.startPage as StartPage)}
+          value={findOption(START_PAGE_OPTIONS, data?.startPage as StartPage)}
           onSelect={(opt: { value: StartPage }) =>
             update("startPage", opt?.value ?? "dashboards")
           }
@@ -238,7 +226,7 @@ const Personal = () => {
         <SelectSecondary
           label=""
           options={DATE_FORMAT_OPTIONS}
-          value={findOption(DATE_FORMAT_OPTIONS, merged.dateFormat as DateFormat)}
+          value={findOption(DATE_FORMAT_OPTIONS, data?.dateFormat as DateFormat)}
           onSelect={(opt: { value: DateFormat }) =>
             update("dateFormat", opt?.value ?? "DD/MM/YYYY")
           }
@@ -253,7 +241,7 @@ const Personal = () => {
         <SelectSecondary
           label=""
           options={TIME_FORMAT_OPTIONS}
-          value={findOption(TIME_FORMAT_OPTIONS, merged.timeFormat as TimeFormat)}
+          value={findOption(TIME_FORMAT_OPTIONS, data?.timeFormat as TimeFormat)}
           onSelect={(opt: { value: TimeFormat }) =>
             update("timeFormat", opt?.value ?? "24h")
           }
@@ -268,7 +256,7 @@ const Personal = () => {
         <SelectSecondary
           label=""
           options={PAGE_SIZE_OPTIONS}
-          value={findOption(PAGE_SIZE_OPTIONS, merged.defaultPageSize ?? 25)}
+          value={findOption(PAGE_SIZE_OPTIONS, data?.defaultPageSize ?? 25)}
           onSelect={(opt: { value: number }) =>
             update("defaultPageSize", opt?.value ?? 25)
           }
@@ -282,33 +270,10 @@ const Personal = () => {
       >
         <Checkbox
           label={t("settings.personal.density.compact")}
-          checked={!!merged.compactMode}
-          onChange={() => update("compactMode", !merged.compactMode)}
+          checked={!!data?.compactMode}
+          onChange={() => update("compactMode", !data?.compactMode)}
         />
       </Section>
-
-      <div className="flex items-center justify-end gap-3 pt-2">
-        {isDirty && (
-          <button
-            type="button"
-            onClick={() => setDraft({})}
-            className="rounded-[10px] px-4 py-2 text-[14px] font-semibold text-[#8A8A8A] hover:text-[#3C3C3C]"
-          >
-            {t("common.cancel")}
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => mutation.mutate(draft)}
-          disabled={!isDirty || mutation.isPending}
-          className={twMerge(
-            "rounded-[10px] bg-[#2B9AE9] px-5 py-2 text-[14px] font-semibold text-white shadow-md transition-colors",
-            "hover:bg-[#3CABFA] disabled:cursor-not-allowed disabled:bg-[#A7CDEE]",
-          )}
-        >
-          {mutation.isPending ? t("common.saving") : t("common.save")}
-        </button>
-      </div>
     </div>
   );
 };

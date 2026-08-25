@@ -23,7 +23,7 @@ const Topbar = ({ onMenuToggle }: Props) => {
   };
 
   return (
-    <div className="flex items-center justify-between bg-[#FFFFFF] px-4 py-3">
+    <div id="app-topbar" className="sticky top-0 z-20 flex items-center justify-between bg-[#FFFFFF] px-4 py-3">
       <div className="flex items-center gap-3 min-w-0">
         <button
           className="lg:hidden text-[#535353] p-1 flex-shrink-0"

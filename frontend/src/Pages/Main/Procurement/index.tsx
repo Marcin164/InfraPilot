@@ -28,6 +28,7 @@ import {
   PurchaseOrder,
 } from "../../../Services/purchaseOrders";
 import { getUser } from "../../../Services/users";
+import { useViewportFillHeight } from "../../../Hooks/useViewportFillHeight";
 
 const STATUS_CONFIG: Record<PurchaseOrderStatus, { color: string; bg: string }> = {
   draft:      { color: "#9a9a9a", bg: "#F5F5F5" },
@@ -196,6 +197,7 @@ type StatusMenuState = { id: string; x: number; y: number } | null;
 
 const Procurement = () => {
   const { t } = useTranslation();
+  const fillHeight = useViewportFillHeight();
   const queryClient = useQueryClient();
   const authInfo: any = useAuthInfo();
   const currentUserId = authInfo?.user?.metadata?.id;
@@ -399,7 +401,10 @@ const Procurement = () => {
 
   return (
     <PageMotion>
-      <div className="h-[calc(100vh-58px)] w-full px-4">
+      <div
+        className="flex w-full flex-col overflow-hidden px-4"
+        style={{ height: fillHeight }}
+      >
         {/* Status counters */}
         <div className="flex gap-5 pt-4 pb-2 flex-wrap">
           {STATUSES.map((s) => {
@@ -437,12 +442,15 @@ const Procurement = () => {
           </div>
         </div>
 
-        <MainTable
-          columns={filterColumns()}
-          data={orders}
-          progressPending={ordersQuery.isFetching}
-          onRowClicked={isAdmin ? (row: PurchaseOrder) => setEditingOrder(row) : undefined}
-        />
+        <div className="min-h-0 flex-1">
+          <MainTable
+            columns={filterColumns()}
+            data={orders}
+            progressPending={ordersQuery.isFetching}
+            onRowClicked={isAdmin ? (row: PurchaseOrder) => setEditingOrder(row) : undefined}
+            fillHeight
+          />
+        </div>
       </div>
 
       {/* Status dropdown portal */}

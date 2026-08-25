@@ -48,6 +48,7 @@ const MainTable = ({
   noDataComponent,
   expandableRows,
   expandableRowsComponent,
+  fillHeight = false,
 }: any) => {
   const { t } = useTranslation();
   const { resolvedTheme } = useTheme();
@@ -59,12 +60,13 @@ const MainTable = ({
   const defaultNoData = (
     <div className="py-6 text-[14px] text-[#7a7a7a]">{t("table.noResults")}</div>
   );
+  const scrollHeight = fillHeight ? "100%" : "calc(100vh - 180px)";
   const customStyles = {
     table: {
       style: {
         width: "100%",
         background: "transparent",
-        height: "80vh",
+        height: fillHeight ? "100%" : "80vh",
       },
     },
     headRow: {
@@ -109,6 +111,7 @@ const MainTable = ({
     <AnimatePresence mode="wait">
       <motion.div
         key={progressPending ? "loading" : "loaded"}
+        className={fillHeight ? "flex h-full flex-col" : undefined}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -125,6 +128,7 @@ const MainTable = ({
           pointerOnHover
           responsive
           fixedHeader
+          fixedHeaderScrollHeight={scrollHeight}
           pagination
           paginationServer={paginationServer}
           paginationTotalRows={paginationTotalRows}

@@ -239,6 +239,7 @@ const TicketsTable = ({
       onChangePage={onPageChange}
       onChangeRowsPerPage={onRowsPerPageChange}
       progressPending={isLoading}
+      fillHeight
     />
   );
 };

@@ -230,6 +230,7 @@ const DevicesTable = ({
           : undefined
       }
       clearSelectedRows={clearSelection}
+      fillHeight
     />
   );
 };

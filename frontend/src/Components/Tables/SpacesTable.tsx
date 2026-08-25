@@ -7,6 +7,7 @@ import type { KnowledgeSpace } from "../../Types";
 type Props = {
   data: KnowledgeSpace[];
   isLoading: boolean;
+  fillHeight?: boolean;
 };
 
 const formatDate = (value?: string) => {
@@ -16,7 +17,7 @@ const formatDate = (value?: string) => {
   return d.toLocaleDateString();
 };
 
-const SpacesTable = ({ data, isLoading }: Props) => {
+const SpacesTable = ({ data, isLoading, fillHeight }: Props) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -78,7 +79,7 @@ const SpacesTable = ({ data, isLoading }: Props) => {
       columns={columns}
       data={data}
       onRowClicked={(row: KnowledgeSpace) => navigate(`/admin/knowledge/${row.id}`)}
-      className="h-[calc(100vh-170px)]"
+      fillHeight={fillHeight}
     />
   );
 };
