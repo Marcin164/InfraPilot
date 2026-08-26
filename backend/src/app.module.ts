@@ -96,6 +96,9 @@ import { PurchaseOrderModule } from './modules/purchaseOrder.module';
 import { AiModule } from './modules/ai.module';
 import { M365Module } from './modules/m365.module';
 import { GoogleWorkspaceModule } from './modules/googleWorkspace.module';
+import { GithubEnterpriseModule } from './modules/githubEnterprise.module';
+import { ZoomModule } from './modules/zoom.module';
+import { DropboxModule } from './modules/dropbox.module';
 import { LicenseSyncModule } from './modules/licenseSync.module';
 import { BootstrapService } from './services/bootstrap.service';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
@@ -249,6 +252,9 @@ import { MetricsController } from './controllers/metrics.controller';
     AiModule,
     M365Module,
     GoogleWorkspaceModule,
+    GithubEnterpriseModule,
+    ZoomModule,
+    DropboxModule,
     LicenseSyncModule,
   ],
   controllers: [HealthController],

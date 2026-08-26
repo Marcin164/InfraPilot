@@ -2,6 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { M365Service } from 'src/services/m365.service';
 import { GoogleWorkspaceService } from 'src/services/googleWorkspace.service';
+import { GithubEnterpriseService } from 'src/services/githubEnterprise.service';
+import { ZoomService } from 'src/services/zoom.service';
+import { DropboxService } from 'src/services/dropbox.service';
 
 @Injectable()
 export class LicenseSyncWorker {
@@ -10,6 +13,9 @@ export class LicenseSyncWorker {
   constructor(
     private readonly m365Service: M365Service,
     private readonly googleService: GoogleWorkspaceService,
+    private readonly githubService: GithubEnterpriseService,
+    private readonly zoomService: ZoomService,
+    private readonly dropboxService: DropboxService,
   ) {}
 
   /** Daily at 06:00 — before the 08:00 expiry alert worker, so alerts see fresh seat data. */
@@ -25,6 +31,24 @@ export class LicenseSyncWorker {
       const cfg = await this.googleService.getPublicConfig();
       if (!cfg?.hasServiceAccount || cfg.skus.length === 0) return; // not configured — skip silently
       await this.googleService.syncLicenses();
+    });
+
+    await this.syncProvider('GitHub Enterprise', async () => {
+      const cfg = await this.githubService.getPublicConfig();
+      if (!cfg?.hasToken) return; // not configured — skip silently
+      await this.githubService.syncLicenses();
+    });
+
+    await this.syncProvider('Zoom', async () => {
+      const cfg = await this.zoomService.getPublicConfig();
+      if (!cfg?.hasSecret) return; // not configured — skip silently
+      await this.zoomService.syncLicenses();
+    });
+
+    await this.syncProvider('Dropbox', async () => {
+      const cfg = await this.dropboxService.getPublicConfig();
+      if (!cfg?.hasRefreshToken) return; // not configured — skip silently
+      await this.dropboxService.syncLicenses();
     });
   }
 

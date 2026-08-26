@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,16 +11,24 @@ import {
   faSpinner,
   faArrowsRotate,
   faArrowUpRightFromSquare,
+  faVideo,
 } from "@fortawesome/free-solid-svg-icons";
-import { faGoogle } from "@fortawesome/free-brands-svg-icons";
+import { faGoogle, faGithub, faDropbox } from "@fortawesome/free-brands-svg-icons";
 import moment from "moment";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import { getM365Config, getM365SyncStatus, syncM365Licenses } from "../../../../Services/m365";
 import { getGoogleWorkspaceConfig, getGoogleWorkspaceSyncStatus, syncGoogleWorkspaceLicenses } from "../../../../Services/googleWorkspace";
+import { getGithubConfig, getGithubSyncStatus, syncGithubLicenses } from "../../../../Services/githubEnterprise";
+import { getZoomConfig, getZoomSyncStatus, syncZoomLicenses } from "../../../../Services/zoom";
+import { getDropboxConfig, getDropboxSyncStatus, syncDropboxLicenses } from "../../../../Services/dropbox";
 import { getLicenses, type LicenseSource } from "../../../../Services/licenses";
 import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
 import { hasRequiredRole } from "../../../../Constants/navigation";
+import GoogleWorkspaceConfigModal from "./GoogleWorkspaceConfigModal";
+import GitHubEnterpriseConfigModal from "./GitHubEnterpriseConfigModal";
+import ZoomConfigModal from "./ZoomConfigModal";
+import DropboxConfigModal from "./DropboxConfigModal";
 
 // Provider brand names are proper nouns and stay untranslated across locales.
 const BRAND_LABELS: Partial<Record<LicenseSource, string>> = {
@@ -36,7 +44,7 @@ const ALL_SOURCES: LicenseSource[] = ["manual", "m365", "google", "github", "zoo
 const ProviderSyncCard = ({
   title,
   icon,
-  configurePath,
+  onConfigure,
   isConnected,
   lastSync,
   onSync,
@@ -46,7 +54,7 @@ const ProviderSyncCard = ({
 }: {
   title: string;
   icon: any;
-  configurePath: string;
+  onConfigure: () => void;
   isConnected: boolean;
   lastSync: string | null | undefined;
   onSync: () => void;
@@ -55,14 +63,13 @@ const ProviderSyncCard = ({
   syncError: string | null;
 }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   return (
     <div className="bg-white shadow-xl rounded-[10px] p-4">
       <div className="flex items-center justify-between mb-3">
         <CardHeader text={title} icon={icon} />
         <button
-          onClick={() => navigate(configurePath)}
+          onClick={onConfigure}
           className="text-[13px] text-[#2B9AE9] hover:underline flex items-center gap-1 shrink-0"
         >
           {t("licenseSync.configure")} <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[11px]" />
@@ -99,17 +106,28 @@ const ProviderSyncCard = ({
 
 const LicenseSyncSettings = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [openModal, setOpenModal] = useState<"google" | "github" | "zoom" | "dropbox" | null>(null);
 
   const m365ConfigQuery = useQuery({ queryKey: ["m365-config"], queryFn: getM365Config });
   const m365SyncStatusQuery = useQuery({ queryKey: ["m365-sync-status"], queryFn: getM365SyncStatus });
   const googleConfigQuery = useQuery({ queryKey: ["google-config"], queryFn: getGoogleWorkspaceConfig });
   const googleSyncStatusQuery = useQuery({ queryKey: ["google-sync-status"], queryFn: getGoogleWorkspaceSyncStatus });
+  const githubConfigQuery = useQuery({ queryKey: ["github-config"], queryFn: getGithubConfig });
+  const githubSyncStatusQuery = useQuery({ queryKey: ["github-sync-status"], queryFn: getGithubSyncStatus });
+  const zoomConfigQuery = useQuery({ queryKey: ["zoom-config"], queryFn: getZoomConfig });
+  const zoomSyncStatusQuery = useQuery({ queryKey: ["zoom-sync-status"], queryFn: getZoomSyncStatus });
+  const dropboxConfigQuery = useQuery({ queryKey: ["dropbox-config"], queryFn: getDropboxConfig });
+  const dropboxSyncStatusQuery = useQuery({ queryKey: ["dropbox-sync-status"], queryFn: getDropboxSyncStatus });
   const licensesQuery = useQuery({ queryKey: ["licenses"], queryFn: getLicenses });
 
   const isM365Connected = !!m365ConfigQuery.data?.tenantId && m365ConfigQuery.data.hasSecret;
   const isGoogleConnected = !!googleConfigQuery.data?.adminEmail && googleConfigQuery.data.hasServiceAccount
     && (googleConfigQuery.data.skus?.length ?? 0) > 0;
+  const isGithubConnected = !!githubConfigQuery.data?.enterpriseSlug && githubConfigQuery.data.hasToken;
+  const isZoomConnected = !!zoomConfigQuery.data?.accountId && zoomConfigQuery.data.hasSecret;
+  const isDropboxConnected = !!dropboxConfigQuery.data?.appKey && dropboxConfigQuery.data.hasSecret && dropboxConfigQuery.data.hasRefreshToken;
 
   const m365SyncMutation = useMutation({
     mutationFn: syncM365Licenses,
@@ -123,6 +141,30 @@ const LicenseSyncSettings = () => {
     mutationFn: syncGoogleWorkspaceLicenses,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["google-sync-status"] });
+      queryClient.invalidateQueries({ queryKey: ["licenses"] });
+    },
+  });
+
+  const githubSyncMutation = useMutation({
+    mutationFn: syncGithubLicenses,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["github-sync-status"] });
+      queryClient.invalidateQueries({ queryKey: ["licenses"] });
+    },
+  });
+
+  const zoomSyncMutation = useMutation({
+    mutationFn: syncZoomLicenses,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["zoom-sync-status"] });
+      queryClient.invalidateQueries({ queryKey: ["licenses"] });
+    },
+  });
+
+  const dropboxSyncMutation = useMutation({
+    mutationFn: syncDropboxLicenses,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dropbox-sync-status"] });
       queryClient.invalidateQueries({ queryKey: ["licenses"] });
     },
   });
@@ -164,7 +206,7 @@ const LicenseSyncSettings = () => {
       <ProviderSyncCard
         title={BRAND_LABELS.m365 + " / Entra ID"}
         icon={faCloud}
-        configurePath="/admin/settings/m365"
+        onConfigure={() => navigate("/admin/settings/m365")}
         isConnected={isM365Connected}
         lastSync={m365SyncStatusQuery.data?.licensesLastSync}
         onSync={() => m365SyncMutation.mutate()}
@@ -176,7 +218,7 @@ const LicenseSyncSettings = () => {
       <ProviderSyncCard
         title={BRAND_LABELS.google!}
         icon={faGoogle}
-        configurePath="/admin/settings/google-workspace"
+        onConfigure={() => setOpenModal("google")}
         isConnected={isGoogleConnected}
         lastSync={googleSyncStatusQuery.data?.licensesLastSync}
         onSync={() => googleSyncMutation.mutate()}
@@ -185,13 +227,46 @@ const LicenseSyncSettings = () => {
         syncError={googleSyncMutation.isError ? ((googleSyncMutation.error as any)?.response?.data?.message ?? t("licenseSync.syncError")) : null}
       />
 
-      {/* ─── Roadmap ────────────────────────────────────────────────────── */}
-      <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text={t("licenseSync.roadmapTitle")} icon={faKey} />
-        <div className="mt-3 text-[13px] text-[#7a7a7a]">
-          {t("licenseSync.roadmapBody")}
-        </div>
-      </div>
+      <ProviderSyncCard
+        title={BRAND_LABELS.github!}
+        icon={faGithub}
+        onConfigure={() => setOpenModal("github")}
+        isConnected={isGithubConnected}
+        lastSync={githubSyncStatusQuery.data?.licensesLastSync}
+        onSync={() => githubSyncMutation.mutate()}
+        syncPending={githubSyncMutation.isPending}
+        syncDisabled={!isGithubConnected}
+        syncError={githubSyncMutation.isError ? ((githubSyncMutation.error as any)?.response?.data?.message ?? t("licenseSync.syncError")) : null}
+      />
+
+      <ProviderSyncCard
+        title={BRAND_LABELS.zoom!}
+        icon={faVideo}
+        onConfigure={() => setOpenModal("zoom")}
+        isConnected={isZoomConnected}
+        lastSync={zoomSyncStatusQuery.data?.licensesLastSync}
+        onSync={() => zoomSyncMutation.mutate()}
+        syncPending={zoomSyncMutation.isPending}
+        syncDisabled={!isZoomConnected}
+        syncError={zoomSyncMutation.isError ? ((zoomSyncMutation.error as any)?.response?.data?.message ?? t("licenseSync.syncError")) : null}
+      />
+
+      <ProviderSyncCard
+        title={BRAND_LABELS.dropbox!}
+        icon={faDropbox}
+        onConfigure={() => setOpenModal("dropbox")}
+        isConnected={isDropboxConnected}
+        lastSync={dropboxSyncStatusQuery.data?.licensesLastSync}
+        onSync={() => dropboxSyncMutation.mutate()}
+        syncPending={dropboxSyncMutation.isPending}
+        syncDisabled={!isDropboxConnected}
+        syncError={dropboxSyncMutation.isError ? ((dropboxSyncMutation.error as any)?.response?.data?.message ?? t("licenseSync.syncError")) : null}
+      />
+
+      <GoogleWorkspaceConfigModal isOpen={openModal === "google"} onClose={() => setOpenModal(null)} />
+      <GitHubEnterpriseConfigModal isOpen={openModal === "github"} onClose={() => setOpenModal(null)} />
+      <ZoomConfigModal isOpen={openModal === "zoom"} onClose={() => setOpenModal(null)} />
+      <DropboxConfigModal isOpen={openModal === "dropbox"} onClose={() => setOpenModal(null)} />
     </div>
   );
 };

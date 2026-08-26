@@ -41,7 +41,6 @@ import {
   faWrench,
   faRetweet,
 } from "@fortawesome/free-solid-svg-icons";
-import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 
 export type NavbarRequirement =
   | "admin"
@@ -236,7 +235,6 @@ export const settingsNavbarItems = [
   { to: "personal", label: "settings.tab.personal", icon: faAddressBook },
   { to: "active-directory", label: "settings.tab.activeDirectory", icon: faNetworkWired, requires: "admin" as NavbarRequirement },
   { to: "m365", label: "settings.tab.m365", icon: faCloud, requires: "admin" as NavbarRequirement },
-  { to: "google-workspace", label: "settings.tab.googleWorkspace", icon: faGoogle, requires: "admin" as NavbarRequirement },
   { to: "licenses", label: "settings.tab.licenseSync", icon: faKey, requires: "admin" as NavbarRequirement },
   { to: "sla", label: "settings.tab.sla", icon: faCalendar },
   { to: "workflows", label: "settings.tab.workflows", icon: faBolt },
