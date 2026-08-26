@@ -99,6 +99,7 @@ import { GoogleWorkspaceModule } from './modules/googleWorkspace.module';
 import { GithubEnterpriseModule } from './modules/githubEnterprise.module';
 import { ZoomModule } from './modules/zoom.module';
 import { DropboxModule } from './modules/dropbox.module';
+import { AdobeModule } from './modules/adobe.module';
 import { LicenseSyncModule } from './modules/licenseSync.module';
 import { BootstrapService } from './services/bootstrap.service';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
@@ -255,6 +256,7 @@ import { MetricsController } from './controllers/metrics.controller';
     GithubEnterpriseModule,
     ZoomModule,
     DropboxModule,
+    AdobeModule,
     LicenseSyncModule,
   ],
   controllers: [HealthController],

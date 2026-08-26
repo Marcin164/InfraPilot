@@ -12,6 +12,7 @@ import {
   faArrowsRotate,
   faArrowUpRightFromSquare,
   faVideo,
+  faPalette,
 } from "@fortawesome/free-solid-svg-icons";
 import { faGoogle, faGithub, faDropbox } from "@fortawesome/free-brands-svg-icons";
 import moment from "moment";
@@ -22,6 +23,7 @@ import { getGoogleWorkspaceConfig, getGoogleWorkspaceSyncStatus, syncGoogleWorks
 import { getGithubConfig, getGithubSyncStatus, syncGithubLicenses } from "../../../../Services/githubEnterprise";
 import { getZoomConfig, getZoomSyncStatus, syncZoomLicenses } from "../../../../Services/zoom";
 import { getDropboxConfig, getDropboxSyncStatus, syncDropboxLicenses } from "../../../../Services/dropbox";
+import { getAdobeConfig, getAdobeSyncStatus, syncAdobeLicenses } from "../../../../Services/adobe";
 import { getLicenses, type LicenseSource } from "../../../../Services/licenses";
 import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
 import { hasRequiredRole } from "../../../../Constants/navigation";
@@ -29,6 +31,7 @@ import GoogleWorkspaceConfigModal from "./GoogleWorkspaceConfigModal";
 import GitHubEnterpriseConfigModal from "./GitHubEnterpriseConfigModal";
 import ZoomConfigModal from "./ZoomConfigModal";
 import DropboxConfigModal from "./DropboxConfigModal";
+import AdobeConfigModal from "./AdobeConfigModal";
 
 // Provider brand names are proper nouns and stay untranslated across locales.
 const BRAND_LABELS: Partial<Record<LicenseSource, string>> = {
@@ -37,9 +40,10 @@ const BRAND_LABELS: Partial<Record<LicenseSource, string>> = {
   github: "GitHub Enterprise",
   zoom: "Zoom",
   dropbox: "Dropbox",
+  adobe: "Adobe",
 };
 
-const ALL_SOURCES: LicenseSource[] = ["manual", "m365", "google", "github", "zoom", "dropbox"];
+const ALL_SOURCES: LicenseSource[] = ["manual", "m365", "google", "github", "zoom", "dropbox", "adobe"];
 
 const ProviderSyncCard = ({
   title,
@@ -108,7 +112,7 @@ const LicenseSyncSettings = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [openModal, setOpenModal] = useState<"google" | "github" | "zoom" | "dropbox" | null>(null);
+  const [openModal, setOpenModal] = useState<"google" | "github" | "zoom" | "dropbox" | "adobe" | null>(null);
 
   const m365ConfigQuery = useQuery({ queryKey: ["m365-config"], queryFn: getM365Config });
   const m365SyncStatusQuery = useQuery({ queryKey: ["m365-sync-status"], queryFn: getM365SyncStatus });
@@ -120,6 +124,8 @@ const LicenseSyncSettings = () => {
   const zoomSyncStatusQuery = useQuery({ queryKey: ["zoom-sync-status"], queryFn: getZoomSyncStatus });
   const dropboxConfigQuery = useQuery({ queryKey: ["dropbox-config"], queryFn: getDropboxConfig });
   const dropboxSyncStatusQuery = useQuery({ queryKey: ["dropbox-sync-status"], queryFn: getDropboxSyncStatus });
+  const adobeConfigQuery = useQuery({ queryKey: ["adobe-config"], queryFn: getAdobeConfig });
+  const adobeSyncStatusQuery = useQuery({ queryKey: ["adobe-sync-status"], queryFn: getAdobeSyncStatus });
   const licensesQuery = useQuery({ queryKey: ["licenses"], queryFn: getLicenses });
 
   const isM365Connected = !!m365ConfigQuery.data?.tenantId && m365ConfigQuery.data.hasSecret;
@@ -128,6 +134,8 @@ const LicenseSyncSettings = () => {
   const isGithubConnected = !!githubConfigQuery.data?.enterpriseSlug && githubConfigQuery.data.hasToken;
   const isZoomConnected = !!zoomConfigQuery.data?.accountId && zoomConfigQuery.data.hasSecret;
   const isDropboxConnected = !!dropboxConfigQuery.data?.appKey && dropboxConfigQuery.data.hasSecret && dropboxConfigQuery.data.hasRefreshToken;
+  const isAdobeConnected = !!adobeConfigQuery.data?.orgId && adobeConfigQuery.data.hasSecret
+    && (adobeConfigQuery.data.profiles?.length ?? 0) > 0;
 
   const m365SyncMutation = useMutation({
     mutationFn: syncM365Licenses,
@@ -165,6 +173,14 @@ const LicenseSyncSettings = () => {
     mutationFn: syncDropboxLicenses,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dropbox-sync-status"] });
+      queryClient.invalidateQueries({ queryKey: ["licenses"] });
+    },
+  });
+
+  const adobeSyncMutation = useMutation({
+    mutationFn: syncAdobeLicenses,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adobe-sync-status"] });
       queryClient.invalidateQueries({ queryKey: ["licenses"] });
     },
   });
@@ -263,10 +279,23 @@ const LicenseSyncSettings = () => {
         syncError={dropboxSyncMutation.isError ? ((dropboxSyncMutation.error as any)?.response?.data?.message ?? t("licenseSync.syncError")) : null}
       />
 
+      <ProviderSyncCard
+        title={BRAND_LABELS.adobe!}
+        icon={faPalette}
+        onConfigure={() => setOpenModal("adobe")}
+        isConnected={isAdobeConnected}
+        lastSync={adobeSyncStatusQuery.data?.licensesLastSync}
+        onSync={() => adobeSyncMutation.mutate()}
+        syncPending={adobeSyncMutation.isPending}
+        syncDisabled={!isAdobeConnected}
+        syncError={adobeSyncMutation.isError ? ((adobeSyncMutation.error as any)?.response?.data?.message ?? t("licenseSync.syncError")) : null}
+      />
+
       <GoogleWorkspaceConfigModal isOpen={openModal === "google"} onClose={() => setOpenModal(null)} />
       <GitHubEnterpriseConfigModal isOpen={openModal === "github"} onClose={() => setOpenModal(null)} />
       <ZoomConfigModal isOpen={openModal === "zoom"} onClose={() => setOpenModal(null)} />
       <DropboxConfigModal isOpen={openModal === "dropbox"} onClose={() => setOpenModal(null)} />
+      <AdobeConfigModal isOpen={openModal === "adobe"} onClose={() => setOpenModal(null)} />
     </div>
   );
 };

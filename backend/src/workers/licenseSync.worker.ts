@@ -5,6 +5,7 @@ import { GoogleWorkspaceService } from 'src/services/googleWorkspace.service';
 import { GithubEnterpriseService } from 'src/services/githubEnterprise.service';
 import { ZoomService } from 'src/services/zoom.service';
 import { DropboxService } from 'src/services/dropbox.service';
+import { AdobeService } from 'src/services/adobe.service';
 
 @Injectable()
 export class LicenseSyncWorker {
@@ -16,6 +17,7 @@ export class LicenseSyncWorker {
     private readonly githubService: GithubEnterpriseService,
     private readonly zoomService: ZoomService,
     private readonly dropboxService: DropboxService,
+    private readonly adobeService: AdobeService,
   ) {}
 
   /** Daily at 06:00 — before the 08:00 expiry alert worker, so alerts see fresh seat data. */
@@ -49,6 +51,12 @@ export class LicenseSyncWorker {
       const cfg = await this.dropboxService.getPublicConfig();
       if (!cfg?.hasRefreshToken) return; // not configured — skip silently
       await this.dropboxService.syncLicenses();
+    });
+
+    await this.syncProvider('Adobe', async () => {
+      const cfg = await this.adobeService.getPublicConfig();
+      if (!cfg?.hasSecret || cfg.profiles.length === 0) return; // not configured — skip silently
+      await this.adobeService.syncLicenses();
     });
   }
 

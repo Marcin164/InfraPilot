@@ -56,6 +56,7 @@ const SOURCE_LABELS: Record<string, string> = {
   github: "GitHub Enterprise",
   zoom: "Zoom",
   dropbox: "Dropbox",
+  adobe: "Adobe",
 };
 
 const expiryStatus = (

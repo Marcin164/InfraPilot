@@ -5,6 +5,7 @@ import { GoogleWorkspaceService } from 'src/services/googleWorkspace.service';
 import { GithubEnterpriseService } from 'src/services/githubEnterprise.service';
 import { ZoomService } from 'src/services/zoom.service';
 import { DropboxService } from 'src/services/dropbox.service';
+import { AdobeService } from 'src/services/adobe.service';
 
 describe('LicenseSyncWorker', () => {
   let worker: LicenseSyncWorker;
@@ -13,6 +14,7 @@ describe('LicenseSyncWorker', () => {
   let githubService: jest.Mocked<Partial<GithubEnterpriseService>>;
   let zoomService: jest.Mocked<Partial<ZoomService>>;
   let dropboxService: jest.Mocked<Partial<DropboxService>>;
+  let adobeService: jest.Mocked<Partial<AdobeService>>;
 
   beforeEach(async () => {
     m365Service = { getPublicConfig: jest.fn(), syncLicenses: jest.fn() };
@@ -20,6 +22,7 @@ describe('LicenseSyncWorker', () => {
     githubService = { getPublicConfig: jest.fn(), syncLicenses: jest.fn() };
     zoomService = { getPublicConfig: jest.fn(), syncLicenses: jest.fn() };
     dropboxService = { getPublicConfig: jest.fn(), syncLicenses: jest.fn() };
+    adobeService = { getPublicConfig: jest.fn(), syncLicenses: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -29,6 +32,7 @@ describe('LicenseSyncWorker', () => {
         { provide: GithubEnterpriseService, useValue: githubService },
         { provide: ZoomService, useValue: zoomService },
         { provide: DropboxService, useValue: dropboxService },
+        { provide: AdobeService, useValue: adobeService },
       ],
     }).compile();
 
@@ -137,6 +141,33 @@ describe('LicenseSyncWorker', () => {
     expect(dropboxService.syncLicenses).toHaveBeenCalled();
   });
 
+  it('skips Adobe sync silently when not configured', async () => {
+    (adobeService.getPublicConfig as jest.Mock).mockResolvedValue({ orgId: '', clientId: '', hasSecret: false, profiles: [] });
+
+    await worker.handle();
+
+    expect(adobeService.syncLicenses).not.toHaveBeenCalled();
+  });
+
+  it('skips Adobe sync when configured but no profiles are tracked yet', async () => {
+    (adobeService.getPublicConfig as jest.Mock).mockResolvedValue({ orgId: 'o', clientId: 'c', hasSecret: true, profiles: [] });
+
+    await worker.handle();
+
+    expect(adobeService.syncLicenses).not.toHaveBeenCalled();
+  });
+
+  it('runs the Adobe license sync when fully configured', async () => {
+    (adobeService.getPublicConfig as jest.Mock).mockResolvedValue({
+      orgId: 'o', clientId: 'c', hasSecret: true, profiles: [{ groupName: 'All Apps' }],
+    });
+    (adobeService.syncLicenses as jest.Mock).mockResolvedValue({ synced: 1, created: 0, skipped: 0, lastSyncAt: 'now' });
+
+    await worker.handle();
+
+    expect(adobeService.syncLicenses).toHaveBeenCalled();
+  });
+
   it('runs every provider independently even when earlier ones fail', async () => {
     (m365Service.getPublicConfig as jest.Mock).mockResolvedValue({ tenantId: 't', clientId: 'c', hasSecret: true });
     (m365Service.syncLicenses as jest.Mock).mockRejectedValue(new Error('Graph down'));
@@ -150,11 +181,16 @@ describe('LicenseSyncWorker', () => {
     (zoomService.syncLicenses as jest.Mock).mockResolvedValue({ synced: 1, created: 0, skipped: 0, lastSyncAt: 'now' });
     (dropboxService.getPublicConfig as jest.Mock).mockResolvedValue({ appKey: 'k', hasSecret: true, hasRefreshToken: true });
     (dropboxService.syncLicenses as jest.Mock).mockResolvedValue({ synced: 1, created: 0, skipped: 0, lastSyncAt: 'now' });
+    (adobeService.getPublicConfig as jest.Mock).mockResolvedValue({
+      orgId: 'o', clientId: 'c', hasSecret: true, profiles: [{ groupName: 'All Apps' }],
+    });
+    (adobeService.syncLicenses as jest.Mock).mockResolvedValue({ synced: 1, created: 0, skipped: 0, lastSyncAt: 'now' });
 
     await worker.handle();
 
     expect(githubService.syncLicenses).toHaveBeenCalled();
     expect(zoomService.syncLicenses).toHaveBeenCalled();
     expect(dropboxService.syncLicenses).toHaveBeenCalled();
+    expect(adobeService.syncLicenses).toHaveBeenCalled();
   });
 });

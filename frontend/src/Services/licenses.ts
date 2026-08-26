@@ -1,7 +1,7 @@
 import api from "../lib/api";
 
 export type LicenseType = "perpetual" | "subscription" | "volume" | "concurrent";
-export type LicenseSource = "manual" | "m365" | "google" | "github" | "zoom" | "dropbox";
+export type LicenseSource = "manual" | "m365" | "google" | "github" | "zoom" | "dropbox" | "adobe";
 
 export type SoftwareLicense = {
   id: string;

@@ -19,6 +19,7 @@ export enum LicenseSource {
   GITHUB = 'github',
   ZOOM = 'zoom',
   DROPBOX = 'dropbox',
+  ADOBE = 'adobe',
 }
 
 @Entity()
