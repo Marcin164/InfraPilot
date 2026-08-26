@@ -28,6 +28,7 @@ export interface Ticket {
   createdAt: string;
   assignee?: string;
   assignmentGroup?: string;
+  affectedUsers?: { id: string; name: string; surname: string; email?: string }[];
   requester: { id: string; distinguishedName: string };
   requesterId: string;
   device?: { id: string; assetName: string; serialNumber: string };
@@ -84,6 +85,7 @@ export interface UpdateTicketData {
   priority?: TicketPriority;
   impact?: TicketImpact;
   urgency?: TicketUrgency;
+  affectedUserIds?: string[];
   title?: string;
   description?: string;
 }

@@ -95,6 +95,8 @@ import { PurchaseOrder } from './entities/purchaseOrder.entity';
 import { PurchaseOrderModule } from './modules/purchaseOrder.module';
 import { AiModule } from './modules/ai.module';
 import { M365Module } from './modules/m365.module';
+import { GoogleWorkspaceModule } from './modules/googleWorkspace.module';
+import { LicenseSyncModule } from './modules/licenseSync.module';
 import { BootstrapService } from './services/bootstrap.service';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { MetricsController } from './controllers/metrics.controller';
@@ -246,6 +248,8 @@ import { MetricsController } from './controllers/metrics.controller';
     IpamModule,
     AiModule,
     M365Module,
+    GoogleWorkspaceModule,
+    LicenseSyncModule,
   ],
   controllers: [HealthController],
   providers: [

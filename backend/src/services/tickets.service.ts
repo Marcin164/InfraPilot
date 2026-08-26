@@ -206,6 +206,7 @@ export class TicketsService {
       await this.ticketsRepository.manager.transaction(async (manager: any) => {
       const ticket = await manager.findOne(Tickets, {
         where: { id },
+        relations: ['affectedUsers'],
       });
 
       if (!ticket) throw new Error('Ticket not found');
@@ -238,10 +239,17 @@ export class TicketsService {
       // merge keys the request actually sent -- explicit `null` (e.g.
       // reopen() clearing closureCode) is preserved, only `undefined` is
       // filtered out.
+      const { affectedUserIds, ...columnDto } = dto;
       const definedUpdates = Object.fromEntries(
-        Object.entries(dto).filter(([, value]) => value !== undefined),
+        Object.entries(columnDto).filter(([, value]) => value !== undefined),
       );
       Object.assign(ticket, definedUpdates);
+
+      if (affectedUserIds !== undefined) {
+        ticket.affectedUsers = affectedUserIds.length
+          ? await manager.find(Users, { where: { id: In(affectedUserIds) } })
+          : [];
+      }
 
       const updated = await manager.save(ticket);
 
@@ -787,6 +795,7 @@ export class TicketsService {
       .createQueryBuilder('ticket')
       .leftJoinAndSelect('ticket.requester', 'requester')
       .leftJoinAndSelect('ticket.device', 'device')
+      .leftJoinAndSelect('ticket.affectedUsers', 'affectedUsers')
       .leftJoinAndSelect('ticket.comments', 'comments')
       .leftJoinAndSelect('ticket.approvals', 'approvals')
       .leftJoinAndSelect('ticket.activities', 'activities')

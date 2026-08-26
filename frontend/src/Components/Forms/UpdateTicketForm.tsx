@@ -32,9 +32,11 @@ type Props = {
   state: TicketState;
   assignee?: string;
   assignmentGroup?: string;
+  affectedUsers?: { id: string; name: string; surname: string; email?: string }[];
   priority: TicketPriority;
   impact: TicketImpact;
   urgency: TicketUrgency;
+  users:any
 };
 
 const UpdateTicketForm = ({
@@ -42,9 +44,11 @@ const UpdateTicketForm = ({
   state,
   assignee,
   assignmentGroup,
+  affectedUsers,
   priority,
   impact,
   urgency,
+  users
 }: Props) => {
   const { t } = useTranslation();
   const trOpts = useMemo(
@@ -74,17 +78,13 @@ const UpdateTicketForm = ({
       ...updateTicketDefaultValues(state, priority, impact, urgency),
       assignee: assignee ?? "",
       assignmentGroup: assignmentGroup ?? "",
+      affectedUserIds: (affectedUsers ?? []).map((u) => u.id),
     },
     onSubmit: ({ value }) => {
       mutation.mutate(value);
     },
   });
 
-  // @tanstack/react-form only re-syncs a field from `defaultValues` while the
-  // form is untouched -- select an option once (e.g. change State) and the
-  // whole form is marked touched forever, so it stops picking up fresh
-  // server values after that (e.g. a workflow silently bumping priority on
-  // save). Sync explicitly instead of relying on that.
   useEffect(() => {
     form.setFieldValue("state", state);
     form.setFieldValue("priority", priority);
@@ -92,8 +92,9 @@ const UpdateTicketForm = ({
     form.setFieldValue("urgency", urgency);
     form.setFieldValue("assignee", assignee ?? "");
     form.setFieldValue("assignmentGroup", assignmentGroup ?? "");
+    form.setFieldValue("affectedUserIds", (affectedUsers ?? []).map((u) => u.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, priority, impact, urgency, assignee, assignmentGroup]);
+  }, [state, priority, impact, urgency, assignee, assignmentGroup, affectedUsers]);
 
   const selectedGroup = useStore(
     form.store,
@@ -107,6 +108,10 @@ const UpdateTicketForm = ({
   const selectedPriority = useStore(form.store, (s: any) => s.values.priority as string);
   const selectedImpact = useStore(form.store, (s: any) => s.values.impact as string);
   const selectedUrgency = useStore(form.store, (s: any) => s.values.urgency as string);
+  const selectedAffectedUserIds = useStore(
+    form.store,
+    (s: any) => s.values.affectedUserIds as string[],
+  );
 
   const groupsQuery = useQuery({
     queryKey: ["assignment-groups"],
@@ -146,6 +151,28 @@ const UpdateTicketForm = ({
     field.handleChange(newGroup);
     // Reset assignee when group changes — the previous assignee may not belong to the new group
     form.setFieldValue("assignee", "");
+  };
+
+  const handleImpactSelect = (opt: any, field: any) => {
+    const newImpact = opt?.value ?? "";
+    field.handleChange(newImpact);
+    // Clear affected users when impact no longer requires them
+    if (newImpact !== "Multiple users") {
+      form.setFieldValue("affectedUserIds", []);
+    }
+  };
+
+  const userOptions = useMemo(
+    () =>
+      (users ?? []).map((u: any) => ({
+        value: u.id,
+        label: `${u.name} ${u.surname}${u.email ? ` (${u.email})` : ""}`,
+      })),
+    [users],
+  );
+
+  const handleAffectedUsersChange = (opts: any, field: any) => {
+    field.handleChange((opts ?? []).map((o: any) => o.value));
   };
 
   return (
@@ -214,10 +241,29 @@ const UpdateTicketForm = ({
             value={trOpts.impacts.find(
               (option) => option.value === selectedImpact
             )}
-            onSelect={(opt: any) => handleSelect(opt, field)}
+            onSelect={(opt: any) => handleImpactSelect(opt, field)}
           />
         )}
       />
+      {selectedImpact === "Multiple users" && (
+        <div className="mt-2">
+          <form.Field
+            name="affectedUserIds"
+            children={(field) => (
+              <SelectSecondary
+                label={t("form.field.affectedUsers", "Affected users")}
+                options={userOptions}
+                value={userOptions.filter((o: any) =>
+                  (selectedAffectedUserIds ?? []).includes(o.value),
+                )}
+                isMulti
+                isClearable={false}
+                onSelect={(opts: any) => handleAffectedUsersChange(opts, field)}
+              />
+            )}
+          />
+        </div>
+      )}
       <form.Field
         name="urgency"
         children={(field) => (

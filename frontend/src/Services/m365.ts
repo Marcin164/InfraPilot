@@ -8,9 +8,10 @@ export type SubscribedSku = {
   consumedUnits: number; prepaidUnits: { enabled: number; warning: number; suspended: number };
 };
 
-export type SyncStatus = { usersLastSync: string | null; devicesLastSync: string | null };
+export type SyncStatus = { usersLastSync: string | null; devicesLastSync: string | null; licensesLastSync: string | null };
 export type UserSyncResult = { synced: number; created: number; skipped: number; lastSyncAt: string };
 export type DeviceSyncResult = { synced: number; unmatched: number; lastSyncAt: string };
+export type LicenseSyncResult = { synced: number; created: number; skipped: number; lastSyncAt: string };
 
 export const getM365Config = async (): Promise<M365PublicConfig> => {
   const { data } = await api.get("/m365/config");
@@ -49,5 +50,10 @@ export const syncM365Users = async (): Promise<UserSyncResult> => {
 
 export const syncM365Devices = async (): Promise<DeviceSyncResult> => {
   const { data } = await api.post("/m365/sync/devices");
+  return data;
+};
+
+export const syncM365Licenses = async (): Promise<LicenseSyncResult> => {
+  const { data } = await api.post("/m365/sync/licenses");
   return data;
 };

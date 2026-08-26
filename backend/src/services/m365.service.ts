@@ -4,12 +4,34 @@ import { Repository, ILike } from 'typeorm';
 import { AdminSettings } from 'src/entities/adminSettings.entity';
 import { Users } from 'src/entities/users.entity';
 import { Devices } from 'src/entities/devices.entity';
+import { LicenseSource, LicenseType, SoftwareLicense } from 'src/entities/softwareLicense.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
 import { encrypt, decrypt } from 'src/helpers/crypto';
+import { invalidateLicenseReports } from 'src/services/softwareLicense.service';
 
 const CONFIG_KEY = 'm365_config';
 const SYNC_STATUS_KEY = 'm365_sync_status';
 const GRAPH = 'https://graph.microsoft.com/v1.0';
+
+// Friendly names for common SKUs — Microsoft's list is long and changes over
+// time; unknown SKUs just fall back to the raw skuPartNumber.
+const SKU_NAMES: Record<string, string> = {
+  ENTERPRISEPACK: 'Office 365 E3',
+  ENTERPRISEPREMIUM: 'Office 365 E5',
+  SPE_E3: 'Microsoft 365 E3',
+  SPE_E5: 'Microsoft 365 E5',
+  SPB: 'Microsoft 365 Business Premium',
+  O365_BUSINESS_PREMIUM: 'Microsoft 365 Business Standard',
+  O365_BUSINESS_ESSENTIALS: 'Microsoft 365 Business Basic',
+  EMS: 'Enterprise Mobility + Security E3',
+  EMSPREMIUM: 'Enterprise Mobility + Security E5',
+  AAD_PREMIUM: 'Microsoft Entra ID P1',
+  AAD_PREMIUM_P2: 'Microsoft Entra ID P2',
+  POWER_BI_STANDARD: 'Power BI (Free)',
+  POWER_BI_PRO: 'Power BI Pro',
+  FLOW_FREE: 'Power Automate (Free)',
+  TEAMS_EXPLORATORY: 'Teams Exploratory',
+};
 
 export type M365Config = { tenantId: string; clientId: string; clientSecret: string };
 export type M365PublicConfig = Omit<M365Config, 'clientSecret'> & { hasSecret: boolean };
@@ -31,6 +53,7 @@ export class M365Service {
     @InjectRepository(AdminSettings) private readonly adminRepo: Repository<AdminSettings>,
     @InjectRepository(Users) private readonly usersRepo: Repository<Users>,
     @InjectRepository(Devices) private readonly devicesRepo: Repository<Devices>,
+    @InjectRepository(SoftwareLicense) private readonly licenseRepo: Repository<SoftwareLicense>,
   ) {}
 
   // ─── Config ──────────────────────────────────────────────────────────────
@@ -138,14 +161,18 @@ export class M365Service {
 
   // ─── Sync status ─────────────────────────────────────────────────────────
 
-  async getSyncStatus(): Promise<{ usersLastSync: string | null; devicesLastSync: string | null }> {
+  async getSyncStatus(): Promise<{ usersLastSync: string | null; devicesLastSync: string | null; licensesLastSync: string | null }> {
     const record = await this.adminRepo.findOne({ where: { key: SYNC_STATUS_KEY } });
-    if (!record?.value) return { usersLastSync: null, devicesLastSync: null };
+    if (!record?.value) return { usersLastSync: null, devicesLastSync: null, licensesLastSync: null };
     const v = record.value as any;
-    return { usersLastSync: v.usersLastSync ?? null, devicesLastSync: v.devicesLastSync ?? null };
+    return {
+      usersLastSync: v.usersLastSync ?? null,
+      devicesLastSync: v.devicesLastSync ?? null,
+      licensesLastSync: v.licensesLastSync ?? null,
+    };
   }
 
-  private async updateSyncStatus(field: 'usersLastSync' | 'devicesLastSync'): Promise<void> {
+  private async updateSyncStatus(field: 'usersLastSync' | 'devicesLastSync' | 'licensesLastSync'): Promise<void> {
     let record = await this.adminRepo.findOne({ where: { key: SYNC_STATUS_KEY } });
     const now = new Date().toISOString();
     if (record) {
@@ -291,5 +318,55 @@ export class M365Service {
     await this.updateSyncStatus('devicesLastSync');
     const lastSyncAt = new Date().toISOString();
     return { synced, unmatched, lastSyncAt };
+  }
+
+  // ─── License sync ─────────────────────────────────────────────────────────
+
+  /**
+   * Pulls seat pools from subscribedSkus into SoftwareLicense. Tracks pooled
+   * seats only — does not create SoftwareLicenseAssignment rows, so it can't
+   * conflict with manually-assigned licenses.
+   */
+  async syncLicenses(): Promise<SyncResult> {
+    const skus = await this.getSubscribedSkus();
+
+    let synced = 0, created = 0, skipped = 0;
+
+    for (const sku of skus) {
+      if (sku.capabilityStatus !== 'Enabled') { skipped++; continue; }
+
+      const existing = await this.licenseRepo.findOne({
+        where: { source: LicenseSource.M365, externalId: sku.skuId },
+      });
+
+      if (existing) {
+        existing.name = SKU_NAMES[sku.skuPartNumber] ?? sku.skuPartNumber;
+        existing.publisher = 'Microsoft';
+        existing.totalSeats = sku.prepaidUnits.enabled;
+        existing.consumedSeats = sku.consumedUnits;
+        existing.lastSyncedAt = new Date();
+        await this.licenseRepo.save(existing);
+        synced++;
+      } else {
+        const license = this.licenseRepo.create({
+          id: uuidv4(),
+          name: SKU_NAMES[sku.skuPartNumber] ?? sku.skuPartNumber,
+          publisher: 'Microsoft',
+          licenseType: LicenseType.SUBSCRIPTION,
+          totalSeats: sku.prepaidUnits.enabled,
+          consumedSeats: sku.consumedUnits,
+          source: LicenseSource.M365,
+          externalId: sku.skuId,
+          lastSyncedAt: new Date(),
+        });
+        await this.licenseRepo.save(license);
+        created++;
+      }
+    }
+
+    invalidateLicenseReports();
+    await this.updateSyncStatus('licensesLastSync');
+    const lastSyncAt = new Date().toISOString();
+    return { synced, created, skipped, lastSyncAt };
   }
 }

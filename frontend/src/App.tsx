@@ -46,6 +46,8 @@ import Categories from "./Pages/Main/Settings/Details/Categories";
 import WindowsAgent from "./Pages/Main/Settings/Details/WindowsAgent";
 import SmtpSettings from "./Pages/Main/Settings/Details/Smtp";
 import M365Settings from "./Pages/Main/Settings/Details/M365Settings";
+import GoogleWorkspaceSettings from "./Pages/Main/Settings/Details/GoogleWorkspaceSettings";
+import LicenseSyncSettings from "./Pages/Main/Settings/Details/LicenseSyncSettings";
 import UsersReports from "./Pages/Main/Reports/Details/UsersReports";
 import DevicesReports from "./Pages/Main/Reports/Details/DevicesReports";
 import TicketsReports from "./Pages/Main/Reports/Details/TicketsReports";
@@ -200,6 +202,8 @@ function App() {
                   <Route path="locations" element={<Locations />} />
                   <Route path="smtp" element={<SmtpSettings />} />
                   <Route path="m365" element={<M365Settings />} />
+                  <Route path="google-workspace" element={<GoogleWorkspaceSettings />} />
+                  <Route path="licenses" element={<LicenseSyncSettings />} />
                 </Route>
               </Route>
               <Route path="*" element={<Navigate to="/admin/dashboards" replace />} />

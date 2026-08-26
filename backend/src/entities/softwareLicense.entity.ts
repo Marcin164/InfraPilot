@@ -12,6 +12,15 @@ export enum LicenseType {
   CONCURRENT = 'concurrent',
 }
 
+export enum LicenseSource {
+  MANUAL = 'manual',
+  M365 = 'm365',
+  GOOGLE = 'google',
+  GITHUB = 'github',
+  ZOOM = 'zoom',
+  DROPBOX = 'dropbox',
+}
+
 @Entity()
 export class SoftwareLicense {
   @PrimaryColumn()
@@ -51,6 +60,20 @@ export class SoftwareLicense {
 
   @Column({ type: 'text', nullable: true })
   notes: string | null;
+
+  @Column({ type: 'enum', enum: LicenseSource, default: LicenseSource.MANUAL })
+  source: LicenseSource;
+
+  /** Business key from the source provider (e.g. Graph subscribedSkus skuId). Null for manual entries. */
+  @Column({ type: 'varchar', length: 256, nullable: true })
+  externalId: string | null;
+
+  /** Seats reported as consumed by the provider. Independent of local SoftwareLicenseAssignment rows. */
+  @Column({ type: 'int', nullable: true })
+  consumedSeats: number | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  lastSyncedAt: Date | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;

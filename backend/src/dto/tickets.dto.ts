@@ -110,6 +110,11 @@ export class UpdateTicketDto {
   urgency?: TicketUrgency;
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  affectedUserIds?: string[];
+
+  @IsOptional()
   category?: string;
 
   @IsOptional()

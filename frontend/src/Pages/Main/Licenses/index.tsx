@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthInfo } from "@propelauth/react";
 import { toast } from "react-toastify";
@@ -11,6 +12,8 @@ import {
   faXmark,
   faCheck,
   faListCheck,
+  faCloud,
+  faPlug,
 } from "@fortawesome/free-solid-svg-icons";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
 import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
@@ -45,6 +48,14 @@ const typeColor: Record<string, string> = {
   subscription: "#8E44AD",
   volume: "#30A712",
   concurrent: "#F1C40F",
+};
+
+const SOURCE_LABELS: Record<string, string> = {
+  m365: "Microsoft 365",
+  google: "Google Workspace",
+  github: "GitHub Enterprise",
+  zoom: "Zoom",
+  dropbox: "Dropbox",
 };
 
 const expiryStatus = (
@@ -86,7 +97,7 @@ const LicenseModal = ({
   deleting,
 }: {
   mode: ModalMode;
-  initial: CreateLicensePayload & { id?: string };
+  initial: CreateLicensePayload & { id?: string; source?: string; lastSyncedAt?: string | null };
   onClose: () => void;
   onSave: (data: CreateLicensePayload & { id?: string }) => void;
   onDelete?: () => void;
@@ -111,6 +122,13 @@ const LicenseModal = ({
             <FontAwesomeIcon icon={faXmark} />
           </button>
         </div>
+        {initial.source && initial.source !== "manual" && (
+          <div className="mx-6 mt-4 flex items-center gap-2 bg-[#EBF5FB] border border-[#2B9AE9]/30 rounded-[8px] px-3 py-2 text-[12px] text-[#2B9AE9]">
+            <FontAwesomeIcon icon={faCloud} />
+            {t("licenses.syncedFrom", { source: SOURCE_LABELS[initial.source] ?? initial.source })}
+            {initial.lastSyncedAt && ` • ${t("licenses.lastSynced", { date: new Date(initial.lastSyncedAt).toLocaleString() })}`}
+          </div>
+        )}
         <div className="px-6 py-4 flex flex-col">
           <Input
             label={`${t("licenses.fields.name")} *`}
@@ -411,6 +429,7 @@ const AssignmentsPanel = ({
 
 const Licenses = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const fillHeight = useViewportFillHeight();
   const queryClient = useQueryClient();
   const authInfo: any = useAuthInfo();
@@ -532,7 +551,16 @@ const Licenses = () => {
       name: t("licenses.fields.name"),
       cell: (row: SoftwareLicense) => (
         <div className="min-w-0">
-          <div className="font-semibold text-[14px] text-[#3C3C3C] truncate">{row.name}</div>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="font-semibold text-[14px] text-[#3C3C3C] truncate">{row.name}</span>
+            {row.source !== "manual" && (
+              <FontAwesomeIcon
+                icon={faCloud}
+                className="text-[#2B9AE9] text-[11px] shrink-0"
+                title={`${t("licenses.syncedFrom", { source: SOURCE_LABELS[row.source] ?? row.source })}${row.lastSyncedAt ? ` • ${t("licenses.lastSynced", { date: new Date(row.lastSyncedAt).toLocaleString() })}` : ""}`}
+              />
+            )}
+          </div>
           {row.publisher && (
             <div className="text-[12px] text-[#9a9a9a]">{row.publisher}</div>
           )}
@@ -640,6 +668,15 @@ const Licenses = () => {
               checkboxes={checkboxes}
               settingsKey="licensesTableColumnOrder"
             />
+            {isAdmin && (
+              <ButtonPrimary
+                color="white"
+                icon={faPlug}
+                text={t("licenses.integrations")}
+                onClick={() => navigate("/admin/settings/licenses")}
+                className="h-[34px]"
+              />
+            )}
             {isAdmin && (
               <ButtonPrimary
                 color="white"

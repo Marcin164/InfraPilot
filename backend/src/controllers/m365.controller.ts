@@ -62,4 +62,13 @@ export class M365Controller {
       throw new BadRequestException(describeGraphError(err));
     }
   }
+
+  @Post('/sync/licenses')
+  async syncLicenses() {
+    try {
+      return await this.m365.syncLicenses();
+    } catch (err: any) {
+      throw new BadRequestException(describeGraphError(err));
+    }
+  }
 }

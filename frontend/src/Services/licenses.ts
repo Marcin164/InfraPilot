@@ -1,6 +1,7 @@
 import api from "../lib/api";
 
 export type LicenseType = "perpetual" | "subscription" | "volume" | "concurrent";
+export type LicenseSource = "manual" | "m365" | "google" | "github" | "zoom" | "dropbox";
 
 export type SoftwareLicense = {
   id: string;
@@ -17,6 +18,10 @@ export type SoftwareLicense = {
   notes: string | null;
   createdAt: string;
   usedSeats: number;
+  source: LicenseSource;
+  externalId: string | null;
+  consumedSeats: number | null;
+  lastSyncedAt: string | null;
 };
 
 export type SoftwareLicenseAssignment = {

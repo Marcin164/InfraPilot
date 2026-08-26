@@ -29,6 +29,7 @@ import {
   getM365SyncStatus,
   syncM365Users,
   syncM365Devices,
+  syncM365Licenses,
   type SubscribedSku,
 } from "../../../../Services/m365";
 import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
@@ -94,6 +95,11 @@ const M365Settings = () => {
 
   const syncDevicesMutation = useMutation({
     mutationFn: syncM365Devices,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["m365-sync-status"] }),
+  });
+
+  const syncLicensesMutation = useMutation({
+    mutationFn: syncM365Licenses,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["m365-sync-status"] }),
   });
 
@@ -228,6 +234,36 @@ const M365Settings = () => {
           </div>
         )}
         <SyncResultBadge result={syncDevicesMutation.data} />
+      </div>
+
+      {/* ─── Sync: Licenses ─────────────────────────────────────────────── */}
+      <div className="bg-white shadow-xl rounded-[10px] p-4">
+        <CardHeader text="Synchronizacja licencji (subscribedSkus)" icon={faKey} />
+        <div className="mt-3 text-[13px] text-[#7a7a7a] mb-4">
+          Pobiera pulę i zajęcie miejsc dla planów licencyjnych (SKU) z Microsoft Graph do listy licencji InfraPilot. Śledzi tylko liczbę miejsc — nie tworzy przypisań do konkretnych użytkowników/urządzeń, te zostają ręczne.
+          Wymaga uprawnienia: <code>Organization.Read.All</code>.
+        </div>
+
+        {syncStatusQuery.data?.licensesLastSync && (
+          <div className="text-[13px] text-[#7a7a7a] mb-3">
+            Ostatnia synchronizacja: <span className="font-medium text-[#3C3C3C]">{moment(syncStatusQuery.data.licensesLastSync).format("DD.MM.YYYY HH:mm:ss")}</span>
+          </div>
+        )}
+
+        <ButtonPrimary
+          text={syncLicensesMutation.isPending ? "Synchronizowanie..." : "Synchronizuj teraz"}
+          icon={syncLicensesMutation.isPending ? faSpinner : faArrowsRotate}
+          onClick={() => syncLicensesMutation.mutate()}
+          disabled={!isConnected || syncLicensesMutation.isPending}
+        />
+
+        {syncLicensesMutation.isError && (
+          <div className="mt-3 flex items-center gap-2 text-[13px] text-red-600">
+            <FontAwesomeIcon icon={faCircleXmark} />
+            {(syncLicensesMutation.error as any)?.response?.data?.message ?? "Błąd synchronizacji"}
+          </div>
+        )}
+        <SyncResultBadge result={syncLicensesMutation.data} />
       </div>
 
       {/* ─── SSO ────────────────────────────────────────────────────────── */}

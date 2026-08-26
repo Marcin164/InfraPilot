@@ -14,7 +14,7 @@ interface TicketInfoPanelProps {
     number: string;
     state: string;
     assignee?: string | null;
-    requester?: { id: string; distinguishedName: string } | null;
+    requester?: { id: string; distinguishedName: string, isVip?: any } | null;
     requesterId?: string | null;
     device?: { id: string; assetName?: string; serialNumber: string } | null;
     createdAt: string;
@@ -22,9 +22,10 @@ interface TicketInfoPanelProps {
   };
   isOpen?: boolean;
   onClose?: () => void;
+  users: any;
 }
 
-const TicketInfoPanel = ({ ticket, isOpen = false, onClose }: TicketInfoPanelProps) => {
+const TicketInfoPanel = ({ ticket, isOpen = false, onClose, users }: TicketInfoPanelProps) => {
   const { t } = useTranslation();
   return (
     <div className={`fixed top-0 left-0 h-screen z-40 w-[85vw] max-w-[420px] bg-white overflow-y-auto p-4 transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"} lg:static lg:translate-x-0 lg:shadow-xl lg:rounded-[10px] lg:w-[340px] xl:w-[400px] lg:flex-shrink-0 lg:ml-4 lg:my-4 lg:h-[calc(100vh-90px)]`}>
@@ -97,7 +98,7 @@ const TicketInfoPanel = ({ ticket, isOpen = false, onClose }: TicketInfoPanelPro
         </span>
       </div>
 
-      <UpdateTicketForm {...ticket} />
+      <UpdateTicketForm {...ticket} users={users}/>
     </div>
   );
 };

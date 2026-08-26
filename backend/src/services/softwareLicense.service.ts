@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThanOrEqual, MoreThan, Repository } from 'typeorm';
-import { SoftwareLicense } from 'src/entities/softwareLicense.entity';
+import { LicenseSource, SoftwareLicense } from 'src/entities/softwareLicense.entity';
 import { SoftwareLicenseAssignment } from 'src/entities/softwareLicenseAssignment.entity';
 import {
   CreateAssignmentDto,
@@ -16,9 +16,16 @@ import {
 import { uuidv4 } from 'src/helpers/uuidv4';
 import { invalidateReportCache } from 'src/helpers/reportCache';
 
-function invalidateLicenseReports() {
+export function invalidateLicenseReports() {
   invalidateReportCache('licenses-expiring-soon');
   invalidateReportCache('licenses-seat-utilization');
+}
+
+/** Synced licenses have no local assignments — seat usage comes from the provider instead. */
+function usedSeatsOf(license: SoftwareLicense, assignmentCount: number): number {
+  return license.source === LicenseSource.MANUAL
+    ? assignmentCount
+    : license.consumedSeats ?? 0;
 }
 
 @Injectable()
@@ -48,19 +55,19 @@ export class SoftwareLicenseService {
 
     return licenses.map((l) => ({
       ...l,
-      usedSeats: countMap.get(l.id) ?? 0,
+      usedSeats: usedSeatsOf(l, countMap.get(l.id) ?? 0),
     }));
   }
 
   async findOne(id: string): Promise<SoftwareLicense & { usedSeats: number }> {
     const license = await this.licenseRepo.findOneBy({ id });
     if (!license) throw new NotFoundException('License not found');
-    const usedSeats = await this.assignmentRepo.countBy({ licenseId: id });
-    return { ...license, usedSeats };
+    const assignmentCount = await this.assignmentRepo.countBy({ licenseId: id });
+    return { ...license, usedSeats: usedSeatsOf(license, assignmentCount) };
   }
 
   async create(dto: CreateLicenseDto): Promise<SoftwareLicense> {
-    const license = this.licenseRepo.create({ ...dto, id: uuidv4() });
+    const license = this.licenseRepo.create({ ...dto, id: uuidv4(), source: LicenseSource.MANUAL });
     const saved = await this.licenseRepo.save(license);
     invalidateLicenseReports();
     return saved;

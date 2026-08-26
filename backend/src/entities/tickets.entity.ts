@@ -8,7 +8,9 @@ import {
   PrimaryGeneratedColumn,
   OneToOne,
   ManyToOne,
+  ManyToMany,
   JoinColumn,
+  JoinTable,
 } from 'typeorm';
 import { TicketsComments } from './ticketsComments.entity';
 import { Users } from './users.entity';
@@ -62,6 +64,16 @@ export class Tickets {
 
   @Column({ nullable: true })
   assignmentGroup: string;
+
+  // Populated only when impact = "Multiple users" -- the set of users
+  // affected besides the requester. Mirrors AssignmentGroup.members.
+  @ManyToMany(() => Users)
+  @JoinTable({
+    name: 'ticket_affected_users',
+    joinColumn: { name: 'ticketId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'userId', referencedColumnName: 'id' },
+  })
+  affectedUsers: Users[];
 
   @Column({
     type: 'enum',

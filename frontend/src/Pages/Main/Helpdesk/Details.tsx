@@ -14,6 +14,7 @@ import TicketInfoPanel from "./components/TicketInfoPanel";
 import TicketContentPanel from "./components/TicketContentPanel";
 import TicketSidePanel from "./components/TicketSidePanel";
 import { useViewportFillHeight } from "../../../Hooks/useViewportFillHeight";
+import { getUsers } from "../../../Services/users";
 
 const convertApprovalsToComments = (approvals: Approval[], requesterName?: string) => {
   return approvals.map((approval) => ({
@@ -59,6 +60,11 @@ const Details = () => {
 
   const openInfo = () => { setInfoOpen(true); setSideOpen(false); };
   const openSide = () => { setSideOpen(true); setInfoOpen(false); };
+
+  const usersQuery = useQuery({
+    queryKey: ["users", params.id],
+    queryFn: () => getUsers(),
+  });
 
   const ticketQuery = useQuery({
     queryKey: ["ticket", params.id],
@@ -142,7 +148,7 @@ const Details = () => {
         />
       )}
 
-      <TicketInfoPanel ticket={ticket} isOpen={infoOpen} onClose={() => setInfoOpen(false)} />
+      <TicketInfoPanel ticket={ticket} isOpen={infoOpen} onClose={() => setInfoOpen(false)} users={usersQuery.data}/>
 
       <TicketContentPanel
         ticketId={ticket.id}
