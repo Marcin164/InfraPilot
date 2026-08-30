@@ -23,6 +23,7 @@ import Connections from "./Pages/Main/Devices/Details/Connections";
 import Backup from "./Pages/Main/Devices/Details/Backup";
 import Topology from "./Pages/Main/Network/Topology";
 import Ipam from "./Pages/Main/Network/Ipam";
+import DhcpServers from "./Pages/Main/Network/DhcpServers";
 import Helpdesk from "./Pages/Main/Helpdesk";
 import Reports from "./Pages/Main/Reports";
 import { ParseProvider } from "./Context/ParserContext";
@@ -34,9 +35,9 @@ import Sla from "./Pages/Main/Settings/Details/Sla";
 import Personal from "./Pages/Main/Settings/Details/Personal";
 import ActiveDirectorySettings from "./Pages/Main/Settings/Details/ActiveDirectory";
 import AdminSettings from "./Pages/Main/Settings/Details/Admin";
-import AuditLog from "./Pages/Main/Settings/Details/AuditLog";
+import AuditLog from "./Pages/Main/Audit";
 import Retention from "./Pages/Main/Settings/Details/Retention";
-import Privacy from "./Pages/Main/Settings/Details/Privacy";
+import Privacy from "./Pages/Main/Privacy";
 import Tags from "./Pages/Main/Settings/Details/Tags";
 import ComplianceRules from "./Pages/Main/Settings/Details/ComplianceRules";
 import TicketTemplates from "./Pages/Main/Settings/Details/TicketTemplates";
@@ -129,6 +130,7 @@ function App() {
                 />
                 <Route path="topology" element={<Topology />} />
                 <Route path="ipam" element={<Ipam />} />
+                <Route path="dhcp-servers" element={<DhcpServers />} />
                 <Route path="devices" element={<Devices />} />
                 <Route path="devices/:id" element={<DeviceDetails />}>
                   <Route path="overview" element={<Overview />} />
@@ -162,6 +164,8 @@ function App() {
                   element={<ArticlePage />}
                 />
                 <Route path="history" element={<History />} />
+                <Route path="audit" element={<AuditLog />} />
+                <Route path="privacy" element={<Privacy />} />
                 <Route path="reports" element={<Reports />}>
                   <Route path="users" element={<UsersReports />} />
                   <Route path="devices" element={<DevicesReports />} />
@@ -185,9 +189,7 @@ function App() {
                     element={<NotificationPreferences />}
                   />
                   <Route path="admin" element={<AdminSettings />} />
-                  <Route path="audit" element={<AuditLog />} />
                   <Route path="retention" element={<Retention />} />
-                  <Route path="privacy" element={<Privacy />} />
                   <Route path="tags" element={<Tags />} />
                   <Route
                     path="compliance-rules"

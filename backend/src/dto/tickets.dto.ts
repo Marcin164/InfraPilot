@@ -115,6 +115,11 @@ export class UpdateTicketDto {
   affectedUserIds?: string[];
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  affectedLocationIds?: string[];
+
+  @IsOptional()
   category?: string;
 
   @IsOptional()

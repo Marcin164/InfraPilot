@@ -41,21 +41,6 @@ export class NetworkDeviceCredential {
   @Column({ default: true })
   backupEnabled: boolean;
 
-  /** e.g. `/ip dhcp-server lease print` (MikroTik), `cat /var/lib/misc/dnsmasq.leases` -- same idea as backupCommand, but for DHCP/DNS record sync. */
-  @Column({ type: 'text', nullable: true })
-  leaseSyncCommand: string | null;
-
-  /**
-   * Fill-in-the-blanks line template instead of asking the admin for raw
-   * regex, e.g. `{ip} {mac} {hostname} {expiry}` -- compiled into a regex
-   * by helpers/leaseTemplate.ts. One record per output line only.
-   */
-  @Column({ type: 'text', nullable: true })
-  leaseSyncLineTemplate: string | null;
-
-  @Column({ default: false })
-  leaseSyncEnabled: boolean;
-
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

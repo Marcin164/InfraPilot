@@ -15,6 +15,7 @@ import {
   getAssignmentGroups,
   getAssignmentGroupMembers,
 } from "../../Services/assignmentGroups";
+import { getLocations } from "../../Services/locations";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
@@ -33,6 +34,7 @@ type Props = {
   assignee?: string;
   assignmentGroup?: string;
   affectedUsers?: { id: string; name: string; surname: string; email?: string }[];
+  affectedLocations?: { id: string; name: string }[];
   priority: TicketPriority;
   impact: TicketImpact;
   urgency: TicketUrgency;
@@ -45,6 +47,7 @@ const UpdateTicketForm = ({
   assignee,
   assignmentGroup,
   affectedUsers,
+  affectedLocations,
   priority,
   impact,
   urgency,
@@ -79,6 +82,7 @@ const UpdateTicketForm = ({
       assignee: assignee ?? "",
       assignmentGroup: assignmentGroup ?? "",
       affectedUserIds: (affectedUsers ?? []).map((u) => u.id),
+      affectedLocationIds: (affectedLocations ?? []).map((l) => l.id),
     },
     onSubmit: ({ value }) => {
       mutation.mutate(value);
@@ -93,8 +97,9 @@ const UpdateTicketForm = ({
     form.setFieldValue("assignee", assignee ?? "");
     form.setFieldValue("assignmentGroup", assignmentGroup ?? "");
     form.setFieldValue("affectedUserIds", (affectedUsers ?? []).map((u) => u.id));
+    form.setFieldValue("affectedLocationIds", (affectedLocations ?? []).map((l) => l.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, priority, impact, urgency, assignee, assignmentGroup, affectedUsers]);
+  }, [state, priority, impact, urgency, assignee, assignmentGroup, affectedUsers, affectedLocations]);
 
   const selectedGroup = useStore(
     form.store,
@@ -112,6 +117,10 @@ const UpdateTicketForm = ({
     form.store,
     (s: any) => s.values.affectedUserIds as string[],
   );
+  const selectedAffectedLocationIds = useStore(
+    form.store,
+    (s: any) => s.values.affectedLocationIds as string[],
+  );
 
   const groupsQuery = useQuery({
     queryKey: ["assignment-groups"],
@@ -122,6 +131,11 @@ const UpdateTicketForm = ({
     queryKey: ["assignment-group-members", selectedGroup],
     queryFn: () => getAssignmentGroupMembers(selectedGroup),
     enabled: Boolean(selectedGroup),
+  });
+
+  const locationsQuery = useQuery({
+    queryKey: ["locations"],
+    queryFn: getLocations,
   });
 
   const groupOptions = useMemo(
@@ -156,9 +170,12 @@ const UpdateTicketForm = ({
   const handleImpactSelect = (opt: any, field: any) => {
     const newImpact = opt?.value ?? "";
     field.handleChange(newImpact);
-    // Clear affected users when impact no longer requires them
+    // Clear affected users/locations when impact no longer requires them
     if (newImpact !== "Multiple users") {
       form.setFieldValue("affectedUserIds", []);
+    }
+    if (newImpact !== "Several locations") {
+      form.setFieldValue("affectedLocationIds", []);
     }
   };
 
@@ -172,6 +189,19 @@ const UpdateTicketForm = ({
   );
 
   const handleAffectedUsersChange = (opts: any, field: any) => {
+    field.handleChange((opts ?? []).map((o: any) => o.value));
+  };
+
+  const locationOptions = useMemo(
+    () =>
+      (locationsQuery.data ?? []).map((l: any) => ({
+        value: l.id,
+        label: l.name,
+      })),
+    [locationsQuery.data],
+  );
+
+  const handleAffectedLocationsChange = (opts: any, field: any) => {
     field.handleChange((opts ?? []).map((o: any) => o.value));
   };
 
@@ -259,6 +289,25 @@ const UpdateTicketForm = ({
                 isMulti
                 isClearable={false}
                 onSelect={(opts: any) => handleAffectedUsersChange(opts, field)}
+              />
+            )}
+          />
+        </div>
+      )}
+      {selectedImpact === "Several locations" && (
+        <div className="mt-2">
+          <form.Field
+            name="affectedLocationIds"
+            children={(field) => (
+              <SelectSecondary
+                label={t("form.field.affectedLocations", "Affected locations")}
+                options={locationOptions}
+                value={locationOptions.filter((o: any) =>
+                  (selectedAffectedLocationIds ?? []).includes(o.value),
+                )}
+                isMulti
+                isClearable={false}
+                onSelect={(opts: any) => handleAffectedLocationsChange(opts, field)}
               />
             )}
           />

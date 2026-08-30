@@ -13,6 +13,7 @@ import { NetworkDeviceCredential } from 'src/entities/networkDeviceCredential.en
 import { NetworkDeviceConfigBackup } from 'src/entities/networkDeviceConfigBackup.entity';
 import { IpAllocation } from 'src/entities/ipAllocation.entity';
 import { Subnet } from 'src/entities/subnet.entity';
+import { DhcpServer } from 'src/entities/dhcpServer.entity';
 import { DevicesService } from 'src/services/devices.service';
 import { SoftwareInventoryService } from 'src/services/softwareInventory.service';
 import { DeviceTagsService } from 'src/services/deviceTags.service';
@@ -29,6 +30,11 @@ import { ConfigBackupWorker } from 'src/workers/configBackup.worker';
 import { LeaseSyncWorker } from 'src/workers/leaseSync.worker';
 import { NetworkDeviceBackupService } from 'src/services/networkDeviceBackup.service';
 import { LeaseSyncService } from 'src/services/leaseSync.service';
+import { DhcpServerService } from 'src/services/dhcpServer.service';
+import { DhcpServersController } from 'src/controllers/dhcpServers.controller';
+import { SshScrapeDriver } from 'src/dhcp/drivers/sshScrape.driver';
+import { DhcpDriverRegistry } from 'src/dhcp/dhcpDriver.registry';
+import { DHCP_LEASE_DRIVERS } from 'src/dhcp/dhcpLeaseDriver.interface';
 import { CveModule } from './cve.module';
 import { AgentGuard } from 'src/guards/agentGuard.guard';
 import { EnrollmentGuard } from 'src/guards/enrollmentGuard.guard';
@@ -62,6 +68,7 @@ import { TicketDeviceLifecycleListener } from 'src/listeners/ticketDeviceLifecyc
       NetworkDeviceConfigBackup,
       IpAllocation,
       Subnet,
+      DhcpServer,
       DeviceEnrollmentToken,
     ]),
     AuditModule,
@@ -71,7 +78,7 @@ import { TicketDeviceLifecycleListener } from 'src/listeners/ticketDeviceLifecyc
     IpamModule,
     FormsModule,
   ],
-  controllers: [DevicesController, NetworkDeviceBackupController],
+  controllers: [DevicesController, NetworkDeviceBackupController, DhcpServersController],
   providers: [
     DevicesService,
     SoftwareInventoryService,
@@ -84,6 +91,14 @@ import { TicketDeviceLifecycleListener } from 'src/listeners/ticketDeviceLifecyc
     DeviceIdentityService,
     NetworkDeviceBackupService,
     LeaseSyncService,
+    DhcpServerService,
+    SshScrapeDriver,
+    DhcpDriverRegistry,
+    {
+      provide: DHCP_LEASE_DRIVERS,
+      useFactory: (sshScrapeDriver: SshScrapeDriver) => [sshScrapeDriver],
+      inject: [SshScrapeDriver],
+    },
     AgentTaskWorker,
     WarrantyAlertWorker,
     PingMonitorWorker,

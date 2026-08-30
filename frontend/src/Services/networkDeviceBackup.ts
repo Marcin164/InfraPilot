@@ -7,9 +7,6 @@ export type SshCredential = {
   backupCommand: string;
   backupEnabled: boolean;
   hasPassword: boolean;
-  leaseSyncCommand: string | null;
-  leaseSyncLineTemplate: string | null;
-  leaseSyncEnabled: boolean;
   updatedAt: string;
 } | null;
 
@@ -19,12 +16,6 @@ export type SetCredentialPayload = {
   sshPort?: number;
   backupCommand: string;
   backupEnabled?: boolean;
-};
-
-export type SetLeaseSyncPayload = {
-  leaseSyncCommand: string;
-  leaseSyncLineTemplate: string;
-  leaseSyncEnabled?: boolean;
 };
 
 export type ConfigBackup = {
@@ -62,18 +53,5 @@ export const listBackups = async (deviceId: string): Promise<ConfigBackup[]> => 
 
 export const getBackup = async (deviceId: string, backupId: string): Promise<ConfigBackup> => {
   const { data } = await api.get(`/devices/${deviceId}/backups/${backupId}`);
-  return data;
-};
-
-export const setLeaseSync = async (
-  deviceId: string,
-  payload: SetLeaseSyncPayload,
-): Promise<SshCredential> => {
-  const { data } = await api.put(`/devices/${deviceId}/lease-sync`, payload);
-  return data;
-};
-
-export const runLeaseSyncNow = async (deviceId: string): Promise<{ recordsFound: number }> => {
-  const { data } = await api.post(`/devices/${deviceId}/lease-sync/run`);
   return data;
 };

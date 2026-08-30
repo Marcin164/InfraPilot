@@ -87,6 +87,7 @@ export const ticketPriorityOptions = [
 export const ticketImpactOptions = [
   { label: "options.ticket.impact.singleUser", value: "Single user" },
   { label: "options.ticket.impact.multipleUsers", value: "Multiple users" },
+  { label: "options.ticket.impact.severalLocations", value: "Several locations" },
   { label: "options.ticket.impact.wholeCompany", value: "Whole company" },
 ];
 

@@ -14,6 +14,7 @@ import {
 } from 'typeorm';
 import { TicketsComments } from './ticketsComments.entity';
 import { Users } from './users.entity';
+import { Location } from './location.entity';
 import { Devices } from './devices.entity';
 import { TicketsApprovals } from './ticketsApprovals.entity';
 import { SlaInstance } from './slaInstance.entity';
@@ -45,6 +46,7 @@ export enum TicketPriority {
 export enum TicketImpact {
   SINGLE = 'Single user',
   MULTIPLE = 'Multiple users',
+  SEVERAL_LOCATIONS = 'Several locations',
   COMPANY = 'Whole company',
 }
 
@@ -74,6 +76,15 @@ export class Tickets {
     inverseJoinColumn: { name: 'userId', referencedColumnName: 'id' },
   })
   affectedUsers: Users[];
+
+  // Populated only when impact = "Several locations".
+  @ManyToMany(() => Location)
+  @JoinTable({
+    name: 'ticket_affected_locations',
+    joinColumn: { name: 'ticketId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'locationId', referencedColumnName: 'id' },
+  })
+  affectedLocations: Location[];
 
   @Column({
     type: 'enum',

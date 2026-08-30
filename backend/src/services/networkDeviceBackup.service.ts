@@ -38,17 +38,6 @@ export class SetCredentialDto {
   backupEnabled?: boolean;
 }
 
-export class SetLeaseSyncDto {
-  @IsString() @IsNotEmpty() @MaxLength(4000)
-  leaseSyncCommand: string;
-
-  @IsString() @IsNotEmpty() @MaxLength(4000)
-  leaseSyncLineTemplate: string;
-
-  @IsOptional() @IsBoolean()
-  leaseSyncEnabled?: boolean;
-}
-
 export type CredentialPublic = {
   deviceId: string;
   sshUsername: string;
@@ -56,9 +45,6 @@ export type CredentialPublic = {
   backupCommand: string;
   backupEnabled: boolean;
   hasPassword: boolean;
-  leaseSyncCommand: string | null;
-  leaseSyncLineTemplate: string | null;
-  leaseSyncEnabled: boolean;
   updatedAt: Date;
 } | null;
 
@@ -87,29 +73,8 @@ export class NetworkDeviceBackupService {
       backupCommand: cred.backupCommand,
       backupEnabled: cred.backupEnabled,
       hasPassword: !!cred.sshPassword,
-      leaseSyncCommand: cred.leaseSyncCommand,
-      leaseSyncLineTemplate: cred.leaseSyncLineTemplate,
-      leaseSyncEnabled: cred.leaseSyncEnabled,
       updatedAt: cred.updatedAt,
     };
-  }
-
-  async setLeaseSync(deviceId: string, dto: SetLeaseSyncDto, actorId?: string): Promise<CredentialPublic> {
-    const cred = await this.credentials.findOneBy({ deviceId });
-    if (!cred) throw new BadRequestException('Configure an SSH credential for this device first');
-
-    cred.leaseSyncCommand = dto.leaseSyncCommand;
-    cred.leaseSyncLineTemplate = dto.leaseSyncLineTemplate;
-    cred.leaseSyncEnabled = dto.leaseSyncEnabled ?? false;
-    await this.credentials.save(cred);
-
-    await this.auditService.log('NETWORK_DEVICE_CREDENTIAL', deviceId, 'LEASE_SYNC_UPDATED', {
-      actorId,
-      leaseSyncCommand: cred.leaseSyncCommand,
-      leaseSyncEnabled: cred.leaseSyncEnabled,
-    });
-
-    return this.getCredentialPublic(deviceId);
   }
 
   async setCredential(deviceId: string, dto: SetCredentialDto, actorId?: string): Promise<CredentialPublic> {

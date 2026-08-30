@@ -13,18 +13,13 @@ import { Role, Roles } from 'src/decorators/roles.decorator';
 import {
   NetworkDeviceBackupService,
   SetCredentialDto,
-  SetLeaseSyncDto,
 } from 'src/services/networkDeviceBackup.service';
-import { LeaseSyncService } from 'src/services/leaseSync.service';
 
 @UseGuards(AuthGuard)
 @Roles(Role.Admin)
 @Controller('devices')
 export class NetworkDeviceBackupController {
-  constructor(
-    private readonly backupService: NetworkDeviceBackupService,
-    private readonly leaseSyncService: LeaseSyncService,
-  ) {}
+  constructor(private readonly backupService: NetworkDeviceBackupService) {}
 
   @Get('/:deviceId/ssh-credential')
   getCredential(@Param('deviceId') deviceId: string) {
@@ -58,21 +53,5 @@ export class NetworkDeviceBackupController {
     @Param('backupId') backupId: string,
   ) {
     return this.backupService.getBackup(deviceId, backupId);
-  }
-
-  @Put('/:deviceId/lease-sync')
-  setLeaseSync(
-    @Param('deviceId') deviceId: string,
-    @Body() dto: SetLeaseSyncDto,
-    @Req() req: any,
-  ) {
-    const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id;
-    return this.backupService.setLeaseSync(deviceId, dto, actor);
-  }
-
-  @Post('/:deviceId/lease-sync/run')
-  runLeaseSync(@Param('deviceId') deviceId: string, @Req() req: any) {
-    const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id;
-    return this.leaseSyncService.runSync(deviceId, actor);
   }
 }

@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Subnet } from './subnet.entity';
 import { Devices } from './devices.entity';
+import { DhcpServer } from './dhcpServer.entity';
 
 export enum IpAllocationStatus {
   RESERVED = 'reserved',
@@ -64,6 +65,14 @@ export class IpAllocation {
 
   @Column({ type: 'varchar', length: 16 })
   source: IpAllocationSource;
+
+  @Index()
+  @Column({ nullable: true })
+  dhcpServerId: string | null;
+
+  @ManyToOne(() => DhcpServer, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'dhcpServerId' })
+  dhcpServer: DhcpServer;
 
   /** Raw expiry text as reported by the source device -- formats vary too much per vendor to normalize (see plan). */
   @Column({ type: 'varchar', length: 64, nullable: true })

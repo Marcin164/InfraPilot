@@ -6,6 +6,7 @@ import { Tickets } from 'src/entities/tickets.entity';
 import { EVENTS } from 'src/events/events.constants';
 import { TicketStateChangedEvent } from 'src/events/ticket-state-changed.event';
 import { Users } from 'src/entities/users.entity';
+import { Location } from 'src/entities/location.entity';
 import {
   CreateTicketDto,
   GetTicketsQueryDto,
@@ -206,7 +207,7 @@ export class TicketsService {
       await this.ticketsRepository.manager.transaction(async (manager: any) => {
       const ticket = await manager.findOne(Tickets, {
         where: { id },
-        relations: ['affectedUsers'],
+        relations: ['affectedUsers', 'affectedLocations'],
       });
 
       if (!ticket) throw new Error('Ticket not found');
@@ -239,7 +240,7 @@ export class TicketsService {
       // merge keys the request actually sent -- explicit `null` (e.g.
       // reopen() clearing closureCode) is preserved, only `undefined` is
       // filtered out.
-      const { affectedUserIds, ...columnDto } = dto;
+      const { affectedUserIds, affectedLocationIds, ...columnDto } = dto;
       const definedUpdates = Object.fromEntries(
         Object.entries(columnDto).filter(([, value]) => value !== undefined),
       );
@@ -248,6 +249,14 @@ export class TicketsService {
       if (affectedUserIds !== undefined) {
         ticket.affectedUsers = affectedUserIds.length
           ? await manager.find(Users, { where: { id: In(affectedUserIds) } })
+          : [];
+      }
+
+      if (affectedLocationIds !== undefined) {
+        ticket.affectedLocations = affectedLocationIds.length
+          ? await manager.find(Location, {
+              where: { id: In(affectedLocationIds) },
+            })
           : [];
       }
 
@@ -796,6 +805,7 @@ export class TicketsService {
       .leftJoinAndSelect('ticket.requester', 'requester')
       .leftJoinAndSelect('ticket.device', 'device')
       .leftJoinAndSelect('ticket.affectedUsers', 'affectedUsers')
+      .leftJoinAndSelect('ticket.affectedLocations', 'affectedLocations')
       .leftJoinAndSelect('ticket.comments', 'comments')
       .leftJoinAndSelect('ticket.approvals', 'approvals')
       .leftJoinAndSelect('ticket.activities', 'activities')

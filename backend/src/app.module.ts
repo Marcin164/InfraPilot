@@ -87,6 +87,7 @@ import { NetworkDeviceCredential } from './entities/networkDeviceCredential.enti
 import { NetworkDeviceConfigBackup } from './entities/networkDeviceConfigBackup.entity';
 import { Subnet } from './entities/subnet.entity';
 import { IpAllocation } from './entities/ipAllocation.entity';
+import { DhcpServer } from './entities/dhcpServer.entity';
 import { DeviceEnrollmentToken } from './entities/deviceEnrollmentToken.entity';
 import { IpamModule } from './modules/ipam.module';
 import { Maintenance } from './entities/maintenance.entity';
@@ -175,6 +176,7 @@ import { MetricsController } from './controllers/metrics.controller';
         NetworkDeviceConfigBackup,
         Subnet,
         IpAllocation,
+        DhcpServer,
         DeviceEnrollmentToken,
       ],
       synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true',

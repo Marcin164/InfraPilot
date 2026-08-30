@@ -9,7 +9,11 @@ export type TicketState =
   | "Cancelled";
 
 export type TicketPriority = "Low" | "Medium" | "High" | "Critical";
-export type TicketImpact = "Single user" | "Multiple users" | "Whole company";
+export type TicketImpact =
+  | "Single user"
+  | "Multiple users"
+  | "Several locations"
+  | "Whole company";
 export type TicketUrgency = "Low" | "Medium" | "High";
 export type TicketType = "Incident" | "Service";
 export type ClosureCode = "Solved Permanently" | "Solved temporarily" | "Not actioned" | "No reply" | "Workaround";
@@ -29,6 +33,7 @@ export interface Ticket {
   assignee?: string;
   assignmentGroup?: string;
   affectedUsers?: { id: string; name: string; surname: string; email?: string }[];
+  affectedLocations?: { id: string; name: string }[];
   requester: { id: string; distinguishedName: string };
   requesterId: string;
   device?: { id: string; assetName: string; serialNumber: string };
@@ -86,6 +91,7 @@ export interface UpdateTicketData {
   impact?: TicketImpact;
   urgency?: TicketUrgency;
   affectedUserIds?: string[];
+  affectedLocationIds?: string[];
   title?: string;
   description?: string;
 }

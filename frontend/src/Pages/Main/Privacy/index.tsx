@@ -4,12 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { faUserShield } from "@fortawesome/free-solid-svg-icons";
 import moment from "moment";
 
-import { listPrivacyAccessLog } from "../../../../Services/privacy";
-import CardHeader from "../../../../Components/Headers/CardHeader";
-import MainTable from "../../../../Components/Tables/MainTable";
-import Input from "../../../../Components/Inputs/Input";
-import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
-import { hasRequiredRole } from "../../../../Constants/navigation";
+import { listPrivacyAccessLog } from "../../../Services/privacy";
+import CardHeader from "../../../Components/Headers/CardHeader";
+import MainTable from "../../../Components/Tables/MainTable";
+import Input from "../../../Components/Inputs/Input";
+import { useCurrentUser } from "../../../Hooks/useCurrentUser";
+import { hasRequiredRole } from "../../../Constants/navigation";
 
 const Privacy = () => {
   const { t } = useTranslation();

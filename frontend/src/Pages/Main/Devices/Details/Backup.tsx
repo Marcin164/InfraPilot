@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useOutletContext } from "react-router";
+import { useNavigate, useOutletContext } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { diffLines } from "diff";
 import {
   faDatabase,
-  faNetworkWired,
+  faServer,
   faPlay,
   faEye,
   faXmark,
@@ -19,18 +19,16 @@ import NoData from "../components/NoData";
 import {
   ConfigBackup,
   SetCredentialPayload,
-  SetLeaseSyncPayload,
   getBackup,
   getSshCredential,
   listBackups,
   runBackupNow,
-  runLeaseSyncNow,
-  setLeaseSync,
   setSshCredential,
 } from "../../../../Services/networkDeviceBackup";
 
 const Backup = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const device: any = useOutletContext();
   const data = device?.data;
   const deviceId = data?.id;
@@ -58,12 +56,6 @@ const Backup = () => {
     backupEnabled: true,
   });
 
-  const [leaseSyncForm, setLeaseSyncForm] = useState<SetLeaseSyncPayload>({
-    leaseSyncCommand: "",
-    leaseSyncLineTemplate: "",
-    leaseSyncEnabled: false,
-  });
-
   useEffect(() => {
     const cred = credentialQuery.data;
     if (!cred) return;
@@ -73,11 +65,6 @@ const Backup = () => {
       sshPort: cred.sshPort,
       backupCommand: cred.backupCommand,
       backupEnabled: cred.backupEnabled,
-    });
-    setLeaseSyncForm({
-      leaseSyncCommand: cred.leaseSyncCommand ?? "",
-      leaseSyncLineTemplate: cred.leaseSyncLineTemplate ?? "",
-      leaseSyncEnabled: cred.leaseSyncEnabled,
     });
   }, [credentialQuery.data]);
 
@@ -103,25 +90,6 @@ const Backup = () => {
     },
     onError: (err: any) =>
       toast.error(err?.response?.data?.message ?? t("network.backup.runFailed")),
-  });
-
-  const saveLeaseSyncMutation = useMutation({
-    mutationFn: () => setLeaseSync(deviceId, leaseSyncForm),
-    onSuccess: () => {
-      toast.success(t("network.backup.leaseSyncSaved"));
-      queryClient.invalidateQueries({ queryKey: ["ssh-credential", deviceId] });
-    },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? t("network.backup.leaseSyncSaveFailed")),
-  });
-
-  const runLeaseSyncMutation = useMutation({
-    mutationFn: () => runLeaseSyncNow(deviceId),
-    onSuccess: (result: { recordsFound: number }) => {
-      toast.success(t("network.backup.leaseSyncRunSucceeded", { count: result.recordsFound }));
-    },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? t("network.backup.leaseSyncRunFailed")),
   });
 
   const viewMutation = useMutation({
@@ -203,56 +171,14 @@ const Backup = () => {
 
       {hasCredential && (
         <div className="bg-white shadow-xl rounded-[10px] p-4 mt-4">
-          <CardHeader text={t("network.backup.leaseSyncTitle")} icon={faNetworkWired} />
-          <div className="mt-1 text-[12px] text-[#9a9a9a]">{t("network.backup.leaseSyncHint")}</div>
-
-          <Input
-            label={t("network.backup.leaseSyncCommand")}
-            value={leaseSyncForm.leaseSyncCommand}
-            handleChange={(v: string) => setLeaseSyncForm({ ...leaseSyncForm, leaseSyncCommand: v })}
-            placeholder="/ip dhcp-server lease print"
+          <CardHeader text={t("network.backup.leaseSyncTitle")} icon={faServer} />
+          <div className="mt-1 text-[13px] text-[#9a9a9a]">{t("network.backup.leaseSyncMovedHint")}</div>
+          <ButtonPrimary
+            className="mt-3"
+            icon={faServer}
+            text={t("network.backup.manageDhcpSync")}
+            onClick={() => navigate("/admin/dhcp-servers")}
           />
-          <Input
-            label={t("network.backup.leaseSyncTemplate")}
-            value={leaseSyncForm.leaseSyncLineTemplate}
-            handleChange={(v: string) =>
-              setLeaseSyncForm({ ...leaseSyncForm, leaseSyncLineTemplate: v })
-            }
-            placeholder="{ip} {mac} {hostname} {expiry}"
-          />
-          <div className="mt-1 text-[11px] text-[#9a9a9a]">{t("network.backup.leaseSyncTemplateHint")}</div>
-
-          <div className="mt-2 flex items-center gap-4">
-            <Checkbox
-              id="lease-sync-enabled"
-              label={t("network.backup.leaseSyncEnabled")}
-              checked={!!leaseSyncForm.leaseSyncEnabled}
-              handleChange={(v: boolean) => setLeaseSyncForm({ ...leaseSyncForm, leaseSyncEnabled: v })}
-            />
-          </div>
-
-          <div className="mt-4 flex gap-2">
-            <ButtonPrimary
-              text={saveLeaseSyncMutation.isPending ? t("common.saving") : t("common.save")}
-              onClick={() => saveLeaseSyncMutation.mutate()}
-              disabled={
-                !leaseSyncForm.leaseSyncCommand ||
-                !leaseSyncForm.leaseSyncLineTemplate ||
-                saveLeaseSyncMutation.isPending
-              }
-            />
-            <ButtonPrimary
-              icon={faPlay}
-              text={
-                runLeaseSyncMutation.isPending
-                  ? t("network.backup.running")
-                  : t("network.backup.leaseSyncRunNow")
-              }
-              onClick={() => runLeaseSyncMutation.mutate()}
-              disabled={runLeaseSyncMutation.isPending}
-              color="green"
-            />
-          </div>
         </div>
       )}
 

@@ -1,14 +1,16 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { faSitemap, faPlus, faTrash, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { faSitemap, faServer, faPlus, faTrash, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import CardHeader from "../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../Components/Inputs/Input";
 import SelectSecondary from "../../../Components/Inputs/SelectSecondary";
 import { getDevicesOptions } from "../../../Services/devices";
+import { getDhcpServers } from "../../../Services/dhcpServers";
 import {
   AllocationStatus,
   CreateAllocationPayload,
@@ -30,6 +32,7 @@ const STATUS_OPTIONS: { value: AllocationStatus; label: string }[] = [
 
 const Ipam = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedSubnetId, setSelectedSubnetId] = useState<string | null>(null);
   const [addingSubnet, setAddingSubnet] = useState(false);
@@ -37,6 +40,7 @@ const Ipam = () => {
 
   const subnetsQuery = useQuery({ queryKey: ["subnets"], queryFn: getSubnets });
   const conflictsQuery = useQuery({ queryKey: ["ip-conflicts"], queryFn: getIpConflicts });
+  const dhcpServersQuery = useQuery({ queryKey: ["dhcp-servers"], queryFn: getDhcpServers });
 
   const utilizationQuery = useQuery({
     queryKey: ["subnet-utilization", selectedSubnetId],
@@ -113,6 +117,15 @@ const Ipam = () => {
   const conflicts = conflictsQuery.data ?? [];
   const utilization = utilizationQuery.data;
 
+  const dhcpSources = dhcpServersQuery.data ?? [];
+  const dhcpActiveCount = dhcpSources.filter((s) => s.enabled).length;
+  const dhcpFailedCount = dhcpSources.filter((s) => s.lastSyncStatus === "failed").length;
+  const dhcpLastSyncAt = dhcpSources.reduce<string | null>((latest, s) => {
+    if (!s.lastSyncAt) return latest;
+    if (!latest || s.lastSyncAt > latest) return s.lastSyncAt;
+    return latest;
+  }, null);
+
   return (
     <div className="w-full p-4">
       <CardHeader text={t("nav.ipam")} icon={faSitemap} />
@@ -133,6 +146,42 @@ const Ipam = () => {
           </div>
         </div>
       )}
+
+      <div
+        className={`mt-4 rounded-[10px] p-4 flex flex-wrap items-center justify-between gap-3 border ${
+          dhcpFailedCount > 0
+            ? "bg-red-50 border-red-200"
+            : dhcpSources.length === 0
+              ? "bg-[#F7F7F7] border-[#F0F0F0]"
+              : "bg-blue-50 border-blue-200"
+        }`}
+      >
+        <div
+          className={`flex items-center gap-2 text-[13px] ${
+            dhcpFailedCount > 0 ? "text-red-700" : "text-[#3C3C3C]"
+          }`}
+        >
+          <FontAwesomeIcon icon={faServer} />
+          {dhcpSources.length === 0 ? (
+            <span>{t("ipam.dhcp.none")}</span>
+          ) : (
+            <span>
+              {t("ipam.dhcp.summary", { active: dhcpActiveCount, total: dhcpSources.length })}
+              {" · "}
+              {dhcpLastSyncAt
+                ? t("ipam.dhcp.lastSync", { date: new Date(dhcpLastSyncAt).toLocaleString() })
+                : t("ipam.dhcp.neverSynced")}
+              {dhcpFailedCount > 0 && (
+                <span className="font-bold"> · {t("ipam.dhcp.failedWarning", { count: dhcpFailedCount })}</span>
+              )}
+            </span>
+          )}
+        </div>
+        <ButtonPrimary
+          text={dhcpSources.length === 0 ? t("ipam.dhcp.setup") : t("ipam.dhcp.manage")}
+          onClick={() => navigate("/admin/dhcp-servers")}
+        />
+      </div>
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white shadow-xl rounded-[10px] p-4">

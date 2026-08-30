@@ -1,16 +1,13 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NodeSSH } from 'node-ssh';
-import { NetworkDeviceCredential } from 'src/entities/networkDeviceCredential.entity';
+import { DhcpServer, DhcpSyncStatus } from 'src/entities/dhcpServer.entity';
 import { IpAllocation, IpAllocationSource, IpAllocationStatus } from 'src/entities/ipAllocation.entity';
 import { Subnet } from 'src/entities/subnet.entity';
-import { Devices } from 'src/entities/devices.entity';
 import { AdminSettings } from 'src/entities/adminSettings.entity';
-import { decrypt } from 'src/helpers/crypto';
 import { uuidv4 } from 'src/helpers/uuidv4';
 import { isIpInCidr } from 'src/helpers/cidr';
-import { compileLeaseTemplate, parseLeaseOutput } from 'src/helpers/leaseTemplate';
+import { DhcpDriverRegistry } from 'src/dhcp/dhcpDriver.registry';
 import { AuditService } from './audit.service';
 import { IpamService } from './ipam.service';
 import { NotificationDispatcherService } from './notificationDispatcher.service';
@@ -23,55 +20,43 @@ export class LeaseSyncService {
   private readonly logger = new Logger(LeaseSyncService.name);
 
   constructor(
-    @InjectRepository(NetworkDeviceCredential)
-    private readonly credentials: Repository<NetworkDeviceCredential>,
+    @InjectRepository(DhcpServer)
+    private readonly sources: Repository<DhcpServer>,
     @InjectRepository(IpAllocation)
     private readonly allocations: Repository<IpAllocation>,
     @InjectRepository(Subnet)
     private readonly subnets: Repository<Subnet>,
-    @InjectRepository(Devices)
-    private readonly devices: Repository<Devices>,
     @InjectRepository(AdminSettings)
     private readonly adminSettings: Repository<AdminSettings>,
+    private readonly driverRegistry: DhcpDriverRegistry,
     private readonly auditService: AuditService,
     private readonly ipamService: IpamService,
     private readonly dispatcher: NotificationDispatcherService,
   ) {}
 
-  async runSync(deviceId: string, actorId?: string): Promise<{ recordsFound: number }> {
-    const device = await this.devices.findOneBy({ id: deviceId });
-    if (!device) throw new BadRequestException('Device not found');
-    if (!device.managementIp) throw new BadRequestException('Device has no management IP set');
+  async runSync(sourceId: string, actorId?: string): Promise<{ recordsFound: number }> {
+    const source = await this.sources.findOneBy({ id: sourceId });
+    if (!source) throw new BadRequestException('DHCP server not found');
 
-    const cred = await this.credentials.findOneBy({ deviceId });
-    if (!cred) throw new BadRequestException('No SSH credential configured for this device');
-    if (!cred.leaseSyncCommand || !cred.leaseSyncLineTemplate) {
-      throw new BadRequestException('Lease sync command/template not configured for this device');
-    }
-
-    const compiled = compileLeaseTemplate(cred.leaseSyncLineTemplate);
+    const driver = this.driverRegistry.getDriver(source.driverType);
     const subnets = await this.subnets.find();
 
-    const ssh = new NodeSSH();
     try {
-      await ssh.connect({
-        host: device.managementIp,
-        username: decrypt(cred.sshUsername),
-        password: cred.sshPassword ? decrypt(cred.sshPassword) : undefined,
-        port: cred.sshPort,
-        readyTimeout: 10000,
-      });
-      const result = await ssh.execCommand(cred.leaseSyncCommand);
-      const records = parseLeaseOutput(result.stdout, compiled);
+      const records = await driver.fetchLeases(source);
 
       const now = new Date();
       for (const record of records) {
         const subnet = subnets.find((s) => isIpInCidr(record.ip, s.cidr));
         let row = await this.allocations.findOne({
-          where: { ip: record.ip, source: IpAllocationSource.SYNC },
+          where: { ip: record.ip, dhcpServerId: source.id },
         });
         if (!row) {
-          row = this.allocations.create({ id: uuidv4(), ip: record.ip, source: IpAllocationSource.SYNC });
+          row = this.allocations.create({
+            id: uuidv4(),
+            ip: record.ip,
+            source: IpAllocationSource.SYNC,
+            dhcpServerId: source.id,
+          });
         }
         row.subnetId = subnet?.id ?? null;
         row.status = IpAllocationStatus.LEASED;
@@ -85,8 +70,15 @@ export class LeaseSyncService {
       invalidateReportCache('ipam-conflicts');
       invalidateReportCache('ipam-subnet-utilization');
 
-      await this.auditService.log('NETWORK_DEVICE_LEASE_SYNC', deviceId, 'SUCCEEDED', {
+      source.lastSyncAt = now;
+      source.lastSyncStatus = DhcpSyncStatus.SUCCESS;
+      source.lastSyncError = null;
+      source.lastSyncRecordCount = records.length;
+      await this.sources.save(source);
+
+      await this.auditService.log('DHCP_SERVER_LEASE_SYNC', sourceId, 'SUCCEEDED', {
         actorId,
+        deviceId: source.deviceId,
         recordsFound: records.length,
       });
 
@@ -94,14 +86,19 @@ export class LeaseSyncService {
       return { recordsFound: records.length };
     } catch (err) {
       const message = (err as Error).message;
-      this.logger.warn(`Lease sync failed for device ${deviceId}: ${message}`);
-      await this.auditService.log('NETWORK_DEVICE_LEASE_SYNC', deviceId, 'FAILED', {
+      this.logger.warn(`Lease sync failed for DHCP server ${sourceId}: ${message}`);
+
+      source.lastSyncAt = new Date();
+      source.lastSyncStatus = DhcpSyncStatus.FAILED;
+      source.lastSyncError = message;
+      await this.sources.save(source);
+
+      await this.auditService.log('DHCP_SERVER_LEASE_SYNC', sourceId, 'FAILED', {
         actorId,
+        deviceId: source.deviceId,
         error: message,
       });
       throw new BadRequestException(`Lease sync failed: ${message}`);
-    } finally {
-      ssh.dispose();
     }
   }
 
