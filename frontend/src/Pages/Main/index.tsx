@@ -14,7 +14,7 @@ const MainLayout = () => {
   }, [sidebarOpen]);
 
   return (
-    <div className="min-h-screen bg-[#F6F6F6]">
+    <div className="h-screen flex flex-col bg-[#F6F6F6]">
       <MainNavbar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       {sidebarOpen && (
         <div
@@ -22,9 +22,11 @@ const MainLayout = () => {
           onClick={() => setSidebarOpen(false)}
         />
       )}
-      <div className="lg:ml-[240px]">
+      <div className="lg:ml-[240px] flex-1 flex flex-col min-h-0">
         <Topbar onMenuToggle={() => setSidebarOpen((o) => !o)} />
-        <Outlet />
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <Outlet />
+        </div>
       </div>
     </div>
   );

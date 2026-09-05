@@ -548,6 +548,15 @@ export class DevicesService {
       .getMany();
   }
 
+  async findByLocationIds(locationIds: string[]): Promise<Devices[]> {
+    if (locationIds.length === 0) return [];
+    return this.devicesRepository
+      .createQueryBuilder('d')
+      .leftJoinAndSelect('d.user', 'user')
+      .where('d.locationId IN (:...locationIds)', { locationIds })
+      .getMany();
+  }
+
   async findDevicesTable(query: any = {}): Promise<any> {
     const page = Math.max(parseInt(query.page, 10) || 1, 1);
     const limit = Math.max(parseInt(query.limit, 10) || 30, 1);

@@ -2,17 +2,15 @@ import { useEffect, useState } from "react";
 import moment from "moment";
 import { useTranslation } from "react-i18next";
 import { useOutletContext } from "react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { faCircleInfo, faPen, faCheck, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import StatusPill, { StatusTone } from "../../../../Components/Badges/StatusPill";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
-import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import Parameter from "../../../../Components/Lists/Parameter";
 import NoData from "../components/NoData";
-import { getLocations } from "../../../../Services/locations";
 import { groupTypeOptions, groupMappings } from "../../../../Constants/options";
 import {
   DeviceDetailsPatch,
@@ -60,8 +58,6 @@ const Overview = () => {
   const data = device?.data;
   const queryClient = useQueryClient();
 
-  const locationsQuery = useQuery({ queryKey: ["locations"], queryFn: getLocations });
-
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<DeviceDetailsPatch>({});
 
@@ -72,7 +68,6 @@ const Overview = () => {
       model: data.model ?? "",
       manufacturer: data.manufacturer ?? "",
       serialNumber: data.serialNumber ?? "",
-      locationId: data.locationId ?? "",
       managementIp: data.managementIp ?? "",
       portCount: data.portCount ?? "",
       firmwareVersion: data.firmwareVersion ?? "",
@@ -97,10 +92,6 @@ const Overview = () => {
   const subgroupOptions =
     groupMappings.find((m) => m.group === data.group)?.subgroupOptions ?? [];
   const subgroupLabel = subgroupOptions.find((s: any) => s.value === data.subgroup)?.label;
-
-  const locations = locationsQuery.data ?? [];
-  const locationName =
-    locations.find((l: any) => l.id === data.locationId)?.name ?? data.location;
 
   const showNetworkFields = isNetworkDevice(data.group);
 
@@ -168,7 +159,6 @@ const Overview = () => {
             <Parameter name={t("device.manufacturer")} value={data.manufacturer} />
             <Parameter name={t("device.model")} value={data.model} />
             <Parameter name={t("device.serial.number")} value={data.serialNumber} />
-            <Parameter name={t("device.location")} value={locationName} />
             {showNetworkFields && (
               <>
                 <Parameter name={t("device.managementIp")} value={data.managementIp} />
@@ -200,20 +190,6 @@ const Overview = () => {
               value={draft.serialNumber ?? ""}
               handleChange={(v: string) => setDraft({ ...draft, serialNumber: v })}
             />
-            <div>
-              <div className="font-bold text-[#3C3C3C]">{t("device.location")}</div>
-              <SelectSecondary
-                options={[
-                  { value: "", label: "—" },
-                  ...locations.map((l: any) => ({ value: l.id, label: l.name })),
-                ]}
-                value={[
-                  { value: "", label: "—" },
-                  ...locations.map((l: any) => ({ value: l.id, label: l.name })),
-                ].find((o) => o.value === (draft.locationId ?? ""))}
-                onSelect={(opt: any) => setDraft({ ...draft, locationId: opt?.value ?? "" })}
-              />
-            </div>
             {showNetworkFields && (
               <>
                 <Input

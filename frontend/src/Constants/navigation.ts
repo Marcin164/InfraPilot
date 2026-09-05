@@ -22,6 +22,7 @@ import {
   faHistory,
   faKey,
   faLayerGroup,
+  faLocationDot,
   faNetworkWired,
   faPaste,
   faPlay,
@@ -41,6 +42,7 @@ import {
   faWindowMaximize,
   faWrench,
   faRetweet,
+  faGlobe,
 } from "@fortawesome/free-solid-svg-icons";
 
 export type NavbarRequirement =
@@ -122,6 +124,11 @@ export const navbarItems: NavbarItem[] = [
     to: "/admin/devices",
     label: "nav.devices",
     icon: faComputer,
+  },
+  {
+    to: "/admin/map",
+    label: "nav.map",
+    icon: faGlobe,
   },
   {
     to: "/admin/topology",
@@ -242,6 +249,7 @@ export const deviceNavbarItems = [
   { to: "backup", label: "device.tab.backup", icon: faDatabase, scope: "network" as const },
   { to: "compliance", label: "device.tab.compliance", icon: faShieldHalved, scope: "computers" as const },
   { to: "cves", label: "device.tab.cves", icon: faBug, scope: "computers" as const },
+  { to: "location", label: "device.tab.location", icon: faLocationDot, scope: "all" as const },
   { to: "lifecycle", label: "device.tab.lifecycle", icon: faBoxArchive, scope: "all" as const },
   { to: "tasks", label: "device.tab.tasks", icon: faPlay, scope: "computers" as const },
   { to: "scans", label: "device.tab.scans", icon: faClockRotateLeft, scope: "computers" as const },

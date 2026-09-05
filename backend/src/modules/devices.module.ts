@@ -113,6 +113,7 @@ import { TicketDeviceLifecycleListener } from 'src/listeners/ticketDeviceLifecyc
     TicketDeviceLifecycleListener,
   ],
   exports: [
+    DevicesService,
     SoftwareInventoryService,
     DeviceTagsService,
     AgentTaskService,

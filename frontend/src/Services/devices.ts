@@ -52,7 +52,6 @@ export type DeviceLifecyclePatch = {
   retiredAt?: string;
   disposedAt?: string;
   disposalMethod?: string;
-  locationId?: string;
 };
 
 export const updateDeviceLifecycle = async (
@@ -69,6 +68,8 @@ export type DeviceDetailsPatch = {
   manufacturer?: string;
   serialNumber?: string;
   locationId?: string;
+  locationX?: number | null;
+  locationY?: number | null;
   managementIp?: string;
   portCount?: string | number;
   firmwareVersion?: string;

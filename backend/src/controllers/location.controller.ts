@@ -6,8 +6,13 @@ import {
   Param,
   Patch,
   Post,
+  Res,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { Role, Roles } from 'src/decorators/roles.decorator';
 import { LocationService, CreateLocationDto, UpdateLocationDto } from 'src/services/location.service';
@@ -50,6 +55,31 @@ export class LocationController {
     const loc = await this.locationService.update(id, dto);
     await this.auditService.log('LOCATION', id, 'UPDATED', dto);
     return loc;
+  }
+
+  @Roles(Role.Admin)
+  @Post(':id/plan')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  async uploadPlan(@Param('id') id: string, @UploadedFile() file: any) {
+    const loc = await this.locationService.uploadPlan(id, file);
+    await this.auditService.log('LOCATION', id, 'PLAN_UPDATED', {});
+    return loc;
+  }
+
+  @Get(':id/summary')
+  getSummary(@Param('id') id: string) {
+    return this.locationService.getSummary(id);
+  }
+
+  @Get(':id/plan')
+  async downloadPlan(@Param('id') id: string, @Res() res: Response) {
+    const { location, stream } = await this.locationService.getPlanStream(id);
+    res.setHeader('Content-Type', location.planMimetype || 'application/octet-stream');
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="${encodeURIComponent(location.planOriginalName ?? 'plan')}"`,
+    );
+    stream.pipe(res);
   }
 
   @Roles(Role.Admin)

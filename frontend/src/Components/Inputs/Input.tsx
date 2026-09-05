@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge";
 
 type Props = {
   label?: string;
-  type?: "text" | "number" | "date" | "password" | "time";
+  type?: "text" | "number" | "date" | "password" | "time" | "file";
   inputClassName?: string;
   className?: string;
   onChange?: any;
@@ -15,6 +15,7 @@ type Props = {
   placeholder?: string;
   suffix?: string;
   errors?: any;
+  accept?: string;
 };
 
 const Input = ({
@@ -31,6 +32,7 @@ const Input = ({
   placeholder,
   suffix,
   errors,
+  accept,
 }: Props) => {
   return (
     <div className={twMerge("pt-2", className)}>
@@ -44,9 +46,10 @@ const Input = ({
           id={name}
           name={name}
           defaultValue={defaultValue ?? undefined}
-          value={value ?? ""}
+          value={type === "file" ? undefined : value ?? ""}
           placeholder={placeholder}
           type={type}
+          accept={type === "file" ? accept : undefined}
           className={twMerge(
             "w-full border border-[#535353] bg-[#FFFFFF] text-[16px] font-bold block rounded-[10px] px-3 py-2",
             suffix && "rounded-r-[0px] border-r-[0px]",
@@ -54,7 +57,11 @@ const Input = ({
             inputClassName,
           )}
           onChange={
-            handleChange ? (e) => handleChange(e.target.value) : onChange
+            handleChange
+              ? type === "file"
+                ? (e) => handleChange(e.target.files?.[0] ?? null)
+                : (e) => handleChange(e.target.value)
+              : onChange
           }
           disabled={disabled}
         />

@@ -3,6 +3,7 @@ import Main from "./Pages/Main";
 import Dashboards from "./Pages/Main/Dashboards";
 import Users from "./Pages/Main/Users";
 import Devices from "./Pages/Main/Devices";
+import Map from "./Pages/Main/Map";
 import Settings from "./Pages/Main/Settings";
 import UserDetails from "./Pages/Main/Users/Details";
 import DeviceDetails from "./Pages/Main/Devices/Details";
@@ -15,6 +16,7 @@ import Security from "./Pages/Main/Devices/Details/Security";
 import Compliance from "./Pages/Main/Devices/Details/Compliance";
 import Cves from "./Pages/Main/Devices/Details/Cves";
 import Lifecycle from "./Pages/Main/Devices/Details/Lifecycle";
+import DeviceLocation from "./Pages/Main/Devices/Details/Location";
 import Tasks from "./Pages/Main/Devices/Details/Tasks";
 import Scans from "./Pages/Main/Devices/Details/Scans";
 import Events from "./Pages/Main/Devices/Details/Events";
@@ -76,7 +78,6 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthSetup } from "./Hooks/useAuthSetup";
 import { ThemeProvider, useTheme } from "./Context/ThemeContext";
-import Tickets from "./Pages/User/Tickets";
 
 const ThemedToastContainer = () => {
   const { resolvedTheme } = useTheme();
@@ -147,12 +148,14 @@ function App() {
                   <Route path="backup" element={<Backup />} />
                   <Route path="compliance" element={<Compliance />} />
                   <Route path="cves" element={<Cves />} />
+                  <Route path="location" element={<DeviceLocation />} />
                   <Route path="lifecycle" element={<Lifecycle />} />
                   <Route path="tasks" element={<Tasks />} />
                   <Route path="scans" element={<Scans />} />
                   <Route path="label" element={<Label />} />
                   <Route path="maintenance" element={<MaintenanceTab />} />
                 </Route>
+                <Route path="map" element={<Map/>}/>
                 <Route path="licenses" element={<Licenses />} />
                 <Route path="procurement" element={<Procurement />} />
                 <Route path="helpdesk" element={<Helpdesk />} />

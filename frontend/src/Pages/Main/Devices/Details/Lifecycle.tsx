@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext } from "react-router";
-import { getLocations } from "../../../../Services/locations";
 import { toast } from "react-toastify";
 import {
   faCheck,
@@ -110,8 +109,6 @@ const Lifecycle = () => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<DeviceLifecyclePatch>({});
 
-  const locationsQuery = useQuery({ queryKey: ["locations"], queryFn: getLocations });
-
   useEffect(() => {
     setDraft({
       lifecycle: data.lifecycle ?? "active",
@@ -127,7 +124,6 @@ const Lifecycle = () => {
       retiredAt: toInputValue(data.retiredAt),
       disposedAt: toInputValue(data.disposedAt),
       disposalMethod: data.disposalMethod ?? "",
-      locationId: data.locationId ?? "",
     });
   }, [data]);
 
@@ -237,31 +233,6 @@ const Lifecycle = () => {
               {data.purchaseCurrency ? ` ${data.purchaseCurrency}` : ""}
             </span>
           </span>
-        )}
-      </div>
-
-      <div className="mt-4">
-        <div className="text-[12px] text-[#9a9a9a] mb-1">{t("device.location")}</div>
-        {editing ? (
-          (() => {
-            const locs = locationsQuery.data ?? [];
-            const opts = [{ value: "", label: "—" }, ...locs.map((l) => ({ value: l.id, label: l.name }))];
-            return (
-              <div className="max-w-[300px]">
-                <SelectSecondary
-                  options={opts}
-                  value={opts.find((o) => o.value === (draft.locationId ?? ""))}
-                  onSelect={(opt: any) => setDraft({ ...draft, locationId: opt?.value ?? "" })}
-                />
-              </div>
-            );
-          })()
-        ) : (
-          <div className="font-bold text-[#3C3C3C]">
-            {(locationsQuery.data ?? []).find((l) => l.id === data.locationId)?.name
-              ?? data.location
-              ?? "—"}
-          </div>
         )}
       </div>
 

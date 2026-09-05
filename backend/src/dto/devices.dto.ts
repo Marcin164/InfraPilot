@@ -7,6 +7,7 @@ import {
   IsIn,
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsObject,
   IsOptional,
   IsString,
@@ -192,7 +193,6 @@ export class UpdateDeviceLifecycleDto {
   @IsOptional() @IsString() retiredAt?: string;
   @IsOptional() @IsString() disposedAt?: string;
   @IsOptional() @IsString() @MaxLength(128) disposalMethod?: string;
-  @IsOptional() @IsString() locationId?: string;
 }
 
 export class UpdateDeviceDetailsDto {
@@ -201,6 +201,8 @@ export class UpdateDeviceDetailsDto {
   @IsOptional() @IsString() @MaxLength(256) manufacturer?: string;
   @IsOptional() @IsString() @MaxLength(256) serialNumber?: string;
   @IsOptional() @IsString() locationId?: string;
+  @IsOptional() @IsNumber() @Min(0) @Max(1) locationX?: number;
+  @IsOptional() @IsNumber() @Min(0) @Max(1) locationY?: number;
   @IsOptional() @IsString() @MaxLength(64) managementIp?: string;
   @IsOptional() @IsInt() portCount?: number;
   @IsOptional() @IsString() @MaxLength(64) firmwareVersion?: string;

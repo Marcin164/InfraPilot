@@ -67,6 +67,13 @@ export class Devices {
   @JoinColumn({ name: 'locationId' })
   locationRef: Location;
 
+  /** Normalized 0-1 fraction of the location's plan image width/height. */
+  @Column({ type: 'double precision', nullable: true })
+  locationX: number | null;
+
+  @Column({ type: 'double precision', nullable: true })
+  locationY: number | null;
+
   @Column({ type: 'jsonb', nullable: true })
   system: Record<string, any>;
 
