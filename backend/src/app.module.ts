@@ -105,6 +105,8 @@ import { LicenseSyncModule } from './modules/licenseSync.module';
 import { BootstrapService } from './services/bootstrap.service';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { MetricsController } from './controllers/metrics.controller';
+import { Shift } from './entities/shift.entity';
+import { ShiftModule } from './modules/shift.module';
 
 @Module({
   imports: [
@@ -178,6 +180,7 @@ import { MetricsController } from './controllers/metrics.controller';
         IpAllocation,
         DhcpServer,
         DeviceEnrollmentToken,
+        Shift
       ],
       synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true',
       migrationsRun: process.env.TYPEORM_SYNCHRONIZE !== 'true',
@@ -210,6 +213,7 @@ import { MetricsController } from './controllers/metrics.controller';
       SystemAuditLog,
       AssignmentGroup,
       TicketActivity,
+      Shift
     ]),
     ScheduleModule.forRoot(),
     // Global in-process event bus — emit domain events here, listen with
@@ -260,6 +264,7 @@ import { MetricsController } from './controllers/metrics.controller';
     DropboxModule,
     AdobeModule,
     LicenseSyncModule,
+    ShiftModule
   ],
   controllers: [HealthController],
   providers: [

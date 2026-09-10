@@ -131,6 +131,11 @@ export const navbarItems: NavbarItem[] = [
     icon: faGlobe,
   },
   {
+    to: "/admin/shifts",
+    label: "Shifts",
+    icon: faCalendar
+  },
+  {
     to: "/admin/topology",
     label: "nav.topology",
     icon: faNetworkWired,

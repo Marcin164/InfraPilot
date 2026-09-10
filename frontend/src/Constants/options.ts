@@ -104,3 +104,24 @@ export const closureCodesOptions = [
   { label: "options.closure.noReply", value: "No reply" },
   { label: "options.closure.workaround", value: "Workaround" },
 ];
+
+export const shiftDateRangesOptions = [
+  { label: "One day", value: "1d", unit: "day", amount: 1 },
+  { label: "Week", value: "week", unit: "week", amount: 1 },
+  { label: "Month", value: "month", unit: "month", amount: 1 },
+  { label: "3 Months", value: "3months", unit: "month", amount: 3 },
+]
+
+export const shiftEventTypes = [
+  { label: "Annual Leave", value: "AnnualLeave", color: "#59A14F" },
+  { label: "Unpaid leave", value: "UnpaidLeave", color: "#9C755F" },
+  { label: "Parental leave", value: "ParentalLeave", color: "#B07AA1" },
+  { label: "Shift work", value: "ShiftWork", color: "#4E79A7" },
+  { label: "Absence on demand", value: "AbsenceOnDemand", color: "#EDC948" },
+  { label: "Compassionate leave", value: "CompassionateLeave", color: "#FF9DA7" },
+  { label: "Bank Holiday", value: "BankHoliday", color: "#76B7B2" },
+  { label: "Blood Donation", value: "BloodDonation", color: "#E15759" },
+  { label: "Other", value: "Other", color: "#BAB0AC" },
+  { label: "Work from Home", value: "WorkFromHome", color: "#2B9AE9" },
+  { label: "Business trip", value: "BusinessTrip", color: "#F28E2B" },
+]

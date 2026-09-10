@@ -78,6 +78,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthSetup } from "./Hooks/useAuthSetup";
 import { ThemeProvider, useTheme } from "./Context/ThemeContext";
+import Shifts from "./Pages/Main/Shifts";
 
 const ThemedToastContainer = () => {
   const { resolvedTheme } = useTheme();
@@ -129,6 +130,7 @@ function App() {
                   path="users/:id/equipmentedit"
                   element={<EditEquipment />}
                 />
+                <Route path="shifts" element={<Shifts />}/>
                 <Route path="topology" element={<Topology />} />
                 <Route path="ipam" element={<Ipam />} />
                 <Route path="dhcp-servers" element={<DhcpServers />} />
