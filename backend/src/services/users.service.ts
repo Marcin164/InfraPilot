@@ -428,6 +428,11 @@ export class UsersService {
     return approvers;
   }
 
+  async findHelpdesk(): Promise<any> {
+    const helpdesk = await this.usersRepository.findBy({ isHelpdesk: true });
+    return helpdesk;
+  }
+
   // ─── PropelAuth linking ──────────────────────────────────────────────
 
   /**

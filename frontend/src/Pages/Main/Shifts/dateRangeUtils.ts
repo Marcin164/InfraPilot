@@ -21,7 +21,7 @@ const addMonths = (date: Date, amount: number) => new Date(date.getFullYear(), d
 // Monday-based week start (getDay(): 0=Sunday..6=Saturday).
 const startOfWeek = (date: Date) => addDays(startOfDay(date), -((date.getDay() + 6) % 7))
 
-const formatDayDate = (date: Date) =>
+export const formatDayDate = (date: Date) =>
   `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`
 
 const toWeekDay = (fullDate: Date): WeekDay => ({day: DAY_LABELS[fullDate.getDay()], date: formatDayDate(fullDate), fullDate})
@@ -60,7 +60,7 @@ export const shiftAnchor = (anchor: Date, option: RangeOption, direction: 1 | -1
   return addDays(anchor, option.amount * direction)
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000
+export const DAY_MS = 24 * 60 * 60 * 1000
 
 const isSameCalendarDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()

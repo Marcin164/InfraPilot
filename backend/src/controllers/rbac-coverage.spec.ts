@@ -129,6 +129,10 @@ describe('RBAC coverage on mutation endpoints', () => {
     'slaRuntime.controller.ts': ['pause', 'resume'],
     // enrollAgent uses EnrollmentGuard (fleet HMAC bootstrap token) instead of @Roles
     'devices.controller.ts': ['enrollAgent'],
+    // create/update/remove gate on ShiftsService.assertCanManage — the target
+    // employee's manager (or an admin), a data-dependent check @Roles can't
+    // express since it isn't a static role.
+    'shift.controller.ts': ['create', 'update', 'remove'],
   };
 
   it('every POST/PATCH/PUT/DELETE has @Roles, AgentGuard, or explicit allow-list entry', () => {

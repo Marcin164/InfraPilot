@@ -1,6 +1,7 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Shift } from "src/entities/shift.entity";
+import { Users } from "src/entities/users.entity";
 import { Repository } from "typeorm";
 import { CreateShiftDto, UpdateShiftDto } from "src/dto/shift.dto";
 
@@ -9,6 +10,8 @@ export class ShiftsService {
   constructor(
     @InjectRepository(Shift)
     private readonly repo: Repository<Shift>,
+    @InjectRepository(Users)
+    private readonly usersRepo: Repository<Users>,
   ) {}
 
   async getShifts(spaceId: string, category?: string) {
@@ -30,7 +33,29 @@ export class ShiftsService {
     return query.getOne();
   }
 
-  async create(dto: CreateShiftDto) {
+  // Only an admin, or the specific employee's manager, may create/edit/
+  // delete their shifts. "Manager" is matched against the free-text
+  // Users.manager field (currently an AD distinguished name, moving to a
+  // plain username) — checked against every identifier we have for the
+  // caller so it keeps working through that migration.
+  private async assertCanManage(callerId: string, targetUserId: string) {
+    const caller = await this.usersRepo.findOneBy({ id: callerId });
+    if (caller?.isAdmin) return;
+
+    const target = await this.usersRepo.findOneBy({ id: targetUserId });
+    const managerRef = target?.manager;
+    const callerIdentifiers = [caller?.username, caller?.distinguishedName, caller?.id].filter(Boolean);
+    const isManager = !!managerRef && callerIdentifiers.includes(managerRef);
+    if (isManager) return;
+
+    throw new ForbiddenException(
+      'Only this employee\'s manager (or an admin) can manage their shifts',
+    );
+  }
+
+  async create(dto: CreateShiftDto, callerId: string) {
+    await this.assertCanManage(callerId, dto.userId);
+
     const startDate = new Date(dto.startDate);
     const endDate = new Date(dto.endDate);
 
@@ -59,9 +84,11 @@ export class ShiftsService {
     });
   }
 
-  async update(id: string, dto: UpdateShiftDto) {
+  async update(id: string, dto: UpdateShiftDto, callerId: string) {
     const shift = await this.repo.findOneBy({ id });
     if (!shift) throw new NotFoundException('Shift not found');
+
+    await this.assertCanManage(callerId, shift.userId);
 
     const startDate = dto.startDate !== undefined ? new Date(dto.startDate) : shift.startDate;
     const endDate = dto.endDate !== undefined ? new Date(dto.endDate) : shift.endDate;
@@ -83,9 +110,11 @@ export class ShiftsService {
     return this.repo.save(shift);
   }
 
-  async remove(id: string) {
+  async remove(id: string, callerId: string) {
     const shift = await this.repo.findOneBy({ id });
     if (!shift) throw new NotFoundException('Shift not found');
+
+    await this.assertCanManage(callerId, shift.userId);
 
     await this.repo.remove(shift);
     return { id };

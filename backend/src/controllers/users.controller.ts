@@ -99,6 +99,12 @@ export class UsersController {
   }
 
   @UseGuards(AuthGuard)
+  @Get('/helpdesk')
+  async findHelpdesk(): Promise<any> {
+    return this.usersService.findHelpdesk();
+  }
+
+  @UseGuards(AuthGuard)
   @Get('/:id')
   async findUser(@Param('id') id: string): Promise<any> {
     return this.usersService.findUser(id);

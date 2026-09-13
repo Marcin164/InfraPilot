@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getUsers } from '../../../../Services/users';
+import { findHelpdesk } from '../../../../Services/users';
 import { getShifts } from '../../../../Services/shifts';
 import DayCell from './DayCell'
 import UserRow, { type SelectedShiftEvent } from './UserRow'
@@ -10,8 +10,11 @@ type Props = {
   days: WeekDay[]
   fillWidth: boolean
   activeType: string
-  selectedEventId: string | null
-  onSelectEvent: (event: SelectedShiftEvent) => void
+  selectedEventIds: string[]
+  manageableUserIds: Set<string>
+  onSelectEvent: (event: SelectedShiftEvent, additive: boolean) => void
+  onEventUpdated: (event: SelectedShiftEvent) => void
+  onRowHover: (userId: string, dayIndex: number | null) => void
 }
 
 const AGENT_COLUMN_WIDTH = 200
@@ -19,7 +22,7 @@ const FIXED_DAY_WIDTH = 200
 const MIN_FILL_DAY_WIDTH = 150
 const NOW_REFRESH_MS = 30_000
 
-const ShiftTable = ({days, fillWidth, activeType, selectedEventId, onSelectEvent}: Props) => {
+const ShiftTable = ({days, fillWidth, activeType, selectedEventIds, manageableUserIds, onSelectEvent, onEventUpdated, onRowHover}: Props) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
   const [now, setNow] = useState(() => new Date())
@@ -42,8 +45,8 @@ const ShiftTable = ({days, fillWidth, activeType, selectedEventId, onSelectEvent
     : FIXED_DAY_WIDTH
 
     const usersQuery = useQuery({
-    queryKey: ["users"],
-    queryFn: () => getUsers(),
+    queryKey: ["shifts-helpdesk-users"],
+    queryFn: () => findHelpdesk(),
     staleTime: 30000,
   });
 
@@ -85,8 +88,11 @@ const ShiftTable = ({days, fillWidth, activeType, selectedEventId, onSelectEvent
               dayWidth={dayWidth}
               shifts={shiftsByUser[user.id] ?? []}
               activeType={activeType}
-              selectedEventId={selectedEventId}
+              selectedEventIds={selectedEventIds}
+              canEdit={manageableUserIds.has(user.id)}
               onSelectEvent={onSelectEvent}
+              onEventUpdated={onEventUpdated}
+              onHover={(dayIndex) => onRowHover(user.id, dayIndex)}
             />
           ))}
           {showNowLine && (

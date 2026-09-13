@@ -85,3 +85,8 @@ export const findApprovers = async (): Promise<User[]> => {
   const { data } = await api.get("/users/approvers");
   return data;
 };
+
+export const findHelpdesk = async (): Promise<User[]> => {
+  const { data } = await api.get("/users/helpdesk");
+  return data;
+};

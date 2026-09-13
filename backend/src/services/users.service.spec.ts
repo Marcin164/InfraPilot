@@ -244,6 +244,22 @@ describe('UsersService', () => {
   });
 
   // ─────────────────────────────────────────
+  // findHelpdesk
+  // ─────────────────────────────────────────
+
+  describe('findHelpdesk', () => {
+    it('returns only users with isHelpdesk=true', async () => {
+      const helpdesk = [makeUser({ isHelpdesk: true })];
+      repo.findBy.mockResolvedValue(helpdesk);
+
+      const result = await service.findHelpdesk();
+
+      expect(repo.findBy).toHaveBeenCalledWith({ isHelpdesk: true });
+      expect(result).toBe(helpdesk);
+    });
+  });
+
+  // ─────────────────────────────────────────
   // resolveAuthIdToUserId
   // ─────────────────────────────────────────
 
