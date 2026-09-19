@@ -13,7 +13,6 @@ import {
   faTrash,
   faPen,
   faCheck,
-  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import Input from "../../../../Components/Inputs/Input";
@@ -34,8 +33,8 @@ import {
   type Location,
   type LocationType,
 } from "../../../../Services/locations";
-import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
-import { hasRequiredRole } from "../../../../Constants/navigation";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 import { requiredValidator, imageFileValidator } from "../../../../Helpers/validators";
 
 const LOCATION_TYPES: LocationType[] = ["building", "floor", "room", "rack", "other"];
@@ -56,47 +55,55 @@ const buildTree = (
   ]);
 };
 
-const LocationRow = ({
-  loc,
-  depth,
+type LocationModalTarget = "create" | Location | null;
+
+const LocationModal = ({
+  target,
   allLocations,
-  onRefresh,
-  hasChildren,
-  collapsed,
-  onToggleCollapse,
+  onClose,
 }: {
-  loc: Location;
-  depth: number;
+  target: LocationModalTarget;
   allLocations: Location[];
-  onRefresh: () => void;
-  hasChildren: boolean;
-  collapsed: boolean;
-  onToggleCollapse: () => void;
+  onClose: () => void;
 }) => {
   const { t } = useTranslation();
-  const [editing, setEditing] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewCoords, setPreviewCoords] = useState<Coordinates | null>(
-    loc.latitude != null && loc.longitude != null
-      ? { lat: loc.latitude, lng: loc.longitude }
-      : null,
-  );
-  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
-  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
+  const queryClient = useQueryClient();
+  const editingLocation = target === "create" || target === null ? null : target;
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const coordsMutation = useMutation({
-    mutationFn: (coords: Coordinates | null) =>
-      updateLocation(loc.id, {
-        latitude: coords?.lat ?? null,
-        longitude: coords?.lng ?? null,
-      }),
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["locations"] });
+
+  const createMutation = useMutation({
+    mutationFn: async (values: {
+      name: string;
+      type: LocationType;
+      parentId: string;
+      description: string;
+      plan: File | null;
+      coordinates: Coordinates | null;
+      planPosition: PlanPosition;
+    }) => {
+      const created = await createLocation({
+        name: values.name.trim(),
+        type: values.type,
+        parentId: values.parentId || null,
+        description: values.description.trim() || null,
+        latitude: values.type === "building" ? (values.coordinates?.lat ?? null) : null,
+        longitude: values.type === "building" ? (values.coordinates?.lng ?? null) : null,
+        planX: isPinnable(values.type) ? (values.planPosition?.x ?? null) : null,
+        planY: isPinnable(values.type) ? (values.planPosition?.y ?? null) : null,
+      });
+      return values.type === "floor" && values.plan
+        ? uploadLocationPlan(created.id, values.plan)
+        : created;
+    },
     onSuccess: () => {
-      toast.success(t("settings.locations.updated"));
-      setPreviewOpen(false);
-      onRefresh();
+      toast.success(t("settings.locations.created"));
+      invalidate();
+      onClose();
     },
     onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? t("settings.locations.updateFailed")),
+      toast.error(err?.response?.data?.message ?? t("settings.locations.createFailed")),
   });
 
   const updateMutation = useMutation({
@@ -109,7 +116,7 @@ const LocationRow = ({
       coordinates: Coordinates | null;
       planPosition: PlanPosition;
     }) => {
-      const updated = await updateLocation(loc.id, {
+      const updated = await updateLocation(editingLocation!.id, {
         name: values.name.trim(),
         type: values.type,
         parentId: values.parentId || null,
@@ -120,48 +127,284 @@ const LocationRow = ({
         planY: isPinnable(values.type) ? (values.planPosition?.y ?? null) : null,
       });
       return values.type === "floor" && values.plan
-        ? uploadLocationPlan(loc.id, values.plan)
+        ? uploadLocationPlan(editingLocation!.id, values.plan)
         : updated;
     },
     onSuccess: () => {
       toast.success(t("settings.locations.updated"));
-      setEditing(false);
-      onRefresh();
+      invalidate();
+      onClose();
     },
     onError: (err: any) =>
       toast.error(err?.response?.data?.message ?? t("settings.locations.updateFailed")),
   });
 
-  const form = useForm({
-    defaultValues: {
-      name: loc.name,
-      type: loc.type,
-      parentId: loc.parentId ?? "",
-      description: loc.description ?? "",
-      plan: null as File | null,
-      coordinates:
-        loc.latitude != null && loc.longitude != null
-          ? { lat: loc.latitude, lng: loc.longitude }
-          : (null as Coordinates | null),
-      planPosition:
-        loc.planX != null && loc.planY != null
-          ? { x: loc.planX, y: loc.planY }
-          : (null as PlanPosition),
-    },
-    onSubmit: ({ value }) => updateMutation.mutate(value),
-  });
-
   const deleteMutation = useMutation({
-    mutationFn: () => deleteLocation(loc.id),
+    mutationFn: () => deleteLocation(editingLocation!.id),
     onSuccess: () => {
       toast.success(t("settings.locations.deleted"));
-      onRefresh();
+      invalidate();
+      onClose();
     },
     onError: (err: any) =>
       toast.error(err?.response?.data?.message ?? t("settings.locations.deleteFailed")),
   });
 
-  const possibleParents = allLocations.filter((l) => l.id !== loc.id);
+  const form = useForm({
+    defaultValues: {
+      name: editingLocation?.name ?? "",
+      type: editingLocation?.type ?? ("other" as LocationType),
+      parentId: editingLocation?.parentId ?? "",
+      description: editingLocation?.description ?? "",
+      plan: null as File | null,
+      coordinates:
+        editingLocation?.latitude != null && editingLocation?.longitude != null
+          ? { lat: editingLocation.latitude, lng: editingLocation.longitude }
+          : (null as Coordinates | null),
+      planPosition:
+        editingLocation?.planX != null && editingLocation?.planY != null
+          ? { x: editingLocation.planX, y: editingLocation.planY }
+          : (null as PlanPosition),
+    },
+    onSubmit: ({ value }) => {
+      if (!value.name.trim()) return toast.error(t("settings.locations.nameRequired"));
+      if (editingLocation) updateMutation.mutate(value);
+      else createMutation.mutate(value);
+    },
+  });
+
+  const possibleParents = editingLocation
+    ? allLocations.filter((l) => l.id !== editingLocation.id)
+    : allLocations;
+
+  const isSaving = createMutation.isPending || updateMutation.isPending;
+
+  return (
+    <>
+      <Modal
+        classNames={{ modal: "w-[620px] max-w-full max-h-[85vh] overflow-y-auto rounded-[10px]" }}
+        open={target !== null}
+        onClose={onClose}
+        center
+      >
+        <CardHeader
+          text={
+            editingLocation
+              ? t("settings.locations.editTitle", { name: editingLocation.name })
+              : t("settings.locations.create")
+          }
+          icon={faBuilding}
+        />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+        >
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2 items-end">
+            <form.Field
+              name="name"
+              validators={{ onChange: ({ value }) => requiredValidator(value) }}
+              children={(field) => (
+                <Input
+                  label={t("settings.locations.namePlaceholder")}
+                  value={field.state.value}
+                  handleChange={field.handleChange}
+                  errors={field.state.meta.errors?.join(", ")}
+                  className="pt-0"
+                />
+              )}
+            />
+            <form.Field
+              name="type"
+              children={(field) => (
+                <SelectSecondary
+                  label={t("common.type")}
+                  options={LOCATION_TYPES.map((lt) => ({ value: lt, label: lt }))}
+                  value={{ value: field.state.value, label: field.state.value }}
+                  onSelect={(opt: any) => field.handleChange(opt.value as LocationType)}
+                />
+              )}
+            />
+            <form.Field
+              name="parentId"
+              children={(field) => (
+                <SelectSecondary
+                  label={t("settings.locations.parent")}
+                  options={[
+                    { value: "", label: t("settings.locations.noParent") },
+                    ...possibleParents.map((l) => ({ value: l.id, label: `${l.name} (${l.type})` })),
+                  ]}
+                  value={
+                    field.state.value
+                      ? {
+                          value: field.state.value,
+                          label: possibleParents.find((l) => l.id === field.state.value)?.name ?? field.state.value,
+                        }
+                      : { value: "", label: t("settings.locations.noParent") }
+                  }
+                  onSelect={(opt: any) => field.handleChange(opt.value)}
+                />
+              )}
+            />
+            <form.Field
+              name="description"
+              children={(field) => (
+                <Input
+                  label={t("common.description")}
+                  value={field.state.value}
+                  handleChange={field.handleChange}
+                  className="pt-0"
+                />
+              )}
+            />
+            <form.Subscribe selector={(state) => [state.values.type, state.values.parentId] as const}>
+              {([type, parentId]) => (
+                <>
+                  {type === "building" && (
+                    <form.Field
+                      name="coordinates"
+                      children={(field) => (
+                        <CoordinatesPicker
+                          label={t("settings.locations.coordinates")}
+                          value={field.state.value}
+                          onChange={field.handleChange}
+                        />
+                      )}
+                    />
+                  )}
+                  {type === "floor" && (
+                    <form.Field
+                      name="plan"
+                      validators={{ onChange: ({ value }) => imageFileValidator(value) }}
+                      children={(field) => (
+                        <div>
+                          {!field.state.value && editingLocation?.planPath && (
+                            <div className="text-[11px] text-[#9a9a9a] mb-1 truncate">
+                              {t("settings.locations.currentPlan", {
+                                name: editingLocation.planOriginalName ?? t("common.plan"),
+                              })}
+                            </div>
+                          )}
+                          <Input
+                            type="file"
+                            accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
+                            label={t("common.plan")}
+                            handleChange={field.handleChange}
+                            errors={field.state.meta.errors?.join(", ")}
+                            className="pt-0"
+                          />
+                        </div>
+                      )}
+                    />
+                  )}
+                  {isPinnable(type) && (
+                    <form.Field
+                      name="planPosition"
+                      children={(field) => (
+                        <div className="col-span-full">
+                          <div className="text-[11px] text-[#9a9a9a] mb-1">
+                            {t("settings.locations.pickOnFloorPlan")}
+                          </div>
+                          <PlanPinPicker
+                            planLocation={findAncestorFloor(allLocations, parentId)}
+                            x={field.state.value?.x}
+                            y={field.state.value?.y}
+                            onChange={(x, y) =>
+                              field.handleChange(x != null && y != null ? { x, y } : null)
+                            }
+                            editable
+                            noLocationHint={t("settings.locations.noAncestorFloor")}
+                            noPlanHint={t("settings.locations.noAncestorFloorPlan")}
+                          />
+                        </div>
+                      )}
+                    />
+                  )}
+                </>
+              )}
+            </form.Subscribe>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between">
+            <div>
+              {editingLocation && (
+                <ButtonPrimary
+                  icon={faTrash}
+                  text={t("common.delete")}
+                  onClick={() => setConfirmDelete(true)}
+                  disabled={deleteMutation.isPending}
+                  color="red"
+                />
+              )}
+            </div>
+            <div className="flex gap-2">
+              <ButtonPrimary text={t("common.cancel")} onClick={onClose} color="white" />
+              <ButtonPrimary
+                type="submit"
+                icon={faCheck}
+                text={isSaving ? t("common.creating") : t("common.save")}
+                disabled={!form.state.canSubmit || isSaving}
+              />
+            </div>
+          </div>
+        </form>
+      </Modal>
+
+      <ConfirmationModal
+        isModalOpen={confirmDelete}
+        handleOnClose={() => setConfirmDelete(false)}
+        onCancel={() => setConfirmDelete(false)}
+        onDelete={() => {
+          setConfirmDelete(false);
+          deleteMutation.mutate();
+        }}
+        message={
+          editingLocation
+            ? `${t("settings.locations.confirmDelete")} "${editingLocation.name}"?`
+            : undefined
+        }
+      />
+    </>
+  );
+};
+
+const LocationRow = ({
+  loc,
+  depth,
+  onEdit,
+  hasChildren,
+  collapsed,
+  onToggleCollapse,
+}: {
+  loc: Location;
+  depth: number;
+  onEdit: () => void;
+  hasChildren: boolean;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
+}) => {
+  const { t } = useTranslation();
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewCoords, setPreviewCoords] = useState<Coordinates | null>(
+    loc.latitude != null && loc.longitude != null
+      ? { lat: loc.latitude, lng: loc.longitude }
+      : null,
+  );
+
+  const coordsMutation = useMutation({
+    mutationFn: (coords: Coordinates | null) =>
+      updateLocation(loc.id, {
+        latitude: coords?.lat ?? null,
+        longitude: coords?.lng ?? null,
+      }),
+    onSuccess: () => {
+      toast.success(t("settings.locations.updated"));
+      setPreviewOpen(false);
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? t("settings.locations.updateFailed")),
+  });
 
   return (
     <div
@@ -183,208 +426,45 @@ const LocationRow = ({
           </button>
         )}
       </div>
-      {editing ? (
-        <form
-          className="flex flex-1 flex-wrap gap-2 items-center"
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit();
-          }}
+      <div className="flex-1 min-w-0">
+        <span className="font-medium text-[13px] text-[#3C3C3C]">{loc.name}</span>
+        <span className="ml-2 text-[11px] text-[#9a9a9a]">{loc.type}</span>
+        {loc.description && (
+          <span className="ml-2 text-[11px] text-[#7a7a7a]">— {loc.description}</span>
+        )}
+      </div>
+      {loc.type === "floor" && (
+        <button
+          onClick={() => setPreviewOpen(true)}
+          className="text-[#2B9AE9] hover:text-[#1a7ac5]"
+          title={t("settings.locations.previewPlan")}
         >
-          <form.Field
-            name="name"
-            validators={{ onChange: ({ value }) => requiredValidator(value) }}
-            children={(field) => (
-              <div className="flex-1 min-w-[120px]">
-                <Input
-                  value={field.state.value}
-                  handleChange={field.handleChange}
-                  errors={field.state.meta.errors?.join(", ")}
-                  className="pt-0"
-                />
-              </div>
-            )}
-          />
-          <form.Field
-            name="type"
-            children={(field) => (
-              <div className="min-w-[140px]">
-                <SelectSecondary
-                  options={LOCATION_TYPES.map((lt) => ({ value: lt, label: lt }))}
-                  value={{ value: field.state.value, label: field.state.value }}
-                  onSelect={(opt: any) => field.handleChange(opt.value as LocationType)}
-                />
-              </div>
-            )}
-          />
-          <form.Field
-            name="parentId"
-            children={(field) => (
-              <div className="min-w-[160px]">
-                <SelectSecondary
-                  options={[
-                    { value: "", label: t("settings.locations.noParent") },
-                    ...possibleParents.map((p) => ({ value: p.id, label: p.name })),
-                  ]}
-                  value={
-                    field.state.value
-                      ? {
-                          value: field.state.value,
-                          label: possibleParents.find((p) => p.id === field.state.value)?.name ?? field.state.value,
-                        }
-                      : { value: "", label: t("settings.locations.noParent") }
-                  }
-                  onSelect={(opt: any) => field.handleChange(opt.value)}
-                />
-              </div>
-            )}
-          />
-          <form.Field
-            name="description"
-            children={(field) => (
-              <div className="flex-1 min-w-[100px]">
-                <Input
-                  value={field.state.value}
-                  handleChange={field.handleChange}
-                  placeholder={t("common.description")}
-                  className="pt-0"
-                />
-              </div>
-            )}
-          />
-          <form.Subscribe selector={(state) => [state.values.type, state.values.parentId] as const}>
-            {([type, parentId]) => (
-              <>
-                {type === "building" && (
-                  <form.Field
-                    name="coordinates"
-                    children={(field) => (
-                      <div className="min-w-[180px]">
-                        <CoordinatesPicker value={field.state.value} onChange={field.handleChange} />
-                      </div>
-                    )}
-                  />
-                )}
-                {type === "floor" && (
-                  <form.Field
-                    name="plan"
-                    validators={{ onChange: ({ value }) => imageFileValidator(value) }}
-                    children={(field) => (
-                      <div className="flex-1 min-w-[100px]">
-                        {!field.state.value && loc.planPath && (
-                          <div className="text-[11px] text-[#9a9a9a] mb-1 truncate">
-                            {t("settings.locations.currentPlan", {
-                              name: loc.planOriginalName ?? t("common.plan"),
-                            })}
-                          </div>
-                        )}
-                        <Input
-                          type="file"
-                          accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
-                          handleChange={field.handleChange}
-                          errors={field.state.meta.errors?.join(", ")}
-                          className="pt-0"
-                        />
-                      </div>
-                    )}
-                  />
-                )}
-                {isPinnable(type) && (
-                  <form.Field
-                    name="planPosition"
-                    children={(field) => (
-                      <div className="min-w-[220px] flex-1 basis-full">
-                        <div className="text-[11px] text-[#9a9a9a] mb-1">
-                          {t("settings.locations.pickOnFloorPlan")}
-                        </div>
-                        <PlanPinPicker
-                          planLocation={findAncestorFloor(allLocations, parentId)}
-                          x={field.state.value?.x}
-                          y={field.state.value?.y}
-                          onChange={(x, y) =>
-                            field.handleChange(x != null && y != null ? { x, y } : null)
-                          }
-                          editable
-                          noLocationHint={t("settings.locations.noAncestorFloor")}
-                          noPlanHint={t("settings.locations.noAncestorFloorPlan")}
-                        />
-                      </div>
-                    )}
-                  />
-                )}
-              </>
-            )}
-          </form.Subscribe>
-          <button
-            type="submit"
-            disabled={!form.state.canSubmit}
-            className="text-[#30A712] hover:text-[#27892C]"
-          >
-            <FontAwesomeIcon icon={faCheck} />
-          </button>
-          <button
-            type="button"
-            onClick={() => setEditing(false)}
-            className="text-[#9a9a9a] hover:text-[#3C3C3C]"
-          >
-            <FontAwesomeIcon icon={faXmark} />
-          </button>
-        </form>
-      ) : (
-        <>
-          <div className="flex-1 min-w-0">
-            <span className="font-medium text-[13px] text-[#3C3C3C]">{loc.name}</span>
-            <span className="ml-2 text-[11px] text-[#9a9a9a]">{loc.type}</span>
-            {loc.description && (
-              <span className="ml-2 text-[11px] text-[#7a7a7a]">— {loc.description}</span>
-            )}
-          </div>
-          {loc.type === "floor" && (
-            <button
-              onClick={() => setPreviewOpen(true)}
-              className="text-[#2B9AE9] hover:text-[#1a7ac5]"
-              title={t("settings.locations.previewPlan")}
-            >
-              <FontAwesomeIcon icon={faImage} className="text-[12px]" />
-            </button>
-          )}
-          {loc.type === "building" && (
-            <button
-              onClick={() => {
-                setPreviewCoords(
-                  loc.latitude != null && loc.longitude != null
-                    ? { lat: loc.latitude, lng: loc.longitude }
-                    : null,
-                );
-                setPreviewOpen(true);
-              }}
-              className="text-[#2B9AE9] hover:text-[#1a7ac5]"
-              title={t("settings.locations.previewMap")}
-            >
-              <FontAwesomeIcon icon={faMap} className="text-[12px]" />
-            </button>
-          )}
-          <button
-            onClick={() => setEditing(true)}
-            className="text-[#2B9AE9] hover:text-[#1a7ac5] ml-2"
-          >
-            <FontAwesomeIcon icon={faPen} className="text-[12px]" />
-          </button>
-          <button
-            onClick={() => askConfirm(() => deleteMutation.mutate(), `${t("settings.locations.confirmDelete")} "${loc.name}"?`)}
-            className="text-[#F3606E] hover:text-[#C0392B]"
-          >
-            <FontAwesomeIcon icon={faTrash} className="text-[12px]" />
-          </button>
-        </>
+          <FontAwesomeIcon icon={faImage} className="text-[12px]" />
+        </button>
       )}
-      <ConfirmationModal
-        isModalOpen={confirmState.open}
-        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
-        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
-        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
-        message={confirmState.message}
-      />
+      {loc.type === "building" && (
+        <button
+          onClick={() => {
+            setPreviewCoords(
+              loc.latitude != null && loc.longitude != null
+                ? { lat: loc.latitude, lng: loc.longitude }
+                : null,
+            );
+            setPreviewOpen(true);
+          }}
+          className="text-[#2B9AE9] hover:text-[#1a7ac5]"
+          title={t("settings.locations.previewMap")}
+        >
+          <FontAwesomeIcon icon={faMap} className="text-[12px]" />
+        </button>
+      )}
+      <button
+        onClick={onEdit}
+        className="text-[#2B9AE9] hover:text-[#1a7ac5] ml-2"
+        title={t("common.edit")}
+      >
+        <FontAwesomeIcon icon={faPen} className="text-[12px]" />
+      </button>
       {loc.type === "floor" && (
         <Modal
           classNames={{ modal: "w-[700px] max-w-full h-fit rounded-[10px]" }}
@@ -442,7 +522,6 @@ const LocationRow = ({
 
 const Locations = () => {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ["locations"],
@@ -469,202 +548,22 @@ const Locations = () => {
     return false;
   };
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["locations"] });
+  const [modalTarget, setModalTarget] = useState<LocationModalTarget>(null);
 
-  const createMutation = useMutation({
-    mutationFn: async (values: {
-      name: string;
-      type: LocationType;
-      parentId: string;
-      description: string;
-      plan: File | null;
-      coordinates: Coordinates | null;
-      planPosition: PlanPosition;
-    }) => {
-      const created = await createLocation({
-        name: values.name.trim(),
-        type: values.type,
-        parentId: values.parentId || null,
-        description: values.description.trim() || null,
-        latitude: values.type === "building" ? (values.coordinates?.lat ?? null) : null,
-        longitude: values.type === "building" ? (values.coordinates?.lng ?? null) : null,
-        planX: isPinnable(values.type) ? (values.planPosition?.x ?? null) : null,
-        planY: isPinnable(values.type) ? (values.planPosition?.y ?? null) : null,
-      });
-      return values.type === "floor" && values.plan
-        ? uploadLocationPlan(created.id, values.plan)
-        : created;
-    },
-    onSuccess: () => {
-      toast.success(t("settings.locations.created"));
-      form.reset();
-      invalidate();
-    },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? t("settings.locations.createFailed")),
-  });
-
-  const form = useForm({
-    defaultValues: {
-      name: "",
-      type: "other" as LocationType,
-      parentId: "",
-      description: "",
-      plan: null as File | null,
-      coordinates: null as Coordinates | null,
-      planPosition: null as PlanPosition,
-    },
-    onSubmit: ({ value }) => {
-      if (!value.name.trim()) return toast.error(t("settings.locations.nameRequired"));
-      createMutation.mutate(value);
-    },
-  });
-
-  const currentUserQuery = useCurrentUser();
-  if (!hasRequiredRole("admin", currentUserQuery.data)) return null;
+  const permissionsQuery = usePermissions();
+  if (!hasPermission("admin.locations.config", permissionsQuery.data)) return null;
 
   return (
     <div className="space-y-4 m-4">
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text={t("settings.locations.create")} icon={faPlus} />
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit();
-          }}
-        >
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
-            <form.Field
-              name="name"
-              validators={{ onChange: ({ value }) => requiredValidator(value) }}
-              children={(field) => (
-                <Input
-                  label={t("settings.locations.namePlaceholder")}
-                  value={field.state.value}
-                  handleChange={field.handleChange}
-                  errors={field.state.meta.errors?.join(", ")}
-                  className="pt-0"
-                />
-              )}
-            />
-            <form.Field
-              name="type"
-              children={(field) => (
-                <SelectSecondary
-                  label={t("common.type")}
-                  options={LOCATION_TYPES.map((lt) => ({ value: lt, label: lt }))}
-                  value={{ value: field.state.value, label: field.state.value }}
-                  onSelect={(opt: any) => field.handleChange(opt.value as LocationType)}
-                />
-              )}
-            />
-            <form.Field
-              name="parentId"
-              children={(field) => (
-                <SelectSecondary
-                  label={t("settings.locations.parent")}
-                  options={[
-                    { value: "", label: t("settings.locations.noParent") },
-                    ...locations.map((l) => ({ value: l.id, label: `${l.name} (${l.type})` })),
-                  ]}
-                  value={
-                    field.state.value
-                      ? {
-                          value: field.state.value,
-                          label: locations.find((l) => l.id === field.state.value)?.name ?? field.state.value,
-                        }
-                      : { value: "", label: t("settings.locations.noParent") }
-                  }
-                  onSelect={(opt: any) => field.handleChange(opt.value)}
-                />
-              )}
-            />
-            <form.Field
-              name="description"
-              children={(field) => (
-                <Input
-                  label={t("common.description")}
-                  value={field.state.value}
-                  handleChange={field.handleChange}
-                  className="pt-0"
-                />
-              )}
-            />
-            <form.Subscribe selector={(state) => [state.values.type, state.values.parentId] as const}>
-              {([type, parentId]) => (
-                <>
-                  {type === "building" && (
-                    <form.Field
-                      name="coordinates"
-                      children={(field) => (
-                        <CoordinatesPicker
-                          label={t("settings.locations.coordinates")}
-                          value={field.state.value}
-                          onChange={field.handleChange}
-                        />
-                      )}
-                    />
-                  )}
-                  {type === "floor" && (
-                    <form.Field
-                      name="plan"
-                      validators={{ onChange: ({ value }) => imageFileValidator(value) }}
-                      children={(field) => (
-                        <Input
-                          type="file"
-                          accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
-                          label={t("common.plan")}
-                          handleChange={field.handleChange}
-                          errors={field.state.meta.errors?.join(", ")}
-                          className="pt-0"
-                        />
-                      )}
-                    />
-                  )}
-                  {isPinnable(type) && (
-                    <form.Field
-                      name="planPosition"
-                      children={(field) => (
-                        <div className="col-span-full">
-                          <div className="text-[11px] text-[#9a9a9a] mb-1">
-                            {t("settings.locations.pickOnFloorPlan")}
-                          </div>
-                          <PlanPinPicker
-                            planLocation={findAncestorFloor(locations, parentId)}
-                            x={field.state.value?.x}
-                            y={field.state.value?.y}
-                            onChange={(x, y) =>
-                              field.handleChange(x != null && y != null ? { x, y } : null)
-                            }
-                            editable
-                            noLocationHint={t("settings.locations.noAncestorFloor")}
-                            noPlanHint={t("settings.locations.noAncestorFloorPlan")}
-                          />
-                        </div>
-                      )}
-                    />
-                  )}
-                </>
-              )}
-            </form.Subscribe>
-          </div>
-          <div className="mt-3">
-            <ButtonPrimary
-              icon={faPlus}
-              type="submit"
-              text={
-                createMutation.isPending
-                  ? t("common.creating")
-                  : t("settings.locations.createBtn")
-              }
-              disabled={!form.state.canSubmit || createMutation.isPending}
-            />
-          </div>
-        </form>
-      </div>
-
-      <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text={t("settings.locations.existing")} icon={faBuilding} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <CardHeader text={t("settings.locations.existing")} icon={faBuilding} />
+          <ButtonPrimary
+            icon={faPlus}
+            text={t("settings.locations.createBtn")}
+            onClick={() => setModalTarget("create")}
+          />
+        </div>
         {query.isLoading ? (
           <div className="mt-3 text-[13px] text-[#7a7a7a]">{t("common.loading")}</div>
         ) : flat.length === 0 ? (
@@ -680,8 +579,7 @@ const Locations = () => {
                   key={loc.id}
                   loc={loc}
                   depth={depth}
-                  allLocations={locations}
-                  onRefresh={invalidate}
+                  onEdit={() => setModalTarget(loc)}
                   hasChildren={locations.some((l) => l.parentId === loc.id)}
                   collapsed={collapsedIds.has(loc.id)}
                   onToggleCollapse={() => toggleCollapse(loc.id)}
@@ -690,6 +588,15 @@ const Locations = () => {
           </div>
         )}
       </div>
+
+      {modalTarget !== null && (
+        <LocationModal
+          key={modalTarget === "create" ? "create" : modalTarget.id}
+          target={modalTarget}
+          allLocations={locations}
+          onClose={() => setModalTarget(null)}
+        />
+      )}
     </div>
   );
 };

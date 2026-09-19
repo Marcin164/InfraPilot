@@ -1,25 +1,17 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { NotificationPreferencesService } from 'src/services/notificationPreferences.service';
 import { NotificationDispatcherService } from 'src/services/notificationDispatcher.service';
 import { UpdatePreferencesDto } from 'src/dto/notificationPreferences.dto';
 
 @UseGuards(AuthGuard)
-@Roles(
-  Role.Admin,
-  Role.Helpdesk,
-  Role.Auditor,
-  Role.Compliance,
-  Role.Approver,
-  Role.Dpo,
+@RequiresPermission(
+  'helpdesk.tickets.access',
+  'audit.fullAccess',
+  'devices.complianceRules.manage',
+  'helpdesk.approver',
+  'dpo.fullAccess',
 )
 @Controller('notification-preferences')
 export class NotificationPreferencesController {
@@ -39,7 +31,10 @@ export class NotificationPreferencesController {
 
   @Post()
   async update(@Req() req: any, @Body() body: UpdatePreferencesDto) {
-    const written = await this.service.setMany(this.actorOf(req), body.rows ?? []);
+    const written = await this.service.setMany(
+      this.actorOf(req),
+      body.rows ?? [],
+    );
     return { written };
   }
 

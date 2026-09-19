@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { SlaPauseService } from '../services/slaPause.service';
 import { SlaRuntimeService } from 'src/services/slaRuntime.service';
 
@@ -19,7 +19,7 @@ export class SlaRuntimeController {
   }
 
   // ⏸ MANUAL PAUSE
-  @Roles(Role.Admin, Role.Compliance)
+  @RequiresPermission('devices.complianceRules.manage')
   @Post('ticket/:ticketId/pause')
   async pause(@Param('ticketId') ticketId: string) {
     await this.pauseService.handleManualPause(ticketId);
@@ -27,7 +27,7 @@ export class SlaRuntimeController {
   }
 
   // ▶️ MANUAL RESUME
-  @Roles(Role.Admin, Role.Compliance)
+  @RequiresPermission('devices.complianceRules.manage')
   @Post('ticket/:ticketId/resume')
   async resume(@Param('ticketId') ticketId: string) {
     await this.pauseService.handleManualResume(ticketId);

@@ -1,13 +1,21 @@
-import { BadRequestException, Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { DropboxService } from 'src/services/dropbox.service';
 import { SaveDropboxConfigDto } from 'src/dto/dropbox.dto';
 import { describeDropboxError } from 'src/helpers/describeDropboxError';
 
 @UseGuards(AuthGuard, MfaGuard)
-@Roles(Role.Admin)
+@RequiresPermission('licenses.integrations.manage')
 @Controller('dropbox')
 export class DropboxController {
   constructor(private readonly dropbox: DropboxService) {}

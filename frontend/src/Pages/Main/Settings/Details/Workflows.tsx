@@ -36,7 +36,7 @@ import {
   listWorkflows,
   uploadWorkflowStepAttachment,
 } from "../../../../Services/ticketWorkflows";
-import { getUsers } from "../../../../Services/users";
+import { getUsers, findApprovers } from "../../../../Services/users";
 import { getAssignmentGroups } from "../../../../Services/assignmentGroups";
 import type { User } from "../../../../Types";
 
@@ -282,6 +282,8 @@ const WorkflowEditor = ({
 }) => {
   const { t } = useTranslation();
   const usersQuery = useQuery({ queryKey: ["users-list"], queryFn: getUsers });
+  const approversQuery = useQuery({ queryKey: ["approvers"], queryFn: findApprovers });
+  const approverIds = new Set((approversQuery.data ?? []).map((u) => u.id));
   const setField = <K extends keyof TicketWorkflow>(
     key: K,
     value: TicketWorkflow[K],
@@ -429,7 +431,7 @@ const WorkflowEditor = ({
                   </div>
                 </div>
 
-                <StepConfig step={step} onChange={(p) => setStep(i, p)} users={usersQuery.data ?? []} />
+                <StepConfig step={step} onChange={(p) => setStep(i, p)} users={usersQuery.data ?? []} approverIds={approverIds} />
               </li>
             ))}
           </ol>
@@ -565,10 +567,12 @@ const StepConfig = ({
   step,
   onChange,
   users,
+  approverIds,
 }: {
   step: WorkflowStep;
   onChange: (patch: Partial<WorkflowStep>) => void;
   users: User[];
+  approverIds: Set<string>;
 }) => {
   const { t } = useTranslation();
   const setCfg = (k: string, v: any) =>
@@ -577,7 +581,7 @@ const StepConfig = ({
   switch (step.type) {
     case "request_approval": {
       const approverType = step.config.approverType ?? "specific";
-      const approvers = users.filter((u) => u.isApprover);
+      const approvers = users.filter((u) => approverIds.has(u.id));
       return (
         <div className="mt-2 grid grid-cols-1 gap-2">
           <SelectField

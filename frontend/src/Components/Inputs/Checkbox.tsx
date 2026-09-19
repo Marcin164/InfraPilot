@@ -50,16 +50,16 @@ const Checkbox = ({
         />
 
         <span
-          className="w-[20px] h-[20px] flex items-center justify-center
-                   bg-gray-200 rounded-[5px] transition-colors
+          className={`w-[20px] h-[20px] flex items-center justify-center
+                   rounded-[5px] transition-colors
                    peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300
-                   peer-checked:bg-blue-600"
+                   ${checked ? "bg-blue-600" : "bg-gray-200"}`}
           style={color && checked ? { backgroundColor: color } : undefined}
           aria-hidden="true"
         >
           <svg
-            className="w-4 h-4 transform transition-all duration-200 ease-in-out
-                     opacity-0 scale-75 peer-checked:opacity-100 peer-checked:scale-100"
+            className={`w-4 h-4 transform transition-all duration-200 ease-in-out
+                     ${checked ? "opacity-100 scale-100" : "opacity-0 scale-75"}`}
             viewBox="0 0 24 24"
             fill="none"
             aria-hidden="true"

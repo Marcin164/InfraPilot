@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthInfo } from "@propelauth/react";
-import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -21,7 +19,8 @@ import {
   rotateAgentSecret,
   revokeAgentSecret,
 } from "../../../../Services/devices";
-import { getUser } from "../../../../Services/users";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 type Props = {
   deviceId: string;
@@ -38,17 +37,11 @@ const AgentCredentials = ({
 }: Props) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const authInfo: any = useAuthInfo();
-  const currentUserId = authInfo?.user?.metadata?.id;
   const [generatedSecret, setGeneratedSecret] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
   const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
-  const currentUserQuery = useQuery({
-    queryKey: ["current-user", currentUserId],
-    queryFn: () => getUser(currentUserId),
-    enabled: Boolean(currentUserId),
-  });
+  const permissionsQuery = usePermissions();
 
   const rotateMutation = useMutation({
     mutationFn: () => rotateAgentSecret(deviceId),
@@ -74,7 +67,7 @@ const AgentCredentials = ({
       toast.error(err?.response?.data?.message ?? "Failed to revoke secret"),
   });
 
-  if (!currentUserQuery.data?.isAdmin) return null;
+  if (!hasPermission("devices.secret.generate", permissionsQuery.data)) return null;
 
   const copySecret = async () => {
     if (!generatedSecret) return;

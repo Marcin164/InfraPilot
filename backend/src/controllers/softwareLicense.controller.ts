@@ -11,7 +11,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { SoftwareLicenseService } from 'src/services/softwareLicense.service';
 import {
   CreateAssignmentDto,
@@ -38,16 +38,18 @@ export class SoftwareLicenseController {
     return this.licenseService.findOne(id);
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('licenses.add')
   @Post()
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async create(@Body() dto: CreateLicenseDto) {
     const license = await this.licenseService.create(dto);
-    await this.auditService.log('SOFTWARE_LICENSE', license.id, 'CREATED', { name: license.name });
+    await this.auditService.log('SOFTWARE_LICENSE', license.id, 'CREATED', {
+      name: license.name,
+    });
     return license;
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('licenses.edit')
   @Patch(':id')
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async update(@Param('id') id: string, @Body() dto: UpdateLicenseDto) {
@@ -56,7 +58,7 @@ export class SoftwareLicenseController {
     return license;
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('licenses.delete')
   @Delete(':id')
   async remove(@Param('id') id: string) {
     await this.licenseService.remove(id);
@@ -69,7 +71,7 @@ export class SoftwareLicenseController {
     return this.licenseService.getAssignments(id);
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('licenses.add')
   @Post('assignments')
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async assign(@Body() dto: CreateAssignmentDto) {
@@ -83,7 +85,7 @@ export class SoftwareLicenseController {
     return assignment;
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('licenses.delete')
   @Delete('assignments/:assignmentId')
   async unassign(@Param('assignmentId') assignmentId: string) {
     await this.licenseService.unassign(assignmentId);

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthInfo } from "@propelauth/react";
 import { toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -36,10 +35,12 @@ import {
   type CreateLicensePayload,
   type SoftwareLicenseAssignment,
 } from "../../../Services/licenses";
-import { getUser, getUsers } from "../../../Services/users";
+import { getUsers } from "../../../Services/users";
 import { getDevicesOptions } from "../../../Services/devices";
 import ConfirmationModal from "../../../Components/Modals/ConfirmationModal";
 import { useViewportFillHeight } from "../../../Hooks/useViewportFillHeight";
+import { usePermissions } from "../../../Hooks/usePermissions";
+import { hasPermission } from "../../../Constants/navigation";
 
 const LICENSE_TYPES = ["perpetual", "subscription", "volume", "concurrent"] as const;
 
@@ -433,20 +434,14 @@ const Licenses = () => {
   const navigate = useNavigate();
   const fillHeight = useViewportFillHeight();
   const queryClient = useQueryClient();
-  const authInfo: any = useAuthInfo();
-  const currentUserId = authInfo?.user?.metadata?.id;
   const [createOpen, setCreateOpen] = useState(false);
   const [editingLicense, setEditingLicense] = useState<SoftwareLicense | null>(null);
   const [assignmentsLicense, setAssignmentsLicense] = useState<SoftwareLicense | null>(null);
   const [search, setSearch] = useState("");
 
-  const currentUserQuery = useQuery({
-    queryKey: ["current-user", currentUserId],
-    queryFn: () => getUser(currentUserId),
-    enabled: Boolean(currentUserId),
-  });
+  const permissionsQuery = usePermissions();
 
-  const isAdmin = Boolean(currentUserQuery.data?.isAdmin);
+  const isAdmin = hasPermission("licenses.add", permissionsQuery.data);
 
   const query = useQuery({
     queryKey: ["licenses"],

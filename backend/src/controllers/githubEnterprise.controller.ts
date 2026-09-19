@@ -1,13 +1,21 @@
-import { BadRequestException, Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { GithubEnterpriseService } from 'src/services/githubEnterprise.service';
 import { SaveGithubConfigDto } from 'src/dto/githubEnterprise.dto';
 import { describeGithubError } from 'src/helpers/describeGithubError';
 
 @UseGuards(AuthGuard, MfaGuard)
-@Roles(Role.Admin)
+@RequiresPermission('licenses.integrations.manage')
 @Controller('github')
 export class GithubEnterpriseController {
   constructor(private readonly github: GithubEnterpriseService) {}
@@ -21,13 +29,19 @@ export class GithubEnterpriseController {
   @Post('/config')
   async saveConfig(@Body() body: SaveGithubConfigDto) {
     await this.github.saveConfig(body);
-    return { success: true, message: 'Konfiguracja GitHub Enterprise zapisana' };
+    return {
+      success: true,
+      message: 'Konfiguracja GitHub Enterprise zapisana',
+    };
   }
 
   @Delete('/config')
   async deleteConfig() {
     await this.github.deleteConfig();
-    return { success: true, message: 'Konfiguracja GitHub Enterprise usunięta' };
+    return {
+      success: true,
+      message: 'Konfiguracja GitHub Enterprise usunięta',
+    };
   }
 
   @Post('/test')

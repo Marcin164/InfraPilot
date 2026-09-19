@@ -9,7 +9,7 @@ import Input from "../Inputs/Input";
 import TicketSelect from "../Inputs/TicketSelect";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
 
-import { getUsers } from "../../Services/users";
+import { findApprovers } from "../../Services/users";
 import { getDevicesOptions, assignDevice } from "../../Services/devices";
 import { createHistoryEntry } from "../../Services/histories";
 import { assignDeviceDefaultValues } from "../../Constants/defaultValues";
@@ -36,9 +36,9 @@ const AssignDeviceForm: React.FC<Props> = ({ close }) => {
   const isUserContext = location.pathname.includes("/users/");
   const isDeviceContext = location.pathname.includes("/devices/");
 
-  const usersQuery = useQuery({
-    queryKey: ["users"],
-    queryFn: () => getUsers(),
+  const approversQuery = useQuery({
+    queryKey: ["approvers"],
+    queryFn: () => findApprovers(),
   });
 
   const devicesQuery = useQuery({
@@ -47,14 +47,12 @@ const AssignDeviceForm: React.FC<Props> = ({ close }) => {
   });
 
   const userOptions: Option[] = useMemo(() => {
-    if (!usersQuery.data) return [];
-    return usersQuery.data
-      .filter((u: any) => u?.isApprover)
-      .map((u: any) => ({
-        value: u.id,
-        label: `${u.distinguishedName} (${u.email})`,
-      }));
-  }, [usersQuery.data]);
+    if (!approversQuery.data) return [];
+    return approversQuery.data.map((u: any) => ({
+      value: u.id,
+      label: `${u.distinguishedName} (${u.email})`,
+    }));
+  }, [approversQuery.data]);
 
   const deviceOptions: Option[] = useMemo(() => {
     if (!devicesQuery.data) return [];
@@ -116,7 +114,7 @@ const AssignDeviceForm: React.FC<Props> = ({ close }) => {
 
   if (
     (isUserContext && devicesQuery.isLoading) ||
-    (isDeviceContext && usersQuery.isLoading)
+    (isDeviceContext && approversQuery.isLoading)
   ) {
     return null;
   }

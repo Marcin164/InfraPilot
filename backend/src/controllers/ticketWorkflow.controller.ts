@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import {
   TicketWorkflowService,
   UpsertCategoryDto,
@@ -21,7 +21,7 @@ import {
 } from 'src/services/ticketWorkflow.service';
 
 @UseGuards(AuthGuard)
-@Roles(Role.Admin, Role.Helpdesk, Role.Auditor)
+@RequiresPermission('helpdesk.workflow.config', 'audit.fullAccess')
 @Controller('ticket-workflows')
 export class TicketWorkflowController {
   constructor(private readonly service: TicketWorkflowService) {}
@@ -33,13 +33,13 @@ export class TicketWorkflowController {
     return this.service.listCategories();
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('helpdesk.workflow.config')
   @Put('categories')
   upsertCategory(@Body() body: UpsertCategoryDto) {
     return this.service.upsertCategory(body);
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('helpdesk.workflow.config')
   @Delete('categories/:id')
   async deleteCategory(@Param('id') id: string) {
     await this.service.deleteCategory(id);
@@ -58,7 +58,7 @@ export class TicketWorkflowController {
     return this.service.getWorkflow(id);
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('helpdesk.workflow.config')
   @Put()
   upsertWorkflow(@Body() body: UpsertWorkflowDto, @Req() req: any) {
     const actorId =
@@ -66,7 +66,7 @@ export class TicketWorkflowController {
     return this.service.upsertWorkflow(body, actorId);
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('helpdesk.workflow.config')
   @Delete(':id')
   async deleteWorkflow(@Param('id') id: string) {
     await this.service.deleteWorkflow(id);
@@ -75,9 +75,11 @@ export class TicketWorkflowController {
 
   // ---- Step attachments (template file for the `add_attachment` step) ----
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('helpdesk.workflow.config')
   @Post('steps/attachment')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }))
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }),
+  )
   async uploadStepAttachment(@UploadedFile() file: any) {
     return this.service.uploadStepAttachment(file);
   }

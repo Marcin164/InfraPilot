@@ -9,8 +9,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
-import { MaintenanceService, CreateMaintenanceDto, UpdateMaintenanceDto } from 'src/services/maintenance.service';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
+import {
+  MaintenanceService,
+  CreateMaintenanceDto,
+  UpdateMaintenanceDto,
+} from 'src/services/maintenance.service';
 import { AuditService } from 'src/services/audit.service';
 
 @UseGuards(AuthGuard)
@@ -36,15 +40,18 @@ export class MaintenanceController {
     return this.maintenanceService.findOne(id);
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('devices.maintenance.manage')
   @Post()
   async create(@Body() dto: CreateMaintenanceDto) {
     const record = await this.maintenanceService.create(dto);
-    await this.auditService.log('Maintenance', record.id, 'CREATED', { deviceId: record.deviceId, type: record.type });
+    await this.auditService.log('Maintenance', record.id, 'CREATED', {
+      deviceId: record.deviceId,
+      type: record.type,
+    });
     return record;
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('devices.maintenance.manage')
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateMaintenanceDto) {
     const record = await this.maintenanceService.update(id, dto);
@@ -52,7 +59,7 @@ export class MaintenanceController {
     return record;
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('devices.maintenance.manage')
   @Delete(':id')
   async remove(@Param('id') id: string) {
     await this.maintenanceService.remove(id);

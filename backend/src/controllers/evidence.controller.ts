@@ -1,20 +1,13 @@
-import {
-  Body,
-  Controller,
-  Post,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { EvidencePackService } from 'src/services/evidencePack.service';
 import { BuildEvidencePackDto } from 'src/dto/evidence.dto';
 
 @UseGuards(AuthGuard, MfaGuard)
-@Roles(Role.Admin, Role.Compliance, Role.Auditor)
+@RequiresPermission('devices.complianceRules.manage', 'audit.fullAccess')
 @Controller('evidence')
 export class EvidenceController {
   constructor(private readonly evidenceService: EvidencePackService) {}
@@ -31,10 +24,7 @@ export class EvidenceController {
       actor,
     });
     res.setHeader('Content-Type', 'application/zip');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${filename}"`,
-    );
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     stream.pipe(res);
   }
 }

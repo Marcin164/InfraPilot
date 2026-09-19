@@ -2,14 +2,14 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import NavbarLink from "./NavbarLink";
 import { settingsNavbarItems, canSeeItem } from "../../Constants/navigation";
-import { useCurrentUser } from "../../Hooks/useCurrentUser";
+import { usePermissions } from "../../Hooks/usePermissions";
 
 const SettingsNavbar = () => {
   const { t } = useTranslation();
-  const currentUserQuery = useCurrentUser();
+  const permissionsQuery = usePermissions();
 
   const visibleItems = settingsNavbarItems.filter((item) =>
-    canSeeItem(item, currentUserQuery.data),
+    canSeeItem(item, permissionsQuery.data),
   );
 
   return (

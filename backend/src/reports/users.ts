@@ -161,10 +161,12 @@ export async function usersPasswordAgeReport({ db, filters }) {
 
 export async function adminsByDepartmentReport({ db }) {
   return db.query(`
-    SELECT department as label, COUNT(*)::integer as value
-    FROM users
-    WHERE "isAdmin" = true
-    GROUP BY department
+    SELECT u.department as label, COUNT(DISTINCT u.id)::integer as value
+    FROM users u
+    JOIN user_custom_role ucr ON ucr."userId" = u.id
+    JOIN custom_role cr ON cr.id = ucr."roleId"
+    WHERE cr."grantsAllPermissions" = true
+    GROUP BY u.department
     ORDER BY value DESC
   `);
 }

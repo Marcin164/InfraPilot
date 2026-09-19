@@ -9,6 +9,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createShift, updateShift, deleteShift } from '../../../Services/shifts'
 import { findHelpdesk } from '../../../Services/users'
 import { useCurrentUser } from '../../../Hooks/useCurrentUser'
+import { usePermissions } from '../../../Hooks/usePermissions'
+import { hasPermission } from '../../../Constants/navigation'
 import { toast } from "react-toastify";
 import { getRangeDays, normalizeAnchor, shiftAnchor, DAY_MS, type RangeOption } from './dateRangeUtils'
 
@@ -40,6 +42,7 @@ const Shifts = (props: Props) => {
 
   const currentUserQuery = useCurrentUser()
   const currentUser: any = currentUserQuery.data
+  const permissionsQuery = usePermissions()
   const helpdeskUsersQuery = useQuery({
     queryKey: ["shifts-helpdesk-users"],
     queryFn: () => findHelpdesk(),
@@ -53,12 +56,12 @@ const Shifts = (props: Props) => {
   // for the server-side mirror of this same check.
   const manageableUserIds = useMemo(() => {
     if (!currentUser) return new Set<string>()
-    if (currentUser.isAdmin) return new Set(helpdeskUsers.map((u) => u.id))
+    if (hasPermission("shifts.edit", permissionsQuery.data)) return new Set(helpdeskUsers.map((u) => u.id))
     const callerIdentifiers = [currentUser.username, currentUser.distinguishedName, currentUser.id].filter(Boolean)
     return new Set(
       helpdeskUsers.filter((u) => u.manager && callerIdentifiers.includes(u.manager)).map((u) => u.id),
     )
-  }, [helpdeskUsers, currentUser])
+  }, [helpdeskUsers, currentUser, permissionsQuery.data])
 
   const [selectedEvents, setSelectedEvents] = useState<SelectedShiftEvent[]>([])
   const [editType, setEditType] = useState('')

@@ -1,13 +1,21 @@
-import { BadRequestException, Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { ZoomService } from 'src/services/zoom.service';
 import { SaveZoomConfigDto } from 'src/dto/zoom.dto';
 import { describeZoomError } from 'src/helpers/describeZoomError';
 
 @UseGuards(AuthGuard, MfaGuard)
-@Roles(Role.Admin)
+@RequiresPermission('licenses.integrations.manage')
 @Controller('zoom')
 export class ZoomController {
   constructor(private readonly zoom: ZoomService) {}

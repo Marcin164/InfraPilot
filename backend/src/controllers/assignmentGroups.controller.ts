@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { AdminGuard } from 'src/guards/adminGuard.guard';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { AssignmentGroupsService } from 'src/services/assignmentGroups.service';
 import {
   CreateAssignmentGroupDto,
@@ -40,51 +40,39 @@ export class AssignmentGroupsController {
     return this.assignmentGroupsService.findMembers(id);
   }
 
-  @UseGuards(AdminGuard)
+  @RequiresPermission('helpdesk.assignmentGroups.manage')
   @Post()
   async create(@Body() dto: CreateAssignmentGroupDto) {
     return this.assignmentGroupsService.create(dto);
   }
 
-  @UseGuards(AdminGuard)
+  @RequiresPermission('helpdesk.assignmentGroups.manage')
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateAssignmentGroupDto,
-  ) {
+  async update(@Param('id') id: string, @Body() dto: UpdateAssignmentGroupDto) {
     return this.assignmentGroupsService.update(id, dto);
   }
 
-  @UseGuards(AdminGuard)
+  @RequiresPermission('helpdesk.assignmentGroups.manage')
   @Delete(':id')
   async delete(@Param('id') id: string) {
     return this.assignmentGroupsService.delete(id);
   }
 
-  @UseGuards(AdminGuard)
+  @RequiresPermission('helpdesk.assignmentGroups.manage')
   @Put(':id/members')
-  async setMembers(
-    @Param('id') id: string,
-    @Body() body: SetGroupMembersDto,
-  ) {
+  async setMembers(@Param('id') id: string, @Body() body: SetGroupMembersDto) {
     return this.assignmentGroupsService.setMembers(id, body?.userIds ?? []);
   }
 
-  @UseGuards(AdminGuard)
+  @RequiresPermission('helpdesk.assignmentGroups.manage')
   @Post(':id/members/:userId')
-  async addMember(
-    @Param('id') id: string,
-    @Param('userId') userId: string,
-  ) {
+  async addMember(@Param('id') id: string, @Param('userId') userId: string) {
     return this.assignmentGroupsService.addMember(id, userId);
   }
 
-  @UseGuards(AdminGuard)
+  @RequiresPermission('helpdesk.assignmentGroups.manage')
   @Delete(':id/members/:userId')
-  async removeMember(
-    @Param('id') id: string,
-    @Param('userId') userId: string,
-  ) {
+  async removeMember(@Param('id') id: string, @Param('userId') userId: string) {
     return this.assignmentGroupsService.removeMember(id, userId);
   }
 }

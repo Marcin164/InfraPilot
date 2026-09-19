@@ -1,13 +1,21 @@
-import { BadRequestException, Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { GoogleWorkspaceService } from 'src/services/googleWorkspace.service';
 import { SaveGoogleWorkspaceConfigDto } from 'src/dto/googleWorkspace.dto';
 import { describeGoogleError } from 'src/helpers/describeGoogleError';
 
 @UseGuards(AuthGuard, MfaGuard)
-@Roles(Role.Admin)
+@RequiresPermission('licenses.integrations.manage')
 @Controller('google-workspace')
 export class GoogleWorkspaceController {
   constructor(private readonly google: GoogleWorkspaceService) {}

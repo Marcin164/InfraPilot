@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -12,6 +12,7 @@ import Checkbox from "../../../../Components/Inputs/Checkbox";
 import ColorPicker from "../../../../Components/Inputs/ColorPicker";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
+import Modal from "../../../../Components/Modals/AnimatedModal";
 import {
   TicketCategory,
   CustomFieldDef,
@@ -39,44 +40,174 @@ const emptyCustomField = (): CustomFieldDef => ({
   options: [],
 });
 
-const Categories = () => {
+type CategoryModalTarget = "create" | TicketCategory | null;
+
+const CategoryModal = ({
+  target,
+  onClose,
+}: {
+  target: CategoryModalTarget;
+  onClose: () => void;
+}) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [name, setName] = useState("");
-  const [color, setColor] = useState("#2B9AE9");
-  const [ticketType, setTicketType] = useState<"Incident" | "Service" | "">("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
-  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
+  const editingCategory = target === "create" || target === null ? null : target;
 
-  const categoriesQuery = useQuery({ queryKey: ["ticket-categories"], queryFn: listTicketCategories });
-  const workflowsQuery = useQuery({ queryKey: ["ticket-workflows"], queryFn: listWorkflows });
+  const [name, setName] = useState(editingCategory?.name ?? "");
+  const [color, setColor] = useState(editingCategory?.color ?? "#2B9AE9");
+  const [ticketType, setTicketType] = useState<"Incident" | "Service" | "">(
+    editingCategory?.ticketType ?? "",
+  );
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    setName(editingCategory?.name ?? "");
+    setColor(editingCategory?.color ?? "#2B9AE9");
+    setTicketType(editingCategory?.ticketType ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingCategory?.id]);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["ticket-categories"] });
 
   const upsertMutation = useMutation({
-    mutationFn: (c: Partial<TicketCategory> & { name: string }) => upsertTicketCategory(c),
+    mutationFn: () =>
+      upsertTicketCategory({
+        id: editingCategory?.id,
+        name: name.trim(),
+        color,
+        ticketType: ticketType || null,
+        enabled: true,
+      }),
     onSuccess: () => {
       toast.success(t("settings.workflow.categories.saved"));
-      setName("");
-      setColor("#2B9AE9");
-      setTicketType("");
-      setEditingId(null);
       invalidate();
+      onClose();
     },
     onError: (err: any) =>
       toast.error(err?.response?.data?.message ?? t("settings.workflow.saveFailed")),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteTicketCategory(id),
+    mutationFn: () => deleteTicketCategory(editingCategory!.id),
     onSuccess: () => {
       toast.success(t("settings.workflow.categories.deleted"));
       invalidate();
+      onClose();
     },
     onError: (err: any) =>
       toast.error(err?.response?.data?.message ?? t("settings.workflow.deleteFailed")),
   });
+
+  const handleSave = () => {
+    if (!name.trim()) {
+      toast.error(t("toast.error.nameRequired"));
+      return;
+    }
+    upsertMutation.mutate();
+  };
+
+  return (
+    <>
+      <Modal
+        classNames={{ modal: "w-[520px] max-w-full rounded-[10px]" }}
+        open={target !== null}
+        onClose={onClose}
+        center
+      >
+        <CardHeader
+          text={
+            editingCategory
+              ? t("settings.workflow.categories.editTitle", { name: editingCategory.name })
+              : t("settings.workflow.categories.create")
+          }
+          icon={faLayerGroup}
+        />
+
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+          <Input
+            className="md:col-span-2 pt-0"
+            value={name}
+            handleChange={setName}
+            placeholder={t("settings.workflow.categories.namePlaceholder")}
+          />
+          <div className="flex items-end pb-[5px]">
+            <ColorPicker value={color} onChange={setColor} />
+          </div>
+        </div>
+
+        <div className="mt-3 min-w-[180px]">
+          <SelectSecondary
+            options={[
+              { value: "", label: t("settings.workflow.categories.anyType") },
+              { value: "Incident", label: t("form.ticketType.incident") },
+              { value: "Service", label: t("form.ticketType.service") },
+            ]}
+            value={
+              ticketType
+                ? {
+                    value: ticketType,
+                    label:
+                      ticketType === "Incident"
+                        ? t("form.ticketType.incident")
+                        : t("form.ticketType.service"),
+                  }
+                : { value: "", label: t("settings.workflow.categories.anyType") }
+            }
+            onSelect={(opt: any) => setTicketType((opt?.value ?? "") as any)}
+          />
+        </div>
+
+        <div className="mt-5 flex items-center justify-between">
+          <div>
+            {editingCategory && (
+              <ButtonPrimary
+                icon={faTrash}
+                text={t("common.delete")}
+                onClick={() => setConfirmDelete(true)}
+                disabled={deleteMutation.isPending}
+                color="red"
+              />
+            )}
+          </div>
+          <div className="flex gap-2">
+            <ButtonPrimary text={t("common.cancel")} onClick={onClose} color="white" />
+            <ButtonPrimary
+              icon={faCheck}
+              text={t("common.save")}
+              onClick={handleSave}
+              disabled={upsertMutation.isPending}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      <ConfirmationModal
+        isModalOpen={confirmDelete}
+        handleOnClose={() => setConfirmDelete(false)}
+        onCancel={() => setConfirmDelete(false)}
+        onDelete={() => {
+          setConfirmDelete(false);
+          deleteMutation.mutate();
+        }}
+        message={
+          editingCategory
+            ? t("settings.workflow.categories.confirmDelete", { name: editingCategory.name })
+            : undefined
+        }
+      />
+    </>
+  );
+};
+
+const Categories = () => {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [modalTarget, setModalTarget] = useState<CategoryModalTarget>(null);
+
+  const categoriesQuery = useQuery({ queryKey: ["ticket-categories"], queryFn: listTicketCategories });
+  const workflowsQuery = useQuery({ queryKey: ["ticket-workflows"], queryFn: listWorkflows });
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["ticket-categories"] });
 
   const customFieldsMutation = useMutation({
     mutationFn: (input: Partial<TicketCategory> & { name: string }) => upsertTicketCategory(input),
@@ -88,87 +219,21 @@ const Categories = () => {
       toast.error(err?.response?.data?.message ?? t("settings.workflow.saveFailed")),
   });
 
-  const submit = () => {
-    if (!name.trim()) {
-      toast.error(t("toast.error.nameRequired"));
-      return;
-    }
-    upsertMutation.mutate({
-      id: editingId ?? undefined,
-      name: name.trim(),
-      color,
-      ticketType: ticketType || null,
-      enabled: true,
-    });
-  };
-
   const categories = categoriesQuery.data ?? [];
   const workflows = workflowsQuery.data ?? [];
 
   return (
     <div className="space-y-4 m-4">
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text={t("settings.workflow.categories.create")} icon={faPlus} />
-        <p className="text-[12px] text-[#7a7a7a] mt-2">{t("settings.workflow.categories.help")}</p>
-
-        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
-          <Input
-            className="md:col-span-2 pt-0"
-            value={name}
-            handleChange={setName}
-            placeholder={t("settings.workflow.categories.namePlaceholder")}
-          />
-          <div className="flex items-end pb-[5px]">
-            <ColorPicker value={color} onChange={setColor} />
-          </div>
-        </div>
-        <div className="mt-2 flex items-center gap-2 flex-wrap">
-          <div className="min-w-[180px]">
-            <SelectSecondary
-              options={[
-                { value: "", label: t("settings.workflow.categories.anyType") },
-                { value: "Incident", label: t("form.ticketType.incident") },
-                { value: "Service", label: t("form.ticketType.service") },
-              ]}
-              value={
-                ticketType
-                  ? {
-                      value: ticketType,
-                      label:
-                        ticketType === "Incident"
-                          ? t("form.ticketType.incident")
-                          : t("form.ticketType.service"),
-                    }
-                  : { value: "", label: t("settings.workflow.categories.anyType") }
-              }
-              onSelect={(opt: any) => setTicketType((opt?.value ?? "") as any)}
-            />
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <CardHeader text={t("settings.workflow.categories.existing")} icon={faLayerGroup} />
           <ButtonPrimary
-            className="h-[42px]"
-            icon={editingId ? faCheck : faPlus}
-            text={editingId ? t("settings.workflow.categories.update") : t("settings.workflow.categories.add")}
-            onClick={submit}
-            disabled={upsertMutation.isPending}
+            icon={faPlus}
+            text={t("settings.workflow.categories.create")}
+            onClick={() => setModalTarget("create")}
           />
-          {editingId && (
-            <ButtonPrimary
-              className="h-[42px]"
-              color="white"
-              text={t("common.cancel")}
-              onClick={() => {
-                setEditingId(null);
-                setName("");
-                setColor("#2B9AE9");
-                setTicketType("");
-              }}
-            />
-          )}
         </div>
-      </div>
 
-      <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text={t("settings.workflow.categories.existing")} icon={faLayerGroup} />
         {categoriesQuery.isLoading ? (
           <div className="mt-3 text-[13px] text-[#7a7a7a]">{t("settings.workflow.loading")}</div>
         ) : categories.length === 0 ? (
@@ -206,24 +271,11 @@ const Categories = () => {
                     </div>
                     <button
                       type="button"
-                      onClick={() => {
-                        setEditingId(c.id);
-                        setName(c.name);
-                        setColor(c.color);
-                        setTicketType(c.ticketType ?? "");
-                      }}
+                      onClick={() => setModalTarget(c)}
                       className="text-[#2B9AE9] cursor-pointer"
                       title={t("common.edit")}
                     >
                       <FontAwesomeIcon icon={faPen} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => askConfirm(() => deleteMutation.mutate(c.id), t("settings.workflow.categories.confirmDelete", { name: c.name }))}
-                      className="text-[#F3606E] cursor-pointer"
-                      title={t("common.delete")}
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
                     </button>
                   </div>
                   <div className="w-full sm:w-auto sm:min-w-[160px]">
@@ -275,13 +327,13 @@ const Categories = () => {
         )}
       </div>
 
-      <ConfirmationModal
-        isModalOpen={confirmState.open}
-        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
-        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
-        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
-        message={confirmState.message}
-      />
+      {modalTarget !== null && (
+        <CategoryModal
+          key={modalTarget === "create" ? "create" : modalTarget.id}
+          target={modalTarget}
+          onClose={() => setModalTarget(null)}
+        />
+      )}
     </div>
   );
 };

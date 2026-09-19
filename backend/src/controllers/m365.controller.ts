@@ -1,13 +1,21 @@
-import { BadRequestException, Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { M365Service } from 'src/services/m365.service';
 import { SaveM365ConfigDto } from 'src/dto/m365.dto';
 import { describeGraphError } from 'src/helpers/graphErrorMessage';
 
 @UseGuards(AuthGuard, MfaGuard)
-@Roles(Role.Admin)
+@RequiresPermission('admin.o365.config')
 @Controller('m365')
 export class M365Controller {
   constructor(private readonly m365: M365Service) {}

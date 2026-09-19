@@ -1,10 +1,10 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { SlaAdminService } from 'src/services/slaAdmin.service';
 
 @UseGuards(AuthGuard)
-@Roles(Role.Admin, Role.Compliance, Role.Auditor)
+@RequiresPermission('devices.complianceRules.manage', 'audit.fullAccess')
 @Controller('sla/admin')
 export class SlaAdminController {
   constructor(private readonly adminService: SlaAdminService) {}

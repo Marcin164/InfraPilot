@@ -12,7 +12,7 @@ import {
 import type { Response } from 'express';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { PrivacyService } from 'src/services/privacy.service';
 import { AuditService } from 'src/services/audit.service';
 import { EraseUserDto } from 'src/dto/privacy.dto';
@@ -21,7 +21,7 @@ const actorOf = (req: any): string =>
   req?.user?.properties?.metadata?.id ?? req?.user?.id ?? 'unknown';
 
 @UseGuards(AuthGuard, MfaGuard)
-@Roles(Role.Admin, Role.Dpo)
+@RequiresPermission('dpo.fullAccess')
 @Controller('privacy')
 export class PrivacyController {
   constructor(
@@ -74,10 +74,7 @@ export class PrivacyController {
       actorOf(req),
     );
     res.setHeader('Content-Type', 'application/zip');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${filename}"`,
-    );
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     stream.pipe(res);
   }
 

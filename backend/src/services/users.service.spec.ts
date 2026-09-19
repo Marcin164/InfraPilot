@@ -1,25 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import {
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Users } from 'src/entities/users.entity';
+import { CustomRolesService } from './customRoles.service';
 
 // ─── External mocks ──────────────────────────────────────────────────────────
 
 const mockCreatePropelAuthUser = jest.fn();
 const mockFetchUserMetadataByEmail = jest.fn();
 const mockFetchUserMetadataByUserId = jest.fn();
-const mockLogoutAllUserSessions = jest.fn();
 const mockUpdateUserMetadata = jest.fn().mockResolvedValue(true);
 
 jest.mock('src/helpers/propelAuthClient', () => ({
   createUser: (...args: any[]) => mockCreatePropelAuthUser(...args),
-  fetchUserMetadataByEmail: (...args: any[]) => mockFetchUserMetadataByEmail(...args),
-  fetchUserMetadataByUserId: (...args: any[]) => mockFetchUserMetadataByUserId(...args),
-  logoutAllUserSessions: (...args: any[]) => mockLogoutAllUserSessions(...args),
+  fetchUserMetadataByEmail: (...args: any[]) =>
+    mockFetchUserMetadataByEmail(...args),
+  fetchUserMetadataByUserId: (...args: any[]) =>
+    mockFetchUserMetadataByUserId(...args),
   updateUserMetadata: (...args: any[]) => mockUpdateUserMetadata(...args),
   propelAuth: {},
 }));
@@ -33,20 +31,15 @@ const makeUser = (overrides: Partial<Users> = {}): Users =>
     surname: 'Kowalski',
     email: 'jan@acme.com',
     authUserId: 'auth-1',
-    isAdmin: false,
-    isApprover: false,
-    isAuditor: false,
-    isCompliance: false,
-    isHelpdesk: false,
-    isDpo: false,
     ...overrides,
-  } as Users);
+  }) as Users;
 
 // ─── Suite ────────────────────────────────────────────────────────────────────
 
 describe('UsersService', () => {
   let service: UsersService;
   let repo: jest.Mocked<any>;
+  let customRolesService: jest.Mocked<any>;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -77,11 +70,15 @@ describe('UsersService', () => {
       update: jest.fn().mockResolvedValue({ affected: 1 }),
       createQueryBuilder: jest.fn().mockReturnValue(selectQb),
     };
+    customRolesService = {
+      findUserIdsWithAnyPermission: jest.fn().mockResolvedValue([]),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
         { provide: getRepositoryToken(Users), useValue: repo },
+        { provide: CustomRolesService, useValue: customRolesService },
       ],
     }).compile();
 
@@ -119,7 +116,11 @@ describe('UsersService', () => {
       const insertResult = { identifiers: [{ id: 'user-new' }] };
       repo.insert.mockResolvedValue(insertResult);
 
-      const result = await service.insertOne({ name: 'Anna', surname: 'Nowak', email: 'anna@acme.com' });
+      const result = await service.insertOne({
+        name: 'Anna',
+        surname: 'Nowak',
+        email: 'anna@acme.com',
+      });
       expect(result).toBe(insertResult);
       expect(repo.insert).toHaveBeenCalled();
     });
@@ -165,7 +166,9 @@ describe('UsersService', () => {
   describe('update', () => {
     it('throws NotFoundException when user does not exist', async () => {
       repo.findOneBy.mockResolvedValue(null);
-      await expect(service.update({ name: 'X' }, 'ghost')).rejects.toThrow(NotFoundException);
+      await expect(service.update({ name: 'X' }, 'ghost')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('saves updated user and returns it', async () => {
@@ -177,42 +180,6 @@ describe('UsersService', () => {
 
       const result = await service.update({ name: 'Updated' }, 'user-1');
       expect(result).toBe(updated);
-    });
-
-    it('logs out all sessions when a role field changes', async () => {
-      const existing = makeUser({ isAdmin: false, authUserId: 'auth-1' });
-      const updated = { ...existing, isAdmin: true };
-      repo.findOneBy.mockResolvedValue(existing);
-      repo.preload.mockResolvedValue(updated as any);
-      repo.save.mockResolvedValue(updated as any);
-      mockLogoutAllUserSessions.mockResolvedValue(undefined);
-
-      await service.update({ isAdmin: true }, 'user-1');
-
-      expect(mockLogoutAllUserSessions).toHaveBeenCalledWith('auth-1');
-    });
-
-    it('does not call logout when no role fields changed', async () => {
-      const existing = makeUser({ isAdmin: false });
-      const updated = { ...existing, name: 'NewName' };
-      repo.findOneBy.mockResolvedValue(existing);
-      repo.preload.mockResolvedValue(updated as any);
-      repo.save.mockResolvedValue(updated as any);
-
-      await service.update({ name: 'NewName' }, 'user-1');
-
-      expect(mockLogoutAllUserSessions).not.toHaveBeenCalled();
-    });
-
-    it('does not throw when logout fails (best-effort)', async () => {
-      const existing = makeUser({ isAdmin: false, authUserId: 'auth-1' });
-      const updated = { ...existing, isAdmin: true };
-      repo.findOneBy.mockResolvedValue(existing);
-      repo.preload.mockResolvedValue(updated as any);
-      repo.save.mockResolvedValue(updated as any);
-      mockLogoutAllUserSessions.mockRejectedValue(new Error('PropelAuth down'));
-
-      await expect(service.update({ isAdmin: true }, 'user-1')).resolves.not.toThrow();
     });
   });
 
@@ -232,14 +199,28 @@ describe('UsersService', () => {
   // ─────────────────────────────────────────
 
   describe('findApprovers', () => {
-    it('returns only users with isApprover=true', async () => {
-      const approvers = [makeUser({ isApprover: true })];
+    it('returns users holding helpdesk.approver', async () => {
+      const approvers = [makeUser({ id: 'approver-1' })];
+      customRolesService.findUserIdsWithAnyPermission.mockResolvedValue([
+        'approver-1',
+      ]);
       repo.findBy.mockResolvedValue(approvers);
 
       const result = await service.findApprovers();
 
-      expect(repo.findBy).toHaveBeenCalledWith({ isApprover: true });
+      expect(
+        customRolesService.findUserIdsWithAnyPermission,
+      ).toHaveBeenCalledWith(['helpdesk.approver']);
       expect(result).toBe(approvers);
+    });
+
+    it('returns an empty array without querying the repo when no one has the permission', async () => {
+      customRolesService.findUserIdsWithAnyPermission.mockResolvedValue([]);
+
+      const result = await service.findApprovers();
+
+      expect(result).toEqual([]);
+      expect(repo.findBy).not.toHaveBeenCalled();
     });
   });
 
@@ -248,14 +229,28 @@ describe('UsersService', () => {
   // ─────────────────────────────────────────
 
   describe('findHelpdesk', () => {
-    it('returns only users with isHelpdesk=true', async () => {
-      const helpdesk = [makeUser({ isHelpdesk: true })];
+    it('returns users holding helpdesk.tickets.access', async () => {
+      const helpdesk = [makeUser({ id: 'agent-1' })];
+      customRolesService.findUserIdsWithAnyPermission.mockResolvedValue([
+        'agent-1',
+      ]);
       repo.findBy.mockResolvedValue(helpdesk);
 
       const result = await service.findHelpdesk();
 
-      expect(repo.findBy).toHaveBeenCalledWith({ isHelpdesk: true });
+      expect(
+        customRolesService.findUserIdsWithAnyPermission,
+      ).toHaveBeenCalledWith(['helpdesk.tickets.access']);
       expect(result).toBe(helpdesk);
+    });
+
+    it('returns an empty array without querying the repo when no one has the permission', async () => {
+      customRolesService.findUserIdsWithAnyPermission.mockResolvedValue([]);
+
+      const result = await service.findHelpdesk();
+
+      expect(result).toEqual([]);
+      expect(repo.findBy).not.toHaveBeenCalled();
     });
   });
 
@@ -282,7 +277,9 @@ describe('UsersService', () => {
   describe('linkAuthByEmail', () => {
     it('throws NotFoundException when user is not found', async () => {
       repo.findOneBy.mockResolvedValue(null);
-      await expect(service.linkAuthByEmail('ghost')).rejects.toThrow(NotFoundException);
+      await expect(service.linkAuthByEmail('ghost')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('returns linked:false when user has no email', async () => {
@@ -293,7 +290,9 @@ describe('UsersService', () => {
     });
 
     it('returns linked:true when user is already linked', async () => {
-      repo.findOneBy.mockResolvedValue(makeUser({ authUserId: 'existing-auth' }));
+      repo.findOneBy.mockResolvedValue(
+        makeUser({ authUserId: 'existing-auth' }),
+      );
       const result = await service.linkAuthByEmail('user-1');
       expect(result.linked).toBe(true);
       expect(result.authUserId).toBe('existing-auth');
@@ -334,12 +333,16 @@ describe('UsersService', () => {
   describe('provisionInAuth', () => {
     it('throws NotFoundException when user is not found', async () => {
       repo.findOneBy.mockResolvedValue(null);
-      await expect(service.provisionInAuth('ghost')).rejects.toThrow(NotFoundException);
+      await expect(service.provisionInAuth('ghost')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws BadRequestException when user has no email', async () => {
       repo.findOneBy.mockResolvedValue(makeUser({ email: null as any }));
-      await expect(service.provisionInAuth('user-1')).rejects.toThrow(BadRequestException);
+      await expect(service.provisionInAuth('user-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('returns existing authUserId without creating a new account', async () => {
@@ -374,7 +377,9 @@ describe('UsersService', () => {
   describe('verifyAuthLink', () => {
     it('throws NotFoundException when user is not found', async () => {
       repo.findOneBy.mockResolvedValue(null);
-      await expect(service.verifyAuthLink('ghost')).rejects.toThrow(NotFoundException);
+      await expect(service.verifyAuthLink('ghost')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('returns valid:false when user has no authUserId', async () => {
@@ -385,7 +390,10 @@ describe('UsersService', () => {
 
     it('returns valid:true when PropelAuth confirms the user', async () => {
       repo.findOneBy.mockResolvedValue(makeUser({ authUserId: 'auth-1' }));
-      mockFetchUserMetadataByUserId.mockResolvedValue({ userId: 'auth-1', email: 'jan@acme.com' });
+      mockFetchUserMetadataByUserId.mockResolvedValue({
+        userId: 'auth-1',
+        email: 'jan@acme.com',
+      });
 
       const result = await service.verifyAuthLink('user-1');
       expect(result.valid).toBe(true);

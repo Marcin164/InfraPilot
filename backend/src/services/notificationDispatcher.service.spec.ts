@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotificationDispatcherService, DispatchInput } from './notificationDispatcher.service';
+import {
+  NotificationDispatcherService,
+  DispatchInput,
+} from './notificationDispatcher.service';
 import { Users } from 'src/entities/users.entity';
 import { NotificationService } from './notification.service';
 import { NotificationPreferencesService } from './notificationPreferences.service';
@@ -12,7 +15,7 @@ const user = (overrides: Partial<Users> = {}): Users =>
     id: 'user-1',
     email: 'user@acme.com',
     ...overrides,
-  } as Users);
+  }) as Users;
 
 const baseDispatch = (): DispatchInput => ({
   recipientIds: ['user-1'],
@@ -27,9 +30,10 @@ const baseDispatch = (): DispatchInput => ({
 
 const makeAdminQb = (admins: Array<{ id: string }>) => ({
   select: jest.fn().mockReturnThis(),
+  innerJoin: jest.fn().mockReturnThis(),
   where: jest.fn().mockReturnThis(),
   andWhere: jest.fn().mockReturnThis(),
-  getMany: jest.fn().mockResolvedValue(admins),
+  getRawMany: jest.fn().mockResolvedValue(admins),
 });
 
 describe('NotificationDispatcherService', () => {
@@ -51,7 +55,9 @@ describe('NotificationDispatcherService', () => {
     mail = { send: jest.fn().mockResolvedValue(undefined) } as any;
     opsNotifications = {
       getConfig: jest.fn().mockResolvedValue({ emails: [], channels: {} }),
-      getChannelsForEvent: jest.fn().mockResolvedValue({ inapp: true, email: true }),
+      getChannelsForEvent: jest
+        .fn()
+        .mockResolvedValue({ inapp: true, email: true }),
     } as any;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -65,7 +71,9 @@ describe('NotificationDispatcherService', () => {
       ],
     }).compile();
 
-    service = module.get<NotificationDispatcherService>(NotificationDispatcherService);
+    service = module.get<NotificationDispatcherService>(
+      NotificationDispatcherService,
+    );
   });
 
   describe('dispatch', () => {
@@ -77,31 +85,44 @@ describe('NotificationDispatcherService', () => {
     });
 
     it('deduplicates recipient ids', async () => {
-      await service.dispatch({ ...baseDispatch(), recipientIds: ['user-1', 'user-1', 'user-1'] });
+      await service.dispatch({
+        ...baseDispatch(),
+        recipientIds: ['user-1', 'user-1', 'user-1'],
+      });
 
       expect(usersRepo.find).toHaveBeenCalledTimes(1);
       expect(inApp.create).toHaveBeenCalledTimes(1);
     });
 
     it('sends in-app notification when prefs enable it', async () => {
-      prefs.isEnabled.mockImplementation(async (uid, event, channel) => channel === 'inapp');
+      prefs.isEnabled.mockImplementation(
+        async (uid, event, channel) => channel === 'inapp',
+      );
 
       await service.dispatch(baseDispatch());
 
       expect(inApp.create).toHaveBeenCalledWith(
-        expect.objectContaining({ recipientId: 'user-1', title: 'Ticket assigned' }),
+        expect.objectContaining({
+          recipientId: 'user-1',
+          title: 'Ticket assigned',
+        }),
       );
       expect(mail.send).not.toHaveBeenCalled();
     });
 
-    it('sends email to the account\'s own address when prefs enable it (no per-user override)', async () => {
-      prefs.isEnabled.mockImplementation(async (uid, event, channel) => channel === 'email');
+    it("sends email to the account's own address when prefs enable it (no per-user override)", async () => {
+      prefs.isEnabled.mockImplementation(
+        async (uid, event, channel) => channel === 'email',
+      );
       usersRepo.find.mockResolvedValue([user({ email: 'user@acme.com' })]);
 
       await service.dispatch(baseDispatch());
 
       expect(mail.send).toHaveBeenCalledWith(
-        expect.objectContaining({ to: 'user@acme.com', subject: 'Ticket assigned' }),
+        expect.objectContaining({
+          to: 'user@acme.com',
+          subject: 'Ticket assigned',
+        }),
       );
     });
 
@@ -141,7 +162,7 @@ describe('NotificationDispatcherService', () => {
   });
 
   describe('test', () => {
-    it('uses the account\'s own login email, no separate override', async () => {
+    it("uses the account's own login email, no separate override", async () => {
       usersRepo.findOne.mockResolvedValue(user({ email: 'me@acme.com' }));
 
       const result = await service.test('user-1');
@@ -155,7 +176,10 @@ describe('NotificationDispatcherService', () => {
 
   describe('dispatchOpsAlert', () => {
     it('does nothing on either channel when both are disabled', async () => {
-      opsNotifications.getChannelsForEvent.mockResolvedValue({ inapp: false, email: false });
+      opsNotifications.getChannelsForEvent.mockResolvedValue({
+        inapp: false,
+        email: false,
+      });
 
       await service.dispatchOpsAlert({
         event: 'device_down' as any,
@@ -168,7 +192,10 @@ describe('NotificationDispatcherService', () => {
     });
 
     it('fans out in-app to every admin when the in-app channel is on', async () => {
-      opsNotifications.getChannelsForEvent.mockResolvedValue({ inapp: true, email: false });
+      opsNotifications.getChannelsForEvent.mockResolvedValue({
+        inapp: true,
+        email: false,
+      });
       usersRepo.createQueryBuilder.mockReturnValue(
         makeAdminQb([{ id: 'admin-1' }, { id: 'admin-2' }]),
       );
@@ -181,13 +208,19 @@ describe('NotificationDispatcherService', () => {
 
       expect(inApp.create).toHaveBeenCalledTimes(2);
       expect(inApp.create).toHaveBeenCalledWith(
-        expect.objectContaining({ recipientId: 'admin-1', title: 'Device unreachable' }),
+        expect.objectContaining({
+          recipientId: 'admin-1',
+          title: 'Device unreachable',
+        }),
       );
       expect(mail.send).not.toHaveBeenCalled();
     });
 
     it('emails every configured ops address when the email channel is on', async () => {
-      opsNotifications.getChannelsForEvent.mockResolvedValue({ inapp: false, email: true });
+      opsNotifications.getChannelsForEvent.mockResolvedValue({
+        inapp: false,
+        email: true,
+      });
       opsNotifications.getConfig.mockResolvedValue({
         emails: ['ops@acme.com', 'noc@acme.com'],
         channels: {} as any,
@@ -202,17 +235,31 @@ describe('NotificationDispatcherService', () => {
       expect(inApp.create).not.toHaveBeenCalled();
       expect(mail.send).toHaveBeenCalledTimes(2);
       expect(mail.send).toHaveBeenCalledWith(
-        expect.objectContaining({ to: 'ops@acme.com', subject: 'Device unreachable' }),
+        expect.objectContaining({
+          to: 'ops@acme.com',
+          subject: 'Device unreachable',
+        }),
       );
       expect(mail.send).toHaveBeenCalledWith(
-        expect.objectContaining({ to: 'noc@acme.com', subject: 'Device unreachable' }),
+        expect.objectContaining({
+          to: 'noc@acme.com',
+          subject: 'Device unreachable',
+        }),
       );
     });
 
     it('never checks per-user preferences for ops alerts', async () => {
-      opsNotifications.getChannelsForEvent.mockResolvedValue({ inapp: true, email: true });
-      opsNotifications.getConfig.mockResolvedValue({ emails: ['ops@acme.com'], channels: {} as any });
-      usersRepo.createQueryBuilder.mockReturnValue(makeAdminQb([{ id: 'admin-1' }]));
+      opsNotifications.getChannelsForEvent.mockResolvedValue({
+        inapp: true,
+        email: true,
+      });
+      opsNotifications.getConfig.mockResolvedValue({
+        emails: ['ops@acme.com'],
+        channels: {} as any,
+      });
+      usersRepo.createQueryBuilder.mockReturnValue(
+        makeAdminQb([{ id: 'admin-1' }]),
+      );
 
       await service.dispatchOpsAlert({
         event: 'device_down' as any,
@@ -224,12 +271,17 @@ describe('NotificationDispatcherService', () => {
     });
 
     it('a failure sending to one ops email does not stop the others', async () => {
-      opsNotifications.getChannelsForEvent.mockResolvedValue({ inapp: false, email: true });
+      opsNotifications.getChannelsForEvent.mockResolvedValue({
+        inapp: false,
+        email: true,
+      });
       opsNotifications.getConfig.mockResolvedValue({
         emails: ['bad@acme.com', 'ops@acme.com'],
         channels: {} as any,
       });
-      mail.send.mockRejectedValueOnce(new Error('SMTP error')).mockResolvedValueOnce(undefined);
+      mail.send
+        .mockRejectedValueOnce(new Error('SMTP error'))
+        .mockResolvedValueOnce(undefined);
 
       await expect(
         service.dispatchOpsAlert({

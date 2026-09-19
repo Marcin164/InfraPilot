@@ -4,6 +4,9 @@ import { Repository } from 'typeorm';
 import { Users } from 'src/entities/users.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
 import { UsersService } from 'src/services/users.service';
+import { CustomRolesService } from 'src/services/customRoles.service';
+
+const BOOTSTRAP_ADMIN_ROLE_NAME = 'Administrator';
 
 @Injectable()
 export class BootstrapService implements OnApplicationBootstrap {
@@ -13,6 +16,7 @@ export class BootstrapService implements OnApplicationBootstrap {
     @InjectRepository(Users)
     private readonly usersRepo: Repository<Users>,
     private readonly usersService: UsersService,
+    private readonly customRolesService: CustomRolesService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -35,11 +39,37 @@ export class BootstrapService implements OnApplicationBootstrap {
       name: name ?? undefined,
       surname: surname ?? undefined,
       distinguishedName,
-      isAdmin: true,
-      isHelpdesk: true,
     });
 
     this.logger.log(`Bootstrap: created first admin user (${adminEmail})`);
+
+    // The built-in Administrator role is what gives this account any access
+    // at all -- there's no legacy flag to fall back on. If the seed
+    // migration hasn't run against this database yet, the account is
+    // created but genuinely has zero access until one is assigned manually.
+    try {
+      const roles = await this.customRolesService.listRoles();
+      const adminRole = roles.find(
+        (r) => r.name === BOOTSTRAP_ADMIN_ROLE_NAME && r.isBuiltIn,
+      );
+      if (adminRole) {
+        await this.customRolesService.assignRole(adminRole.id, id);
+        this.logger.log(
+          `Bootstrap: assigned the "${BOOTSTRAP_ADMIN_ROLE_NAME}" custom role to ${adminEmail}`,
+        );
+      } else {
+        this.logger.warn(
+          `Bootstrap: built-in "${BOOTSTRAP_ADMIN_ROLE_NAME}" role not found (seed migration may not have run yet) -- ` +
+            `${adminEmail} was created with NO role assignment and has no access yet. ` +
+            `Run the SeedBuiltInCustomRoles migration, then assign a role manually from Settings > Admin.`,
+        );
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Bootstrap: failed to assign the "${BOOTSTRAP_ADMIN_ROLE_NAME}" custom role to ${adminEmail}: ${(err as Error).message}. ` +
+          `${adminEmail} has no access until a role is assigned manually.`,
+      );
+    }
 
     // Link to an existing PropelAuth account by email first — falls back to
     // creating a new one only if none exists. Same logic UsersController

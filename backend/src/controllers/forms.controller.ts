@@ -14,31 +14,30 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { FormsService } from 'src/services/forms.service';
-import { Users } from 'src/entities/users.entity';
+import { CustomRolesService } from 'src/services/customRoles.service';
 
 @UseGuards(AuthGuard)
 @Controller('forms')
 export class FormsController {
   constructor(
     private readonly formsService: FormsService,
-    @InjectRepository(Users)
-    private readonly usersRepository: Repository<Users>,
+    private readonly customRolesService: CustomRolesService,
   ) {}
 
-  // A regular user may only touch their own forms; admins/helpdesk (who
-  // manage forms on a user's behalf from Settings > Users) can touch anyone's.
+  // A regular user may only touch their own forms; staff who manage forms on
+  // a user's behalf from Settings > Users (users.equipment.manage) can touch
+  // anyone's.
   private async assertSelfOrStaff(req: any, targetUserId: string) {
     const callerId: string | undefined = req?.user?.properties?.metadata?.id;
     if (callerId && callerId === targetUserId) return;
 
-    const caller = callerId
-      ? await this.usersRepository.findOneBy({ id: callerId })
-      : null;
-    if (caller?.isAdmin || caller?.isHelpdesk) return;
+    if (callerId) {
+      const granted =
+        await this.customRolesService.getUserPermissions(callerId);
+      if (granted.has('users.equipment.manage')) return;
+    }
 
     throw new ForbiddenException('You may only manage your own documents');
   }
@@ -55,7 +54,11 @@ export class FormsController {
   }
 
   @Get('/:id')
-  async findOne(@Param('id') id: string, @Req() req: any, @Res() res: Response) {
+  async findOne(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Res() res: Response,
+  ) {
     const { form, stream } = await this.formsService.getFileStream(id);
     await this.assertSelfOrStaff(req, form.userId);
     res.setHeader('Content-Type', form.mimetype || 'application/octet-stream');
@@ -67,7 +70,9 @@ export class FormsController {
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }))
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }),
+  )
   async create(
     @UploadedFile() file: any,
     @Body('userId') userId: string,

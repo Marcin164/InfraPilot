@@ -10,9 +10,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { SlaRuleService } from 'src/services/slaRule.service';
-import { CreateSlaRuleDto, ReplaceSlaRuleMatrixDto, UpdateSlaRuleDto } from 'src/dto/slaRule.dto';
+import {
+  CreateSlaRuleDto,
+  ReplaceSlaRuleMatrixDto,
+  UpdateSlaRuleDto,
+} from 'src/dto/slaRule.dto';
 
 @UseGuards(AuthGuard)
 @Controller('sla/rules')
@@ -24,25 +28,25 @@ export class SlaRuleController {
     return this.service.getAll();
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('helpdesk.sla.config')
   @Put('matrix')
   replaceMatrix(@Body() dto: ReplaceSlaRuleMatrixDto) {
     return this.service.replaceMatrix(dto.entries);
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('helpdesk.sla.config')
   @Post()
   create(@Body() dto: CreateSlaRuleDto) {
     return this.service.create(dto);
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('helpdesk.sla.config')
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateSlaRuleDto) {
     return this.service.update(id, dto);
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('helpdesk.sla.config')
   @Delete(':id')
   delete(@Param('id') id: string) {
     return this.service.delete(id);

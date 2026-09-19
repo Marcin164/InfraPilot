@@ -9,14 +9,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import {
   NetworkDeviceBackupService,
   SetCredentialDto,
 } from 'src/services/networkDeviceBackup.service';
 
 @UseGuards(AuthGuard)
-@Roles(Role.Admin)
+@RequiresPermission('devices.connection.manage')
 @Controller('devices')
 export class NetworkDeviceBackupController {
   constructor(private readonly backupService: NetworkDeviceBackupService) {}

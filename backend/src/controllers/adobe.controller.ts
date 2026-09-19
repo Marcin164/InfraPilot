@@ -1,13 +1,21 @@
-import { BadRequestException, Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { AdobeService } from 'src/services/adobe.service';
 import { SaveAdobeConfigDto } from 'src/dto/adobe.dto';
 import { describeAdobeError } from 'src/helpers/describeAdobeError';
 
 @UseGuards(AuthGuard, MfaGuard)
-@Roles(Role.Admin)
+@RequiresPermission('licenses.integrations.manage')
 @Controller('adobe')
 export class AdobeController {
   constructor(private readonly adobe: AdobeService) {}

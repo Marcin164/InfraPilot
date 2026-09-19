@@ -52,7 +52,9 @@ export class NotificationDispatcherService {
    * preference matrix.
    */
   async dispatchOpsAlert(input: OpsDispatchInput): Promise<void> {
-    const channels = await this.opsNotifications.getChannelsForEvent(input.event);
+    const channels = await this.opsNotifications.getChannelsForEvent(
+      input.event,
+    );
 
     if (channels.inapp) {
       const adminIds = await this.getAdminIds();
@@ -96,13 +98,15 @@ export class NotificationDispatcherService {
   }
 
   private async getAdminIds(): Promise<string[]> {
-    const admins = await this.users
+    const rows = await this.users
       .createQueryBuilder('u')
-      .select('u.id')
-      .where('u.isAdmin = true')
+      .select('DISTINCT u.id', 'id')
+      .innerJoin('user_custom_role', 'ucr', 'ucr."userId" = u.id')
+      .innerJoin('custom_role', 'cr', 'cr.id = ucr."roleId"')
+      .where('cr."grantsAllPermissions" = true')
       .andWhere('u.erasedAt IS NULL')
-      .getMany();
-    return admins.map((u) => u.id);
+      .getRawMany();
+    return rows.map((r) => r.id);
   }
 
   async dispatch(input: DispatchInput): Promise<void> {
@@ -131,14 +135,19 @@ export class NotificationDispatcherService {
           });
         }
       } catch (err) {
-        this.logger.warn(`In-app dispatch failed for ${userId}: ${(err as Error).message}`);
+        this.logger.warn(
+          `In-app dispatch failed for ${userId}: ${(err as Error).message}`,
+        );
       }
 
       try {
         // Notification email is always the account's own login/directory
         // email -- no separate per-user override anymore.
         const emailTo = u.email ?? null;
-        if (emailTo && (await this.prefs.isEnabled(userId, input.event, 'email'))) {
+        if (
+          emailTo &&
+          (await this.prefs.isEnabled(userId, input.event, 'email'))
+        ) {
           await this.mail.send({
             to: emailTo,
             subject: input.title,
@@ -147,7 +156,9 @@ export class NotificationDispatcherService {
           });
         }
       } catch (err) {
-        this.logger.warn(`Email dispatch failed for ${userId}: ${(err as Error).message}`);
+        this.logger.warn(
+          `Email dispatch failed for ${userId}: ${(err as Error).message}`,
+        );
       }
     }
   }
@@ -156,7 +167,11 @@ export class NotificationDispatcherService {
     const userRecord = await this.users.findOne({ where: { id: userId } });
     const emailTo = userRecord?.email || null;
 
-    const result: TestResult = { inapp: false, email: false, emailAddress: emailTo };
+    const result: TestResult = {
+      inapp: false,
+      email: false,
+      emailAddress: emailTo,
+    };
 
     try {
       await this.inApp.create({
@@ -171,7 +186,9 @@ export class NotificationDispatcherService {
       });
       result.inapp = true;
     } catch (err) {
-      this.logger.warn(`Test in-app failed for ${userId}: ${(err as Error).message}`);
+      this.logger.warn(
+        `Test in-app failed for ${userId}: ${(err as Error).message}`,
+      );
     }
 
     if (emailTo) {
@@ -184,7 +201,9 @@ export class NotificationDispatcherService {
         });
         result.email = true;
       } catch (err) {
-        this.logger.warn(`Test email failed for ${userId}: ${(err as Error).message}`);
+        this.logger.warn(
+          `Test email failed for ${userId}: ${(err as Error).message}`,
+        );
       }
     }
 
@@ -193,14 +212,26 @@ export class NotificationDispatcherService {
 
   private mapToInAppType(
     event: NotificationEvent,
-  ): 'mention' | 'assignment' | 'sla_breach' | 'auto_followup' | 'cve_critical' | 'system' {
+  ):
+    | 'mention'
+    | 'assignment'
+    | 'sla_breach'
+    | 'auto_followup'
+    | 'cve_critical'
+    | 'system' {
     switch (event) {
-      case 'ticket_mention': return 'mention';
-      case 'ticket_assigned': return 'assignment';
-      case 'ticket_sla_breach': return 'sla_breach';
-      case 'ticket_auto_followup': return 'auto_followup';
-      case 'cve_critical': return 'cve_critical';
-      default: return 'system';
+      case 'ticket_mention':
+        return 'mention';
+      case 'ticket_assigned':
+        return 'assignment';
+      case 'ticket_sla_breach':
+        return 'sla_breach';
+      case 'ticket_auto_followup':
+        return 'auto_followup';
+      case 'cve_critical':
+        return 'cve_critical';
+      default:
+        return 'system';
     }
   }
 }

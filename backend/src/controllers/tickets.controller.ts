@@ -25,7 +25,7 @@ import {
 } from 'src/dto/tickets.dto';
 import { Tickets } from 'src/entities/tickets.entity';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { TicketsService } from 'src/services/tickets.service';
 
 @UseGuards(AuthGuard)
@@ -63,13 +63,13 @@ export class TicketsController {
     return this.ticketsService.getAgentStats(userId);
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('helpdesk.workflow.config')
   @Patch('/categories')
   async updateTicketCategories(@Body() dto: UpdateTicketCategoriesDto) {
     return this.ticketsService.updateTicketCategories(dto);
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('helpdesk.tickets.access')
   @Get('/by-requester/:userId')
   async getByRequester(
     @Param('userId') userId: string,
@@ -82,17 +82,14 @@ export class TicketsController {
   }
 
   @Get('/:id/similar')
-  async getSimilar(
-    @Param('id') id: string,
-    @Query('limit') limit?: string,
-  ) {
+  async getSimilar(@Param('id') id: string, @Query('limit') limit?: string) {
     return this.ticketsService.getSimilarResolvedTickets(
       id,
       limit ? Number(limit) : 5,
     );
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('helpdesk.tickets.access')
   @Get('/by-device/:deviceId')
   async getByDevice(
     @Param('deviceId') deviceId: string,
@@ -104,7 +101,7 @@ export class TicketsController {
     );
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('helpdesk.tickets.access')
   @Post(':id/link')
   async linkTicket(
     @Param('id') id: string,
@@ -121,7 +118,7 @@ export class TicketsController {
     return this.ticketsService.getTicketById(id, userId);
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('helpdesk.tickets.access')
   @Patch(':id')
   async updateTicket(
     @Param('id') id: string,
@@ -148,7 +145,9 @@ export class TicketsController {
   }
 
   @Post('/comment/:id/:requesterId/attachment')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }))
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }),
+  )
   async createCommentWithAttachment(
     @Param('id') id: string,
     @UploadedFile() file: any,
@@ -188,7 +187,7 @@ export class TicketsController {
     return this.ticketsService.getMyApprovals(currentUserId);
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('helpdesk.tickets.access')
   @Post('/approve/:ticketId/:requesterId/:approverId')
   async createApproval(
     @Param('ticketId') ticketId: string,

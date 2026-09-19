@@ -1,13 +1,13 @@
 import { Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { SmtpSettingsService } from 'src/services/smtp-settings.service';
 import { MailService } from 'src/services/mail.service';
 import { SaveSmtpConfigDto } from 'src/dto/smtp.dto';
 
 @UseGuards(AuthGuard, MfaGuard)
-@Roles(Role.Admin)
+@RequiresPermission('admin.smtp.config')
 @Controller('smtp')
 export class SmtpController {
   constructor(
@@ -18,7 +18,16 @@ export class SmtpController {
   @Get('/config')
   async getConfig() {
     const cfg = await this.smtpSettings.getPublicConfig();
-    return cfg ?? { host: '', port: 587, secure: false, user: '', from: '', hasPass: false };
+    return (
+      cfg ?? {
+        host: '',
+        port: 587,
+        secure: false,
+        user: '',
+        from: '',
+        hasPass: false,
+      }
+    );
   }
 
   @Post('/config')
@@ -32,7 +41,10 @@ export class SmtpController {
   async deleteConfig() {
     await this.smtpSettings.deleteConfig();
     await this.mailService.reinit();
-    return { success: true, message: 'Konfiguracja SMTP usunięta — przywrócono ustawienia z .env' };
+    return {
+      success: true,
+      message: 'Konfiguracja SMTP usunięta — przywrócono ustawienia z .env',
+    };
   }
 
   @Post('/test')

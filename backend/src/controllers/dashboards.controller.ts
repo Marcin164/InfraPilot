@@ -11,9 +11,12 @@ import {
 } from '@nestjs/common';
 import { Request } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { DashboardsService } from 'src/services/dashboards.service';
-import { CreateDashboardDto, UpdateDashboardCardsDto } from 'src/dto/dashboards.dto';
+import {
+  CreateDashboardDto,
+  UpdateDashboardCardsDto,
+} from 'src/dto/dashboards.dto';
 
 @UseGuards(AuthGuard)
 @Controller('dashboards')
@@ -25,19 +28,19 @@ export class DashboardsController {
     return this.dashboardsService.findAll();
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('dashboards.edit')
   @Post()
   create(@Body() body: CreateDashboardDto) {
     return this.dashboardsService.createDashboard(body.name, body.userId);
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('dashboards.edit')
   @Delete(':id')
   delete(@Param('id') id: string) {
     return this.dashboardsService.deleteDashboard(id);
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('dashboards.edit')
   @Patch(':id')
   updateCards(@Param('id') id: string, @Body() body: UpdateDashboardCardsDto) {
     return this.dashboardsService.updateCards(id, body.cards);

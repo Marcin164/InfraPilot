@@ -32,8 +32,8 @@ import {
   deleteAdCertificate,
   type AdConfig,
 } from "../../../../Services/activeDirectory";
-import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
-import { hasRequiredRole } from "../../../../Constants/navigation";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const ActiveDirectory = () => {
   const { t } = useTranslation();
@@ -161,8 +161,8 @@ const ActiveDirectory = () => {
     if (certInputRef.current) certInputRef.current.value = "";
   };
 
-  const currentUserQuery = useCurrentUser();
-  if (!hasRequiredRole("admin", currentUserQuery.data)) return null;
+  const permissionsQuery = usePermissions();
+  if (!hasPermission("admin.activeDirectory.config", permissionsQuery.data)) return null;
 
   return (
     <div className="m-4 space-y-4">

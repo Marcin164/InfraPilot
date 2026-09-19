@@ -27,6 +27,8 @@ import {
   type OpsEventChannels,
   type OpsNotificationConfig,
 } from "../../../../Services/opsNotifications";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const TestBadge = ({
   label,
@@ -78,7 +80,8 @@ const NotificationPreferences = () => {
     queryFn: () => getUser(currentUserId),
     enabled: Boolean(currentUserId),
   });
-  const isAdmin = Boolean(currentUserQuery.data?.isAdmin);
+  const permissionsQuery = usePermissions();
+  const isAdmin = hasPermission("admin.opsAlertEmails.config", permissionsQuery.data);
   const loginEmail = currentUserQuery.data?.email ?? null;
 
   // ── Notification matrix (per-user events only) ───────────────────

@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { RetentionService } from 'src/services/retention.service';
 import {
   CreateRetentionPolicyDto,
@@ -19,7 +19,7 @@ import {
 } from 'src/dto/retention.dto';
 
 @UseGuards(AuthGuard, MfaGuard)
-@Roles(Role.Admin, Role.Compliance)
+@RequiresPermission('dpo.retentionPolicy.config')
 @Controller('retention')
 export class RetentionController {
   constructor(private readonly retentionService: RetentionService) {}
@@ -51,10 +51,7 @@ export class RetentionController {
   }
 
   @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() body: UpdateRetentionPolicyDto,
-  ) {
+  update(@Param('id') id: string, @Body() body: UpdateRetentionPolicyDto) {
     return this.retentionService.update(id, body);
   }
 

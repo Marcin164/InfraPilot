@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useAuthInfo } from "@propelauth/react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import moment from "moment";
 import { toast } from "react-toastify";
@@ -10,8 +9,9 @@ import {
   getHistoryFeed,
   exportHistoryFeedCsv,
 } from "../../../Services/histories";
-import { getUser } from "../../../Services/users";
 import type { HistoryEntry, HistoryType } from "../../../Types";
+import { usePermissions } from "../../../Hooks/usePermissions";
+import { hasPermission } from "../../../Constants/navigation";
 import HistoryFilters, {
   HistoryFiltersState,
 } from "./components/HistoryFilters";
@@ -55,18 +55,9 @@ const emptyFilters: HistoryFiltersState = {
 
 const History = () => {
   const { t } = useTranslation();
-  const authInfo: any = useAuthInfo();
-  const currentUserId = authInfo?.user?.metadata?.id;
+  const permissionsQuery = usePermissions();
 
-  const currentUserQuery = useQuery({
-    queryKey: ["current-user", currentUserId],
-    queryFn: () => getUser(currentUserId),
-    enabled: Boolean(currentUserId),
-  });
-
-  const hasAccess =
-    currentUserQuery.data?.isAdmin === true ||
-    currentUserQuery.data?.isApprover === true;
+  const hasAccess = hasPermission("helpdesk.approver", permissionsQuery.data);
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -173,7 +164,7 @@ const History = () => {
     }
   };
 
-  if (currentUserQuery.isLoading) {
+  if (permissionsQuery.isLoading) {
     return <div className="p-6 text-[#535353]">{t("history.loading")}</div>;
   }
 

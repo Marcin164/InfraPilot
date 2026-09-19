@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import {
   IpamService,
   CreateSubnetDto,
@@ -42,15 +42,18 @@ export class IpamController {
     return this.ipamService.getSubnetUtilization(id);
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('devices.connection.manage')
   @Post('subnets')
   async createSubnet(@Body() dto: CreateSubnetDto) {
     const subnet = await this.ipamService.createSubnet(dto);
-    await this.auditService.log('SUBNET', subnet.id, 'CREATED', { name: subnet.name, cidr: subnet.cidr });
+    await this.auditService.log('SUBNET', subnet.id, 'CREATED', {
+      name: subnet.name,
+      cidr: subnet.cidr,
+    });
     return subnet;
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('devices.connection.manage')
   @Patch('subnets/:id')
   async updateSubnet(@Param('id') id: string, @Body() dto: UpdateSubnetDto) {
     const subnet = await this.ipamService.updateSubnet(id, dto);
@@ -58,7 +61,7 @@ export class IpamController {
     return subnet;
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('devices.connection.manage')
   @Delete('subnets/:id')
   async removeSubnet(@Param('id') id: string) {
     await this.ipamService.removeSubnet(id);
@@ -71,7 +74,7 @@ export class IpamController {
     return this.ipamService.listAllocations(subnetId);
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('devices.connection.manage')
   @Post('allocations')
   async createAllocation(@Body() dto: CreateAllocationDto) {
     const allocation = await this.ipamService.createAllocation(dto);
@@ -82,7 +85,7 @@ export class IpamController {
     return allocation;
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('devices.connection.manage')
   @Delete('allocations/:id')
   async removeAllocation(@Param('id') id: string) {
     await this.ipamService.removeAllocation(id);

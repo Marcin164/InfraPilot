@@ -11,7 +11,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import {
   ActiveDirectoryService,
   AdConnectDto,
@@ -21,7 +21,7 @@ import { UsersService } from 'src/services/users.service';
 import { describeAdError } from 'src/helpers/adErrorMessage';
 
 @UseGuards(AuthGuard, MfaGuard)
-@Roles(Role.Admin)
+@RequiresPermission('admin.activeDirectory.config')
 @Controller('active-directory')
 export class ActiveDirectoryController {
   constructor(
@@ -69,7 +69,9 @@ export class ActiveDirectoryController {
   }
 
   @Post('/certificate')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2 * 1024 * 1024 } }))
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 2 * 1024 * 1024 } }),
+  )
   async uploadCertificate(@UploadedFile() file: any) {
     if (!file) {
       return { success: false, message: 'Nie przesłano pliku' };

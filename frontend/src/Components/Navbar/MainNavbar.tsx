@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignOut, faTimes } from "@fortawesome/free-solid-svg-icons";
 import Logo from "../../assets/Logo.png";
 import { useTranslation } from "react-i18next";
-import { useCurrentUser } from "../../Hooks/useCurrentUser";
+import { usePermissions } from "../../Hooks/usePermissions";
 
 type Props = {
   isOpen: boolean;
@@ -24,10 +24,10 @@ const MainNavbar = ({ isOpen, onClose }: Props) => {
   const authInfo: any = useAuthInfo();
   const accessToken = authInfo?.accessToken;
 
-  const currentUserQuery = useCurrentUser();
+  const permissionsQuery = usePermissions();
 
   const adminItems = navbarItems.filter((item) =>
-    canSeeItem(item, currentUserQuery.data),
+    canSeeItem(item, permissionsQuery.data),
   );
 
   return (

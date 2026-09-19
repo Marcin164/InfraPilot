@@ -45,69 +45,52 @@ import {
   faGlobe,
 } from "@fortawesome/free-solid-svg-icons";
 
-export type NavbarRequirement =
-  | "admin"
-  | "approverOrAdmin"
-  | "auditorOrAdmin"
-  | "complianceOrAdmin"
-  | "helpdeskOrAdmin"
-  | "dpoOrAdmin"
-  | "anyRole";
+// A permission requirement is one or more catalog codes (see
+// backend/src/decorators/permissions.catalog.ts) — OR semantics, same as
+// the backend's @RequiresPermission(...). No requirement = visible to any
+// authenticated user, staff or not (unchanged from the old system).
+export type PermissionRequirement = string | string[];
 
 export type NavbarItem = {
   to: string;
   label: string;
   icon: any;
-  requires?: NavbarRequirement;
+  requires?: PermissionRequirement;
 };
 
-export type RoleFlags = {
-  isAdmin?: boolean;
-  isApprover?: boolean;
-  isAuditor?: boolean;
-  isCompliance?: boolean;
-  isHelpdesk?: boolean;
-  isDpo?: boolean;
-};
+// "Staff" bucket for things that should be visible to anyone holding at
+// least one elevated permission, not a specific one — mirrors the backend's
+// own STAFF_PERMISSIONS list in helpers/isStaffUser.ts. Used for the old
+// "anyRole" requirement (e.g. "show the switch-to-admin link").
+export const STAFF_PERMISSIONS: PermissionRequirement = [
+  "helpdesk.tickets.access",
+  "audit.fullAccess",
+  "devices.complianceRules.manage",
+  "helpdesk.approver",
+  "dpo.fullAccess",
+];
 
-// Core check, usable directly on a page component (`hasRequiredRole("admin",
-// currentUser)`) without needing a full NavbarItem — pages don't have a
-// `to`/`label`/`icon` to construct one.
-export const hasRequiredRole = (
-  requires: NavbarRequirement | undefined,
-  user: RoleFlags | undefined,
+// Core check, usable directly on a page component
+// (`hasPermission("admin.locations.config", permissionsQuery.data)`)
+// without needing a full NavbarItem — pages don't have a
+// `to`/`label`/`icon` to construct one. `permissions` comes from
+// usePermissions() and is undefined only while that query hasn't
+// resolved yet (or the user isn't logged in), not for a genuinely
+// permission-less user (which resolves to an empty array).
+export const hasPermission = (
+  requires: PermissionRequirement | undefined,
+  permissions: string[] | undefined,
 ): boolean => {
   if (!requires) return true;
-  if (!user) return false;
-  if (user.isAdmin) return true;
-  switch (requires) {
-    case "admin":
-      return false;
-    case "approverOrAdmin":
-      return Boolean(user.isApprover);
-    case "auditorOrAdmin":
-      return Boolean(user.isAuditor);
-    case "complianceOrAdmin":
-      return Boolean(user.isCompliance);
-    case "helpdeskOrAdmin":
-      return Boolean(user.isHelpdesk);
-    case "dpoOrAdmin":
-      return Boolean(user.isDpo);
-    case "anyRole":
-      return Boolean(
-        user.isApprover ||
-          user.isAuditor ||
-          user.isCompliance ||
-          user.isHelpdesk ||
-          user.isDpo,
-      );
-    default:
-      return true;
-  }
+  if (!permissions) return false;
+  const required = Array.isArray(requires) ? requires : [requires];
+  return required.some((code) => permissions.includes(code));
 };
 
-export const canSeeItem = (item: NavbarItem, user: RoleFlags | undefined) =>
-  hasRequiredRole(item.requires, user);
+export const canSeeItem = (
+  item: NavbarItem,
+  permissions: string[] | undefined,
+) => hasPermission(item.requires, permissions);
 
 export const navbarItems: NavbarItem[] = [
   {
@@ -154,13 +137,13 @@ export const navbarItems: NavbarItem[] = [
     to: "/admin/licenses",
     label: "nav.licenses",
     icon: faKey,
-    requires: "helpdeskOrAdmin" as NavbarRequirement,
+    requires: "licenses.view",
   },
   {
     to: "/admin/procurement",
     label: "nav.procurement",
     icon: faShoppingCart,
-    requires: "helpdeskOrAdmin" as NavbarRequirement,
+    requires: "procurement.view",
   },
   {
     to: "/admin/helpdesk",
@@ -181,19 +164,19 @@ export const navbarItems: NavbarItem[] = [
     to: "/admin/history",
     label: "nav.history",
     icon: faHistory,
-    requires: "approverOrAdmin",
+    requires: "helpdesk.approver",
   },
   {
     to: "/admin/audit",
     label: "nav.audit",
     icon: faBookAtlas,
-    requires: "auditorOrAdmin" as NavbarRequirement,
+    requires: "audit.fullAccess",
   },
   {
     to: "/admin/privacy",
     label: "nav.privacy",
     icon: faUser,
-    requires: "dpoOrAdmin" as NavbarRequirement,
+    requires: "dpo.fullAccess",
   },
   {
     to: "/admin/settings/personal",
@@ -215,13 +198,13 @@ export const userPortalExtraItems: NavbarItem[] = [
     to: "/user/approvals",
     label: "nav.approvals",
     icon: faSquareCheck,
-    requires: "approverOrAdmin",
+    requires: "helpdesk.approver",
   },
   {
     to: "/admin/dashboards",
     label: "nav.switchToAdmin",
     icon: faGear,
-    requires: "anyRole",
+    requires: STAFF_PERMISSIONS,
   },
 ];
 
@@ -264,21 +247,21 @@ export const deviceNavbarItems = [
 
 export const settingsNavbarItems = [
   { to: "personal", label: "settings.tab.personal", icon: faAddressBook },
-  { to: "active-directory", label: "settings.tab.activeDirectory", icon: faNetworkWired, requires: "admin" as NavbarRequirement },
-  { to: "m365", label: "settings.tab.m365", icon: faCloud, requires: "admin" as NavbarRequirement },
-  { to: "licenses", label: "settings.tab.licenseSync", icon: faKey, requires: "admin" as NavbarRequirement },
+  { to: "active-directory", label: "settings.tab.activeDirectory", icon: faNetworkWired, requires: "admin.activeDirectory.config" },
+  { to: "m365", label: "settings.tab.m365", icon: faCloud, requires: "admin.o365.config" },
+  { to: "licenses", label: "settings.tab.licenseSync", icon: faKey, requires: "licenses.integrations.manage" },
   { to: "sla", label: "settings.tab.sla", icon: faCalendar },
   { to: "workflows", label: "settings.tab.workflows", icon: faBolt },
   { to: "categories", label: "settings.tab.categories", icon: faLayerGroup },
   { to: "notifications", label: "settings.tab.notifications", icon: faBell },
-  { to: "admin", label: "settings.tab.admin", icon: faShield, requires: "admin" as NavbarRequirement },
-  { to: "retention", label: "settings.tab.retention", icon: faBoxArchive, requires: "complianceOrAdmin" as NavbarRequirement },
-  { to: "tags", label: "settings.tab.tags", icon: faTag, requires: "admin" as NavbarRequirement },
-  { to: "compliance-rules", label: "settings.tab.complianceRules", icon: faShieldHalved, requires: "complianceOrAdmin" as NavbarRequirement },
-  { to: "ticket-templates", label: "settings.tab.ticketTemplates", icon: faPaste, requires: "helpdeskOrAdmin" as NavbarRequirement },
-  { to: "agent", label: "settings.tab.windowsAgent", icon: faWindowMaximize, requires: "admin" as NavbarRequirement },
-  { to: "locations", label: "settings.tab.locations", icon: faBuilding, requires: "admin" as NavbarRequirement },
-  { to: "smtp", label: "settings.tab.smtp", icon: faEnvelope, requires: "admin" as NavbarRequirement },
+  { to: "admin", label: "settings.tab.admin", icon: faShield, requires: "admin.roleAssignment.manage" },
+  { to: "retention", label: "settings.tab.retention", icon: faBoxArchive, requires: "dpo.retentionPolicy.config" },
+  { to: "tags", label: "settings.tab.tags", icon: faTag, requires: "devices.tags.manage" },
+  { to: "compliance-rules", label: "settings.tab.complianceRules", icon: faShieldHalved, requires: "devices.complianceRules.manage" },
+  { to: "ticket-templates", label: "settings.tab.ticketTemplates", icon: faPaste, requires: "helpdesk.ticketTemplates.manage" },
+  { to: "agent", label: "settings.tab.windowsAgent", icon: faWindowMaximize, requires: "devices.agentConfig.manage" },
+  { to: "locations", label: "settings.tab.locations", icon: faBuilding, requires: "admin.locations.config" },
+  { to: "smtp", label: "settings.tab.smtp", icon: faEnvelope, requires: "admin.smtp.config" },
 ];
 
 import type { ReportCategory } from "../Services/reports";

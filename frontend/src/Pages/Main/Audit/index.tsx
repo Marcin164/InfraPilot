@@ -22,8 +22,8 @@ import MainTable from "../../../Components/Tables/MainTable";
 import Input from "../../../Components/Inputs/Input";
 import SelectSecondary from "../../../Components/Inputs/SelectSecondary";
 import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
-import { useCurrentUser } from "../../../Hooks/useCurrentUser";
-import { hasRequiredRole } from "../../../Constants/navigation";
+import { usePermissions } from "../../../Hooks/usePermissions";
+import { hasPermission } from "../../../Constants/navigation";
 
 // ── Known entity types and common actions for dropdowns ──────────────────────
 
@@ -415,8 +415,8 @@ const AuditLog = () => {
 
   const hasActiveFilters = Object.values(filters).some(Boolean);
 
-  const currentUserQuery = useCurrentUser();
-  if (!hasRequiredRole("auditorOrAdmin", currentUserQuery.data)) return null;
+  const permissionsQuery = usePermissions();
+  if (!hasPermission("audit.fullAccess", permissionsQuery.data)) return null;
 
   return (
     <div className="p-6">

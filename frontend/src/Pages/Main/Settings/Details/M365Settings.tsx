@@ -32,8 +32,8 @@ import {
   syncM365Licenses,
   type SubscribedSku,
 } from "../../../../Services/m365";
-import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
-import { hasRequiredRole } from "../../../../Constants/navigation";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const SKU_NAMES: Record<string, string> = {
   ENTERPRISEPREMIUM: "Microsoft 365 E5",
@@ -133,8 +133,8 @@ const M365Settings = () => {
     );
   };
 
-  const currentUserQuery = useCurrentUser();
-  if (!hasRequiredRole("admin", currentUserQuery.data)) return null;
+  const permissionsQuery = usePermissions();
+  if (!hasPermission("admin.o365.config", permissionsQuery.data)) return null;
 
   return (
     <div className="m-4 space-y-4">

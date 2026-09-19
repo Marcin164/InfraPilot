@@ -14,7 +14,8 @@ import UserDetailsDropdown from "../../../../Components/Dropdowns/UserDetailsDro
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import PrivacyDialog from "../../../../Components/Modals/PrivacyDialog";
 import AuthLinkPanel from "./AuthLinkPanel";
-import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 type Props = { data: any };
 
@@ -22,11 +23,9 @@ const UserDetails = ({ data }: Props) => {
   const { t } = useTranslation();
   const [privacyOpen, setPrivacyOpen] = useState(false);
 
-  const currentUserQuery = useCurrentUser();
+  const permissionsQuery = usePermissions();
 
-  const canViewAsDpo = Boolean(
-    currentUserQuery.data?.isDpo || currentUserQuery.data?.isAdmin,
-  );
+  const canViewAsDpo = hasPermission("dpo.viewUserAsDpo", permissionsQuery.data);
 
   const initials =
     `${data.name?.[0] ?? ""}${data.surname?.[0] ?? ""}`.toUpperCase() || "?";
@@ -100,7 +99,7 @@ const UserDetails = ({ data }: Props) => {
         {data.company && <Parameter name={t("user.company")} value={data.company} />}
       </div>
 
-      {(currentUserQuery.data?.isAdmin || canViewAsDpo) && (
+      {canViewAsDpo && (
         <AuthLinkPanel user={data} />
       )}
     </div>

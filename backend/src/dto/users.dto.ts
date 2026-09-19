@@ -1,4 +1,13 @@
-import { IsOptional, IsString, IsInt, Min, IsBoolean, IsArray, ValidateNested, MaxLength } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  Min,
+  IsBoolean,
+  IsArray,
+  ValidateNested,
+  MaxLength,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class GetUsersDto {
@@ -20,11 +29,11 @@ export class GetUsersDto {
   @Type(() => Number) @IsInt() @Min(1) limit: number = 20;
 }
 
-// Deliberately excludes id/distinguishedName/authUserId/role flags
-// (isAdmin/isApprover/...) and Entra/AD-managed fields (entraId,
-// erasedAt, memberOf, ...) -- those aren't part of the manual "add a
-// user" form and shouldn't be settable through this endpoint even
-// though it's already Admin-gated.
+// Deliberately excludes id/distinguishedName/authUserId and Entra/AD-managed
+// fields (entraId, erasedAt, memberOf, ...) -- those aren't part of the
+// manual "add a user" form and shouldn't be settable through this endpoint
+// even though it's already Admin-gated. Role assignment happens through
+// CustomRolesService (see custom-roles endpoints), not here.
 export class CreateUserDto {
   @IsOptional() @IsString() @MaxLength(128) name?: string;
   @IsOptional() @IsString() @MaxLength(128) surname?: string;
@@ -81,11 +90,5 @@ export class UpdateUserDto {
   @IsOptional() @IsString() @MaxLength(32) postalCode?: string;
   @IsOptional() @IsString() @MaxLength(128) country?: string;
   @IsOptional() @IsString() manager?: string;
-  @IsOptional() @IsBoolean() isApprover?: boolean;
-  @IsOptional() @IsBoolean() isAdmin?: boolean;
-  @IsOptional() @IsBoolean() isAuditor?: boolean;
-  @IsOptional() @IsBoolean() isCompliance?: boolean;
-  @IsOptional() @IsBoolean() isHelpdesk?: boolean;
-  @IsOptional() @IsBoolean() isDpo?: boolean;
   @IsOptional() @IsBoolean() isVip?: boolean;
 }

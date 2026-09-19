@@ -13,8 +13,12 @@ import {
   UpdateTicketDto,
 } from 'src/dto/tickets.dto';
 import { TicketsGateway } from 'src/gateways/tickets.gateway';
-import { TicketsComments, CommentType } from 'src/entities/ticketsComments.entity';
-import { Role, userHasAnyRole } from 'src/decorators/roles.decorator';
+import {
+  TicketsComments,
+  CommentType,
+} from 'src/entities/ticketsComments.entity';
+import { isStaffUser } from 'src/helpers/isStaffUser';
+import { CustomRolesService } from './customRoles.service';
 import { TicketsApprovals } from 'src/entities/ticketsApprovals.entity';
 import { SlaEngineService } from './slaEngine.service';
 import { TicketActivity } from 'src/entities/ticketActivity.entity';
@@ -100,6 +104,7 @@ export class TicketsService {
     private readonly dispatcher: NotificationDispatcherService,
     private readonly workflows: TicketWorkflowService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly customRolesService: CustomRolesService,
   ) {
     if (!fs.existsSync(ATTACHMENT_DIR)) {
       fs.mkdirSync(ATTACHMENT_DIR, { recursive: true });
@@ -205,133 +210,133 @@ export class TicketsService {
   async updateTicket(id: string, dto: UpdateTicketDto, userId?: string) {
     const { updated, previousState, previousPriority, previousAssignee } =
       await this.ticketsRepository.manager.transaction(async (manager: any) => {
-      const ticket = await manager.findOne(Tickets, {
-        where: { id },
-        relations: ['affectedUsers', 'affectedLocations'],
-      });
-
-      if (!ticket) throw new Error('Ticket not found');
-
-      const previousState = ticket.state;
-      const previousPriority = ticket.priority;
-      const previousAssignee = ticket.assignee;
-
-      // track field changes for activity log
-      const changes: { field: string; oldValue: string; newValue: string }[] =
-        [];
-
-      for (const field of TRACKED_FIELDS) {
-        if (dto[field] !== undefined && dto[field] !== ticket[field]) {
-          changes.push({
-            field,
-            oldValue: ticket[field] ?? null,
-            newValue: dto[field],
-          });
-        }
-      }
-
-      // class-transformer (via ValidationPipe) instantiates UpdateTicketDto
-      // for every request, so with `target: ES2023` in tsconfig (class
-      // fields default to defined, not just declared) every declared field
-      // becomes an *own* property set to `undefined` even when the request
-      // body never included it. A plain `Object.assign(ticket, dto)` would
-      // copy those `undefined`s too, silently blanking out fields (e.g.
-      // `category`) that this particular PATCH never meant to touch. Only
-      // merge keys the request actually sent -- explicit `null` (e.g.
-      // reopen() clearing closureCode) is preserved, only `undefined` is
-      // filtered out.
-      const { affectedUserIds, affectedLocationIds, ...columnDto } = dto;
-      const definedUpdates = Object.fromEntries(
-        Object.entries(columnDto).filter(([, value]) => value !== undefined),
-      );
-      Object.assign(ticket, definedUpdates);
-
-      if (affectedUserIds !== undefined) {
-        ticket.affectedUsers = affectedUserIds.length
-          ? await manager.find(Users, { where: { id: In(affectedUserIds) } })
-          : [];
-      }
-
-      if (affectedLocationIds !== undefined) {
-        ticket.affectedLocations = affectedLocationIds.length
-          ? await manager.find(Location, {
-              where: { id: In(affectedLocationIds) },
-            })
-          : [];
-      }
-
-      const updated = await manager.save(ticket);
-
-      // save activity entries
-      const activityRepo = manager.getRepository(TicketActivity);
-      const savedActivities: TicketActivity[] = [];
-
-      for (const change of changes) {
-        const activity = await activityRepo.save({
-          ticketId: id,
-          userId: userId ?? null,
-          field: change.field,
-          oldValue: change.oldValue,
-          newValue: change.newValue,
+        const ticket = await manager.findOne(Tickets, {
+          where: { id },
+          relations: ['affectedUsers', 'affectedLocations'],
         });
-        savedActivities.push(activity);
 
-        await this.auditService.log(
-          'Ticket',
-          id,
-          'field_change',
-          {
+        if (!ticket) throw new Error('Ticket not found');
+
+        const previousState = ticket.state;
+        const previousPriority = ticket.priority;
+        const previousAssignee = ticket.assignee;
+
+        // track field changes for activity log
+        const changes: { field: string; oldValue: string; newValue: string }[] =
+          [];
+
+        for (const field of TRACKED_FIELDS) {
+          if (dto[field] !== undefined && dto[field] !== ticket[field]) {
+            changes.push({
+              field,
+              oldValue: ticket[field] ?? null,
+              newValue: dto[field],
+            });
+          }
+        }
+
+        // class-transformer (via ValidationPipe) instantiates UpdateTicketDto
+        // for every request, so with `target: ES2023` in tsconfig (class
+        // fields default to defined, not just declared) every declared field
+        // becomes an *own* property set to `undefined` even when the request
+        // body never included it. A plain `Object.assign(ticket, dto)` would
+        // copy those `undefined`s too, silently blanking out fields (e.g.
+        // `category`) that this particular PATCH never meant to touch. Only
+        // merge keys the request actually sent -- explicit `null` (e.g.
+        // reopen() clearing closureCode) is preserved, only `undefined` is
+        // filtered out.
+        const { affectedUserIds, affectedLocationIds, ...columnDto } = dto;
+        const definedUpdates = Object.fromEntries(
+          Object.entries(columnDto).filter(([, value]) => value !== undefined),
+        );
+        Object.assign(ticket, definedUpdates);
+
+        if (affectedUserIds !== undefined) {
+          ticket.affectedUsers = affectedUserIds.length
+            ? await manager.find(Users, { where: { id: In(affectedUserIds) } })
+            : [];
+        }
+
+        if (affectedLocationIds !== undefined) {
+          ticket.affectedLocations = affectedLocationIds.length
+            ? await manager.find(Location, {
+                where: { id: In(affectedLocationIds) },
+              })
+            : [];
+        }
+
+        const updated = await manager.save(ticket);
+
+        // save activity entries
+        const activityRepo = manager.getRepository(TicketActivity);
+        const savedActivities: TicketActivity[] = [];
+
+        for (const change of changes) {
+          const activity = await activityRepo.save({
             ticketId: id,
+            userId: userId ?? null,
             field: change.field,
             oldValue: change.oldValue,
             newValue: change.newValue,
-            actor: userId ?? null,
-            activityId: activity.id,
-          },
-          manager,
-        );
-      }
+          });
+          savedActivities.push(activity);
 
-      // Resolve assignee ids to display names before pushing over the
-      // socket -- same reason as in getTicketById(), just for the live path.
-      const assigneeIds = new Set<string>();
-      for (const a of savedActivities) {
-        if (a.field !== 'assignee') continue;
-        if (a.oldValue) assigneeIds.add(a.oldValue);
-        if (a.newValue) assigneeIds.add(a.newValue);
-      }
-      if (assigneeIds.size > 0) {
-        const assigneeUsers = await this.usersRepository.find({
-          where: { id: In(Array.from(assigneeIds)) },
-        });
-        const nameById = new Map(
-          assigneeUsers.map((u) => [u.id, u.distinguishedName]),
-        );
+          await this.auditService.log(
+            'Ticket',
+            id,
+            'field_change',
+            {
+              ticketId: id,
+              field: change.field,
+              oldValue: change.oldValue,
+              newValue: change.newValue,
+              actor: userId ?? null,
+              activityId: activity.id,
+            },
+            manager,
+          );
+        }
+
+        // Resolve assignee ids to display names before pushing over the
+        // socket -- same reason as in getTicketById(), just for the live path.
+        const assigneeIds = new Set<string>();
         for (const a of savedActivities) {
           if (a.field !== 'assignee') continue;
-          if (a.oldValue) a.oldValue = nameById.get(a.oldValue) ?? a.oldValue;
-          if (a.newValue) a.newValue = nameById.get(a.newValue) ?? a.newValue;
+          if (a.oldValue) assigneeIds.add(a.oldValue);
+          if (a.newValue) assigneeIds.add(a.newValue);
         }
-      }
+        if (assigneeIds.size > 0) {
+          const assigneeUsers = await this.usersRepository.find({
+            where: { id: In(Array.from(assigneeIds)) },
+          });
+          const nameById = new Map(
+            assigneeUsers.map((u) => [u.id, u.distinguishedName]),
+          );
+          for (const a of savedActivities) {
+            if (a.field !== 'assignee') continue;
+            if (a.oldValue) a.oldValue = nameById.get(a.oldValue) ?? a.oldValue;
+            if (a.newValue) a.newValue = nameById.get(a.newValue) ?? a.newValue;
+          }
+        }
 
-      // emit activities via websocket
-      for (const activity of savedActivities) {
-        this.ticketsGateway.emitTicketActivity(id, activity);
-      }
+        // emit activities via websocket
+        for (const activity of savedActivities) {
+          this.ticketsGateway.emitTicketActivity(id, activity);
+        }
 
-      // przekazujemy manager do SLA Engine
-      await this.slaEngine.handleStateChange(updated, previousState, manager);
+        // przekazujemy manager do SLA Engine
+        await this.slaEngine.handleStateChange(updated, previousState, manager);
 
-      if (dto.priority && dto.priority !== previousPriority) {
-        await this.slaEngine.handlePriorityChange(updated, manager);
-      }
+        if (dto.priority && dto.priority !== previousPriority) {
+          await this.slaEngine.handlePriorityChange(updated, manager);
+        }
 
-      if (dto.state === 'Resolved') {
-        await this.slaEngine.handleResolved(updated, manager);
-      }
+        if (dto.state === 'Resolved') {
+          await this.slaEngine.handleResolved(updated, manager);
+        }
 
-      return { updated, previousState, previousPriority, previousAssignee };
-    });
+        return { updated, previousState, previousPriority, previousAssignee };
+      });
 
     // Everything below reads the ticket's own connection back out of the
     // pool (audit logging, workflow steps, etc. all default to a fresh
@@ -366,7 +371,7 @@ export class TicketsService {
       // State change → notify requester (channels per preference).
       if (dto.state && dto.state !== previousState && updated.requesterId) {
         await this.dispatcher.dispatch({
-          recipientIds: [updated.requesterId as any],
+          recipientIds: [updated.requesterId],
           event: 'ticket_state_changed',
           title: `Ticket #${updated.number} status: ${dto.state}`,
           body: `Your ticket has moved from "${previousState}" to "${dto.state}".`,
@@ -411,7 +416,12 @@ export class TicketsService {
       try {
         this.eventEmitter.emit(
           EVENTS.TICKET_STATE_CHANGED,
-          new TicketStateChangedEvent(updated, previousState, dto.state, userId),
+          new TicketStateChangedEvent(
+            updated,
+            previousState,
+            dto.state,
+            userId,
+          ),
         );
       } catch (err) {
         this.logger.warn(
@@ -449,7 +459,12 @@ export class TicketsService {
     const qb = this.ticketsRepository
       .createQueryBuilder('ticket')
       .leftJoinAndSelect('ticket.requester', 'requester')
-      .leftJoinAndMapOne('ticket.assigneeUser', Users, 'assigneeUser', 'assigneeUser.id = ticket.assignee')
+      .leftJoinAndMapOne(
+        'ticket.assigneeUser',
+        Users,
+        'assigneeUser',
+        'assigneeUser.id = ticket.assignee',
+      )
       .where('ticket.requesterId IS NOT NULL');
 
     if (
@@ -458,7 +473,7 @@ export class TicketsService {
       typeof current === 'undefined'
     ) {
       // domyślnie pokazuj tylko otwarte tickety
-      const stateFilter = (filters as any).state;
+      const stateFilter = filters.state;
       const hasExplicitState =
         stateFilter && (Array.isArray(stateFilter) ? stateFilter.length : true);
       if (!hasExplicitState) {
@@ -776,14 +791,7 @@ export class TicketsService {
   private async isStaffUser(userId?: string): Promise<boolean> {
     if (!userId) return false;
     const user = await this.usersRepository.findOneBy({ id: userId });
-    return userHasAnyRole(user, [
-      Role.Admin,
-      Role.Approver,
-      Role.Auditor,
-      Role.Compliance,
-      Role.Helpdesk,
-      Role.Dpo,
-    ]);
+    return isStaffUser(user, this.customRolesService);
   }
 
   // Worknote comments should only ever be created by staff -- silently
@@ -818,7 +826,10 @@ export class TicketsService {
       .orderBy('comments.createdAt', 'ASC')
       .getOne();
 
-    if (ticket?.comments?.length && !(await this.isStaffUser(requesterUserId))) {
+    if (
+      ticket?.comments?.length &&
+      !(await this.isStaffUser(requesterUserId))
+    ) {
       ticket.comments = ticket.comments.filter(
         (c) => c.type !== CommentType.WORKNOTE,
       );
@@ -1133,7 +1144,10 @@ export class TicketsService {
       relations: ['approver'],
     });
 
-    if (updated && (dto.decision === 'approved' || dto.decision === 'rejected')) {
+    if (
+      updated &&
+      (dto.decision === 'approved' || dto.decision === 'rejected')
+    ) {
       try {
         await this.workflows.resumeAfterApproval(updated, dto.decision);
       } catch (err: any) {

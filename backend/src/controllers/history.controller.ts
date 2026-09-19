@@ -12,8 +12,7 @@ import {
 import { Request } from '@nestjs/common';
 import type { Response } from 'express';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { HistoryAccessGuard } from 'src/guards/historyAccessGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import {
   HistoriesService,
   type HistoryFeedQuery,
@@ -30,13 +29,13 @@ export class HistoriesController {
     return this.historiesService.findAll();
   }
 
-  @UseGuards(HistoryAccessGuard)
+  @RequiresPermission('audit.fullAccess', 'helpdesk.approver', 'dpo.fullAccess')
   @Get('feed')
   async findFeed(@Query() query: HistoryFeedQuery): Promise<any> {
     return this.historiesService.findFeed(query);
   }
 
-  @UseGuards(HistoryAccessGuard)
+  @RequiresPermission('audit.fullAccess', 'helpdesk.approver', 'dpo.fullAccess')
   @Get('feed/export')
   async exportFeed(
     @Query() query: HistoryFeedQuery,
@@ -48,7 +47,7 @@ export class HistoriesController {
     res.send(csv);
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('helpdesk.tickets.access')
   @Post()
   async createHistory(@Body() body: CreateHistoryDto): Promise<any> {
     return this.historiesService.createHistory(body);

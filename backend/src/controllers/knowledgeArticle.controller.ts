@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import {
   KnowledgeArticleService,
   CreateArticleDto,
@@ -46,20 +46,20 @@ export class KnowledgeArticleController {
     return this.service.findOne(id);
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('knowledge.manage')
   @Post()
   async create(@Body() dto: CreateArticleDto, @Req() req: any) {
     const userId = req?.user?.properties?.metadata?.id;
     return this.service.create(dto, userId);
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('knowledge.manage')
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateArticleDto) {
     return this.service.update(id, dto);
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('knowledge.manage')
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.service.remove(id);

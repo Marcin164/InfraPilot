@@ -1,9 +1,15 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Shift } from "src/entities/shift.entity";
-import { Users } from "src/entities/users.entity";
-import { Repository } from "typeorm";
-import { CreateShiftDto, UpdateShiftDto } from "src/dto/shift.dto";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Shift } from 'src/entities/shift.entity';
+import { Users } from 'src/entities/users.entity';
+import { Repository } from 'typeorm';
+import { CreateShiftDto, UpdateShiftDto } from 'src/dto/shift.dto';
+import { CustomRolesService } from 'src/services/customRoles.service';
 
 @Injectable()
 export class ShiftsService {
@@ -12,6 +18,7 @@ export class ShiftsService {
     private readonly repo: Repository<Shift>,
     @InjectRepository(Users)
     private readonly usersRepo: Repository<Users>,
+    private readonly customRolesService: CustomRolesService,
   ) {}
 
   async getShifts(spaceId: string, category?: string) {
@@ -33,23 +40,28 @@ export class ShiftsService {
     return query.getOne();
   }
 
-  // Only an admin, or the specific employee's manager, may create/edit/
-  // delete their shifts. "Manager" is matched against the free-text
-  // Users.manager field (currently an AD distinguished name, moving to a
-  // plain username) — checked against every identifier we have for the
-  // caller so it keeps working through that migration.
+  // Only someone with shifts.edit, or the specific employee's manager, may
+  // create/edit/delete their shifts. "Manager" is matched against the
+  // free-text Users.manager field (currently an AD distinguished name,
+  // moving to a plain username) — checked against every identifier we have
+  // for the caller so it keeps working through that migration.
   private async assertCanManage(callerId: string, targetUserId: string) {
-    const caller = await this.usersRepo.findOneBy({ id: callerId });
-    if (caller?.isAdmin) return;
+    const granted = await this.customRolesService.getUserPermissions(callerId);
+    if (granted.has('shifts.edit')) return;
 
+    const caller = await this.usersRepo.findOneBy({ id: callerId });
     const target = await this.usersRepo.findOneBy({ id: targetUserId });
     const managerRef = target?.manager;
-    const callerIdentifiers = [caller?.username, caller?.distinguishedName, caller?.id].filter(Boolean);
+    const callerIdentifiers = [
+      caller?.username,
+      caller?.distinguishedName,
+      caller?.id,
+    ].filter(Boolean);
     const isManager = !!managerRef && callerIdentifiers.includes(managerRef);
     if (isManager) return;
 
     throw new ForbiddenException(
-      'Only this employee\'s manager (or an admin) can manage their shifts',
+      "Only this employee's manager (or someone with shifts.edit) can manage their shifts",
     );
   }
 
@@ -79,9 +91,8 @@ export class ShiftsService {
     return this.repo.save(shift);
   }
 
-    async updateShifts(spaceId: string, category?: string) {
-    return this.repo.find({
-    });
+  async updateShifts(spaceId: string, category?: string) {
+    return this.repo.find({});
   }
 
   async update(id: string, dto: UpdateShiftDto, callerId: string) {
@@ -90,11 +101,18 @@ export class ShiftsService {
 
     await this.assertCanManage(callerId, shift.userId);
 
-    const startDate = dto.startDate !== undefined ? new Date(dto.startDate) : shift.startDate;
-    const endDate = dto.endDate !== undefined ? new Date(dto.endDate) : shift.endDate;
+    const startDate =
+      dto.startDate !== undefined ? new Date(dto.startDate) : shift.startDate;
+    const endDate =
+      dto.endDate !== undefined ? new Date(dto.endDate) : shift.endDate;
 
     if (dto.startDate !== undefined || dto.endDate !== undefined) {
-      const overlapping = await this.findOverlapping(shift.userId, startDate, endDate, id);
+      const overlapping = await this.findOverlapping(
+        shift.userId,
+        startDate,
+        endDate,
+        id,
+      );
       if (overlapping) {
         throw new BadRequestException(
           'Shift dates overlap with an existing shift for this user',

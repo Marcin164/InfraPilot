@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { ReportsService } from 'src/services/reports.service';
 import { BatchReportsDto } from 'src/dto/reports.dto';
 
@@ -19,7 +19,7 @@ import { BatchReportsDto } from 'src/dto/reports.dto';
 export class ReportsController {
   constructor(private reportsService: ReportsService) {}
 
-  @Roles(Role.Admin, Role.Auditor, Role.Compliance)
+  @RequiresPermission('audit.fullAccess', 'devices.complianceRules.manage')
   @Get('list')
   list() {
     return this.reportsService.list();
@@ -29,20 +29,27 @@ export class ReportsController {
   // powers the Dashboards page, which itself has no role gate (see
   // navigation.ts) -- Reports' other actions (browsing, CSV/PDF export)
   // stay Admin/Auditor/Compliance-only.
-  @Roles(Role.Admin, Role.Auditor, Role.Compliance, Role.Helpdesk)
+  @RequiresPermission(
+    'audit.fullAccess',
+    'devices.complianceRules.manage',
+    'helpdesk.tickets.access',
+  )
   @Post('batch')
   async batch(@Body() body: BatchReportsDto) {
     return this.reportsService.generateBatch(body.types);
   }
 
-  @Roles(Role.Admin, Role.Compliance, Role.Auditor)
+  @RequiresPermission('audit.fullAccess', 'devices.complianceRules.manage')
   @Get('export')
   async export(@Query() query, @Req() req: any, @Res() res: Response) {
     const { type, format, ...filters } = query;
     const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id;
     if (format === 'pdf') {
-      const { filename, buffer, sha256 } =
-        await this.reportsService.exportPdf(type, filters, actor);
+      const { filename, buffer, sha256 } = await this.reportsService.exportPdf(
+        type,
+        filters,
+        actor,
+      );
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader(
         'Content-Disposition',
@@ -52,13 +59,16 @@ export class ReportsController {
       res.send(buffer);
       return;
     }
-    const { filename, csv } = await this.reportsService.exportCsv(type, filters);
+    const { filename, csv } = await this.reportsService.exportCsv(
+      type,
+      filters,
+    );
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(csv);
   }
 
-  @Roles(Role.Admin, Role.Auditor, Role.Compliance)
+  @RequiresPermission('audit.fullAccess', 'devices.complianceRules.manage')
   @Get()
   async generateReport(@Query() query) {
     const { type, ...filters } = query;

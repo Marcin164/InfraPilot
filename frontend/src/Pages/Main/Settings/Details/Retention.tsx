@@ -33,8 +33,8 @@ import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import Checkbox from "../../../../Components/Inputs/Checkbox";
 import MainTable from "../../../../Components/Tables/MainTable";
 import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
-import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
-import { hasRequiredRole } from "../../../../Constants/navigation";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const ACTIONS: RetentionAction[] = ["purge", "archive"];
 
@@ -437,8 +437,8 @@ const EvidencePackSection = () => {
 };
 
 const Retention = () => {
-  const currentUserQuery = useCurrentUser();
-  if (!hasRequiredRole("complianceOrAdmin", currentUserQuery.data)) return null;
+  const permissionsQuery = usePermissions();
+  if (!hasPermission("dpo.retentionPolicy.config", permissionsQuery.data)) return null;
 
   return (
     <div className="space-y-4 m-4">

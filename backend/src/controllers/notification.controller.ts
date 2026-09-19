@@ -8,18 +8,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { NotificationService } from 'src/services/notification.service';
 import { MarkNotificationsReadDto } from 'src/dto/notification.dto';
 
 @UseGuards(AuthGuard)
-@Roles(
-  Role.Admin,
-  Role.Helpdesk,
-  Role.Auditor,
-  Role.Compliance,
-  Role.Approver,
-  Role.Dpo,
+@RequiresPermission(
+  'helpdesk.tickets.access',
+  'audit.fullAccess',
+  'devices.complianceRules.manage',
+  'helpdesk.approver',
+  'dpo.fullAccess',
 )
 @Controller('notifications')
 export class NotificationController {
@@ -49,7 +48,10 @@ export class NotificationController {
 
   @Post('read')
   async markRead(@Req() req: any, @Body() body: MarkNotificationsReadDto) {
-    const affected = await this.service.markRead(this.actorOf(req), body.ids ?? []);
+    const affected = await this.service.markRead(
+      this.actorOf(req),
+      body.ids ?? [],
+    );
     return { affected };
   }
 

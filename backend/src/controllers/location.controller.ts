@@ -14,8 +14,12 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
-import { LocationService, CreateLocationDto, UpdateLocationDto } from 'src/services/location.service';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
+import {
+  LocationService,
+  CreateLocationDto,
+  UpdateLocationDto,
+} from 'src/services/location.service';
 import { AuditService } from 'src/services/audit.service';
 
 @UseGuards(AuthGuard)
@@ -41,15 +45,17 @@ export class LocationController {
     return this.locationService.findOne(id);
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('admin.locations.config')
   @Post()
   async create(@Body() dto: CreateLocationDto) {
     const loc = await this.locationService.create(dto);
-    await this.auditService.log('LOCATION', loc.id, 'CREATED', { name: loc.name });
+    await this.auditService.log('LOCATION', loc.id, 'CREATED', {
+      name: loc.name,
+    });
     return loc;
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('admin.locations.config')
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateLocationDto) {
     const loc = await this.locationService.update(id, dto);
@@ -57,9 +63,11 @@ export class LocationController {
     return loc;
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('admin.locations.config')
   @Post(':id/plan')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
+  )
   async uploadPlan(@Param('id') id: string, @UploadedFile() file: any) {
     const loc = await this.locationService.uploadPlan(id, file);
     await this.auditService.log('LOCATION', id, 'PLAN_UPDATED', {});
@@ -74,7 +82,10 @@ export class LocationController {
   @Get(':id/plan')
   async downloadPlan(@Param('id') id: string, @Res() res: Response) {
     const { location, stream } = await this.locationService.getPlanStream(id);
-    res.setHeader('Content-Type', location.planMimetype || 'application/octet-stream');
+    res.setHeader(
+      'Content-Type',
+      location.planMimetype || 'application/octet-stream',
+    );
     res.setHeader(
       'Content-Disposition',
       `inline; filename="${encodeURIComponent(location.planOriginalName ?? 'plan')}"`,
@@ -82,7 +93,7 @@ export class LocationController {
     stream.pipe(res);
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('admin.locations.config')
   @Delete(':id')
   async remove(@Param('id') id: string) {
     await this.locationService.remove(id);

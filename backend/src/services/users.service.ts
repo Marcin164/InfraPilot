@@ -5,26 +5,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { ILike, In, Repository } from 'typeorm';
 import { Users } from 'src/entities/users.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
 import {
   createUser as createPropelAuthUser,
   fetchUserMetadataByEmail,
   fetchUserMetadataByUserId,
-  logoutAllUserSessions,
   updateUserMetadata,
 } from 'src/helpers/propelAuthClient';
 import { randomBytes } from 'crypto';
-
-const ROLE_FIELDS = [
-  'isAdmin',
-  'isApprover',
-  'isAuditor',
-  'isCompliance',
-  'isHelpdesk',
-  'isDpo',
-] as const;
+import { CustomRolesService } from 'src/services/customRoles.service';
 
 @Injectable()
 export class UsersService {
@@ -33,6 +24,7 @@ export class UsersService {
   constructor(
     @InjectRepository(Users)
     private usersRepository: Repository<Users>,
+    private readonly customRolesService: CustomRolesService,
   ) {}
 
   async findAll(): Promise<Users[]> {
@@ -91,13 +83,16 @@ export class UsersService {
           ? await this.usersRepository.findOneBy({ email: row.email })
           : null;
         if (existing) {
-          errors.push(`Row ${i + 1}: user with email ${row.email} already exists — skipped`);
+          errors.push(
+            `Row ${i + 1}: user with email ${row.email} already exists — skipped`,
+          );
           skipped++;
           continue;
         }
         await this.usersRepository.insert({
           id: uuidv4(),
-          distinguishedName: [row.name, row.surname].filter(Boolean).join(' ') || row.email,
+          distinguishedName:
+            [row.name, row.surname].filter(Boolean).join(' ') || row.email,
           name: row.name ?? null,
           surname: row.surname ?? null,
           email: row.email ?? null,
@@ -126,26 +121,7 @@ export class UsersService {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    const saved = await this.usersRepository.save(user);
-
-    const roleChanged = ROLE_FIELDS.some(
-      (f) => Boolean(existing[f]) !== Boolean(saved[f]),
-    );
-
-    if (roleChanged && existing.authUserId) {
-      try {
-        await logoutAllUserSessions(existing.authUserId);
-        this.logger.log(
-          `Forced logout of all sessions for user ${id} (authUserId=${existing.authUserId}) after role change`,
-        );
-      } catch (err) {
-        this.logger.warn(
-          `Failed to logout sessions for user ${id}: ${(err as Error).message}`,
-        );
-      }
-    }
-
-    return saved;
+    return this.usersRepository.save(user);
   }
 
   async delete(id: string): Promise<any> {
@@ -205,7 +181,8 @@ export class UsersService {
       // AD has no distinguishedName yet, so without this fallback AD sync
       // would create a duplicate row instead of enriching the existing one.
       const where: Record<string, any>[] = [];
-      if (user.distinguishedName) where.push({ distinguishedName: user.distinguishedName });
+      if (user.distinguishedName)
+        where.push({ distinguishedName: user.distinguishedName });
       if (user.email) where.push({ email: ILike(user.email) });
 
       const existing = where.length
@@ -325,12 +302,6 @@ export class UsersService {
         'users.streetAddress AS street',
         'users.postalCode AS postalCode',
         'users.manager AS manager',
-        'users.isAdmin AS "isAdmin"',
-        'users.isApprover AS "isApprover"',
-        'users.isAuditor AS "isAuditor"',
-        'users.isCompliance AS "isCompliance"',
-        'users.isHelpdesk AS "isHelpdesk"',
-        'users.isDpo AS "isDpo"',
         'users.entraMfaEnabled AS "entraMfaEnabled"',
       ])
       .groupBy('users.id')
@@ -347,12 +318,6 @@ export class UsersService {
       .addGroupBy('users.streetAddress')
       .addGroupBy('users.postalCode')
       .addGroupBy('users.manager')
-      .addGroupBy('users.isAdmin')
-      .addGroupBy('users.isApprover')
-      .addGroupBy('users.isAuditor')
-      .addGroupBy('users.isCompliance')
-      .addGroupBy('users.isHelpdesk')
-      .addGroupBy('users.isDpo')
       .addGroupBy('users.entraMfaEnabled')
       .orderBy('users.surname', 'ASC')
       .offset((page - 1) * limit)
@@ -424,13 +389,19 @@ export class UsersService {
   }
 
   async findApprovers(): Promise<any> {
-    const approvers = await this.usersRepository.findBy({ isApprover: true });
-    return approvers;
+    const ids = await this.customRolesService.findUserIdsWithAnyPermission([
+      'helpdesk.approver',
+    ]);
+    if (!ids.length) return [];
+    return this.usersRepository.findBy({ id: In(ids) });
   }
 
   async findHelpdesk(): Promise<any> {
-    const helpdesk = await this.usersRepository.findBy({ isHelpdesk: true });
-    return helpdesk;
+    const ids = await this.customRolesService.findUserIdsWithAnyPermission([
+      'helpdesk.tickets.access',
+    ]);
+    if (!ids.length) return [];
+    return this.usersRepository.findBy({ id: In(ids) });
   }
 
   // ─── PropelAuth linking ──────────────────────────────────────────────
@@ -561,10 +532,10 @@ export class UsersService {
 
   /**
    * Pushes the app's local user id into PropelAuth's `properties.metadata.id`
-   * so RolesGuard/AdminGuard/HistoryAccessGuard can resolve the local user
-   * straight from the token (their first lookup) instead of falling back to
-   * an authUserId or email match. Best-effort — auth already works via those
-   * fallbacks without this, so a failure here is logged, not thrown.
+   * so PermissionsGuard can resolve the local user straight from the token
+   * (its first lookup) instead of falling back to an authUserId or email
+   * match. Best-effort — auth already works via those fallbacks without
+   * this, so a failure here is logged, not thrown.
    */
   private async syncAuthMetadataId(
     localId: string,

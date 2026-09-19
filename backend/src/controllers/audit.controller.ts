@@ -3,7 +3,7 @@ import type { Response } from 'express';
 
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { AuditService } from 'src/services/audit.service';
 import { AuditSinksService } from 'src/services/auditSinks/orchestrator.service';
 
@@ -13,7 +13,7 @@ const csvCell = (value: unknown): string => {
 };
 
 @UseGuards(AuthGuard, MfaGuard)
-@Roles(Role.Admin, Role.Auditor)
+@RequiresPermission('audit.fullAccess')
 @Controller('audit')
 export class AuditController {
   constructor(

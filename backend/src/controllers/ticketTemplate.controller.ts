@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import {
   TicketTemplateService,
   CreateTicketTemplateDto,
@@ -21,7 +21,7 @@ const actorOf = (req: any): string =>
   req?.user?.properties?.metadata?.id ?? req?.user?.id ?? 'unknown';
 
 @UseGuards(AuthGuard)
-@Roles(Role.Admin, Role.Helpdesk, Role.Auditor)
+@RequiresPermission('helpdesk.ticketTemplates.manage', 'audit.fullAccess')
 @Controller('ticket-templates')
 export class TicketTemplateController {
   constructor(private readonly service: TicketTemplateService) {}
@@ -31,22 +31,23 @@ export class TicketTemplateController {
     return this.service.listForUser(actorOf(req));
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('helpdesk.ticketTemplates.manage')
   @Post()
-  create(
-    @Body() body: CreateTicketTemplateDto,
-    @Req() req: any,
-  ) {
+  create(@Body() body: CreateTicketTemplateDto, @Req() req: any) {
     return this.service.create(body, actorOf(req));
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('helpdesk.ticketTemplates.manage')
   @Patch(':id')
-  update(@Param('id') id: string, @Body() patch: UpdateTicketTemplateDto, @Req() req: any) {
+  update(
+    @Param('id') id: string,
+    @Body() patch: UpdateTicketTemplateDto,
+    @Req() req: any,
+  ) {
     return this.service.update(id, patch, actorOf(req));
   }
 
-  @Roles(Role.Admin, Role.Helpdesk)
+  @RequiresPermission('helpdesk.ticketTemplates.manage')
   @Delete(':id')
   async remove(@Param('id') id: string, @Req() req: any) {
     await this.service.remove(id, actorOf(req));

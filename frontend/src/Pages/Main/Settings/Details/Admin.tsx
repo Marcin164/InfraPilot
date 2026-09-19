@@ -2,14 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { twMerge } from "tailwind-merge";
 import {
   faPlus,
   faTrash,
   faUsers,
   faPen,
-  faXmark,
   faCheck,
-  faUserShield,
 } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
 
@@ -22,22 +21,18 @@ import {
   setAssignmentGroupMembers,
   updateAssignmentGroup,
 } from "../../../../Services/assignmentGroups";
-import { getUsers, getUsersTable, updateUser } from "../../../../Services/users";
-import { ROLE_DEFS } from "../../../../Constants/roles";
-import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
-import { hasRequiredRole } from "../../../../Constants/navigation";
+import { getUsers } from "../../../../Services/users";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
-import Checkbox from "../../../../Components/Inputs/Checkbox";
-import Search from "../../../../Components/Inputs/Search";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
-import MainTable from "../../../../Components/Tables/MainTable";
 import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
+import Modal from "../../../../Components/Modals/AnimatedModal";
 import ColorPicker from "../../../../Components/Inputs/ColorPicker";
-import { buildQuery } from "../../../../Helpers/queries";
-import { useDebounce } from "../../../../Hooks/useDebounce";
 import type { LastLogonThreshold, User } from "../../../../Types";
+import CustomRoles from "./CustomRoles";
 
 const DEFAULT_THRESHOLDS: LastLogonThreshold[] = [
   { maxDays: 7, color: "#30A712", label: "Recent" },
@@ -222,21 +217,188 @@ const LastLogonSection = () => {
 
 /* ───────────────── Assignment Groups Section ────────────────── */
 
-const AssignmentGroupsSection = () => {
+type AssignmentGroupModalTarget = "create" | AssignmentGroup | null;
+
+const AssignmentGroupModal = ({
+  target,
+  userOptions,
+  onClose,
+}: {
+  target: AssignmentGroupModalTarget;
+  userOptions: { value: string; label: string }[];
+  onClose: () => void;
+}) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const editingGroup = target === "create" || target === null ? null : target;
 
-  const [newName, setNewName] = useState("");
-  const [newDescription, setNewDescription] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
-  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
+  const [name, setName] = useState(editingGroup?.name ?? "");
+  const [description, setDescription] = useState(editingGroup?.description ?? "");
+  const [memberIds, setMemberIds] = useState<string[]>(
+    (editingGroup?.members ?? []).map((m) => m.id),
+  );
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const currentUserQuery = useCurrentUser();
+  // Reset the draft only when the target group identity changes (not on
+  // every field), so a background refetch mid-edit doesn't clobber unsaved
+  // input -- same reasoning as CustomRoleModal.
+  useEffect(() => {
+    setName(editingGroup?.name ?? "");
+    setDescription(editingGroup?.description ?? "");
+    setMemberIds((editingGroup?.members ?? []).map((m) => m.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingGroup?.id]);
 
-  const isAdmin = Boolean(currentUserQuery.data?.isAdmin);
+  const invalidateGroups = () =>
+    queryClient.invalidateQueries({ queryKey: ["assignment-groups"] });
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const group = await createAssignmentGroup({
+        name: name.trim(),
+        description: description.trim() || undefined,
+      });
+      if (memberIds.length) await setAssignmentGroupMembers(group.id, memberIds);
+      return group;
+    },
+    onSuccess: () => {
+      toast.success(t("toast.success.assignmentGroupCreated"));
+      invalidateGroups();
+      onClose();
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? t("settings.admin.groups.createGroupFailed")),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      await updateAssignmentGroup(editingGroup!.id, {
+        name: name.trim(),
+        description: description.trim() || undefined,
+      });
+      await setAssignmentGroupMembers(editingGroup!.id, memberIds);
+    },
+    onSuccess: () => {
+      toast.success(t("toast.success.groupUpdated"));
+      invalidateGroups();
+      onClose();
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? t("settings.admin.groups.updateGroupFailed")),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteAssignmentGroup(editingGroup!.id),
+    onSuccess: () => {
+      toast.success(t("toast.success.groupDeleted"));
+      invalidateGroups();
+      onClose();
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? t("settings.admin.groups.deleteGroupFailed")),
+  });
+
+  const handleSave = () => {
+    if (!name.trim()) {
+      toast.error(t("toast.error.nameRequired"));
+      return;
+    }
+    if (editingGroup) updateMutation.mutate();
+    else createMutation.mutate();
+  };
+
+  const isSaving = createMutation.isPending || updateMutation.isPending;
+  const selectedMembers = userOptions.filter((o) => memberIds.includes(o.value));
+
+  return (
+    <>
+      <Modal
+        classNames={{ modal: "w-[620px] max-w-full max-h-[85vh] overflow-y-auto rounded-[10px]" }}
+        open={target !== null}
+        onClose={onClose}
+        center
+      >
+        <CardHeader
+          text={
+            editingGroup
+              ? t("settings.assignmentGroups.editTitle", { name: editingGroup.name })
+              : t("settings.assignmentGroups.create")
+          }
+          icon={faUsers}
+        />
+
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Input label="Name" value={name} onChange={(e: any) => setName(e.target.value)} />
+          <Input
+            label="Description"
+            value={description}
+            onChange={(e: any) => setDescription(e.target.value)}
+          />
+        </div>
+
+        <div className="mt-3">
+          <SelectSecondary
+            label="Members"
+            options={userOptions}
+            value={selectedMembers}
+            isMulti
+            isClearable={false}
+            onSelect={(opts: any) => setMemberIds((opts ?? []).map((o: any) => o.value))}
+          />
+        </div>
+
+        <div className="mt-5 flex items-center justify-between">
+          <div>
+            {editingGroup && (
+              <ButtonPrimary
+                icon={faTrash}
+                text={t("common.delete")}
+                onClick={() => setConfirmDelete(true)}
+                disabled={deleteMutation.isPending}
+                color="red"
+              />
+            )}
+          </div>
+          <div className="flex gap-2">
+            <ButtonPrimary text={t("common.cancel")} onClick={onClose} color="white" />
+            <ButtonPrimary
+              icon={faCheck}
+              text={t("common.save")}
+              onClick={handleSave}
+              disabled={isSaving}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      <ConfirmationModal
+        isModalOpen={confirmDelete}
+        handleOnClose={() => setConfirmDelete(false)}
+        onCancel={() => setConfirmDelete(false)}
+        onDelete={() => {
+          setConfirmDelete(false);
+          deleteMutation.mutate();
+        }}
+        message={
+          editingGroup
+            ? t("settings.admin.groups.deleteConfirm", { name: editingGroup.name })
+            : undefined
+        }
+      />
+    </>
+  );
+};
+
+const AssignmentGroupsSection = () => {
+  const { t } = useTranslation();
+  const [modalTarget, setModalTarget] = useState<AssignmentGroupModalTarget>(null);
+
+  const permissionsQuery = usePermissions();
+
+  const canManageGroups = hasPermission(
+    "helpdesk.assignmentGroups.manage",
+    permissionsQuery.data,
+  );
 
   const groupsQuery = useQuery({
     queryKey: ["assignment-groups"],
@@ -257,92 +419,7 @@ const AssignmentGroupsSection = () => {
     [usersQuery.data],
   );
 
-  const invalidateGroups = () =>
-    queryClient.invalidateQueries({ queryKey: ["assignment-groups"] });
-
-  const createMutation = useMutation({
-    mutationFn: () =>
-      createAssignmentGroup({
-        name: newName.trim(),
-        description: newDescription.trim() || undefined,
-      }),
-    onSuccess: () => {
-      toast.success(t("toast.success.assignmentGroupCreated"));
-      setNewName("");
-      setNewDescription("");
-      invalidateGroups();
-    },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? t("settings.admin.groups.createGroupFailed")),
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, name, description }: { id: string; name?: string; description?: string }) =>
-      updateAssignmentGroup(id, { name, description }),
-    onSuccess: () => {
-      toast.success(t("toast.success.groupUpdated"));
-      setEditingId(null);
-      invalidateGroups();
-    },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? t("settings.admin.groups.updateGroupFailed")),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteAssignmentGroup(id),
-    onSuccess: () => {
-      toast.success(t("toast.success.groupDeleted"));
-      invalidateGroups();
-    },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? t("settings.admin.groups.deleteGroupFailed")),
-  });
-
-  const setMembersMutation = useMutation({
-    mutationFn: ({ id, userIds }: { id: string; userIds: string[] }) =>
-      setAssignmentGroupMembers(id, userIds),
-    onSuccess: () => {
-      toast.success(t("toast.success.membersUpdated"));
-      invalidateGroups();
-    },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? t("settings.admin.groups.updateMembersFailed")),
-  });
-
-  const startEdit = (group: AssignmentGroup) => {
-    setEditingId(group.id);
-    setEditName(group.name);
-    setEditDescription(group.description ?? "");
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditName("");
-    setEditDescription("");
-  };
-
-  const handleCreate = () => {
-    if (!newName.trim()) {
-      toast.error(t("toast.error.nameRequired"));
-      return;
-    }
-    createMutation.mutate();
-  };
-
-  const handleSaveEdit = (id: string) => {
-    if (!editName.trim()) {
-      toast.error(t("toast.error.nameRequired"));
-      return;
-    }
-    updateMutation.mutate({ id, name: editName.trim(), description: editDescription.trim() || undefined });
-  };
-
-  const handleMembersChange = (groupId: string, options: any) => {
-    const userIds = (options ?? []).map((o: any) => o.value);
-    setMembersMutation.mutate({ id: groupId, userIds });
-  };
-
-  if (currentUserQuery.isLoading || groupsQuery.isLoading) {
+  if (permissionsQuery.isLoading || groupsQuery.isLoading) {
     return (
       <div className="bg-white shadow-xl rounded-[10px] p-4">{t("common.loading2")}</div>
     );
@@ -350,289 +427,89 @@ const AssignmentGroupsSection = () => {
 
   return (
     <>
-      {isAdmin && (
-        <div className="bg-white shadow-xl rounded-[10px] p-4">
-          <CardHeader text={t("settings.assignmentGroups.create")} icon={faPlus} />
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="Name" value={newName} onChange={(e: any) => setNewName(e.target.value)} />
-            <Input
-              label="Description"
-              value={newDescription}
-              onChange={(e: any) => setNewDescription(e.target.value)}
-            />
-          </div>
-          <div className="mt-4">
-            <ButtonPrimary icon={faPlus} text={t("common.create")} onClick={handleCreate} disabled={createMutation.isPending} />
-          </div>
-        </div>
-      )}
-
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text={t("settings.assignmentGroups.title")} icon={faUsers} />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <CardHeader text={t("settings.assignmentGroups.title")} icon={faUsers} />
+          {canManageGroups && (
+            <ButtonPrimary
+              icon={faPlus}
+              text={t("settings.assignmentGroups.create")}
+              onClick={() => setModalTarget("create")}
+            />
+          )}
+        </div>
 
-        {!isAdmin && (
+        {!canManageGroups && (
           <p className="text-[14px] text-[#7a7a7a] mt-2">
             Read-only view. Only administrators can manage assignment groups.
           </p>
         )}
 
-        <div className="mt-4 space-y-4 max-h-[600px] overflow-y-auto pr-1">
+        <div className="mt-4 space-y-3 max-h-[600px] overflow-y-auto pr-1">
           {(groupsQuery.data ?? []).length === 0 && (
             <div className="text-[14px] text-[#7a7a7a]">No assignment groups yet.</div>
           )}
 
-          {(groupsQuery.data ?? []).map((group) => {
-            const memberValues = (group.members ?? []).map((m) => ({
-              value: m.id,
-              label: `${m.name} ${m.surname}${m.email ? ` (${m.email})` : ""}`,
-            }));
-            const isEditing = editingId === group.id;
-
-            return (
-              <div key={group.id} className="border border-[#E6E6E6] rounded-[10px] p-4">
-                <div className="flex flex-wrap items-start gap-3">
-                  <div className="flex-1 min-w-[140px]">
-                    {isEditing ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input label="Name" value={editName} onChange={(e: any) => setEditName(e.target.value)} />
-                        <Input
-                          label="Description"
-                          value={editDescription}
-                          onChange={(e: any) => setEditDescription(e.target.value)}
-                        />
-                      </div>
-                    ) : (
-                      <>
-                        <div className="text-[18px] font-semibold text-[#3C3C3C]">{group.name}</div>
-                        {group.description && (
-                          <div className="text-[14px] text-[#7a7a7a]">{group.description}</div>
-                        )}
-                        <div className="text-[12px] text-[#9a9a9a] mt-1">
-                          {(group.members ?? []).length} member
-                          {(group.members ?? []).length === 1 ? "" : "s"}
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {isAdmin && (
-                    <div className="flex gap-2 shrink-0">
-                      {isEditing ? (
-                        <>
-                          <ButtonPrimary
-                            icon={faCheck}
-                            text={t("common.save")}
-                            onClick={() => handleSaveEdit(group.id)}
-                            disabled={updateMutation.isPending}
-                          />
-                          <ButtonPrimary icon={faXmark} text={t("common.cancel")} onClick={cancelEdit} />
-                        </>
-                      ) : (
-                        <>
-                          <ButtonPrimary icon={faPen} text={t("common.edit")} onClick={() => startEdit(group)} />
-                          <ButtonPrimary
-                            icon={faTrash}
-                            text={t("common.delete")}
-                            onClick={() => askConfirm(() => deleteMutation.mutate(group.id), t("settings.admin.groups.deleteConfirm", { name: group.name }))}
-                          />
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-4">
-                  {isAdmin ? (
-                    <SelectSecondary
-                      label="Members"
-                      options={userOptions}
-                      value={memberValues}
-                      isMulti
-                      isClearable={false}
-                      onSelect={(opts: any) => handleMembersChange(group.id, opts)}
-                    />
-                  ) : (
-                    <div>
-                      <div className="font-bold text-[#3C3C3C] mb-1">Members</div>
-                      <div className="flex flex-wrap gap-2">
-                        {(group.members ?? []).length === 0 && (
-                          <span className="text-[14px] text-[#9a9a9a]">No members</span>
-                        )}
-                        {(group.members ?? []).map((m) => (
-                          <span
-                            key={m.id}
-                            className="inline-flex items-center gap-1 bg-[#F0F7FE] text-[#2B9AE9] text-[13px] font-medium rounded-full px-3 py-1"
-                          >
-                            <FontAwesomeIcon icon={faUsers} />
-                            {m.name} {m.surname}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+          {(groupsQuery.data ?? []).map((group) => (
+            <div
+              key={group.id}
+              className={twMerge(
+                "border border-[#E6E6E6] rounded-[10px] p-4",
+                canManageGroups && "cursor-pointer hover:border-[#2B9AE9]",
+              )}
+              onClick={canManageGroups ? () => setModalTarget(group) : undefined}
+            >
+              <div className="text-[16px] font-semibold text-[#3C3C3C] flex items-center gap-1.5">
+                {group.name}
+                {canManageGroups && (
+                  <FontAwesomeIcon icon={faPen} className="text-[10px] opacity-60" />
+                )}
               </div>
-            );
-          })}
+              {group.description && (
+                <div className="text-[14px] text-[#7a7a7a]">{group.description}</div>
+              )}
+
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(group.members ?? []).length === 0 && (
+                  <span className="text-[13px] text-[#9a9a9a]">No members</span>
+                )}
+                {(group.members ?? []).map((m) => (
+                  <span
+                    key={m.id}
+                    className="inline-flex items-center gap-1 bg-[#F0F7FE] text-[#2B9AE9] text-[13px] font-medium rounded-full px-3 py-1"
+                  >
+                    <FontAwesomeIcon icon={faUsers} />
+                    {m.name} {m.surname}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-      <ConfirmationModal
-        isModalOpen={confirmState.open}
-        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
-        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
-        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
-        message={confirmState.message}
-      />
+
+      {modalTarget !== null && (
+        <AssignmentGroupModal
+          key={modalTarget === "create" ? "create" : modalTarget.id}
+          target={modalTarget}
+          userOptions={userOptions}
+          onClose={() => setModalTarget(null)}
+        />
+      )}
     </>
-  );
-};
-
-/* ─────────────────────── Roles Section ──────────────────────── */
-
-const RolesSection = () => {
-  const { t } = useTranslation();
-  const queryClient = useQueryClient();
-  const [searchValue, setSearchValue] = useState("");
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(15);
-  const debouncedSearch = useDebounce(searchValue, 400);
-  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
-  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
-
-  const currentUserQuery = useCurrentUser();
-
-  const isAdmin = Boolean(currentUserQuery.data?.isAdmin);
-
-  const queryString = buildQuery({
-    search: debouncedSearch,
-    page,
-    limit,
-  });
-
-  const usersQuery = useQuery({
-    queryKey: ["users-roles-table", debouncedSearch, page, limit],
-    queryFn: () => getUsersTable(queryString),
-    enabled: isAdmin,
-    placeholderData: (prev) => prev,
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, patch }: { id: string; patch: Partial<User> }) =>
-      updateUser(patch, id),
-    onSuccess: () => {
-      toast.success(t("toast.success.rolesUpdated"));
-      queryClient.invalidateQueries({ queryKey: ["users-roles-table"] });
-      queryClient.invalidateQueries({ queryKey: ["current-user"] });
-    },
-    onError: (err: any) => {
-      const data = err?.response?.data;
-      toast.error(data?.message ?? t("settings.admin.roles.updateFailed"));
-    },
-  });
-
-  if (!isAdmin) return null;
-
-  const userColumn = {
-    id: "user",
-    name: t("settings.admin.roles.user"),
-    cell: (row: any) => (
-      <div className="py-1">
-        <div className="font-bold text-[#3C3C3C]">
-          {row.name} {row.surname}
-        </div>
-        <div className="text-[12px] text-[#9a9a9a]">{row.email ?? row.username}</div>
-      </div>
-    ),
-    grow: 2,
-  };
-
-  const roleColumns = ROLE_DEFS.map((r) => ({
-    id: r.key,
-    name: t(r.labelKey),
-    center: true,
-    width: "110px",
-    cell: (row: any) => (
-      <Checkbox
-        id={`role-${r.key}-${row.id}`}
-        checked={Boolean(row[r.key])}
-        disabled={updateMutation.isPending}
-        color={r.color}
-        onClick={(e) => e.stopPropagation()}
-        handleChange={(checked: boolean) =>
-          askConfirm(
-            () =>
-              updateMutation.mutate({
-                id: row.id,
-                patch: { [r.key]: checked } as Partial<User>,
-              }),
-            t(
-              checked
-                ? "settings.admin.roles.confirmGrant"
-                : "settings.admin.roles.confirmRevoke",
-              { role: t(r.labelKey), user: `${row.name} ${row.surname}` },
-            ),
-          )
-        }
-      />
-    ),
-  }));
-
-  return (
-    <div className="bg-white shadow-xl rounded-[10px] p-4">
-      <CardHeader text={t("settings.admin.roles.title")} icon={faUserShield} />
-      <p className="text-[14px] text-[#7a7a7a] mt-2">
-        {t("settings.admin.roles.help")}
-      </p>
-
-      <div className="mt-4">
-        <Search
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setSearchValue(e.target.value);
-            setPage(1);
-          }}
-          className="w-full md:w-[400px]"
-        />
-      </div>
-
-      <div className="mt-4">
-        <MainTable
-          columns={[userColumn, ...roleColumns]}
-          data={usersQuery.data?.data ?? []}
-          paginationServer
-          paginationTotalRows={usersQuery.data?.total ?? 0}
-          onChangePage={setPage}
-          onChangeRowsPerPage={(newLimit: number) => {
-            setLimit(newLimit);
-            setPage(1);
-          }}
-          progressPending={usersQuery.isFetching}
-        />
-      </div>
-      <ConfirmationModal
-        isModalOpen={confirmState.open}
-        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
-        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
-        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
-        message={confirmState.message}
-        title={t("common.confirm")}
-        confirmText={t("common.confirm")}
-        confirmIcon={faCheck}
-        confirmClassName="bg-[#2B9AE9]"
-      />
-    </div>
   );
 };
 
 /* ──────────────────────── Admin Page ────────────────────────── */
 
 const Admin = () => {
-  const currentUserQuery = useCurrentUser();
-  if (!hasRequiredRole("admin", currentUserQuery.data)) return null;
+  const permissionsQuery = usePermissions();
+  if (!hasPermission("admin.roleAssignment.manage", permissionsQuery.data)) return null;
 
   return (
     <div className="space-y-4 m-4">
       <LastLogonSection />
-      <RolesSection />
+      <CustomRoles />
       <AssignmentGroupsSection />
     </div>
   );

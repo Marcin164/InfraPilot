@@ -1,8 +1,8 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { faPaste, faPlus, faTrash, faPen, faCheck, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faPaste, faPlus, faTrash, faPen, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import CardHeader from "../../../../Components/Headers/CardHeader";
@@ -10,6 +10,7 @@ import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
 import Checkbox from "../../../../Components/Inputs/Checkbox";
 import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
+import Modal from "../../../../Components/Modals/AnimatedModal";
 import {
   listTicketTemplates,
   createTicketTemplate,
@@ -17,8 +18,8 @@ import {
   deleteTicketTemplate,
   TicketTemplate,
 } from "../../../../Services/ticketTemplates";
-import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
-import { hasRequiredRole } from "../../../../Constants/navigation";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const emptyDraft = () => ({
   name: "",
@@ -58,29 +59,48 @@ const VARIABLE_GROUPS: { group: string; vars: { path: string; label: string }[] 
   },
 ];
 
-const TicketTemplates = () => {
+type TemplateModalTarget = "create" | TicketTemplate | null;
+
+const TemplateModal = ({
+  target,
+  onClose,
+}: {
+  target: TemplateModalTarget;
+  onClose: () => void;
+}) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [draft, setDraft] = useState(emptyDraft());
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
-  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
+  const editingTemplate = target === "create" || target === null ? null : target;
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
-  const startEdit = (tpl: TicketTemplate) => {
-    setEditingId(tpl.id);
-    setDraft({
-      name: tpl.name,
-      body: tpl.body,
-      category: tpl.category,
-      shared: tpl.shared,
-    });
-  };
+  const [draft, setDraft] = useState(
+    editingTemplate
+      ? {
+          name: editingTemplate.name,
+          body: editingTemplate.body,
+          category: editingTemplate.category,
+          shared: editingTemplate.shared,
+        }
+      : emptyDraft(),
+  );
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const cancelEdit = () => {
-    setEditingId(null);
-    setDraft(emptyDraft());
-  };
+  useEffect(() => {
+    setDraft(
+      editingTemplate
+        ? {
+            name: editingTemplate.name,
+            body: editingTemplate.body,
+            category: editingTemplate.category,
+            shared: editingTemplate.shared,
+          }
+        : emptyDraft(),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingTemplate?.id]);
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["ticket-templates"] });
 
   const insertVariable = (path: string) => {
     const placeholder = `{${path}}`;
@@ -99,64 +119,58 @@ const TicketTemplates = () => {
     });
   };
 
-  const templatesQuery = useQuery({
-    queryKey: ["ticket-templates"],
-    queryFn: listTicketTemplates,
-  });
-
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: ["ticket-templates"] });
-
   const saveMutation = useMutation({
     mutationFn: () =>
-      editingId ? updateTicketTemplate(editingId, draft) : createTicketTemplate(draft),
+      editingTemplate ? updateTicketTemplate(editingTemplate.id, draft) : createTicketTemplate(draft),
     onSuccess: () => {
-      toast.success(editingId ? t("toast.success.templateUpdated") : t("toast.success.templateCreated"));
-      setDraft(emptyDraft());
-      setEditingId(null);
+      toast.success(editingTemplate ? t("toast.success.templateUpdated") : t("toast.success.templateCreated"));
       invalidate();
+      onClose();
     },
     onError: (err: any) =>
       toast.error(
         err?.response?.data?.message ??
-          (editingId ? t("settings.templates.updateFailed") : t("settings.templates.createFailed")),
+          (editingTemplate ? t("settings.templates.updateFailed") : t("settings.templates.createFailed")),
       ),
   });
 
-  const toggleSharedMutation = useMutation({
-    mutationFn: (tpl: TicketTemplate) =>
-      updateTicketTemplate(tpl.id, { shared: !tpl.shared }),
-    onSuccess: () => invalidate(),
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? t("settings.templates.updateFailed")),
-  });
-
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteTicketTemplate(id),
-    onSuccess: (_data, id) => {
+    mutationFn: () => deleteTicketTemplate(editingTemplate!.id),
+    onSuccess: () => {
       toast.success(t("toast.success.templateDeleted"));
-      if (editingId === id) cancelEdit();
       invalidate();
+      onClose();
     },
     onError: (err: any) =>
       toast.error(err?.response?.data?.message ?? t("settings.templates.deleteFailed")),
   });
 
-  const templates = templatesQuery.data ?? [];
-
-  const currentUserQuery = useCurrentUser();
-  if (!hasRequiredRole("helpdeskOrAdmin", currentUserQuery.data)) return null;
+  const handleSave = () => {
+    if (!draft.name.trim() || !draft.body.trim()) {
+      toast.error(t("toast.error.bodyRequired"));
+      return;
+    }
+    saveMutation.mutate();
+  };
 
   return (
-    <div className="space-y-4 m-4">
-      <div className="bg-white shadow-xl rounded-[10px] p-4">
+    <>
+      <Modal
+        classNames={{ modal: "w-[700px] max-w-full max-h-[85vh] overflow-y-auto rounded-[10px]" }}
+        open={target !== null}
+        onClose={onClose}
+        center
+      >
         <CardHeader
-          text={editingId ? t("settings.templates.editing", { name: draft.name }) : t("settings.templates.new")}
-          icon={editingId ? faPen : faPlus}
+          text={
+            editingTemplate
+              ? t("settings.templates.editing", { name: editingTemplate.name })
+              : t("settings.templates.new")
+          }
+          icon={editingTemplate ? faPen : faPlus}
         />
-        <p className="text-[12px] text-[#7a7a7a] mt-2">
-          {t("settings.templates.help")}
-        </p>
+        <p className="text-[12px] text-[#7a7a7a] mt-2">{t("settings.templates.help")}</p>
+
         <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
           <Input
             value={draft.name}
@@ -196,7 +210,7 @@ const TicketTemplates = () => {
             </div>
           ))}
         </div>
-        <div className="mt-3 flex items-center gap-3">
+        <div className="mt-3">
           <Checkbox
             id="template-shared"
             checked={draft.shared}
@@ -205,37 +219,85 @@ const TicketTemplates = () => {
             }
             label={t("settings.templates.shared")}
           />
-          <ButtonPrimary
-            icon={editingId ? faCheck : faPlus}
-            text={
-              saveMutation.isPending
-                ? t("settings.templates.saving")
-                : editingId
-                  ? t("common.update")
-                  : t("common.create")
-            }
-            onClick={() => {
-              if (!draft.name.trim() || !draft.body.trim()) {
-                toast.error(t("toast.error.bodyRequired"));
-                return;
-              }
-              saveMutation.mutate();
-            }}
-            disabled={saveMutation.isPending}
-          />
-          {editingId && (
-            <ButtonPrimary
-              color="white"
-              icon={faXmark}
-              text={t("common.cancel")}
-              onClick={cancelEdit}
-            />
-          )}
         </div>
-      </div>
 
+        <div className="mt-5 flex items-center justify-between">
+          <div>
+            {editingTemplate && (
+              <ButtonPrimary
+                icon={faTrash}
+                text={t("common.delete")}
+                onClick={() => setConfirmDelete(true)}
+                disabled={deleteMutation.isPending}
+                color="red"
+              />
+            )}
+          </div>
+          <div className="flex gap-2">
+            <ButtonPrimary text={t("common.cancel")} onClick={onClose} color="white" />
+            <ButtonPrimary
+              icon={faCheck}
+              text={saveMutation.isPending ? t("settings.templates.saving") : t("common.save")}
+              onClick={handleSave}
+              disabled={saveMutation.isPending}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      <ConfirmationModal
+        isModalOpen={confirmDelete}
+        handleOnClose={() => setConfirmDelete(false)}
+        onCancel={() => setConfirmDelete(false)}
+        onDelete={() => {
+          setConfirmDelete(false);
+          deleteMutation.mutate();
+        }}
+        message={
+          editingTemplate
+            ? t("settings.templates.confirmDelete", { name: editingTemplate.name })
+            : undefined
+        }
+      />
+    </>
+  );
+};
+
+const TicketTemplates = () => {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [modalTarget, setModalTarget] = useState<TemplateModalTarget>(null);
+
+  const templatesQuery = useQuery({
+    queryKey: ["ticket-templates"],
+    queryFn: listTicketTemplates,
+  });
+
+  const toggleSharedMutation = useMutation({
+    mutationFn: (tpl: TicketTemplate) =>
+      updateTicketTemplate(tpl.id, { shared: !tpl.shared }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["ticket-templates"] }),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message ?? t("settings.templates.updateFailed")),
+  });
+
+  const templates = templatesQuery.data ?? [];
+
+  const permissionsQuery = usePermissions();
+  if (!hasPermission("helpdesk.ticketTemplates.manage", permissionsQuery.data)) return null;
+
+  return (
+    <div className="space-y-4 m-4">
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text={t("settings.templates.existing")} icon={faPaste} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <CardHeader text={t("settings.templates.existing")} icon={faPaste} />
+          <ButtonPrimary
+            icon={faPlus}
+            text={t("settings.templates.new")}
+            onClick={() => setModalTarget("create")}
+          />
+        </div>
+
         {templates.length === 0 ? (
           <div className="mt-3 text-[13px] text-[#7a7a7a]">
             {t("settings.templates.empty")}
@@ -274,31 +336,25 @@ const TicketTemplates = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => startEdit(tpl)}
+                  onClick={() => setModalTarget(tpl)}
                   className="text-[#2B9AE9] cursor-pointer"
                   title={t("common.edit")}
                 >
                   <FontAwesomeIcon icon={faPen} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => askConfirm(() => deleteMutation.mutate(tpl.id), t("settings.templates.confirmDelete", { name: tpl.name }))}
-                  className="text-[#F3606E] hover:text-[#C0392B] cursor-pointer"
-                >
-                  <FontAwesomeIcon icon={faTrash} />
                 </button>
               </div>
             ))}
           </div>
         )}
       </div>
-      <ConfirmationModal
-        isModalOpen={confirmState.open}
-        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
-        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
-        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
-        message={confirmState.message}
-      />
+
+      {modalTarget !== null && (
+        <TemplateModal
+          key={modalTarget === "create" ? "create" : modalTarget.id}
+          target={modalTarget}
+          onClose={() => setModalTarget(null)}
+        />
+      )}
     </div>
   );
 };

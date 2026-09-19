@@ -13,9 +13,10 @@ import {
 import { Request } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { UsersService } from 'src/services/users.service';
 import { ActiveDirectoryService } from 'src/services/active-directory.service';
+import { CustomRolesService } from 'src/services/customRoles.service';
 import {
   CreateUserDto,
   InsertManyUsersDto,
@@ -28,10 +29,11 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly adService: ActiveDirectoryService,
+    private readonly customRolesService: CustomRolesService,
   ) {}
 
   @UseGuards(AuthGuard, MfaGuard)
-  @Roles(Role.Admin)
+  @RequiresPermission('admin.activeDirectory.config')
   @Get('/ad/user')
   async syncADUser(@Query('username') username: string) {
     const users = await this.adService.findAllUsers();
@@ -46,37 +48,40 @@ export class UsersController {
   }
 
   @UseGuards(AuthGuard, MfaGuard)
-  @Roles(Role.Admin)
+  @RequiresPermission('users.add')
   @Post()
   async insertOne(@Body() body: CreateUserDto): Promise<any> {
     return this.usersService.insertOne(body);
   }
 
   @UseGuards(AuthGuard, MfaGuard)
-  @Roles(Role.Admin)
+  @RequiresPermission('users.add')
   @Post('/many')
   async insertMany(@Body() body: InsertManyUsersDto): Promise<any> {
     return this.usersService.insertMany(body.users);
   }
 
   @UseGuards(AuthGuard, MfaGuard)
-  @Roles(Role.Admin)
+  @RequiresPermission('users.add')
   @Post('bulk-import')
   async bulkImport(@Body() body: BulkImportUsersDto): Promise<any> {
     return this.usersService.bulkImport(body.rows ?? []);
   }
 
   @UseGuards(AuthGuard, MfaGuard)
-  @Roles(Role.Admin)
+  @RequiresPermission('users.delete')
   @Delete(':id')
   async delete(@Param('id') id: string): Promise<any> {
     return this.usersService.delete(id);
   }
 
   @UseGuards(AuthGuard, MfaGuard)
-  @Roles(Role.Admin)
+  @RequiresPermission('users.edit')
   @Patch(':id')
-  async update(@Body() body: UpdateUserDto, @Param('id') id: string): Promise<any> {
+  async update(
+    @Body() body: UpdateUserDto,
+    @Param('id') id: string,
+  ): Promise<any> {
     return this.usersService.update(body, id);
   }
 
@@ -111,14 +116,23 @@ export class UsersController {
   }
 
   @UseGuards(AuthGuard)
-  @Roles(Role.Admin)
+  @Get('/:id/permissions')
+  async getUserPermissions(
+    @Param('id') id: string,
+  ): Promise<{ permissions: string[] }> {
+    const granted = await this.customRolesService.getUserPermissions(id);
+    return { permissions: Array.from(granted) };
+  }
+
+  @UseGuards(AuthGuard)
+  @RequiresPermission('users.provision')
   @Post('/:id/link-auth')
   async linkAuth(@Param('id') id: string) {
     return this.usersService.linkAuthByEmail(id);
   }
 
   @UseGuards(AuthGuard)
-  @Roles(Role.Admin)
+  @RequiresPermission('users.provision')
   @Post('/:id/provision-auth')
   async provisionAuth(@Param('id') id: string) {
     return this.usersService.provisionInAuth(id);

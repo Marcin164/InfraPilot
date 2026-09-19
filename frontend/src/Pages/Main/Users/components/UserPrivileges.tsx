@@ -1,90 +1,61 @@
-import { useState } from "react";
+import { useNavigate } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "@tanstack/react-form";
-import { useParams } from "react-router";
-import { toast } from "react-toastify";
-import { faUniversalAccess, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faUniversalAccess, faPen } from "@fortawesome/free-solid-svg-icons";
 import CardHeader from "../../../../Components/Headers/CardHeader";
-import Checkbox from "../../../../Components/Inputs/Checkbox";
-import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
-import { updateUser } from "../../../../Services/users";
-import { ROLE_DEFS, type RoleKey } from "../../../../Constants/roles";
+import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
+import { getCustomRoles, getCustomRoleAssignments } from "../../../../Services/customRoles";
 
 type Props = {
-  data: Record<RoleKey, boolean>;
+  userId: string;
 };
 
-const UserPrivileges = ({ data }: Props) => {
+const UserPrivileges = ({ userId }: Props) => {
   const { t } = useTranslation();
-  const params = useParams();
-  const queryClient = useQueryClient();
-  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
-  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
+  const navigate = useNavigate();
 
-  const mutation = useMutation({
-    mutationFn: (patch: Partial<Record<RoleKey, boolean>>) => updateUser(patch, params.id!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user"] });
-    },
-    onError: (err: any) => {
-      // Backend rejected the change (e.g. not an admin) — the checkbox already
-      // flipped optimistically in local form state, so without this the UI
-      // would silently look like the change succeeded.
-      toast.error(err?.response?.data?.message ?? t("settings.admin.roles.updateFailed"));
-    },
+  const rolesQuery = useQuery({
+    queryKey: ["custom-roles"],
+    queryFn: getCustomRoles,
   });
 
-  const form = useForm({
-    defaultValues: data,
-    onSubmit: ({ value }) => mutation.mutate(value),
+  const assignmentsQuery = useQuery({
+    queryKey: ["custom-role-assignments", userId],
+    queryFn: () => getCustomRoleAssignments([userId]),
+    enabled: Boolean(userId),
   });
 
-  const handleCheckboxChange = (field: any, roleKey: RoleKey, checked: boolean) => {
-    askConfirm(() => {
-      field.handleChange(checked);
-      form.handleSubmit();
-    }, t(
-      checked ? "settings.admin.roles.confirmGrantSelf" : "settings.admin.roles.confirmRevokeSelf",
-      { role: t(ROLE_DEFS.find((r) => r.key === roleKey)!.labelKey) },
-    ));
-  };
+  const assignedRoleIds = assignmentsQuery.data?.[userId] ?? [];
+  const assignedRoles = (rolesQuery.data ?? []).filter((role) =>
+    assignedRoleIds.includes(role.id),
+  );
 
   return (
     <div className="bg-white shadow-xl rounded-[10px] p-4">
       <CardHeader text={t("users.privileges")} icon={faUniversalAccess} />
-      <form className="flex flex-col gap-2 mt-3">
-        {ROLE_DEFS.map((def) => (
-          <form.Field
-            key={def.key}
-            name={def.key}
-            children={(field) => (
-              <Checkbox
-                id={`user-privilege-${def.key}`}
-                label={t(def.labelKey)}
-                color={def.color}
-                name={field.name}
-                checked={field.state.value}
-                disabled={mutation.isPending}
-                handleChange={(checked: boolean) =>
-                  handleCheckboxChange(field, def.key, checked)
-                }
-              />
-            )}
-          />
-        ))}
-      </form>
-      <ConfirmationModal
-        isModalOpen={confirmState.open}
-        handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}
-        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
-        onDelete={() => { confirmState.onConfirm(); setConfirmState((s) => ({ ...s, open: false })); }}
-        message={confirmState.message}
-        title={t("common.confirm")}
-        confirmText={t("common.confirm")}
-        confirmIcon={faCheck}
-        confirmClassName="bg-[#2B9AE9]"
-      />
+      <div className="mt-3 flex flex-wrap gap-2">
+        {assignedRoles.length > 0 ? (
+          assignedRoles.map((role) => (
+            <span
+              key={role.id}
+              className="rounded-full bg-[#EEF5FD] text-[#2B9AE9] text-[12px] font-semibold px-3 py-1"
+            >
+              {role.name}
+            </span>
+          ))
+        ) : (
+          <div className="text-[13px] text-[#9a9a9a]">
+            {t("users.privileges.empty")}
+          </div>
+        )}
+      </div>
+      <div className="py-2">
+        <ButtonPrimary
+          icon={faPen}
+          text={t("users.privileges.manage")}
+          onClick={() => navigate("/admin/settings/admin")}
+        />
+      </div>
     </div>
   );
 };

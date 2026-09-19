@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthInfo } from "@propelauth/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faShoppingCart, faPlus, faTrash, faCheck, faXmark, faChevronDown,
@@ -27,8 +26,9 @@ import {
   CreatePurchaseOrderDto,
   PurchaseOrder,
 } from "../../../Services/purchaseOrders";
-import { getUser } from "../../../Services/users";
 import { useViewportFillHeight } from "../../../Hooks/useViewportFillHeight";
+import { usePermissions } from "../../../Hooks/usePermissions";
+import { hasPermission } from "../../../Constants/navigation";
 
 const STATUS_CONFIG: Record<PurchaseOrderStatus, { color: string; bg: string }> = {
   draft:      { color: "#9a9a9a", bg: "#F5F5F5" },
@@ -199,21 +199,15 @@ const Procurement = () => {
   const { t } = useTranslation();
   const fillHeight = useViewportFillHeight();
   const queryClient = useQueryClient();
-  const authInfo: any = useAuthInfo();
-  const currentUserId = authInfo?.user?.metadata?.id;
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<PurchaseOrder | null>(null);
   const [search, setSearch] = useState("");
   const [statusMenu, setStatusMenu] = useState<StatusMenuState>(null);
 
-  const currentUserQuery = useQuery({
-    queryKey: ["current-user", currentUserId],
-    queryFn: () => getUser(currentUserId),
-    enabled: Boolean(currentUserId),
-  });
+  const permissionsQuery = usePermissions();
 
-  const isAdmin = Boolean(currentUserQuery.data?.isAdmin);
+  const isAdmin = hasPermission("procurement.add", permissionsQuery.data);
 
   useEffect(() => {
     if (!statusMenu) return;

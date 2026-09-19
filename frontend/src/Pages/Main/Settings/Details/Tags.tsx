@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -10,31 +10,39 @@ import ColorPicker from "../../../../Components/Inputs/ColorPicker";
 import Input from "../../../../Components/Inputs/Input";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
+import Modal from "../../../../Components/Modals/AnimatedModal";
 import {
   listDeviceTags,
   createDeviceTag,
   deleteDeviceTag,
 } from "../../../../Services/deviceTags";
-import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
-import { hasRequiredRole } from "../../../../Constants/navigation";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
-const Tags = () => {
+const CreateDeviceTagModal = ({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [key, setKey] = useState("");
   const [label, setLabel] = useState("");
   const [color, setColor] = useState("#2B9AE9");
   const [description, setDescription] = useState("");
-  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
-  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
-  const tagsQuery = useQuery({
-    queryKey: ["device-tags"],
-    queryFn: listDeviceTags,
-  });
-
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: ["device-tags"] });
+  // Clear the draft every time the modal opens, so a previous create doesn't
+  // linger in the fields the next time it's opened.
+  useEffect(() => {
+    if (open) {
+      setKey("");
+      setLabel("");
+      setColor("#2B9AE9");
+      setDescription("");
+    }
+  }, [open]);
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -46,72 +54,106 @@ const Tags = () => {
       }),
     onSuccess: () => {
       toast.success(t("settings.tags.created"));
-      setKey("");
-      setLabel("");
-      setColor("#2B9AE9");
-      setDescription("");
-      invalidate();
+      queryClient.invalidateQueries({ queryKey: ["device-tags"] });
+      onClose();
     },
     onError: (err: any) =>
       toast.error(err?.response?.data?.message ?? t("settings.tags.createFailed")),
+  });
+
+  const handleCreate = () => {
+    if (!key.trim() || !label.trim()) {
+      toast.error(t("settings.tags.keyLabelRequired"));
+      return;
+    }
+    createMutation.mutate();
+  };
+
+  return (
+    <Modal
+      classNames={{ modal: "w-[520px] max-w-full rounded-[10px]" }}
+      open={open}
+      onClose={onClose}
+      center
+    >
+      <CardHeader text={t("settings.tags.create")} icon={faPlus} />
+
+      <div className="mt-4 flex flex-col gap-1">
+        <Input
+          label={t("settings.tags.key")}
+          value={key}
+          handleChange={setKey}
+          placeholder={t("settings.tags.keyPlaceholder")}
+        />
+        <Input
+          label={t("settings.tags.label")}
+          value={label}
+          handleChange={setLabel}
+          placeholder={t("settings.tags.labelPlaceholder")}
+        />
+        <div className="pt-2 flex items-center gap-3">
+          <span className="font-bold text-[#3C3C3C]">{t("settings.tags.color")}</span>
+          <ColorPicker value={color} onChange={setColor} size={36} />
+        </div>
+        <Input
+          label={t("settings.tags.description")}
+          value={description}
+          handleChange={setDescription}
+          placeholder={t("settings.tags.descriptionPlaceholder")}
+        />
+      </div>
+
+      <div className="mt-5 flex justify-end gap-2">
+        <ButtonPrimary text={t("common.cancel")} onClick={onClose} color="white" />
+        <ButtonPrimary
+          icon={faPlus}
+          text={createMutation.isPending ? t("common.creating") : t("settings.tags.createBtn")}
+          onClick={handleCreate}
+          disabled={createMutation.isPending}
+        />
+      </div>
+    </Modal>
+  );
+};
+
+const Tags = () => {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
+  const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
+
+  const tagsQuery = useQuery({
+    queryKey: ["device-tags"],
+    queryFn: listDeviceTags,
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteDeviceTag(id),
     onSuccess: () => {
       toast.success(t("settings.tags.deleted"));
-      invalidate();
+      queryClient.invalidateQueries({ queryKey: ["device-tags"] });
     },
     onError: (err: any) =>
       toast.error(err?.response?.data?.message ?? t("settings.tags.deleteFailed")),
   });
 
-  const currentUserQuery = useCurrentUser();
-  if (!hasRequiredRole("admin", currentUserQuery.data)) return null;
+  const permissionsQuery = usePermissions();
+  const canManageTags = hasPermission("devices.tags.manage", permissionsQuery.data);
+  if (!canManageTags) return null;
 
   return (
     <div className="space-y-4 m-4">
       <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text={t("settings.tags.create")} icon={faPlus} />
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Input
-            value={key}
-            handleChange={setKey}
-            placeholder={t("settings.tags.keyPlaceholder")}
-            className="flex-1 min-w-[140px]"
-          />
-          <Input
-            value={label}
-            handleChange={setLabel}
-            placeholder={t("settings.tags.labelPlaceholder")}
-            className="flex-1 min-w-[140px]"
-          />
-          <ColorPicker value={color} onChange={setColor} size={36} />
-          <Input
-            value={description}
-            handleChange={setDescription}
-            placeholder={t("settings.tags.descriptionPlaceholder")}
-            className="flex-1 min-w-[140px]"
-          />
-        </div>
-        <div className="mt-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <CardHeader text={t("settings.tags.existing")} icon={faTag} />
           <ButtonPrimary
             icon={faPlus}
-            text={createMutation.isPending ? t("common.creating", "Creating…") : t("settings.tags.createBtn")}
-            onClick={() => {
-              if (!key.trim() || !label.trim()) {
-                toast.error("Key and label are required");
-                return;
-              }
-              createMutation.mutate();
-            }}
-            disabled={createMutation.isPending}
+            text={t("settings.tags.createBtn")}
+            onClick={() => setCreateOpen(true)}
           />
         </div>
-      </div>
 
-      <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text={t("settings.tags.existing")} icon={faTag} />
         {tagsQuery.isLoading ? (
           <div className="mt-3 text-[13px] text-[#7a7a7a]">{t("settings.tags.loading")}</div>
         ) : (tagsQuery.data ?? []).length === 0 ? (
@@ -143,7 +185,7 @@ const Tags = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={() => askConfirm(() => deleteMutation.mutate(tag.id), `Delete tag "${tag.label}"?`)}
+                  onClick={() => askConfirm(() => deleteMutation.mutate(tag.id), t("settings.tags.deleteConfirm", { name: tag.label }))}
                   className="text-[#F3606E] hover:text-[#C0392B] cursor-pointer"
                   title={t("settings.tags.delete")}
                 >
@@ -154,6 +196,9 @@ const Tags = () => {
           </div>
         )}
       </div>
+
+      <CreateDeviceTagModal open={createOpen} onClose={() => setCreateOpen(false)} />
+
       <ConfirmationModal
         isModalOpen={confirmState.open}
         handleOnClose={() => setConfirmState((s) => ({ ...s, open: false }))}

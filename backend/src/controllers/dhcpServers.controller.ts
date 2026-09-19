@@ -1,11 +1,25 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
-import { CreateDhcpServerDto, DhcpServerService, UpdateDhcpServerDto } from 'src/services/dhcpServer.service';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
+import {
+  CreateDhcpServerDto,
+  DhcpServerService,
+  UpdateDhcpServerDto,
+} from 'src/services/dhcpServer.service';
 import { LeaseSyncService } from 'src/services/leaseSync.service';
 
 @UseGuards(AuthGuard)
-@Roles(Role.Admin)
+@RequiresPermission('devices.connection.manage')
 @Controller('dhcp-servers')
 export class DhcpServersController {
   constructor(

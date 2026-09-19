@@ -107,6 +107,9 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { MetricsController } from './controllers/metrics.controller';
 import { Shift } from './entities/shift.entity';
 import { ShiftModule } from './modules/shift.module';
+import { CustomRole } from './entities/customRole.entity';
+import { UserCustomRole } from './entities/userCustomRole.entity';
+import { CustomRolesModule } from './modules/customRoles.module';
 
 @Module({
   imports: [
@@ -180,7 +183,9 @@ import { ShiftModule } from './modules/shift.module';
         IpAllocation,
         DhcpServer,
         DeviceEnrollmentToken,
-        Shift
+        Shift,
+        CustomRole,
+        UserCustomRole,
       ],
       synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true',
       migrationsRun: process.env.TYPEORM_SYNCHRONIZE !== 'true',
@@ -213,7 +218,7 @@ import { ShiftModule } from './modules/shift.module';
       SystemAuditLog,
       AssignmentGroup,
       TicketActivity,
-      Shift
+      Shift,
     ]),
     ScheduleModule.forRoot(),
     // Global in-process event bus — emit domain events here, listen with
@@ -227,6 +232,7 @@ import { ShiftModule } from './modules/shift.module';
       { name: 'long', ttl: 60_000, limit: 1000 },
     ]),
     AccessControlModule,
+    CustomRolesModule,
     DevicesModule,
     UsersModule,
     FormsModule,
@@ -264,7 +270,7 @@ import { ShiftModule } from './modules/shift.module';
     DropboxModule,
     AdobeModule,
     LicenseSyncModule,
-    ShiftModule
+    ShiftModule,
   ],
   controllers: [HealthController],
   providers: [

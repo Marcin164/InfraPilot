@@ -6,7 +6,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { TicketsService } from './tickets.service';
-import { Tickets, TicketType, TicketPriority, TicketState } from 'src/entities/tickets.entity';
+import {
+  Tickets,
+  TicketType,
+  TicketPriority,
+  TicketState,
+} from 'src/entities/tickets.entity';
 import { TicketsComments } from 'src/entities/ticketsComments.entity';
 import { TicketsApprovals } from 'src/entities/ticketsApprovals.entity';
 import { TicketActivity } from 'src/entities/ticketActivity.entity';
@@ -21,6 +26,7 @@ import { TicketAutoTagService } from './ticketAutoTag.service';
 import { NotificationService } from './notification.service';
 import { NotificationDispatcherService } from './notificationDispatcher.service';
 import { TicketWorkflowService } from './ticketWorkflow.service';
+import { CustomRolesService } from './customRoles.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 jest.mock('fs', () => ({
@@ -36,6 +42,14 @@ jest.mock('fs', () => ({
 // check — the DI below fully replaces it with a plain mock anyway.
 jest.mock('src/gateways/tickets.gateway', () => ({
   TicketsGateway: class TicketsGateway {},
+}));
+
+// CustomRolesService now imports propelAuthClient (for the force-logout on
+// role change), which throws at module-load time without real PropelAuth
+// env vars. The DI below fully replaces CustomRolesService with a mock, but
+// importing the real class file still runs its top-level imports.
+jest.mock('src/helpers/propelAuthClient', () => ({
+  logoutAllUserSessions: jest.fn(),
 }));
 
 const buildQueryBuilder = (overrides: Record<string, any> = {}) => {
@@ -185,11 +199,23 @@ describe('TicketsService', () => {
       providers: [
         TicketsService,
         { provide: getRepositoryToken(Tickets), useValue: ticketsRepo },
-        { provide: getRepositoryToken(TicketsComments), useValue: commentsRepo },
-        { provide: getRepositoryToken(TicketsApprovals), useValue: approvalsRepo },
+        {
+          provide: getRepositoryToken(TicketsComments),
+          useValue: commentsRepo,
+        },
+        {
+          provide: getRepositoryToken(TicketsApprovals),
+          useValue: approvalsRepo,
+        },
         { provide: getRepositoryToken(TicketActivity), useValue: activityRepo },
-        { provide: getRepositoryToken(AdminSettings), useValue: adminSettingsRepo },
-        { provide: getRepositoryToken(TicketCategory), useValue: ticketCategoryRepo },
+        {
+          provide: getRepositoryToken(AdminSettings),
+          useValue: adminSettingsRepo,
+        },
+        {
+          provide: getRepositoryToken(TicketCategory),
+          useValue: ticketCategoryRepo,
+        },
         { provide: getRepositoryToken(SlaInstance), useValue: slaInstanceRepo },
         { provide: getRepositoryToken(Users), useValue: usersRepo },
         { provide: TicketsGateway, useValue: gateway },
@@ -200,6 +226,12 @@ describe('TicketsService', () => {
         { provide: NotificationDispatcherService, useValue: dispatcher },
         { provide: TicketWorkflowService, useValue: workflows },
         { provide: EventEmitter2, useValue: { emit: jest.fn() } },
+        {
+          provide: CustomRolesService,
+          useValue: {
+            getUserPermissions: jest.fn().mockResolvedValue(new Set()),
+          },
+        },
       ],
     }).compile();
 
@@ -232,27 +264,44 @@ describe('TicketsService', () => {
 
     beforeEach(() => {
       ticketsRepo.query.mockResolvedValue([{ nextval: '1' }]);
-      ticketsRepo.save.mockImplementation(async (t) => ({ ...t, id: 'saved-ticket-id' }));
+      ticketsRepo.save.mockImplementation(async (t) => ({
+        ...t,
+        id: 'saved-ticket-id',
+      }));
     });
 
     it('saves ticket and starts SLA', async () => {
       const result = await service.createTicket(dto);
 
       expect(ticketsRepo.save).toHaveBeenCalledTimes(1);
-      expect(slaEngine.createForTicket).toHaveBeenCalledWith(expect.objectContaining({ type: dto.type }));
-      expect(auditService.log).toHaveBeenCalledWith('Ticket', result.id, 'created', expect.any(Object));
+      expect(slaEngine.createForTicket).toHaveBeenCalledWith(
+        expect.objectContaining({ type: dto.type }),
+      );
+      expect(auditService.log).toHaveBeenCalledWith(
+        'Ticket',
+        result.id,
+        'created',
+        expect.any(Object),
+      );
     });
 
     it('applies auto-category when none is provided', async () => {
       autoTag.suggestCategory.mockResolvedValue({ category: 'Hardware issue' });
-      const saved = { ...dto, id: 'auto-cat-ticket-id', category: 'Hardware issue' };
+      const saved = {
+        ...dto,
+        id: 'auto-cat-ticket-id',
+        category: 'Hardware issue',
+      };
       ticketsRepo.save.mockResolvedValue(saved);
 
       const result = await service.createTicket(dto);
 
       expect(result.category).toBe('Hardware issue');
       expect(auditService.log).toHaveBeenCalledWith(
-        'Ticket', result.id, 'auto_categorized', { category: 'Hardware issue' },
+        'Ticket',
+        result.id,
+        'auto_categorized',
+        { category: 'Hardware issue' },
       );
     });
 
@@ -262,8 +311,13 @@ describe('TicketsService', () => {
     });
 
     it('runs workflow after creation (best-effort: error does not throw)', async () => {
-      workflows.runOnCreate.mockRejectedValue(new Error('workflow misconfiguration'));
-      ticketsRepo.save.mockImplementation(async (t) => ({ ...t, id: 'workflow-fail-ticket' }));
+      workflows.runOnCreate.mockRejectedValue(
+        new Error('workflow misconfiguration'),
+      );
+      ticketsRepo.save.mockImplementation(async (t) => ({
+        ...t,
+        id: 'workflow-fail-ticket',
+      }));
 
       await expect(service.createTicket(dto)).resolves.not.toThrow();
     });
@@ -284,7 +338,9 @@ describe('TicketsService', () => {
         return cb(manager);
       });
 
-      await expect(service.updateTicket('non-existent-id', {})).rejects.toThrow('Ticket not found');
+      await expect(service.updateTicket('non-existent-id', {})).rejects.toThrow(
+        'Ticket not found',
+      );
     });
 
     it('tracks field changes and emits WebSocket activity', async () => {
@@ -295,17 +351,27 @@ describe('TicketsService', () => {
         const repoMock = { save: jest.fn().mockResolvedValue(activityEntry) };
         const manager = {
           findOne: jest.fn().mockResolvedValue({ ...ticket }),
-          save: jest.fn().mockResolvedValue({ ...ticket, state: TicketState.ASSIGNED }),
+          save: jest
+            .fn()
+            .mockResolvedValue({ ...ticket, state: TicketState.ASSIGNED }),
           getRepository: jest.fn().mockReturnValue(repoMock),
         };
         return cb(manager);
       });
 
-      await service.updateTicket(ticket.id!, { state: TicketState.ASSIGNED }, 'actor-id');
+      await service.updateTicket(
+        ticket.id!,
+        { state: TicketState.ASSIGNED },
+        'actor-id',
+      );
 
       expect(gateway.emitTicketActivity).toHaveBeenCalled();
       expect(auditService.log).toHaveBeenCalledWith(
-        'Ticket', ticket.id, 'field_change', expect.any(Object), expect.anything(),
+        'Ticket',
+        ticket.id,
+        'field_change',
+        expect.any(Object),
+        expect.anything(),
       );
     });
 
@@ -317,14 +383,19 @@ describe('TicketsService', () => {
         const manager = {
           findOne: jest.fn().mockResolvedValue({ ...ticket }),
           save: jest.fn().mockResolvedValue(updated),
-          getRepository: jest.fn().mockReturnValue({ save: jest.fn().mockResolvedValue({}) }),
+          getRepository: jest
+            .fn()
+            .mockReturnValue({ save: jest.fn().mockResolvedValue({}) }),
         };
         return cb(manager);
       });
 
       await service.updateTicket(ticket.id!, { state: 'Resolved' as any });
 
-      expect(slaEngine.handleResolved).toHaveBeenCalledWith(updated, expect.anything());
+      expect(slaEngine.handleResolved).toHaveBeenCalledWith(
+        updated,
+        expect.anything(),
+      );
     });
 
     it('calls handlePriorityChange when priority changes', async () => {
@@ -335,14 +406,21 @@ describe('TicketsService', () => {
         const manager = {
           findOne: jest.fn().mockResolvedValue({ ...ticket }),
           save: jest.fn().mockResolvedValue(updated),
-          getRepository: jest.fn().mockReturnValue({ save: jest.fn().mockResolvedValue({}) }),
+          getRepository: jest
+            .fn()
+            .mockReturnValue({ save: jest.fn().mockResolvedValue({}) }),
         };
         return cb(manager);
       });
 
-      await service.updateTicket(ticket.id!, { priority: TicketPriority.CRITICAL });
+      await service.updateTicket(ticket.id!, {
+        priority: TicketPriority.CRITICAL,
+      });
 
-      expect(slaEngine.handlePriorityChange).toHaveBeenCalledWith(updated, expect.anything());
+      expect(slaEngine.handlePriorityChange).toHaveBeenCalledWith(
+        updated,
+        expect.anything(),
+      );
     });
 
     it('dispatches notification when assignee changes', async () => {
@@ -354,15 +432,24 @@ describe('TicketsService', () => {
         const manager = {
           findOne: jest.fn().mockResolvedValue({ ...ticket }),
           save: jest.fn().mockResolvedValue(updated),
-          getRepository: jest.fn().mockReturnValue({ save: jest.fn().mockResolvedValue({}) }),
+          getRepository: jest
+            .fn()
+            .mockReturnValue({ save: jest.fn().mockResolvedValue({}) }),
         };
         return cb(manager);
       });
 
-      await service.updateTicket(ticket.id!, { assignee: newAssignee }, 'actor');
+      await service.updateTicket(
+        ticket.id!,
+        { assignee: newAssignee },
+        'actor',
+      );
 
       expect(dispatcher.dispatch).toHaveBeenCalledWith(
-        expect.objectContaining({ event: 'ticket_assigned', recipientIds: [newAssignee] }),
+        expect.objectContaining({
+          event: 'ticket_assigned',
+          recipientIds: [newAssignee],
+        }),
       );
     });
 
@@ -375,7 +462,9 @@ describe('TicketsService', () => {
         const manager = {
           findOne: jest.fn().mockResolvedValue({ ...ticket }),
           save: jest.fn().mockResolvedValue(updated),
-          getRepository: jest.fn().mockReturnValue({ save: jest.fn().mockResolvedValue({}) }),
+          getRepository: jest
+            .fn()
+            .mockReturnValue({ save: jest.fn().mockResolvedValue({}) }),
         };
         return cb(manager);
       });
@@ -383,7 +472,10 @@ describe('TicketsService', () => {
       await service.updateTicket(ticket.id!, { state: 'Assigned' as any });
 
       expect(dispatcher.dispatch).toHaveBeenCalledWith(
-        expect.objectContaining({ event: 'ticket_state_changed', recipientIds: [requesterId] }),
+        expect.objectContaining({
+          event: 'ticket_state_changed',
+          recipientIds: [requesterId],
+        }),
       );
     });
   });
@@ -396,14 +488,18 @@ describe('TicketsService', () => {
     it('throws NotFoundException when ticket does not exist', async () => {
       ticketsRepo.findOneBy.mockResolvedValue(null);
 
-      await expect(service.linkTicket('missing-id', 'parent-id', 'actor')).rejects.toBeInstanceOf(NotFoundException);
+      await expect(
+        service.linkTicket('missing-id', 'parent-id', 'actor'),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('throws BadRequestException when linking ticket to itself', async () => {
       const ticket = mockTicket();
       ticketsRepo.findOneBy.mockResolvedValue(ticket);
 
-      await expect(service.linkTicket(ticket.id!, ticket.id!, 'actor')).rejects.toBeInstanceOf(BadRequestException);
+      await expect(
+        service.linkTicket(ticket.id!, ticket.id!, 'actor'),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('throws NotFoundException when parent ticket does not exist', async () => {
@@ -412,7 +508,9 @@ describe('TicketsService', () => {
         .mockResolvedValueOnce(ticket)
         .mockResolvedValueOnce(null);
 
-      await expect(service.linkTicket(ticket.id!, 'parent-id', 'actor')).rejects.toBeInstanceOf(NotFoundException);
+      await expect(
+        service.linkTicket(ticket.id!, 'parent-id', 'actor'),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('throws BadRequestException when linking would create a cycle', async () => {
@@ -423,7 +521,9 @@ describe('TicketsService', () => {
         .mockResolvedValueOnce(ticket)
         .mockResolvedValueOnce(parent);
 
-      await expect(service.linkTicket(ticket.id!, parent.id!, 'actor')).rejects.toBeInstanceOf(BadRequestException);
+      await expect(
+        service.linkTicket(ticket.id!, parent.id!, 'actor'),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('links tickets successfully and records activity', async () => {
@@ -432,14 +532,22 @@ describe('TicketsService', () => {
       ticketsRepo.findOneBy
         .mockResolvedValueOnce(ticket)
         .mockResolvedValueOnce(parent);
-      ticketsRepo.save.mockResolvedValue({ ...ticket, parentTicketId: parent.id });
+      ticketsRepo.save.mockResolvedValue({
+        ...ticket,
+        parentTicketId: parent.id,
+      });
       activityRepo.save.mockResolvedValue({});
 
       const result = await service.linkTicket(ticket.id!, parent.id!, 'actor');
 
       expect(ticketsRepo.save).toHaveBeenCalled();
       expect(activityRepo.save).toHaveBeenCalled();
-      expect(auditService.log).toHaveBeenCalledWith('Ticket', ticket.id, 'linked', expect.any(Object));
+      expect(auditService.log).toHaveBeenCalledWith(
+        'Ticket',
+        ticket.id,
+        'linked',
+        expect.any(Object),
+      );
       expect(result).toEqual({ id: ticket.id, parentTicketId: parent.id });
     });
 
@@ -463,11 +571,19 @@ describe('TicketsService', () => {
     it('saves comment and emits via WebSocket', async () => {
       const ticketId = 'ticket-comment-uuid';
       const commentId = 'comment-uuid-1';
-      const savedComment = { id: commentId, content: 'Test comment', author: { id: 'u1' } };
+      const savedComment = {
+        id: commentId,
+        content: 'Test comment',
+        author: { id: 'u1' },
+      };
 
       commentsRepo.save.mockResolvedValue({ id: commentId });
       commentsRepo.findOne.mockResolvedValue(savedComment);
-      ticketsRepo.findOne.mockResolvedValue({ id: ticketId, number: 100, requester: { id: 'req1' } });
+      ticketsRepo.findOne.mockResolvedValue({
+        id: ticketId,
+        number: 100,
+        requester: { id: 'req1' },
+      });
 
       const result = await service.createComment(ticketId, 'author-id', {
         content: 'Test comment',
@@ -475,7 +591,10 @@ describe('TicketsService', () => {
       });
 
       expect(commentsRepo.save).toHaveBeenCalledTimes(1);
-      expect(gateway.emitNewComment).toHaveBeenCalledWith(ticketId, savedComment);
+      expect(gateway.emitNewComment).toHaveBeenCalledWith(
+        ticketId,
+        savedComment,
+      );
       expect(result).toBe(savedComment);
     });
 
@@ -483,9 +602,16 @@ describe('TicketsService', () => {
       notifications.resolveMentions.mockResolvedValue([]);
       commentsRepo.save.mockResolvedValue({ id: '1' });
       commentsRepo.findOne.mockResolvedValue({ id: '1' });
-      ticketsRepo.findOne.mockResolvedValue({ id: 't1', number: 1, requester: null });
+      ticketsRepo.findOne.mockResolvedValue({
+        id: 't1',
+        number: 1,
+        requester: null,
+      });
 
-      await service.createComment('ticket-id', 'author-id', { content: 'hello', type: 'Public' });
+      await service.createComment('ticket-id', 'author-id', {
+        content: 'hello',
+        type: 'Public',
+      });
 
       expect(dispatcher.dispatch).not.toHaveBeenCalledWith(
         expect.objectContaining({ event: 'ticket_mention' }),
@@ -495,10 +621,16 @@ describe('TicketsService', () => {
     it('dispatches mention notification for mentioned users (excluding author)', async () => {
       const authorId = 'author-mention-uuid';
       const mentionedUserId = 'mentioned-user-uuid';
-      notifications.resolveMentions.mockResolvedValue([{ userId: mentionedUserId }]);
+      notifications.resolveMentions.mockResolvedValue([
+        { userId: mentionedUserId },
+      ]);
       commentsRepo.save.mockResolvedValue({ id: '1' });
       commentsRepo.findOne.mockResolvedValue({ id: '1' });
-      ticketsRepo.findOne.mockResolvedValue({ id: 't1', number: 5, requester: null });
+      ticketsRepo.findOne.mockResolvedValue({
+        id: 't1',
+        number: 5,
+        requester: null,
+      });
 
       await service.createComment('ticket-id', authorId, {
         content: `@${mentionedUserId} check this`,
@@ -506,7 +638,10 @@ describe('TicketsService', () => {
       });
 
       expect(dispatcher.dispatch).toHaveBeenCalledWith(
-        expect.objectContaining({ event: 'ticket_mention', recipientIds: [mentionedUserId] }),
+        expect.objectContaining({
+          event: 'ticket_mention',
+          recipientIds: [mentionedUserId],
+        }),
       );
     });
   });
@@ -523,7 +658,12 @@ describe('TicketsService', () => {
     });
 
     it('throws BadRequestException for disallowed MIME type', async () => {
-      const invalidFile = { mimetype: 'application/exe', originalname: 'virus.exe', buffer: Buffer.from('x'), size: 1 };
+      const invalidFile = {
+        mimetype: 'application/exe',
+        originalname: 'virus.exe',
+        buffer: Buffer.from('x'),
+        size: 1,
+      };
 
       await expect(
         service.createCommentWithAttachment('t1', 'u1', {}, invalidFile),
@@ -531,13 +671,26 @@ describe('TicketsService', () => {
     });
 
     it('accepts valid image MIME type and saves the comment', async () => {
-      const file = { mimetype: 'image/png', originalname: 'screenshot.png', buffer: Buffer.from('img'), size: 3 };
-      const savedComment = { id: 'attachment-comment-uuid', attachmentMimetype: 'image/png' };
+      const file = {
+        mimetype: 'image/png',
+        originalname: 'screenshot.png',
+        buffer: Buffer.from('img'),
+        size: 3,
+      };
+      const savedComment = {
+        id: 'attachment-comment-uuid',
+        attachmentMimetype: 'image/png',
+      };
 
       commentsRepo.save.mockResolvedValue(savedComment);
       commentsRepo.findOne.mockResolvedValue(savedComment);
 
-      const result = await service.createCommentWithAttachment('t1', 'u1', {}, file);
+      const result = await service.createCommentWithAttachment(
+        't1',
+        'u1',
+        {},
+        file,
+      );
 
       expect(result).toBe(savedComment);
       expect(gateway.emitNewComment).toHaveBeenCalled();
@@ -552,32 +705,62 @@ describe('TicketsService', () => {
     it('throws NotFoundException when approval does not exist', async () => {
       approvalsRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.updateApproval('missing-id', { decision: 'Approved' })).rejects.toBeInstanceOf(NotFoundException);
+      await expect(
+        service.updateApproval('missing-id', { decision: 'Approved' }),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('throws ForbiddenException when approval already has a decision', async () => {
-      approvalsRepo.findOne.mockResolvedValue({ id: '1', decision: 'Approved', approverId: 'u1' });
+      approvalsRepo.findOne.mockResolvedValue({
+        id: '1',
+        decision: 'Approved',
+        approverId: 'u1',
+      });
 
-      await expect(service.updateApproval('1', { decision: 'Rejected' }, 'u1')).rejects.toBeInstanceOf(ForbiddenException);
+      await expect(
+        service.updateApproval('1', { decision: 'Rejected' }, 'u1'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
     });
 
     it('throws ForbiddenException when caller is not the assigned approver', async () => {
-      approvalsRepo.findOne.mockResolvedValue({ id: '1', decision: null, approverId: 'correct-approver' });
+      approvalsRepo.findOne.mockResolvedValue({
+        id: '1',
+        decision: null,
+        approverId: 'correct-approver',
+      });
 
-      await expect(service.updateApproval('1', { decision: 'Approved' }, 'wrong-user')).rejects.toBeInstanceOf(ForbiddenException);
+      await expect(
+        service.updateApproval('1', { decision: 'Approved' }, 'wrong-user'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
     });
 
     it('updates approval with decidedAt timestamp when caller is the approver', async () => {
-      const approval = { id: '1', decision: null, approverId: 'approver-id', approver: {} };
+      const approval = {
+        id: '1',
+        decision: null,
+        approverId: 'approver-id',
+        approver: {},
+      };
       approvalsRepo.findOne
         .mockResolvedValueOnce(approval)
-        .mockResolvedValueOnce({ ...approval, decision: 'Approved', decidedAt: expect.any(Date) });
+        .mockResolvedValueOnce({
+          ...approval,
+          decision: 'Approved',
+          decidedAt: expect.any(Date),
+        });
 
-      const result = await service.updateApproval('1', { decision: 'Approved' }, 'approver-id');
+      const result = await service.updateApproval(
+        '1',
+        { decision: 'Approved' },
+        'approver-id',
+      );
 
       expect(approvalsRepo.update).toHaveBeenCalledWith(
         '1',
-        expect.objectContaining({ decision: 'Approved', decidedAt: expect.any(Date) }),
+        expect.objectContaining({
+          decision: 'Approved',
+          decidedAt: expect.any(Date),
+        }),
       );
       expect(result).toBeDefined();
     });
@@ -589,7 +772,9 @@ describe('TicketsService', () => {
 
   describe('getMyTickets', () => {
     it('filters open tickets by default', async () => {
-      const qb = buildQueryBuilder({ getMany: jest.fn().mockResolvedValue([]) });
+      const qb = buildQueryBuilder({
+        getMany: jest.fn().mockResolvedValue([]),
+      });
       ticketsRepo.createQueryBuilder.mockReturnValue(qb);
 
       await service.getMyTickets('requester-id', 'open');
@@ -602,7 +787,9 @@ describe('TicketsService', () => {
     });
 
     it('filters closed tickets when scope is closed', async () => {
-      const qb = buildQueryBuilder({ getMany: jest.fn().mockResolvedValue([]) });
+      const qb = buildQueryBuilder({
+        getMany: jest.fn().mockResolvedValue([]),
+      });
       ticketsRepo.createQueryBuilder.mockReturnValue(qb);
 
       await service.getMyTickets('requester-id', 'closed');
@@ -630,9 +817,24 @@ describe('TicketsService', () => {
 
     it('splits categories by ticketType and includes custom fields', async () => {
       ticketCategoryRepo.find.mockResolvedValue([
-        { name: 'Hardware issue', color: '#F00', ticketType: 'Incident', customFields: [] },
-        { name: 'Access request', color: '#0F0', ticketType: 'Service', customFields: [{ id: 'f1' }] },
-        { name: 'Untyped legacy category', color: '#00F', ticketType: null, customFields: [] },
+        {
+          name: 'Hardware issue',
+          color: '#F00',
+          ticketType: 'Incident',
+          customFields: [],
+        },
+        {
+          name: 'Access request',
+          color: '#0F0',
+          ticketType: 'Service',
+          customFields: [{ id: 'f1' }],
+        },
+        {
+          name: 'Untyped legacy category',
+          color: '#00F',
+          ticketType: null,
+          customFields: [],
+        },
       ]);
 
       const result = await service.getTicketCategories();
@@ -645,9 +847,9 @@ describe('TicketsService', () => {
         'Access request',
         'Untyped legacy category',
       ]);
-      expect(result.Service.find((c) => c.name === 'Access request')?.customFields).toEqual([
-        { id: 'f1' },
-      ]);
+      expect(
+        result.Service.find((c) => c.name === 'Access request')?.customFields,
+      ).toEqual([{ id: 'f1' }]);
     });
   });
 
@@ -688,14 +890,28 @@ describe('TicketsService', () => {
     it('calculates avgMttrHours correctly', async () => {
       const now = Date.now();
       const twoHoursAgo = new Date(now - 2 * 3600 * 1000);
-      const resolved = [{ id: '1', createdAt: twoHoursAgo, resolvedAt: new Date(now) }];
+      const resolved = [
+        { id: '1', createdAt: twoHoursAgo, resolvedAt: new Date(now) },
+      ];
 
-      const qbOpen = buildQueryBuilder({ getCount: jest.fn().mockResolvedValue(3) });
-      const qbToday = buildQueryBuilder({ getCount: jest.fn().mockResolvedValue(1) });
-      const qbWeek = buildQueryBuilder({ getCount: jest.fn().mockResolvedValue(5) });
-      const qbResolved = buildQueryBuilder({ getMany: jest.fn().mockResolvedValue(resolved) });
-      const qbBreaching = buildQueryBuilder({ getRawMany: jest.fn().mockResolvedValue([]) });
-      const qbBreaches = buildQueryBuilder({ getRawMany: jest.fn().mockResolvedValue([]) });
+      const qbOpen = buildQueryBuilder({
+        getCount: jest.fn().mockResolvedValue(3),
+      });
+      const qbToday = buildQueryBuilder({
+        getCount: jest.fn().mockResolvedValue(1),
+      });
+      const qbWeek = buildQueryBuilder({
+        getCount: jest.fn().mockResolvedValue(5),
+      });
+      const qbResolved = buildQueryBuilder({
+        getMany: jest.fn().mockResolvedValue(resolved),
+      });
+      const qbBreaching = buildQueryBuilder({
+        getRawMany: jest.fn().mockResolvedValue([]),
+      });
+      const qbBreaches = buildQueryBuilder({
+        getRawMany: jest.fn().mockResolvedValue([]),
+      });
 
       let callCount = 0;
       ticketsRepo.createQueryBuilder.mockImplementation(() => {
@@ -724,7 +940,9 @@ describe('TicketsService', () => {
   describe('getTicketsByRequester', () => {
     it('returns tickets limited to 50 max', async () => {
       const tickets = [mockTicket(), mockTicket()];
-      const qb = buildQueryBuilder({ getMany: jest.fn().mockResolvedValue(tickets) });
+      const qb = buildQueryBuilder({
+        getMany: jest.fn().mockResolvedValue(tickets),
+      });
       ticketsRepo.createQueryBuilder.mockReturnValue(qb);
 
       const result = await service.getTicketsByRequester('user-id', 100);

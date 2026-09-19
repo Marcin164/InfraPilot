@@ -12,7 +12,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { validateAccessTokenAndGetUserClass } from 'src/helpers/propelAuthClient';
 import { Users } from 'src/entities/users.entity';
-import { Role, userHasAnyRole } from 'src/decorators/roles.decorator';
+import { isStaffUser } from 'src/helpers/isStaffUser';
+import { CustomRolesService } from 'src/services/customRoles.service';
 import { CommentType } from 'src/entities/ticketsComments.entity';
 
 type Viewer = { userId: string; label: string };
@@ -22,7 +23,10 @@ type Viewer = { userId: string; label: string };
 const wsOrigins = (() => {
   const raw = process.env.CORS_ORIGINS?.trim();
   if (!raw) return false;
-  return raw.split(',').map((s) => s.trim()).filter(Boolean);
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
 })();
 
 @WebSocketGateway({
@@ -31,13 +35,16 @@ const wsOrigins = (() => {
     credentials: true,
   },
 })
-export class TicketsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class TicketsGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
   constructor(
     @InjectRepository(Users)
     private readonly usersRepository: Repository<Users>,
+    private readonly customRolesService: CustomRolesService,
   ) {}
 
   /**
@@ -66,19 +73,12 @@ export class TicketsGateway implements OnGatewayConnection, OnGatewayDisconnect 
       const user = await validateAccessTokenAndGetUserClass(token);
       const internalUserId =
         (user as any)?.properties?.metadata?.id || (user as any)?.userId || '';
-      (client.data as any).internalUserId = internalUserId;
+      client.data.internalUserId = internalUserId;
 
       const appUser = internalUserId
         ? await this.usersRepository.findOneBy({ id: internalUserId })
         : null;
-      (client.data as any).isStaff = userHasAnyRole(appUser, [
-        Role.Admin,
-        Role.Approver,
-        Role.Auditor,
-        Role.Compliance,
-        Role.Helpdesk,
-        Role.Dpo,
-      ]);
+      client.data.isStaff = await isStaffUser(appUser, this.customRolesService);
     } catch {
       client.disconnect(true);
     }
@@ -107,7 +107,7 @@ export class TicketsGateway implements OnGatewayConnection, OnGatewayDisconnect 
   ) {
     // Identity comes from the token verified in handleConnection, never
     // from the message body — the client only gets to pick a display label.
-    const userId = (client.data as any)?.internalUserId;
+    const userId = client.data?.internalUserId;
     if (!userId) {
       client.disconnect(true);
       return;
@@ -117,14 +117,13 @@ export class TicketsGateway implements OnGatewayConnection, OnGatewayDisconnect 
     const label = (typeof body === 'string' ? '' : body.label) || userId;
 
     client.join(`ticket:${ticketId}`);
-    if ((client.data as any)?.isStaff) {
+    if (client.data?.isStaff) {
       client.join(`ticket:${ticketId}:staff`);
     }
-    (client.data as any).ticketId = ticketId;
+    client.data.ticketId = ticketId;
 
     const inner =
-      this.viewersByTicket.get(ticketId) ??
-      new Map<string, Viewer>();
+      this.viewersByTicket.get(ticketId) ?? new Map<string, Viewer>();
     inner.set(client.id, { userId, label });
     this.viewersByTicket.set(ticketId, inner);
     this.broadcastViewers(ticketId);
@@ -147,7 +146,7 @@ export class TicketsGateway implements OnGatewayConnection, OnGatewayDisconnect 
   }
 
   handleDisconnect(client: Socket) {
-    const ticketId = (client.data as any)?.ticketId;
+    const ticketId = client.data?.ticketId;
     if (!ticketId) return;
     const inner = this.viewersByTicket.get(ticketId);
     if (!inner) return;

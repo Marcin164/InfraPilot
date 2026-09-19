@@ -25,8 +25,8 @@ import { getZoomConfig, getZoomSyncStatus, syncZoomLicenses } from "../../../../
 import { getDropboxConfig, getDropboxSyncStatus, syncDropboxLicenses } from "../../../../Services/dropbox";
 import { getAdobeConfig, getAdobeSyncStatus, syncAdobeLicenses } from "../../../../Services/adobe";
 import { getLicenses, type LicenseSource } from "../../../../Services/licenses";
-import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
-import { hasRequiredRole } from "../../../../Constants/navigation";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 import GoogleWorkspaceConfigModal from "./GoogleWorkspaceConfigModal";
 import GitHubEnterpriseConfigModal from "./GitHubEnterpriseConfigModal";
 import ZoomConfigModal from "./ZoomConfigModal";
@@ -196,8 +196,8 @@ const LicenseSyncSettings = () => {
   const sourceLabel = (source: LicenseSource) =>
     source === "manual" ? t("licenses.source.manual") : BRAND_LABELS[source] ?? source;
 
-  const currentUserQuery = useCurrentUser();
-  if (!hasRequiredRole("admin", currentUserQuery.data)) return null;
+  const permissionsQuery = usePermissions();
+  if (!hasPermission("licenses.integrations.manage", permissionsQuery.data)) return null;
 
   return (
     <div className="m-4 space-y-4">

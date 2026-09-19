@@ -18,6 +18,11 @@ export const linkUserAuth = async (id: string): Promise<AuthLinkResult> => {
   return data;
 };
 
+export const getUserPermissions = async (id: string): Promise<string[]> => {
+  const { data } = await api.get(`/users/${id}/permissions`);
+  return data.permissions ?? [];
+};
+
 export const provisionUserAuth = async (
   id: string,
 ): Promise<{ authUserId: string | null; created: boolean; reason?: string }> => {

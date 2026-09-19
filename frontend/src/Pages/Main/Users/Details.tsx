@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import { useEffect } from "react";
 import { useParser } from "../../../Hooks/useParser";
-import { useCurrentUser } from "../../../Hooks/useCurrentUser";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
 import { getUser } from "../../../Services/users";
 import { getDevicesByOwner } from "../../../Services/devices";
@@ -17,9 +16,6 @@ import AssignmentsGroups from "./components/AssignmentsGroups";
 const Details = () => {
   const params: any = useParams();
   const { setParsers } = useParser();
-
-  const currentUserQuery = useCurrentUser();
-  const viewerIsAdmin = Boolean(currentUserQuery.data?.isAdmin);
 
   const userQuery = useQuery({
     queryKey: ["user"],
@@ -47,18 +43,7 @@ const Details = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 items-start">
         <div className="flex flex-col gap-4">
           <UserDetails data={userQuery.data} />
-          {viewerIsAdmin && (
-            <UserPrivileges
-              data={{
-                isAdmin: Boolean(userQuery.data.isAdmin),
-                isApprover: Boolean(userQuery.data.isApprover),
-                isAuditor: Boolean(userQuery.data.isAuditor),
-                isCompliance: Boolean(userQuery.data.isCompliance),
-                isHelpdesk: Boolean(userQuery.data.isHelpdesk),
-                isDpo: Boolean(userQuery.data.isDpo),
-              }}
-            />
-          )}
+          <UserPrivileges userId={userQuery.data.id} />
           <UserGroups memberOf={userQuery.data.memberOf} />
         </div>
 

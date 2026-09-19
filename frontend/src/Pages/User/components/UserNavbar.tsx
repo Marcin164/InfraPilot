@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import NavbarLink from "../../../Components/Navbar/NavbarLink";
 import Logo from "../../../assets/Logo.png";
 import { canSeeItem, userPortalExtraItems } from "../../../Constants/navigation";
-import { useCurrentUser } from "../../../Hooks/useCurrentUser";
+import { usePermissions } from "../../../Hooks/usePermissions";
 
 type Props = {
   isOpen: boolean;
@@ -34,12 +34,12 @@ const UserNavbar = ({ isOpen, onClose }: Props) => {
   const logout = useLogoutFunction();
   const { t } = useTranslation();
 
-  const currentUserQuery = useCurrentUser();
+  const permissionsQuery = usePermissions();
 
   const visibleItems = [
     ...items,
     ...userPortalExtraItems.filter((item) =>
-      canSeeItem(item, currentUserQuery.data),
+      canSeeItem(item, permissionsQuery.data),
     ),
   ];
 

@@ -15,12 +15,6 @@ export interface User {
   phone?: string;
   manager?: string;
   enabled?: boolean;
-  isApprover: boolean;
-  isAdmin: boolean;
-  isAuditor?: boolean;
-  isCompliance?: boolean;
-  isHelpdesk?: boolean;
-  isDpo?: boolean;
   memberOf?: string[];
   distinguishedName: string;
   lastLogonDate?: string;
@@ -28,15 +22,7 @@ export interface User {
 
 export type CreateUserData = Omit<
   User,
-  | "id"
-  | "isApprover"
-  | "isAdmin"
-  | "isAuditor"
-  | "isCompliance"
-  | "isHelpdesk"
-  | "isDpo"
-  | "enabled"
-  | "distinguishedName"
+  "id" | "enabled" | "distinguishedName"
 >;
 
 export interface UserFilter {

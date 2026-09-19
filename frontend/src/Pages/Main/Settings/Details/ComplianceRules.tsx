@@ -19,8 +19,8 @@ import {
   ComplianceRule,
   ComplianceSeverity,
 } from "../../../../Services/compliance";
-import { useCurrentUser } from "../../../../Hooks/useCurrentUser";
-import { hasRequiredRole } from "../../../../Constants/navigation";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const OPERATORS: ComplianceOperator[] = [
   "eq",
@@ -158,8 +158,8 @@ const ComplianceRules = () => {
 
   const rules = rulesQuery.data ?? [];
 
-  const currentUserQuery = useCurrentUser();
-  if (!hasRequiredRole("complianceOrAdmin", currentUserQuery.data)) return null;
+  const permissionsQuery = usePermissions();
+  if (!hasPermission("devices.complianceRules.manage", permissionsQuery.data)) return null;
 
   return (
     <div className="space-y-4 m-4">

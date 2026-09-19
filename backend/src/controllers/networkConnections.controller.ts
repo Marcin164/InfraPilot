@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import {
   NetworkConnectionsService,
   CreateNetworkConnectionDto,
@@ -35,7 +35,7 @@ export class NetworkConnectionsController {
     return this.connectionsService.getTopology();
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('devices.topology.edit')
   @Post()
   async create(@Body() dto: CreateNetworkConnectionDto, @Req() req: any) {
     const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id;
@@ -47,7 +47,7 @@ export class NetworkConnectionsController {
     return conn;
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('devices.topology.edit')
   @Delete(':id')
   async remove(@Param('id') id: string) {
     await this.connectionsService.remove(id);

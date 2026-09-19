@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { MfaGuard } from 'src/guards/mfaGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { LegalHoldService } from 'src/services/legalHold.service';
 import { CreateLegalHoldDto, ReleaseLegalHoldDto } from 'src/dto/legalHold.dto';
 
@@ -18,7 +18,7 @@ const actorOf = (req: any): string =>
   req?.user?.properties?.metadata?.id ?? req?.user?.id ?? 'unknown';
 
 @UseGuards(AuthGuard, MfaGuard)
-@Roles(Role.Admin, Role.Compliance, Role.Dpo)
+@RequiresPermission('devices.complianceRules.manage', 'dpo.fullAccess')
 @Controller('legal-holds')
 export class LegalHoldController {
   constructor(private readonly service: LegalHoldService) {}
@@ -37,10 +37,7 @@ export class LegalHoldController {
   }
 
   @Post()
-  create(
-    @Body() body: CreateLegalHoldDto,
-    @Req() req: any,
-  ) {
+  create(@Body() body: CreateLegalHoldDto, @Req() req: any) {
     return this.service.create({
       userId: body.userId,
       reason: body.reason,

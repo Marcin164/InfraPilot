@@ -5,7 +5,6 @@ import { Histories } from 'src/entities/histories.entity';
 import { HistoryApprovers } from 'src/entities/historyApprovers.entity';
 import { HistoryComponents } from 'src/entities/historyComponents.entity';
 import { Users } from 'src/entities/users.entity';
-import { HistoryAccessGuard } from 'src/guards/historyAccessGuard.guard';
 import { HistoriesService } from 'src/services/histories.service';
 import { AuditModule } from './audit.module';
 
@@ -20,6 +19,6 @@ import { AuditModule } from './audit.module';
     AuditModule,
   ],
   controllers: [HistoriesController],
-  providers: [HistoriesService, HistoryAccessGuard],
+  providers: [HistoriesService],
 })
 export class HistoryModule {}

@@ -9,9 +9,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
-import { Role, Roles } from 'src/decorators/roles.decorator';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { SlaDefinitionService } from 'src/services/slaDefinition.service';
-import { CreateSlaDefinitionDto, UpdateSlaDefinitionDto } from 'src/dto/slaDefinition.dto';
+import {
+  CreateSlaDefinitionDto,
+  UpdateSlaDefinitionDto,
+} from 'src/dto/slaDefinition.dto';
 
 @UseGuards(AuthGuard)
 @Controller('sla/definitions')
@@ -23,19 +26,19 @@ export class SlaDefinitionController {
     return this.service.getAll();
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('helpdesk.sla.config')
   @Post()
   create(@Body() dto: CreateSlaDefinitionDto) {
     return this.service.create(dto);
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('helpdesk.sla.config')
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateSlaDefinitionDto) {
     return this.service.update(id, dto);
   }
 
-  @Roles(Role.Admin)
+  @RequiresPermission('helpdesk.sla.config')
   @Delete(':id')
   delete(@Param('id') id: string) {
     return this.service.delete(id);
