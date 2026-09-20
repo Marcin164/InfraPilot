@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { PartialType } from '@nestjs/mapped-types';
 import {
   IsIn,
@@ -167,6 +167,80 @@ export class IpamService {
     if (!allocation) throw new NotFoundException('Allocation not found');
     await this.allocations.remove(allocation);
     invalidateIpamReports();
+  }
+
+  /**
+   * Materializes a `network_scan` agent task's result into IpAllocation
+   * rows. Upserts by `ip` scoped to `source: 'scan'` only -- a manual or
+   * synced row for the same IP (a different "owner") is left untouched;
+   * getConflicts() is what surfaces the disagreement, not this method.
+   */
+  async ingestDiscovery(input: {
+    cidr: string;
+    subnetId?: string | null;
+    hosts: Array<{ ip: string; mac?: string | null; hostname?: string | null }>;
+  }): Promise<{ upserted: number }> {
+    let subnetId = input.subnetId ?? null;
+    if (!subnetId) {
+      const bySubnetCidr = await this.subnets.findOneBy({ cidr: input.cidr });
+      subnetId = bySubnetCidr?.id ?? null;
+    }
+
+    let upserted = 0;
+    for (const host of input.hosts) {
+      try {
+        ipToInt(host.ip); // skip malformed entries rather than fail the whole batch
+      } catch {
+        continue;
+      }
+      const existing = await this.allocations.findOneBy({
+        ip: host.ip,
+        source: IpAllocationSource.SCAN,
+      });
+      if (existing) {
+        existing.subnetId = subnetId;
+        existing.hostname = host.hostname ?? existing.hostname;
+        existing.macAddress = host.mac ?? existing.macAddress;
+        existing.lastSeenAt = new Date();
+        await this.allocations.save(existing);
+      } else {
+        await this.allocations.save(
+          this.allocations.create({
+            id: uuidv4(),
+            subnetId,
+            ip: host.ip,
+            status: IpAllocationStatus.ASSIGNED,
+            deviceId: null,
+            hostname: host.hostname ?? null,
+            macAddress: host.mac ?? null,
+            source: IpAllocationSource.SCAN,
+            lastSeenAt: new Date(),
+          }),
+        );
+      }
+      upserted += 1;
+    }
+    if (upserted > 0) invalidateIpamReports();
+    return { upserted };
+  }
+
+  /**
+   * Windows agents stationed at a subnet's location -- i.e. eligible to
+   * run a `network_scan` task for it. Same selection rule the scheduled
+   * scan worker (networkScan.worker.ts) uses, exposed here so the manual
+   * "Scan this subnet" button can default to a sane device instead of
+   * making the admin pick from every device in the system.
+   */
+  async findScanCandidates(subnetId: string): Promise<Devices[]> {
+    const subnet = await this.findSubnet(subnetId);
+    if (!subnet.locationId) return [];
+    return this.devices.find({
+      where: {
+        platform: 'windows',
+        locationId: subnet.locationId,
+        apiSecretHash: Not(IsNull()),
+      } as any,
+    });
   }
 
   // ---- Utilization & conflicts ----

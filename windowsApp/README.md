@@ -9,33 +9,51 @@ Trzymane prosto: **jeden binary, jeden instalator, jedna ścieżka deployu**.
 
 ## Model deployu
 
+Repo jest prywatne, więc gołe `Invoke-WebRequest` z hosta docelowego nie
+pobierze niczego z GitHub Releases bez poświadczeń -- a host instalujący
+agenta nie ma i nie powinien dostawać żadnego tokena. Zamiast tego to
+**backend** (trzymający token po swojej stronie, w `.env`, tak jak
+`AGENT_ENROLLMENT_TOKEN`) ściąga najnowsze wydanie z GitHuba i serwuje je
+dalej hostom dokładnie tak jak dawny ręczny upload -- tylko automatycznie.
+
 ```
-   Settings > Windows Agent          backend (self-hosted)
-   (admin wgrywa .exe przez UI) ───► uploads/agent/InfraPilotAgentSetup.exe
-                                              │
-                                              ▼
-   Frontend "Settings > Windows Agent"     GET /devices/agent/installer
-   (admin kopiuje snippet)                 + /devices/agent/setup-info
-                                              │
-                                              ▼
-                                          host Windows
+   git tag vX.Y.Z          GitHub Actions (windows-agent.yml)
+   git push --tags  ───►   buduje + publikuje InfraPilotAgentSetup-X.Y.Z.exe
+                            na (prywatnym) GitHub Release
+                                        │
+                                        ▼ co godzinę (albo "Synchronizuj
+                                          teraz" w Settings)
+                    AgentInstallerSyncWorker / AgentInstallerService
+                    .syncFromGitHubReleases('windows') -- backend, z
+                    AGENT_INSTALLER_GITHUB_TOKEN, ściąga asset i zapisuje
+                    go pod uploads/agent/ (ten sam self-hosted mechanizm
+                    co Linux)
+                                        │
+                                        ▼
+   Frontend "Settings > Windows Agent"   GET /devices/agent/setup-info
+   (admin kopiuje snippet)               GET /devices/agent/installer
+                                        │
+                                        ▼
+                                    host Windows
 ```
 
-1. **Build lokalny / CI** produkuje `InfraPilotAgentSetup-x.y.z.exe`
-   (patrz "Build" poniżej).
-2. **Admin tenanta** w **Settings → Windows Agent** wgrywa ten plik
-   przyciskiem "Wgraj instalator" — backend zapisuje go pod
-   `uploads/agent/` (ten sam wolumin co inne uploady) i serwuje go publicznie
-   pod `GET /devices/agent/installer`. Brak kroku Docker-build-arg / GitHub
-   Releases — to jest teraz domyślna ścieżka.
-3. Strona pokazuje też Backend URL + `AGENT_ENROLLMENT_TOKEN` + gotowy
-   snippet PowerShell, który pobiera ten URL.
-4. **Operator hosta** wkleja snippet w elevated PowerShell:
+1. **Push tagu** `vX.Y.Z` → CI (`.github/workflows/windows-agent.yml`) buduje
+   `InfraPilotAgentSetup-X.Y.Z.exe` i publikuje go na (prywatnym) GitHub
+   Release.
+2. **Jednorazowo**: ustaw w `.env` backendu
+   `AGENT_INSTALLER_GITHUB_TOKEN=<PAT z uprawnieniem Contents: Read-only
+   na to repo>` i `AGENT_INSTALLER_GITHUB_REPO=<org>/<repo>`. Backend co
+   godzinę sam sprawdza najnowszy release i ściąga nowy plik, jeśli się
+   pojawił -- **bez ręcznego wgrywania** (backend nie przyjmuje już
+   uploadu instalatora dla Windows przez przeglądarkę, patrz
+   `AgentInstallerService.upload()`).
+3. Nie chcesz czekać do godziny? W **Settings → Windows Agent** kliknij
+   „Synchronizuj teraz" (`POST /devices/agent/installer/sync?platform=windows`).
+4. Strona **Settings → Windows Agent** pokazuje Backend URL +
+   `AGENT_ENROLLMENT_TOKEN` + gotowy snippet PowerShell.
+5. **Operator hosta** wkleja snippet w elevated PowerShell:
    `Invoke-WebRequest ...` + `setup.exe /SILENT /BACKENDURL=... /TOKEN=...`.
    Instalator robi wszystko cicho, host pojawia się w UI po ~30 s.
-5. Opcjonalnie: ustaw `AGENT_INSTALLER_URL` w `.env`, żeby zamiast
-   self-hostingu wskazać zewnętrzny adres (CDN / GitHub Releases) — wtedy
-   ten URL nadpisuje przesłany plik.
 
 ## Co siedzi w środku
 
@@ -138,7 +156,9 @@ Wynik: `installer\Output\InfraPilotAgentSetup-0.1.0.exe`.
 ## Build (CI)
 
 Push tagu `vX.Y.Z` → workflow `.github/workflows/windows-agent.yml` zrobi
-build na `windows-latest` i wrzuci `.exe` jako asset Release'a.
+build na `windows-latest` i wrzuci `InfraPilotAgentSetup-X.Y.Z.exe` jako
+asset (prywatnego) Release'a — patrz "Model deployu" wyżej, jak backend to
+stamtąd odbiera.
 
 ## Bezpieczeństwo
 
@@ -151,3 +171,6 @@ build na `windows-latest` i wrzuci `.exe` jako asset Release'a.
 - **Enrollment token rotation**: zmiana `AGENT_ENROLLMENT_TOKEN` w env
   backendu + restart. Stare instalatory padają na enrollu, już enrolled
   hosty jadą dalej (mają per-device HMAC secrets).
+- **`AGENT_INSTALLER_GITHUB_TOKEN`**: PAT z uprawnieniem tylko
+  `Contents: Read-only` na to jedno repo, trzymany wyłącznie w `.env`
+  backendu -- nigdy nie trafia do instalatora ani na hosta docelowego.

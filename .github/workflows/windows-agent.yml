@@ -87,9 +87,11 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      # Tag pushes (v*.*.*) get a public Release entry with the
-      # installer attached. The Release page gives operators a stable
-      # https URL they can download from without a GitHub account.
+      # Tag pushes (v*.*.*) get a Release entry with the installer attached.
+      # This repo is private, so the Release page itself isn't a public
+      # download link -- the backend (holding a PAT server-side) polls
+      # this via the GitHub API and self-hosts the file, see
+      # AgentInstallerService.syncFromGitHubReleases().
       - name: Create / update GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2

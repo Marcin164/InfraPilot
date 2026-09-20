@@ -302,6 +302,8 @@
   "device.tasks.typeScanNow": "Skanuj teraz",
   "device.tasks.typeCollectEventLog": "Zbierz dziennik zdarzeń",
   "device.tasks.typeInventoryRefresh": "Odśwież inwentaryzację",
+  "device.tasks.typeNetworkScan": "Skanuj sieć (wykrywanie urządzeń)",
+  "device.tasks.cidrLabel": "Zakres CIDR",
   "device.tasks.help": "Zakolejkowane zadania są odbierane przez agenta przy następnym uwierzytelnionym (HMAC) odpytaniu. Okno leasingu to 15 minut; wygasłe leasingi są automatycznie ponawiane do 3 razy.",
   "device.tasks.typeLabel": "Typ zadania",
   "device.tasks.queuing": "Kolejkowanie…",
@@ -2032,5 +2034,15 @@
   "ipam.allocation.createFailed": "Nie udało się zarezerwować IP",
   "ipam.noEntries": "Brak zajętych adresów.",
   "ipam.conflicts.title": "Wykryto {{count}} konflikt(ów) IP",
+
+  "ipam.scan.agent": "Urządzenie skanujące",
+  "ipam.scan.scanSubnet": "Skanuj tę podsieć",
+  "ipam.scan.queuing": "Kolejkowanie…",
+  "ipam.scan.queued": "Skan zakolejkowany — wyniki pojawią się po jego zakończeniu",
+  "ipam.scan.failed": "Nie udało się zakolejkować skanu",
+  "ipam.scan.noDevice": "Wybierz urządzenie, które ma wykonać skan",
+  "ipam.scan.noAgents": "Brak agenta Windows w lokalizacji tej podsieci",
+  "ipam.scan.discoveredBadge": "wykryte skanem",
+
   "notif.event.ip_conflict_detected": "Wykryto konflikt IP"
 }

@@ -277,6 +277,9 @@ export type AgentInstallerMeta = {
   uploadedBy: string | null;
   sha256?: string;
   signature?: string | null;
+  // GitHub release tag this file was auto-synced from (windows/macos) --
+  // null for a human upload (Linux).
+  releaseTag?: string | null;
 };
 
 export type AgentPlatform = "windows" | "macos" | "linux";
@@ -309,6 +312,15 @@ export const uploadAgentInstaller = async (
   if (signatureFile) formData.append("signature", signatureFile);
   const { data } = await api.post("/devices/agent/installer", formData, {
     headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+};
+
+export const syncAgentInstaller = async (
+  platform: "windows" | "macos",
+): Promise<{ updated: boolean }> => {
+  const { data } = await api.post("/devices/agent/installer/sync", null, {
+    params: { platform },
   });
   return data;
 };

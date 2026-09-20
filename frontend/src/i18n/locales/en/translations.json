@@ -304,6 +304,8 @@
   "device.tasks.typeScanNow": "Scan now",
   "device.tasks.typeCollectEventLog": "Collect event log",
   "device.tasks.typeInventoryRefresh": "Inventory refresh",
+  "device.tasks.typeNetworkScan": "Network scan (device discovery)",
+  "device.tasks.cidrLabel": "CIDR range",
   "device.tasks.help": "Queued tasks are picked up by the agent on its next HMAC-authenticated poll. Lease window is 15 minutes; expired leases auto-requeue up to 3 times.",
   "device.tasks.typeLabel": "Task type",
   "device.tasks.queuing": "Queuing…",
@@ -1865,5 +1867,15 @@
   "ipam.allocation.createFailed": "Could not reserve IP",
   "ipam.noEntries": "No addresses in use yet.",
   "ipam.conflicts.title": "{{count}} IP conflict(s) detected",
+
+  "ipam.scan.agent": "Scanning device",
+  "ipam.scan.scanSubnet": "Scan this subnet",
+  "ipam.scan.queuing": "Queuing…",
+  "ipam.scan.queued": "Scan queued — results will appear once it completes",
+  "ipam.scan.failed": "Failed to queue the scan",
+  "ipam.scan.noDevice": "Pick a device to run the scan",
+  "ipam.scan.noAgents": "No Windows agent at this subnet's location",
+  "ipam.scan.discoveredBadge": "discovered by scan",
+
   "notif.event.ip_conflict_detected": "IP conflict detected"
 }

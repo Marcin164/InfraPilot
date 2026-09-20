@@ -226,7 +226,7 @@ export class BulkLifecycleDto {
   @IsOptional() @IsString() note?: string;
 }
 
-const AGENT_TASK_TYPES = ['scan_now', 'collect_event_log', 'inventory_refresh'] as const;
+const AGENT_TASK_TYPES = ['scan_now', 'collect_event_log', 'inventory_refresh', 'network_scan'] as const;
 
 export class EnqueueBulkTasksDto {
   @IsArray() @IsString({ each: true }) deviceIds: string[];

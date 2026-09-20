@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { faSitemap, faServer, faPlus, faTrash, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { faSitemap, faServer, faPlus, faTrash, faTriangleExclamation, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import CardHeader from "../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
@@ -11,6 +11,7 @@ import Input from "../../../Components/Inputs/Input";
 import SelectSecondary from "../../../Components/Inputs/SelectSecondary";
 import { getDevicesOptions } from "../../../Services/devices";
 import { getDhcpServers } from "../../../Services/dhcpServers";
+import { enqueueDeviceTask } from "../../../Services/agentTasks";
 import {
   AllocationStatus,
   CreateAllocationPayload,
@@ -20,6 +21,7 @@ import {
   deleteAllocation,
   deleteSubnet,
   getIpConflicts,
+  getScanCandidates,
   getSubnetUtilization,
   getSubnets,
 } from "../../../Services/ipam";
@@ -37,6 +39,7 @@ const Ipam = () => {
   const [selectedSubnetId, setSelectedSubnetId] = useState<string | null>(null);
   const [addingSubnet, setAddingSubnet] = useState(false);
   const [addingAllocation, setAddingAllocation] = useState(false);
+  const [scanDeviceId, setScanDeviceId] = useState<string | null>(null);
 
   const subnetsQuery = useQuery({ queryKey: ["subnets"], queryFn: getSubnets });
   const conflictsQuery = useQuery({ queryKey: ["ip-conflicts"], queryFn: getIpConflicts });
@@ -57,6 +60,39 @@ const Ipam = () => {
       })),
     [devicesQuery.data],
   );
+
+  const scanCandidatesQuery = useQuery({
+    queryKey: ["scan-candidates", selectedSubnetId],
+    queryFn: () => getScanCandidates(selectedSubnetId!),
+    enabled: !!selectedSubnetId,
+  });
+  const scanDeviceOptions = useMemo(() => {
+    const candidates = scanCandidatesQuery.data ?? [];
+    const source = candidates.length > 0 ? candidates : devicesQuery.data ?? [];
+    return source.map((d: any) => ({
+      value: d.id,
+      label: d.assetName || `${d.manufacturer ?? ""} ${d.model ?? ""} (${d.serialNumber ?? d.serialnumber ?? ""})`,
+    }));
+  }, [scanCandidatesQuery.data, devicesQuery.data]);
+
+  useEffect(() => {
+    setScanDeviceId(scanDeviceOptions[0]?.value ?? null);
+  }, [selectedSubnetId, scanDeviceOptions]);
+
+  const scanSubnetMutation = useMutation({
+    mutationFn: (cidr: string) => {
+      if (!scanDeviceId) throw new Error(t("ipam.scan.noDevice"));
+      return enqueueDeviceTask(scanDeviceId, {
+        type: "network_scan",
+        payload: { cidr, subnetId: selectedSubnetId },
+      });
+    },
+    onSuccess: () => {
+      toast.success(t("ipam.scan.queued"));
+    },
+    onError: (err: any) =>
+      toast.error(err?.message ?? err?.response?.data?.message ?? t("ipam.scan.failed")),
+  });
 
   const [subnetForm, setSubnetForm] = useState<CreateSubnetPayload>({ name: "", cidr: "" });
   const [allocationForm, setAllocationForm] = useState<CreateAllocationPayload>({
@@ -257,11 +293,13 @@ const Ipam = () => {
             <>
               <div className="flex justify-between items-start">
                 <CardHeader text={utilization.subnet.name} />
-                <ButtonPrimary
-                  icon={faPlus}
-                  text={t("ipam.allocation.add")}
-                  onClick={() => setAddingAllocation(!addingAllocation)}
-                />
+                <div className="flex items-center gap-2">
+                  <ButtonPrimary
+                    icon={faPlus}
+                    text={t("ipam.allocation.add")}
+                    onClick={() => setAddingAllocation(!addingAllocation)}
+                  />
+                </div>
               </div>
               <div className="mt-2 text-[13px] text-[#3C3C3C]">
                 {t("ipam.utilization", {
@@ -277,6 +315,30 @@ const Ipam = () => {
                     width: `${Math.min(100, (utilization.used / Math.max(1, utilization.total)) * 100)}%`,
                   }}
                 />
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-end gap-2 border border-[#F0F0F0] rounded-[10px] p-3">
+                <div className="min-w-[220px]">
+                  <SelectSecondary
+                    label={t("ipam.scan.agent")}
+                    options={scanDeviceOptions}
+                    value={scanDeviceOptions.find((o) => o.value === scanDeviceId)}
+                    onSelect={(opt: any) => setScanDeviceId(opt?.value ?? null)}
+                  />
+                </div>
+                <ButtonPrimary
+                  icon={faMagnifyingGlass}
+                  text={
+                    scanSubnetMutation.isPending
+                      ? t("ipam.scan.queuing")
+                      : t("ipam.scan.scanSubnet")
+                  }
+                  onClick={() => scanSubnetMutation.mutate(utilization.subnet.cidr)}
+                  disabled={scanSubnetMutation.isPending || !scanDeviceId}
+                />
+                {scanDeviceOptions.length === 0 && (
+                  <span className="text-[12px] text-[#9a9a9a]">{t("ipam.scan.noAgents")}</span>
+                )}
               </div>
 
               {addingAllocation && (
@@ -325,7 +387,13 @@ const Ipam = () => {
                       <div>
                         <span className="font-bold text-[#3C3C3C] mr-2">{e.ip}</span>
                         <span className="text-[13px] text-[#9a9a9a]">{e.label}</span>
-                        <span className="text-[11px] text-[#9a9a9a] ml-2">({e.source})</span>
+                        {e.source === "scan" ? (
+                          <span className="text-[11px] font-bold text-[#2B9AE9] ml-2">
+                            {t("ipam.scan.discoveredBadge")}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-[#9a9a9a] ml-2">({e.source})</span>
+                        )}
                       </div>
                       {e.id && (
                         <ButtonPrimary

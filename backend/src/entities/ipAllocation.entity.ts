@@ -21,6 +21,7 @@ export enum IpAllocationStatus {
 export enum IpAllocationSource {
   MANUAL = 'manual',
   SYNC = 'sync',
+  SCAN = 'scan',
 }
 
 /**

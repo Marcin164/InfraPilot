@@ -33,6 +33,7 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from agent import scanner
+from agent.scanner import discovery
 from agent.config import (
     DEFAULT_CONFIG_PATH, DEFAULT_STATE_PATH,
     AgentConfig, AgentState, dpapi_encrypt, load_config, load_state, write_state,
@@ -115,10 +116,13 @@ def process_tasks(cfg: AgentConfig, state: AgentState, sections: list[str]) -> N
     """Claim and run queued admin tasks (Settings > device > Tasks tab).
 
     ``scan_now`` / ``inventory_refresh`` trigger a full scan; ``collect_event_log``
-    re-sends just the events section. None of these read ``task["payload"]``
-    -- there's nothing to parameterize today. Any other type (there's no
-    UI to enqueue one, but the API doesn't enforce that) is failed back
-    with an explanatory error rather than silently dropped.
+    re-sends just the events section -- none of these read ``task["payload"]``.
+    ``network_scan`` is different: it sweeps *other* machines on the LAN
+    (``payload["cidr"]``) rather than this one, and reports back through
+    the task's own ``result`` instead of ``send_scan()`` (that endpoint is
+    for this device's own inventory). Any other type (there's no UI to
+    enqueue one, but the API doesn't enforce that) is failed back with an
+    explanatory error rather than silently dropped.
     """
     log = logging.getLogger("agent.tasks")
     try:
@@ -135,6 +139,13 @@ def process_tasks(cfg: AgentConfig, state: AgentState, sections: list[str]) -> N
                 send_scan(cfg, state, build_payload(sections))
             elif task_type == "collect_event_log":
                 send_scan(cfg, state, {"events": scanner.collect_events()})
+            elif task_type == "network_scan":
+                cidr = (task.get("payload") or {}).get("cidr")
+                if not cidr:
+                    raise ValueError("network_scan task is missing payload.cidr")
+                hosts = discovery.scan_network(cidr)
+                complete_task(cfg, state, task_id, lease_token, {"hosts": hosts, "cidr": cidr})
+                continue
             else:
                 raise ValueError(f"Unsupported task type for this agent: {task_type}")
             complete_task(cfg, state, task_id, lease_token, {"ok": True})

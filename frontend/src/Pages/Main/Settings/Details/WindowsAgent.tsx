@@ -10,6 +10,7 @@ import {
   faDownload,
   faUpload,
   faPlus,
+  faRotate,
 } from "@fortawesome/free-solid-svg-icons";
 import { faWindows as faWindowsBrand, faApple, faLinux } from "@fortawesome/free-brands-svg-icons";
 import { twMerge } from "tailwind-merge";
@@ -29,6 +30,7 @@ import {
   createEnrollmentToken,
   revokeEnrollmentToken,
   uploadAgentInstaller,
+  syncAgentInstaller,
 } from "../../../../Services/devices";
 import { usePermissions } from "../../../../Hooks/usePermissions";
 import { hasPermission } from "../../../../Constants/navigation";
@@ -127,13 +129,89 @@ const AgentPlatformPanel = ({
 }: {
   platform: AgentPlatform;
   data: AgentPlatformSetupInfo;
+  onUpload?: (file: File, signatureFile?: File) => void;
+  uploading?: boolean;
+}) => {
+  if (platform === "windows" || platform === "macos") {
+    return <GitHubSyncAgentPanel platform={platform} data={data} />;
+  }
+
+  return <LinuxAgentPanel data={data} onUpload={onUpload!} uploading={!!uploading} />;
+};
+
+const GitHubSyncAgentPanel = ({
+  platform,
+  data,
+}: {
+  platform: "windows" | "macos";
+  data: AgentPlatformSetupInfo;
+}) => {
+  const queryClient = useQueryClient();
+  const cfg = PLATFORM_CONFIG[platform];
+
+  const syncMutation = useMutation({
+    mutationFn: () => syncAgentInstaller(platform),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["agent-setup-info"] });
+      toast.success(
+        result.updated
+          ? "Zsynchronizowano nową wersję z GitHub Releases"
+          : "Już aktualne — brak nowego wydania od ostatniej synchronizacji",
+      );
+    },
+    onError: () => toast.error("Synchronizacja z GitHub Releases nie powiodła się"),
+  });
+
+  return (
+    <div className="bg-white rounded-[10px] shadow-xl p-4">
+      <CardHeader text={`Instalator agenta (${cfg.label})`} icon={faDownload} />
+      <p className="text-[14px] text-[#535353] mt-2 mb-3">
+        Synchronizowany automatycznie z prywatnego GitHub Release co godzinę
+        -- bez ręcznego wgrywania. Snippet instalacyjny (adres + token)
+        generujesz osobno w sekcji „Tokeny rejestracji" powyżej.
+      </p>
+      {data.installerMeta ? (
+        <div className="bg-[#F5F7FA] rounded-[8px] p-3 text-[13px] text-[#3C3C3C] mb-3 flex items-center justify-between">
+          <span>
+            {data.installerMeta.originalName} ·{" "}
+            {formatBytes(data.installerMeta.sizeBytes)}
+            {data.installerMeta.releaseTag && (
+              <span className="text-[#7a7a7a]"> · {data.installerMeta.releaseTag}</span>
+            )}
+          </span>
+          <a href={data.installerUrl ?? undefined} className="text-[#2B9AE9] font-semibold">
+            Pobierz
+          </a>
+        </div>
+      ) : (
+        <div className="bg-[#FFFBEB] border border-[#F59E0B] rounded-[8px] p-3 text-[#92400E] text-[14px] mb-3">
+          Jeszcze nie zsynchronizowano żadnego wydania. Poczekaj na najbliższy
+          cykl (do godziny) albo kliknij „Synchronizuj teraz".
+        </div>
+      )}
+      <ButtonPrimary
+        icon={faRotate}
+        text={syncMutation.isPending ? "Synchronizowanie..." : "Synchronizuj teraz"}
+        onClick={() => syncMutation.mutate()}
+        disabled={syncMutation.isPending}
+      />
+    </div>
+  );
+};
+
+const LinuxAgentPanel = ({
+  data,
+  onUpload,
+  uploading,
+}: {
+  data: AgentPlatformSetupInfo;
   onUpload: (file: File, signatureFile?: File) => void;
   uploading: boolean;
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const sigInputRef = useRef<HTMLInputElement | null>(null);
   const [pendingSignature, setPendingSignature] = useState<File | null>(null);
-  const cfg = PLATFORM_CONFIG[platform];
+  const cfg = PLATFORM_CONFIG.linux;
 
   return (
     <div className="bg-white rounded-[10px] shadow-xl p-4">
@@ -148,11 +226,9 @@ const AgentPlatformPanel = ({
           <span>
             {data.installerMeta.originalName} ·{" "}
             {formatBytes(data.installerMeta.sizeBytes)}
-            {platform === "linux" && (
-              <span className={data.installerMeta.signature ? "text-[#166534]" : "text-[#92400E]"}>
-                {" "}· {data.installerMeta.signature ? "podpisany" : "niepodpisany"}
-              </span>
-            )}
+            <span className={data.installerMeta.signature ? "text-[#166534]" : "text-[#92400E]"}>
+              {" "}· {data.installerMeta.signature ? "podpisany" : "niepodpisany"}
+            </span>
           </span>
           <a href={data.installerUrl ?? undefined} className="text-[#2B9AE9] font-semibold">
             Pobierz
@@ -183,30 +259,26 @@ const AgentPlatformPanel = ({
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
         />
-        {platform === "linux" && (
-          <>
-            <input
-              ref={sigInputRef}
-              type="file"
-              accept=".asc,.sig"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) setPendingSignature(file);
-                e.target.value = "";
-              }}
-            />
-            <ButtonPrimary
-              color="white"
-              text={pendingSignature ? `Podpis: ${pendingSignature.name}` : "Dołącz podpis (.sig)"}
-              icon={faKey}
-              onClick={() => sigInputRef.current?.click()}
-              disabled={uploading}
-            />
-          </>
-        )}
+        <input
+          ref={sigInputRef}
+          type="file"
+          accept=".asc,.sig"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) setPendingSignature(file);
+            e.target.value = "";
+          }}
+        />
+        <ButtonPrimary
+          color="white"
+          text={pendingSignature ? `Podpis: ${pendingSignature.name}` : "Dołącz podpis (.sig)"}
+          icon={faKey}
+          onClick={() => sigInputRef.current?.click()}
+          disabled={uploading}
+        />
       </div>
-      {platform === "linux" && pendingSignature && (
+      {pendingSignature && (
         <p className="text-[12px] text-[#7a7a7a] mt-2">
           Podpis zostanie wysłany razem z następnym plikiem {cfg.accept} wybranym powyżej.
         </p>
@@ -311,10 +383,17 @@ const GenerateTokenModal = ({
               className="text-[13px] text-[#535353] mb-2"
               dangerouslySetInnerHTML={{ __html: PLATFORM_CONFIG[activePlatform].installHint }}
             />
-          ) : (
+          ) : activePlatform === "linux" ? (
             <p className="text-[13px] text-[#92400E] mb-2">
               Instalator dla {PLATFORM_CONFIG[activePlatform].label} nie został
               jeszcze wgrany — wgraj go w panelu poniżej, żeby snippet zadziałał.
+            </p>
+          ) : (
+            <p className="text-[13px] text-[#92400E] mb-2">
+              Instalator dla {PLATFORM_CONFIG[activePlatform].label} nie został
+              jeszcze zsynchronizowany z GitHub Releases — poczekaj na
+              najbliższy cykl albo kliknij „Synchronizuj teraz" w panelu
+              poniżej, żeby snippet zadziałał.
             </p>
           )}
           {result[activePlatform].snippet && (

@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
+import Input from "../../../../Components/Inputs/Input";
 import {
   AgentTask,
   AgentTaskType,
@@ -23,18 +24,20 @@ import {
 // agent has no defined behaviour for it (always failed with "Unsupported
 // task type") and making it do something would mean letting an admin
 // have the agent execute arbitrary, unaudited input -- not a tradeoff
-// worth the convenience. None of the remaining types take parameters, so
-// there's no payload field either.
+// worth the convenience. `network_scan` is the one type that does take a
+// payload (a CIDR) -- see the conditional input below.
 const TASK_TYPE_VALUES: AgentTaskType[] = [
   "scan_now",
   "collect_event_log",
   "inventory_refresh",
+  "network_scan",
 ];
 
 const TASK_TYPE_LABEL_KEYS: Record<AgentTaskType, string> = {
   scan_now: "device.tasks.typeScanNow",
   collect_event_log: "device.tasks.typeCollectEventLog",
   inventory_refresh: "device.tasks.typeInventoryRefresh",
+  network_scan: "device.tasks.typeNetworkScan",
 };
 
 const STATE_COLOR: Record<string, string> = {
@@ -53,6 +56,7 @@ const Tasks = () => {
   const queryClient = useQueryClient();
 
   const [type, setType] = useState<AgentTaskType>("scan_now");
+  const [cidr, setCidr] = useState("");
 
   const TASK_TYPES = TASK_TYPE_VALUES.map((value) => ({
     value,
@@ -67,7 +71,11 @@ const Tasks = () => {
   });
 
   const enqueueMutation = useMutation({
-    mutationFn: () => enqueueDeviceTask(deviceId, { type }),
+    mutationFn: () =>
+      enqueueDeviceTask(deviceId, {
+        type,
+        payload: type === "network_scan" ? { cidr: cidr.trim() } : undefined,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["device-tasks", deviceId] });
       toast.success(tr("toast.success.taskQueued"));
@@ -112,12 +120,26 @@ const Tasks = () => {
             }
           />
         </div>
+        {type === "network_scan" && (
+          <div className="mt-3 max-w-[280px]">
+            <Input
+              label={tr("device.tasks.cidrLabel")}
+              placeholder="192.168.1.0/24"
+              value={cidr}
+              handleChange={(v: string) => setCidr(v)}
+            />
+          </div>
+        )}
         <div className="mt-3">
           <ButtonPrimary
             icon={faPlay}
             text={enqueueMutation.isPending ? tr("device.tasks.queuing") : tr("device.tasks.queueBtn")}
             onClick={() => enqueueMutation.mutate()}
-            disabled={enqueueMutation.isPending || !deviceId}
+            disabled={
+              enqueueMutation.isPending ||
+              !deviceId ||
+              (type === "network_scan" && !cidr.trim())
+            }
           />
         </div>
       </div>

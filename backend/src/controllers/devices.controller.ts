@@ -63,6 +63,12 @@ import {
 import { AgentBootstrapService } from 'src/services/agent-bootstrap.service';
 import { DeviceEnrollmentTokenService } from 'src/services/deviceEnrollmentToken.service';
 import { LINUX_PACKAGE_SIGNING_PUBLIC_KEY } from 'src/config/packageSigningKey';
+import { IpamService } from 'src/services/ipam.service';
+import { cidrRange } from 'src/helpers/cidr';
+
+/** /22 = 1024 addresses -- generous for a site subnet, bounded enough to
+ * finish comfortably inside a single agent task lease. */
+const MAX_NETWORK_SCAN_ADDRESSES = 1024;
 
 @Controller('devices')
 export class DevicesController {
@@ -78,6 +84,7 @@ export class DevicesController {
     private readonly agentInstallerService: AgentInstallerService,
     private readonly agentBootstrapService: AgentBootstrapService,
     private readonly enrollmentTokenService: DeviceEnrollmentTokenService,
+    private readonly ipamService: IpamService,
   ) {}
 
   @UseGuards(AuthGuard)
@@ -353,26 +360,20 @@ export class DevicesController {
   async agentSetupInfo(@Req() req: any) {
     const baseUrl = this.resolveBaseUrl(req);
 
-    // AGENT_INSTALLER_URL_<PLATFORM> wins when set (e.g. CDN / GitHub
-    // Releases). `AGENT_INSTALLER_URL` (no suffix) is kept as a legacy
-    // alias for Windows only. Otherwise, if an admin has uploaded an
-    // installer through this page, self-host it. `?.trim() || ...` (not
-    // `??`) on purpose: an env var present but left blank (common with
-    // .env templates / docker-compose) is `""`, which `??` treats as "set"
-    // and would silently kill the self-hosted fallback.
+    // AGENT_INSTALLER_URL_<PLATFORM> wins when set (manual override /
+    // CDN). Otherwise self-host whatever file is on disk -- for
+    // windows/macos that file is kept in sync automatically from GitHub
+    // Releases (AgentInstallerService.syncFromGitHubReleases()), for
+    // Linux it's still a human upload (the only place a signed .deb+.sig
+    // gets paired today). `?.trim() || ...` (not `??`) on purpose: an env
+    // var present but left blank (common with .env templates /
+    // docker-compose) is `""`, which `??` treats as "set" and would
+    // silently kill the self-hosted fallback.
     const windowsMeta = await this.agentInstallerService.getMeta('windows');
-    const windowsUrl = await this.resolveInstallerUrl(
-      'windows',
-      baseUrl,
-      windowsMeta,
-    );
+    const windowsUrl = await this.resolveInstallerUrl('windows', baseUrl, windowsMeta);
 
     const macosMeta = await this.agentInstallerService.getMeta('macos');
-    const macosUrl = await this.resolveInstallerUrl(
-      'macos',
-      baseUrl,
-      macosMeta,
-    );
+    const macosUrl = await this.resolveInstallerUrl('macos', baseUrl, macosMeta);
 
     const linuxMeta = await this.agentInstallerService.getMeta('linux');
     const linuxUrl = await this.resolveInstallerUrl(
@@ -421,17 +422,9 @@ export class DevicesController {
 
     const baseUrl = this.resolveBaseUrl(req);
     const windowsMeta = await this.agentInstallerService.getMeta('windows');
-    const windowsUrl = await this.resolveInstallerUrl(
-      'windows',
-      baseUrl,
-      windowsMeta,
-    );
+    const windowsUrl = await this.resolveInstallerUrl('windows', baseUrl, windowsMeta);
     const macosMeta = await this.agentInstallerService.getMeta('macos');
-    const macosUrl = await this.resolveInstallerUrl(
-      'macos',
-      baseUrl,
-      macosMeta,
-    );
+    const macosUrl = await this.resolveInstallerUrl('macos', baseUrl, macosMeta);
     const linuxMeta = await this.agentInstallerService.getMeta('linux');
     const linuxUrl = await this.resolveInstallerUrl(
       'linux',
@@ -704,6 +697,28 @@ export class DevicesController {
     return meta;
   }
 
+  // Manual trigger for the hourly AgentInstallerSyncWorker sweep -- lets
+  // an admin who just tagged a release skip the up-to-an-hour wait.
+  @UseGuards(AuthGuard)
+  @RequiresPermission('devices.agentConfig.manage')
+  @Post('/agent/installer/sync')
+  async syncAgentInstaller(
+    @Query('platform') platform: 'windows' | 'macos',
+    @Req() req: any,
+  ) {
+    if (platform !== 'windows' && platform !== 'macos') {
+      throw new BadRequestException('platform must be "windows" or "macos"');
+    }
+    const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id ?? null;
+    const result = await this.agentInstallerService.syncFromGitHubReleases(platform);
+    await this.auditService.log('Device', null, 'agent_installer_synced', {
+      actor,
+      platform,
+      updated: result.updated,
+    });
+    return result;
+  }
+
   @UseGuards(AuthGuard)
   @RequiresPermission('devices.view')
   @Get('/:deviceId/report.pdf')
@@ -948,6 +963,20 @@ export class DevicesController {
     @Req() req: any,
   ) {
     const actor = req?.user?.properties?.metadata?.id ?? req?.user?.id ?? null;
+    if (body.type === 'network_scan') {
+      const cidr = body.payload?.cidr;
+      if (!cidr || typeof cidr !== 'string') {
+        throw new BadRequestException(
+          'network_scan requires payload.cidr (e.g. "192.168.1.0/24")',
+        );
+      }
+      const { total } = cidrRange(cidr); // throws on malformed CIDR
+      if (total > MAX_NETWORK_SCAN_ADDRESSES) {
+        throw new BadRequestException(
+          `network_scan CIDR is too wide (${total} addresses) -- max ${MAX_NETWORK_SCAN_ADDRESSES}`,
+        );
+      }
+    }
     const task = await this.agentTasks.enqueue({
       deviceId,
       type: body.type,
@@ -995,7 +1024,19 @@ export class DevicesController {
   @UseGuards(AgentGuard)
   @Post('/agent/tasks/:id/complete')
   async completeTask(@Param('id') id: string, @Body() body: CompleteTaskDto) {
-    return this.agentTasks.complete(id, body.leaseToken, body.result ?? null);
+    const task = await this.agentTasks.complete(
+      id,
+      body.leaseToken,
+      body.result ?? null,
+    );
+    if (task.type === 'network_scan' && Array.isArray(body.result?.hosts)) {
+      await this.ipamService.ingestDiscovery({
+        cidr: task.payload?.cidr,
+        subnetId: task.payload?.subnetId ?? null,
+        hosts: body.result.hosts,
+      });
+    }
+    return task;
   }
 
   @UseGuards(AgentGuard)

@@ -24,6 +24,8 @@ import { HandoverFormService } from 'src/services/handoverForm.service';
 import { RemoteAssistService } from 'src/services/remoteAssist.service';
 import { DeviceIdentityService } from 'src/services/deviceIdentity.service';
 import { AgentTaskWorker } from 'src/workers/agentTask.worker';
+import { NetworkScanWorker } from 'src/workers/networkScan.worker';
+import { AgentInstallerSyncWorker } from 'src/workers/agentInstallerSync.worker';
 import { WarrantyAlertWorker } from 'src/workers/warrantyAlert.worker';
 import { PingMonitorWorker } from 'src/workers/pingMonitor.worker';
 import { ConfigBackupWorker } from 'src/workers/configBackup.worker';
@@ -100,6 +102,8 @@ import { TicketDeviceLifecycleListener } from 'src/listeners/ticketDeviceLifecyc
       inject: [SshScrapeDriver],
     },
     AgentTaskWorker,
+    NetworkScanWorker,
+    AgentInstallerSyncWorker,
     WarrantyAlertWorker,
     PingMonitorWorker,
     ConfigBackupWorker,

@@ -42,6 +42,11 @@ export class IpamController {
     return this.ipamService.getSubnetUtilization(id);
   }
 
+  @Get('subnets/:id/scan-candidates')
+  getScanCandidates(@Param('id') id: string) {
+    return this.ipamService.findScanCandidates(id);
+  }
+
   @RequiresPermission('devices.connection.manage')
   @Post('subnets')
   async createSubnet(@Body() dto: CreateSubnetDto) {

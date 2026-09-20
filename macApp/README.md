@@ -16,15 +16,27 @@ na macOS po prostu nie ma.
 ## Model deployu
 
 Analogiczny do Windows (`windowsApp/README.md`), z różnicami wynikającymi
-z platformy:
+z platformy. Repo jest prywatne, więc dystrybucja nie idzie przez publiczny
+link do GitHub Release -- backend ściąga najnowsze wydanie sam, trzymając
+token po swojej stronie (`AgentInstallerService.syncFromGitHubReleases()`),
+i serwuje je dalej hostom. Backend nie przyjmuje już ręcznego uploadu
+instalatora dla macOS przez przeglądarkę (patrz `AgentInstallerService
+.upload()`).
 
-1. **Build lokalny / CI** produkuje `InfraPilotAgentSetup-x.y.z.pkg`
-   (patrz "Build" poniżej) -- podpisany Developer ID + notaryzowany.
-2. **Admin tenanta** w **Settings → macOS Agent** wgrywa ten plik —
-   backend serwuje go pod `GET /devices/agent/installer?platform=macos`.
-3. Strona pokazuje Backend URL + `AGENT_ENROLLMENT_TOKEN` (ten sam token
-   floty co dla Windows) + gotowy snippet bash.
-4. **Operator hosta** wkleja snippet w Terminalu:
+1. **Push tagu** `vX.Y.Z` → CI (`.github/workflows/macos-agent.yml`)
+   buduje `InfraPilotAgentSetup-X.Y.Z.pkg` (podpisany Developer ID +
+   notaryzowany, jeśli sekrety Apple są skonfigurowane) i publikuje go na
+   (prywatnym) GitHub Release.
+2. **Jednorazowo**: ustaw w `.env` backendu `AGENT_INSTALLER_GITHUB_TOKEN`
+   (PAT, `Contents: Read-only` na to repo) i `AGENT_INSTALLER_GITHUB_REPO`
+   (te same dwie zmienne co dla Windows -- jeden sync worker obsługuje
+   oba). Backend sprawdza nowe wydanie co godzinę.
+3. Nie chcesz czekać? W **Settings → macOS Agent** kliknij „Synchronizuj
+   teraz".
+4. Strona **Settings → macOS Agent** pokazuje Backend URL +
+   `AGENT_ENROLLMENT_TOKEN` (ten sam token floty co dla Windows) + gotowy
+   snippet bash.
+5. **Operator hosta** wkleja snippet w Terminalu:
    ```bash
    curl -fsSL "<installerUrl>" -o /tmp/InfraPilotAgentSetup.pkg
    sudo BACKEND_URL="<backend>" ENROLL_TOKEN="<token>" installer -pkg /tmp/InfraPilotAgentSetup.pkg -target /
@@ -33,7 +45,7 @@ z platformy:
    Setup's `/BACKENDURL=`/`/TOKEN=` -- `installer` przekazuje je do
    `installer/scripts/postinstall`, który pisze `config.json` i
    rejestruje daemona `launchd`. Host pojawia się w UI po ~30 s.
-5. Bez `BACKEND_URL`/`ENROLL_TOKEN` w środowisku, instalacja kończy się
+6. Bez `BACKEND_URL`/`ENROLL_TOKEN` w środowisku, instalacja kończy się
    bez konfiguracji -- operator otwiera **InfraPilot Agent** z menu bar
    (`/Applications`) i łączy się przez "Połącz z backendem...".
 
@@ -119,7 +131,9 @@ wersję do lokalnych testów -- Gatekeeper zablokuje ją na innym Macu.
 ## Build (CI)
 
 Push tagu `vX.Y.Z` → workflow `.github/workflows/macos-agent.yml` zrobi
-build na `macos-latest` i wrzuci `.pkg` jako asset Release'a. Wymaga
+build na `macos-latest` i wrzuci `InfraPilotAgentSetup-X.Y.Z.pkg` jako
+asset (prywatnego) Release'a -- patrz "Model deployu" wyżej, jak backend
+to stamtąd odbiera. Wymaga
 sekretów repo `APPLE_DEVELOPER_ID_APPLICATION`, `APPLE_DEVELOPER_ID_INSTALLER`,
 `APPLE_NOTARY_PROFILE` + zaimportowanego certyfikatu (poza zakresem tego
 pliku -- do skonfigurowania przez właściciela konta Apple Developer).

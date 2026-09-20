@@ -16,7 +16,8 @@ import { Devices } from './devices.entity';
 export type AgentTaskType =
   | 'scan_now'
   | 'collect_event_log'
-  | 'inventory_refresh';
+  | 'inventory_refresh'
+  | 'network_scan';
 
 export type AgentTaskState =
   | 'queued'

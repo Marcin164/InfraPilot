@@ -22,11 +22,19 @@ export type IpAllocation = {
   deviceId: string | null;
   hostname: string | null;
   macAddress: string | null;
-  source: "manual" | "sync";
+  source: "manual" | "sync" | "scan";
   leaseExpiresRaw: string | null;
   lastSeenAt: string | null;
   notes: string | null;
   createdAt: string;
+};
+
+export type ScanCandidateDevice = {
+  id: string;
+  assetName?: string | null;
+  manufacturer?: string | null;
+  model?: string | null;
+  serialNumber?: string | null;
 };
 
 export type SubnetUtilization = {
@@ -78,6 +86,11 @@ export const deleteSubnet = async (id: string): Promise<void> => {
 
 export const getSubnetUtilization = async (id: string): Promise<SubnetUtilization> => {
   const { data } = await api.get(`/ipam/subnets/${id}/utilization`);
+  return data;
+};
+
+export const getScanCandidates = async (subnetId: string): Promise<ScanCandidateDevice[]> => {
+  const { data } = await api.get(`/ipam/subnets/${subnetId}/scan-candidates`);
   return data;
 };
 
