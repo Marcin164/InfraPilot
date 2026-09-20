@@ -53,10 +53,18 @@ try {
     Invoke-Native $Python -m pip install -r requirements.txt pyinstaller
 
     Write-Host "Building infrapilot-agent.exe..." -ForegroundColor Cyan
+    # --paths (not -p): PowerShell 7.4+ added a -ProgressAction common
+    # parameter, which makes the single-dash "-p" an ambiguous abbreviation
+    # against Invoke-Native's implicit common parameters (any function using
+    # [Parameter(...)] attributes gets these automatically, even without
+    # [CmdletBinding()]) -- PowerShell tries to bind it there instead of
+    # passing it through to PyInstaller. The double-dash long form isn't
+    # subject to PowerShell's parameter binding at all, so it always reaches
+    # $Args untouched.
     Invoke-Native $Python -m PyInstaller `
         --noconfirm --onefile --console `
         --name infrapilot-agent `
-        -p . `
+        --paths . `
         agent\main.py
 
     Write-Host "Building infrapilot-agent-gui.exe..." -ForegroundColor Cyan
@@ -68,7 +76,7 @@ try {
         --noconfirm --onefile --windowed --uac-admin `
         --name infrapilot-agent-gui `
         --collect-data customtkinter `
-        -p . `
+        --paths . `
         agent\gui.py
 
     if ($SkipInstaller) {
