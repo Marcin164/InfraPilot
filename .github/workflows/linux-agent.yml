@@ -41,8 +41,23 @@ jobs:
       - name: Install Tk + dpkg-deb
         run: sudo apt-get update && sudo apt-get install -y python3-tk tk-dev dpkg-dev
 
+      # Only a tag push has a real version -- github.ref_name on a branch
+      # push is the branch name ("master"), not a version. Without this,
+      # every build (tagged or not) shipped agent/__init__.py's hardcoded
+      # __version__ regardless of which tag actually triggered it.
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build (agent + GUI + .deb installer)
         run: ./scripts/build.sh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         # No LV_* secrets: this is a generic, no-secrets-baked installer.
         # Each InfraPilot backend deployment serves this same .deb and
         # operators install with BACKEND_URL=... ENROLL_TOKEN=... env vars

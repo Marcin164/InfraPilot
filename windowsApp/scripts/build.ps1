@@ -10,7 +10,12 @@ param(
     [string] $Python = "python",
     [string] $Iscc   = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
     [switch] $Clean,
-    [switch] $SkipInstaller
+    [switch] $SkipInstaller,
+    # Overrides installer.iss's built-in MyAppVersion default -- pass the
+    # git tag (stripped of its leading "v") in CI so the installer's
+    # actual version tracks what was tagged instead of always shipping
+    # whatever's hardcoded in the .iss file.
+    [string] $Version = ""
 )
 
 $ErrorActionPreference = 'Stop'
@@ -49,6 +54,9 @@ if ($Clean) {
 
 Push-Location $root
 try {
+    if ($Version) {
+        Write-Host "Building InfraPilot Windows agent v$Version" -ForegroundColor Cyan
+    }
     Invoke-Native $Python -m pip install --upgrade pip
     Invoke-Native $Python -m pip install -r requirements.txt pyinstaller
 
@@ -95,7 +103,11 @@ Install Inno Setup 6 from https://jrsoftware.org/isinfo.php
     }
 
     Write-Host "Compiling Inno Setup installer..." -ForegroundColor Cyan
-    Invoke-Native $Iscc /Qp "$root\installer\installer.iss"
+    $isccArgs = @('/Qp')
+    if ($Version) {
+        $isccArgs += "/DMyAppVersion=$Version"
+    }
+    Invoke-Native $Iscc @isccArgs "$root\installer\installer.iss"
 
     Write-Host ""
     Write-Host "Build complete." -ForegroundColor Green

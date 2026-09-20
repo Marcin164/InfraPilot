@@ -42,8 +42,22 @@ jobs:
         run: choco install innosetup --no-progress -y
         shell: pwsh
 
+      # Only a tag push has a real version -- github.ref_name on a branch
+      # push is the branch name ("master"), not a version. Without this,
+      # every build (tagged or not) shipped whatever's hardcoded in
+      # installer.iss regardless of which tag actually triggered it.
+      - name: Determine version
+        id: version
+        run: |
+          $version = ""
+          if ("${{ github.ref }}" -like "refs/tags/v*") {
+            $version = "${{ github.ref_name }}".Substring(1)  # strip leading "v"
+          }
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        shell: pwsh
+
       - name: Build (agent + GUIs + generic installer)
-        run: .\scripts\build.ps1 -Clean
+        run: .\scripts\build.ps1 -Clean -Version "${{ steps.version.outputs.version }}"
         shell: pwsh
         # No LV_* secrets: this is a generic, no-secrets-baked installer.
         # Each InfraPilot backend deployment serves this same .exe and

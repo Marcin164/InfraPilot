@@ -34,7 +34,11 @@ for arg in "$@"; do
   esac
 done
 
-VERSION="$(python3 -c "import sys; sys.path.insert(0,'.'); from agent import __version__; print(__version__)")"
+# VERSION, if already set in the environment (CI passes the pushed git
+# tag, stripped of its leading "v"), wins over agent/__init__.py's
+# __version__ -- otherwise the built .pkg always carries whatever's
+# hardcoded there regardless of which tag triggered the build.
+VERSION="${VERSION:-$(python3 -c "import sys; sys.path.insert(0,'.'); from agent import __version__; print(__version__)")}"
 echo "Building InfraPilot macOS agent v${VERSION}"
 
 rm -rf build dist installer/Output component.pkg

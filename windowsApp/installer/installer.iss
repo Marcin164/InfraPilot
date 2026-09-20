@@ -10,7 +10,12 @@
 ; in the background.
 
 #define MyAppName       "InfraPilot Agent"
-#define MyAppVersion    "0.1.0"
+; Overridable from the command line via `iscc /DMyAppVersion=X.Y.Z ...`
+; (build.ps1's -Version passes this through, driven by the git tag in CI)
+; -- #ifndef so a CLI-supplied value isn't clobbered by this default.
+#ifndef MyAppVersion
+  #define MyAppVersion  "0.1.0"
+#endif
 #define MyAppPublisher  "InfraPilot"
 #define MyAppURL        "https://infrapilot.example.com"
 #define MyAppExeName    "infrapilot-agent.exe"
