@@ -61,11 +61,18 @@ export class InsertManyUsersDto {
 export class BulkImportUserRowDto {
   @IsOptional() @IsString() @MaxLength(128) name?: string;
   @IsOptional() @IsString() @MaxLength(128) surname?: string;
+  @IsOptional() @IsString() @MaxLength(128) username?: string;
   @IsOptional() @IsString() @MaxLength(256) email?: string;
   @IsOptional() @IsString() @MaxLength(256) phone?: string;
-  @IsOptional() @IsString() @MaxLength(128) department?: string;
   @IsOptional() @IsString() @MaxLength(128) title?: string;
-  @IsOptional() @IsString() @MaxLength(128) location?: string;
+  @IsOptional() @IsString() @MaxLength(128) department?: string;
+  @IsOptional() @IsString() @MaxLength(128) company?: string;
+  @IsOptional() @IsString() @MaxLength(128) office?: string;
+  @IsOptional() @IsString() @MaxLength(256) streetAddress?: string;
+  @IsOptional() @IsString() @MaxLength(128) city?: string;
+  @IsOptional() @IsString() @MaxLength(32) postalCode?: string;
+  @IsOptional() @IsString() @MaxLength(128) country?: string;
+  @IsOptional() @IsString() manager?: string;
 }
 
 export class BulkImportUsersDto {

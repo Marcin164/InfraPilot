@@ -5,11 +5,14 @@ import {
   faFileLines,
   faCircleExclamation,
   faCloudArrowUp,
+  faDownload,
+  faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
+import ExcelJS from "exceljs";
 import { parseSpreadsheetFile } from "../../lib/parseSpreadsheet";
 import Papa from "papaparse";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addManyUsers } from "../../Services/users";
+import { bulkImportUsers } from "../../Services/bulkImport";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
@@ -41,6 +44,40 @@ const OPTIONAL_COLUMNS = [
 const ALL_COLUMNS = [...REQUIRED_COLUMNS, ...OPTIONAL_COLUMNS];
 const PREVIEW_LIMIT = 5;
 
+const TEMPLATE_EXAMPLE_ROW: Record<string, string> = {
+  name: "Jan",
+  surname: "Kowalski",
+  email: "jan.kowalski@company.com",
+  username: "jkowalski",
+  phone: "+48123456789",
+  title: "Engineer",
+  department: "IT",
+  company: "Acme",
+  office: "Warsaw HQ",
+  streetAddress: "ul. Przykladowa 1",
+  city: "Warszawa",
+  postalCode: "00-001",
+  country: "Poland",
+};
+
+const downloadTemplate = async () => {
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Users");
+  sheet.columns = ALL_COLUMNS.map((col) => ({ header: col, key: col, width: 20 }));
+  sheet.getRow(1).font = { bold: true };
+  sheet.addRow(TEMPLATE_EXAMPLE_ROW);
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "infrapilot-users-template.xlsx";
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
 const FileUpload = ({ close }: Props) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -49,16 +86,30 @@ const FileUpload = ({ close }: Props) => {
   const [data, setData] = useState<any[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
+  const [result, setResult] = useState<{
+    created: number;
+    skipped: number;
+    errors: string[];
+  } | null>(null);
 
   const mutation = useMutation({
-    mutationFn: async (users: any[]) => {
-      return addManyUsers(users);
+    mutationFn: async (users: any[]) => bulkImportUsers(users),
+
+    onSuccess: (res) => {
+      setResult(res);
+      if (res.created > 0) {
+        toast.success(t("import.success", { count: res.created }));
+        queryClient.invalidateQueries({ queryKey: ["users"] });
+      }
+      if (res.errors.length > 0) {
+        toast.warning(t("import.partial", { skipped: res.skipped }));
+      } else {
+        close();
+      }
     },
 
-    onSuccess: () => {
-      toast.success(t("toast.success.user"));
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      close();
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? t("import.failed"));
     },
   });
   const validateColumns = (headers: string[]) => {
@@ -158,6 +209,7 @@ const FileUpload = ({ close }: Props) => {
     }
 
     setError(null);
+    setResult(null);
     setData([]);
     parseFile(file);
   };
@@ -166,6 +218,16 @@ const FileUpload = ({ close }: Props) => {
 
   return (
     <div className="w-full max-w-3xl space-y-4">
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={downloadTemplate}
+          className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+        >
+          <FontAwesomeIcon icon={faDownload} />
+          {t("file.download.template")}
+        </button>
+      </div>
       <div
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => {
@@ -260,8 +322,34 @@ const FileUpload = ({ close }: Props) => {
             onClick={() => {
               mutation.mutate(data);
             }}
-            text={t("file.send")}
+            disabled={mutation.isPending}
+            text={mutation.isPending ? t("import.importing") : t("file.send")}
           />
+        </div>
+      )}
+      {result && (
+        <div className="rounded-xl border bg-white p-4">
+          <div className="flex gap-6 mb-2 text-sm">
+            <span className="text-green-600 font-medium">
+              {t("import.resultCreated")}: {result.created}
+            </span>
+            <span className="text-amber-600 font-medium">
+              {t("import.resultSkipped")}: {result.skipped}
+            </span>
+          </div>
+          {result.errors.length > 0 && (
+            <div className="space-y-1">
+              {result.errors.map((e, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-start gap-2 text-xs text-red-600"
+                >
+                  <FontAwesomeIcon icon={faTriangleExclamation} className="mt-0.5 shrink-0" />
+                  {e}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

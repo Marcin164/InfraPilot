@@ -49,13 +49,6 @@ export const addUser = async (
   return result;
 };
 
-export const addManyUsers = async (
-  data: Record<string, unknown>[],
-): Promise<User[]> => {
-  const { data: result } = await api.post("/users/many", { users: data });
-  return result;
-};
-
 export const updateUser = async (
   data: Partial<User>,
   id: string,

@@ -95,10 +95,18 @@ export class UsersService {
             [row.name, row.surname].filter(Boolean).join(' ') || row.email,
           name: row.name ?? null,
           surname: row.surname ?? null,
+          username: row.username ?? null,
           email: row.email ?? null,
           phone: row.phone ?? null,
           department: row.department ?? null,
           title: row.title ?? null,
+          company: row.company ?? null,
+          office: row.office ?? null,
+          streetAddress: row.streetAddress ?? null,
+          city: row.city ?? null,
+          postalCode: row.postalCode ?? null,
+          country: row.country ?? null,
+          manager: row.manager ?? null,
         });
         created++;
       } catch (err) {

@@ -181,6 +181,7 @@
   "file.placeholder": "Klicken oder eine CSV-/TSV-/XLSX-Datei ablegen",
   "file.pending": "Datei wird verarbeitet",
   "file.send": "Daten senden",
+  "file.download.template": "Excel-Vorlage herunterladen",
 
   "device.device": "Gerät",
   "device.assignee": "Benutzer",

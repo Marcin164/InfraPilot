@@ -183,6 +183,7 @@
   "file.placeholder": "Click or drag a CSV / TSV / XLSX file",
   "file.pending": "Processing file",
   "file.send": "Send data",
+  "file.download.template": "Download Excel template",
 
   "device.device": "Device",
   "device.assignee": "User",

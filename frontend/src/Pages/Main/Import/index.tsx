@@ -26,11 +26,11 @@ const DEVICE_COLUMNS = [
   "vendor", "warrantyEnd",
 ];
 const USER_COLUMNS = [
-  "name", "surname", "email", "phone", "department", "location", "title",
+  "name", "surname", "email", "phone", "department", "title",
 ];
 
 const DEVICE_TEMPLATE = DEVICE_COLUMNS.join(",") + "\nLaptop-001,SN123456,Computers,Laptop,ThinkPad X1,Lenovo,Building A,active,2023-01-15,1200,USD,Lenovo,2026-01-15";
-const USER_TEMPLATE = USER_COLUMNS.join(",") + "\nJan,Kowalski,jan.kowalski@company.com,+48123456789,IT,Building A,Engineer";
+const USER_TEMPLATE = USER_COLUMNS.join(",") + "\nJan,Kowalski,jan.kowalski@company.com,+48123456789,IT,Engineer";
 
 function parseFile(file: File): Promise<Record<string, string>[]> {
   const ext = file.name.split(".").pop()?.toLowerCase();

@@ -181,6 +181,7 @@
   "file.placeholder": "Clicca o trascina un file CSV / TSV / XLSX",
   "file.pending": "Elaborazione file in corso",
   "file.send": "Invia dati",
+  "file.download.template": "Scarica modello Excel",
 
   "device.device": "Dispositivo",
   "device.assignee": "Utente",

@@ -181,6 +181,7 @@
   "file.placeholder": "Kliknij lub przeciągnij plik CSV / TSV / XLSX",
   "file.pending": "Przetwarzanie pliku",
   "file.send": "Wyślij dane",
+  "file.download.template": "Pobierz szablon Excel",
 
   "device.device": "Urządzenie",
   "device.assignee": "Właściciel",
