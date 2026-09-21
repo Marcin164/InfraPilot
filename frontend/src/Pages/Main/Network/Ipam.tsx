@@ -11,7 +11,7 @@ import Input from "../../../Components/Inputs/Input";
 import SelectSecondary from "../../../Components/Inputs/SelectSecondary";
 import { getDevicesOptions } from "../../../Services/devices";
 import { getDhcpServers } from "../../../Services/dhcpServers";
-import { enqueueDeviceTask } from "../../../Services/agentTasks";
+import { enqueueDeviceTask, listDeviceTasks, AgentTask, AgentTaskState } from "../../../Services/agentTasks";
 import {
   AllocationStatus,
   CreateAllocationPayload,
@@ -32,6 +32,28 @@ const STATUS_OPTIONS: { value: AllocationStatus; label: string }[] = [
   { value: "leased", label: "Leased" },
 ];
 
+// Client-side mirror of backend/src/helpers/cidr.ts's cidrRange() format
+// check -- format-only, the backend stays the source of truth for the
+// actual range math. Lets the Save button catch typos before a round trip.
+const isValidCidr = (value: string): boolean => {
+  const [ip, prefixStr] = value.trim().split("/");
+  if (!ip || prefixStr === undefined) return false;
+  const prefix = Number(prefixStr);
+  if (!Number.isInteger(prefix) || prefix < 0 || prefix > 32) return false;
+  const octets = ip.split(".");
+  if (octets.length !== 4) return false;
+  return octets.every((o) => /^\d{1,3}$/.test(o) && Number(o) >= 0 && Number(o) <= 255);
+};
+
+const SCAN_STATE_COLOR: Record<AgentTaskState, string> = {
+  queued: "#2B9AE9",
+  leased: "#F1C40F",
+  completed: "#30A712",
+  failed: "#F3606E",
+  cancelled: "#8A8A8A",
+  expired: "#8E44AD",
+};
+
 const Ipam = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -39,7 +61,7 @@ const Ipam = () => {
   const [selectedSubnetId, setSelectedSubnetId] = useState<string | null>(null);
   const [addingSubnet, setAddingSubnet] = useState(false);
   const [addingAllocation, setAddingAllocation] = useState(false);
-  const [scanDeviceId, setScanDeviceId] = useState<string | null>(null);
+  const [activeScanTaskId, setActiveScanTaskId] = useState<string | null>(null);
 
   const subnetsQuery = useQuery({ queryKey: ["subnets"], queryFn: getSubnets });
   const conflictsQuery = useQuery({ queryKey: ["ip-conflicts"], queryFn: getIpConflicts });
@@ -74,25 +96,40 @@ const Ipam = () => {
       label: d.assetName || `${d.manufacturer ?? ""} ${d.model ?? ""} (${d.serialNumber ?? d.serialnumber ?? ""})`,
     }));
   }, [scanCandidatesQuery.data, devicesQuery.data]);
+  const scanDevice = scanDeviceOptions[0] ?? null;
 
   useEffect(() => {
-    setScanDeviceId(scanDeviceOptions[0]?.value ?? null);
-  }, [selectedSubnetId, scanDeviceOptions]);
+    setActiveScanTaskId(null);
+  }, [selectedSubnetId]);
 
   const scanSubnetMutation = useMutation({
     mutationFn: (cidr: string) => {
-      if (!scanDeviceId) throw new Error(t("ipam.scan.noDevice"));
-      return enqueueDeviceTask(scanDeviceId, {
+      if (!scanDevice) throw new Error(t("ipam.scan.noDevice"));
+      return enqueueDeviceTask(scanDevice.value, {
         type: "network_scan",
         payload: { cidr, subnetId: selectedSubnetId },
       });
     },
-    onSuccess: () => {
+    onSuccess: (task) => {
+      setActiveScanTaskId(task.id);
       toast.success(t("ipam.scan.queued"));
     },
     onError: (err: any) =>
       toast.error(err?.message ?? err?.response?.data?.message ?? t("ipam.scan.failed")),
   });
+
+  const TERMINAL_STATES: AgentTaskState[] = ["completed", "failed", "cancelled", "expired"];
+  const scanTaskQuery = useQuery({
+    queryKey: ["device-tasks", scanDevice?.value],
+    queryFn: () => listDeviceTasks(scanDevice!.value),
+    enabled: !!activeScanTaskId && !!scanDevice,
+    refetchInterval: (query) => {
+      const tasks = query.state.data as AgentTask[] | undefined;
+      const active = tasks?.find((t) => t.id === activeScanTaskId);
+      return active && !TERMINAL_STATES.includes(active.state) ? 4000 : false;
+    },
+  });
+  const activeScanTask = scanTaskQuery.data?.find((t) => t.id === activeScanTaskId) ?? null;
 
   const [subnetForm, setSubnetForm] = useState<CreateSubnetPayload>({ name: "", cidr: "" });
   const [allocationForm, setAllocationForm] = useState<CreateAllocationPayload>({
@@ -238,6 +275,7 @@ const Ipam = () => {
                 placeholder="192.168.1.0/24"
                 value={subnetForm.cidr}
                 handleChange={(v: string) => setSubnetForm({ ...subnetForm, cidr: v })}
+                errors={subnetForm.cidr && !isValidCidr(subnetForm.cidr) ? t("ipam.subnet.cidrInvalid") : undefined}
               />
               <Input
                 label={t("ipam.subnet.vlan")}
@@ -253,7 +291,11 @@ const Ipam = () => {
                 text={t("common.save")}
                 className="mt-3"
                 onClick={() => createSubnetMutation.mutate()}
-                disabled={!subnetForm.name || !subnetForm.cidr || createSubnetMutation.isPending}
+                disabled={
+                  !subnetForm.name ||
+                  !isValidCidr(subnetForm.cidr) ||
+                  createSubnetMutation.isPending
+                }
               />
             </div>
           )}
@@ -317,27 +359,44 @@ const Ipam = () => {
                 />
               </div>
 
-              <div className="mt-3 flex flex-wrap items-end gap-2 border border-[#F0F0F0] rounded-[10px] p-3">
-                <div className="min-w-[220px]">
-                  <SelectSecondary
-                    label={t("ipam.scan.agent")}
-                    options={scanDeviceOptions}
-                    value={scanDeviceOptions.find((o) => o.value === scanDeviceId)}
-                    onSelect={(opt: any) => setScanDeviceId(opt?.value ?? null)}
+              <div className="mt-3 border border-[#F0F0F0] rounded-[10px] p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <ButtonPrimary
+                    icon={faMagnifyingGlass}
+                    text={
+                      scanSubnetMutation.isPending
+                        ? t("ipam.scan.queuing")
+                        : t("ipam.scan.scanSubnet")
+                    }
+                    onClick={() => scanSubnetMutation.mutate(utilization.subnet.cidr)}
+                    disabled={scanSubnetMutation.isPending || !scanDevice}
                   />
+                  {scanDevice ? (
+                    <span className="text-[12px] text-[#9a9a9a]">
+                      {t("ipam.scan.willUse", { device: scanDevice.label })}
+                    </span>
+                  ) : (
+                    <span className="text-[12px] text-[#9a9a9a]">{t("ipam.scan.noAgents")}</span>
+                  )}
                 </div>
-                <ButtonPrimary
-                  icon={faMagnifyingGlass}
-                  text={
-                    scanSubnetMutation.isPending
-                      ? t("ipam.scan.queuing")
-                      : t("ipam.scan.scanSubnet")
-                  }
-                  onClick={() => scanSubnetMutation.mutate(utilization.subnet.cidr)}
-                  disabled={scanSubnetMutation.isPending || !scanDeviceId}
-                />
-                {scanDeviceOptions.length === 0 && (
-                  <span className="text-[12px] text-[#9a9a9a]">{t("ipam.scan.noAgents")}</span>
+
+                {activeScanTask && (
+                  <div className="mt-2 flex items-center gap-2 text-[12px]">
+                    <span
+                      className="inline-block w-[70px] text-center rounded-full px-2 py-0.5 text-[11px] font-bold text-white"
+                      style={{ backgroundColor: SCAN_STATE_COLOR[activeScanTask.state] }}
+                    >
+                      {activeScanTask.state}
+                    </span>
+                    {activeScanTask.state === "completed" && (
+                      <span className="text-[#3C3C3C]">
+                        {t("ipam.scan.hostsFound", { count: activeScanTask.result?.hosts?.length ?? 0 })}
+                      </span>
+                    )}
+                    {activeScanTask.state === "failed" && (
+                      <span className="text-[#F3606E]">{activeScanTask.lastError}</span>
+                    )}
+                  </div>
                 )}
               </div>
 

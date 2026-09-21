@@ -1853,6 +1853,7 @@
   "ipam.subnets": "Subnets",
   "ipam.subnet.name": "Name",
   "ipam.subnet.cidr": "CIDR",
+  "ipam.subnet.cidrInvalid": "Invalid CIDR format (e.g. 192.168.1.0/24)",
   "ipam.subnet.vlan": "VLAN",
   "ipam.subnet.gateway": "Gateway",
   "ipam.subnet.created": "Subnet created",
@@ -1869,14 +1870,15 @@
   "ipam.noEntries": "No addresses in use yet.",
   "ipam.conflicts.title": "{{count}} IP conflict(s) detected",
 
-  "ipam.scan.agent": "Scanning device",
   "ipam.scan.scanSubnet": "Scan this subnet",
+  "ipam.scan.willUse": "Will run on: {{device}}",
   "ipam.scan.queuing": "Queuing…",
   "ipam.scan.queued": "Scan queued — results will appear once it completes",
   "ipam.scan.failed": "Failed to queue the scan",
   "ipam.scan.noDevice": "Pick a device to run the scan",
   "ipam.scan.noAgents": "No Windows agent at this subnet's location",
   "ipam.scan.discoveredBadge": "discovered by scan",
+  "ipam.scan.hostsFound": "{{count}} host(s) found",
 
   "notif.event.ip_conflict_detected": "IP conflict detected"
 }

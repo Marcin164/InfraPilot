@@ -424,6 +424,18 @@ html.dark .text-gray-700 { color: #C9CFD6 !important; }
 html.dark .text-gray-800 { color: #DDE1E6 !important; }
 html.dark .text-gray-900 { color: #E8EAED !important; }
 html.dark .text-zinc-500 { color: #B0B0B8 !important; }
+/* Ipam.tsx (conflicts banner, DHCP status banner, selected subnet row) is
+   one of the only places using Tailwind's built-in named palette instead
+   of the hardcoded-hex convention above -- without these it fell through
+   every override, leaving e.g. near-white text on a light-blue selected
+   row. Colors picked to match the existing hardcoded-hex mappings for the
+   same hue (see .bg-\[\#FDECEC\]/.border-\[\#F3D3D7\]/.bg-\[\#D7EEFF\] etc.). */
+html.dark .bg-red-50 { background-color: #421919 !important; }
+html.dark .border-red-200,
+html.dark .divide-red-200 > :not([hidden]) ~ :not([hidden]) { border-color: #3C1F23 !important; }
+html.dark .text-red-700 { color: #E33737 !important; }
+html.dark .bg-blue-50 { background-color: #153247 !important; }
+html.dark .border-blue-200 { border-color: #193042 !important; }
 
 html.dark .react-responsive-modal-modal {
   background: #1A1F26;

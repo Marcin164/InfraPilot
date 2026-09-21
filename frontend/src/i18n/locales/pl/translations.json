@@ -2020,6 +2020,7 @@
   "ipam.subnets": "Podsieci",
   "ipam.subnet.name": "Nazwa",
   "ipam.subnet.cidr": "CIDR",
+  "ipam.subnet.cidrInvalid": "Nieprawidłowy format CIDR (np. 192.168.1.0/24)",
   "ipam.subnet.vlan": "VLAN",
   "ipam.subnet.gateway": "Brama",
   "ipam.subnet.created": "Podsieć utworzona",
@@ -2036,14 +2037,15 @@
   "ipam.noEntries": "Brak zajętych adresów.",
   "ipam.conflicts.title": "Wykryto {{count}} konflikt(ów) IP",
 
-  "ipam.scan.agent": "Urządzenie skanujące",
   "ipam.scan.scanSubnet": "Skanuj tę podsieć",
+  "ipam.scan.willUse": "Wykona: {{device}}",
   "ipam.scan.queuing": "Kolejkowanie…",
   "ipam.scan.queued": "Skan zakolejkowany — wyniki pojawią się po jego zakończeniu",
   "ipam.scan.failed": "Nie udało się zakolejkować skanu",
   "ipam.scan.noDevice": "Wybierz urządzenie, które ma wykonać skan",
   "ipam.scan.noAgents": "Brak agenta Windows w lokalizacji tej podsieci",
   "ipam.scan.discoveredBadge": "wykryte skanem",
+  "ipam.scan.hostsFound": "znaleziono urządzeń: {{count}}",
 
   "notif.event.ip_conflict_detected": "Wykryto konflikt IP"
 }
