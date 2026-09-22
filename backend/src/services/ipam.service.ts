@@ -231,15 +231,48 @@ export class IpamService {
    * "Scan this subnet" button can default to a sane device instead of
    * making the admin pick from every device in the system.
    */
+  /**
+   * Prefers an enrolled Windows agent whose own reported NIC IP actually
+   * falls inside the subnet's CIDR -- reflects real network topology
+   * (an agent physically on that segment), no manual location-tagging
+   * required. Only falls back to matching Subnet.locationId against the
+   * device's locationId (today's original behavior, still useful for a
+   * routed subnet an agent can reach but isn't itself addressed on) when
+   * no agent's own IP helps.
+   */
   async findScanCandidates(subnetId: string): Promise<Devices[]> {
     const subnet = await this.findSubnet(subnetId);
-    if (!subnet.locationId) return [];
+    const windowsAgents = await this.findAllWindowsAgents();
+
+    const byOwnIp = windowsAgents.filter((d) => {
+      const nicConfig = (d.network as any)?.nic_config;
+      if (!Array.isArray(nicConfig)) return false;
+      return nicConfig.some(
+        (nic: any) => nic?.IPv4Address && isIpInCidr(nic.IPv4Address, subnet.cidr),
+      );
+    });
+    if (byOwnIp.length > 0) return byOwnIp;
+
+    if (subnet.locationId) {
+      const byLocation = windowsAgents.filter((d) => d.locationId === subnet.locationId);
+      if (byLocation.length > 0) return byLocation;
+    }
+
+    return [];
+  }
+
+  /**
+   * Every enrolled Windows agent, regardless of subnet match -- the
+   * manual-pick fallback for "Scan this subnet" when findScanCandidates()
+   * can't confirm a match (no location set, no agent IP in range) but the
+   * admin knows an agent can still reach it. Unlike the old removed
+   * "fall back to any device" bug, this only ever returns real, enrolled
+   * agents that will actually poll for and claim the task -- never a
+   * device with no agent at all.
+   */
+  async findAllWindowsAgents(): Promise<Devices[]> {
     return this.devices.find({
-      where: {
-        platform: 'windows',
-        locationId: subnet.locationId,
-        apiSecretHash: Not(IsNull()),
-      } as any,
+      where: { platform: 'windows', apiSecretHash: Not(IsNull()) } as any,
     });
   }
 

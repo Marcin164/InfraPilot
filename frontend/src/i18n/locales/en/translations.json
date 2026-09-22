@@ -1858,6 +1858,10 @@
   "ipam.subnet.gateway": "Gateway",
   "ipam.subnet.created": "Subnet created",
   "ipam.subnet.createFailed": "Could not create subnet",
+  "ipam.subnet.updated": "Subnet updated",
+  "ipam.subnet.updateFailed": "Could not update subnet",
+  "ipam.subnet.location": "Location",
+  "ipam.subnet.noLocation": "— none —",
   "ipam.selectSubnet": "Select a subnet to see its allocations.",
   "ipam.utilization": "{{used}} used / {{free}} free of {{total}} addresses",
   "ipam.allocation.add": "Reserve IP",
@@ -1876,9 +1880,17 @@
   "ipam.scan.queued": "Scan queued — results will appear once it completes",
   "ipam.scan.failed": "Failed to queue the scan",
   "ipam.scan.noDevice": "Pick a device to run the scan",
-  "ipam.scan.noAgents": "No Windows agent at this subnet's location",
+  "ipam.scan.noAgents": "No enrolled Windows agent in the system",
+  "ipam.scan.manualPickLabel": "Pick an agent manually",
+  "ipam.scan.manualPickHint": "Couldn't auto-match an agent to this subnet (no location set, or no agent IP in range) — pick manually from every enrolled Windows agent.",
   "ipam.scan.discoveredBadge": "discovered by scan",
   "ipam.scan.hostsFound": "{{count}} host(s) found",
+
+  "topbar.scanActivity.title": "Network scans",
+  "topbar.scanActivity.none": "No recent scan activity.",
+  "topbar.scanActivity.hostsFound": "{{count}} found",
+  "topbar.scanActivity.completedToast": "Network scan ({{device}}) finished — {{count}} host(s) found",
+  "topbar.scanActivity.failedToast": "Network scan ({{device}}) failed: {{error}}",
 
   "notif.event.ip_conflict_detected": "IP conflict detected"
 }

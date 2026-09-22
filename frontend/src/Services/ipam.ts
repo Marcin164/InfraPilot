@@ -56,7 +56,7 @@ export type CreateSubnetPayload = {
   vlan?: string;
   gateway?: string;
   dnsServers?: string[];
-  locationId?: string;
+  locationId?: string | null;
   notes?: string;
 };
 
@@ -80,6 +80,14 @@ export const createSubnet = async (payload: CreateSubnetPayload): Promise<Subnet
   return data;
 };
 
+export const updateSubnet = async (
+  id: string,
+  payload: Partial<CreateSubnetPayload>,
+): Promise<Subnet> => {
+  const { data } = await api.patch(`/ipam/subnets/${id}`, payload);
+  return data;
+};
+
 export const deleteSubnet = async (id: string): Promise<void> => {
   await api.delete(`/ipam/subnets/${id}`);
 };
@@ -91,6 +99,15 @@ export const getSubnetUtilization = async (id: string): Promise<SubnetUtilizatio
 
 export const getScanCandidates = async (subnetId: string): Promise<ScanCandidateDevice[]> => {
   const { data } = await api.get(`/ipam/subnets/${subnetId}/scan-candidates`);
+  return data;
+};
+
+// Fallback list when getScanCandidates() can't confirm a match for a
+// subnet (no location set, no agent IP in range) -- every enrolled
+// Windows agent, so the admin can pick one manually instead of being
+// blocked outright.
+export const getAllWindowsAgents = async (): Promise<ScanCandidateDevice[]> => {
+  const { data } = await api.get(`/ipam/scan-agents`);
   return data;
 };
 

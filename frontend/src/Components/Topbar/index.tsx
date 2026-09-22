@@ -6,6 +6,7 @@ import GlobalSearch from "./GlobalSearch";
 import { useParser } from "../../Hooks/useParser";
 import AccountButton from "./AccountButton";
 import NotificationsBell from "./NotificationsBell";
+import ScanActivityIndicator from "./ScanActivityIndicator";
 
 type Props = {
   onMenuToggle: () => void;
@@ -58,6 +59,7 @@ const Topbar = ({ onMenuToggle }: Props) => {
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         <GlobalSearch />
+        <ScanActivityIndicator />
         <NotificationsBell />
         <AccountButton />
       </div>

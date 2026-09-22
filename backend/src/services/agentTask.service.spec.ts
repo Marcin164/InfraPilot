@@ -247,4 +247,75 @@ describe('AgentTaskService', () => {
       expect(count).toBe(2);
     });
   });
+
+  // ─────────────────────────────────────────
+  // listRecentByType
+  // ─────────────────────────────────────────
+
+  describe('listRecentByType', () => {
+    it('queries by type across all devices, newest first', async () => {
+      repo.find.mockResolvedValue([]);
+
+      await service.listRecentByType('network_scan' as any, 10);
+
+      expect(repo.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { type: 'network_scan' },
+          relations: ['device'],
+          order: { createdAt: 'DESC' },
+          take: 10,
+        }),
+      );
+    });
+
+    it('caps an oversized limit at 100', async () => {
+      repo.find.mockResolvedValue([]);
+
+      await service.listRecentByType('network_scan' as any, 500);
+
+      expect(repo.find).toHaveBeenCalledWith(expect.objectContaining({ take: 100 }));
+    });
+
+    it('returns a lean projection that never leaks the raw device relation', async () => {
+      const task = makeTask({
+        id: 'task-1',
+        type: 'network_scan' as any,
+        state: 'completed',
+        result: { hosts: [{ ip: '10.0.0.5' }] },
+      });
+      (task as any).device = {
+        id: 'device-1',
+        assetName: 'SW-1',
+        apiSecretHash: 'super-secret-hash',
+        apiSecretHashPrev: 'also-secret',
+      };
+      repo.find.mockResolvedValue([task]);
+
+      const [row] = await service.listRecentByType('network_scan' as any);
+
+      expect(row).toEqual({
+        id: 'task-1',
+        deviceId: 'device-1',
+        deviceName: 'SW-1',
+        type: 'network_scan',
+        payload: null,
+        state: 'completed',
+        result: { hosts: [{ ip: '10.0.0.5' }] },
+        lastError: null,
+        completedAt: null,
+        createdAt: undefined,
+      });
+      expect(row).not.toHaveProperty('device');
+      expect(JSON.stringify(row)).not.toContain('secret');
+    });
+
+    it('falls back to the device id when assetName is unset', async () => {
+      const task = makeTask({ deviceId: 'device-1' });
+      (task as any).device = { id: 'device-1', assetName: null };
+      repo.find.mockResolvedValue([task]);
+
+      const [row] = await service.listRecentByType('network_scan' as any);
+      expect(row.deviceName).toBe('device-1');
+    });
+  });
 });

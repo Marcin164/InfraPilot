@@ -27,6 +27,13 @@ PING_TIMEOUT_MS = 500
 SWEEP_WORKERS = 64
 DNS_TIMEOUT_S = 1.5
 
+# Credential-less signal only -- just "is something listening here", no
+# banner grab or auth attempt. Picked to distinguish the coarse device
+# classes the backend cares about (see classifyDevice.ts): SSH (network
+# gear/Linux), web mgmt UI, SMB/RDP (Windows), IPP/JetDirect (printers).
+SCAN_PORTS = (22, 80, 443, 445, 3389, 631, 9100)
+PORT_CONNECT_TIMEOUT_S = 0.3
+
 _NEIGHBORS_PS = r"""
 Get-NetNeighbor -AddressFamily IPv4 -ErrorAction SilentlyContinue |
   Where-Object { $_.State -notin @('Unreachable', 'Incomplete') } |
@@ -93,6 +100,37 @@ def _resolve_hostnames(ips: list[str]) -> dict[str, str | None]:
     return hostnames
 
 
+def _check_port(ip: str, port: int) -> bool:
+    try:
+        with socket.create_connection((ip, port), timeout=PORT_CONNECT_TIMEOUT_S):
+            return True
+    except OSError:
+        return False
+
+
+def _scan_ports(ips: list[str]) -> dict[str, list[int]]:
+    """Best-effort TCP connect scan of SCAN_PORTS for each already-live
+    host -- only run against hosts the ping/ARP sweep already found, not
+    the whole range, so this stays fast and doesn't probe hosts that
+    aren't even there."""
+    open_ports: dict[str, list[int]] = {ip: [] for ip in ips}
+    if not ips:
+        return open_ports
+    with concurrent.futures.ThreadPoolExecutor(max_workers=SWEEP_WORKERS) as pool:
+        futures = {
+            pool.submit(_check_port, ip, port): (ip, port)
+            for ip in ips
+            for port in SCAN_PORTS
+        }
+        for future in concurrent.futures.as_completed(futures):
+            ip, port = futures[future]
+            if future.result():
+                open_ports[ip].append(port)
+    for ports in open_ports.values():
+        ports.sort()
+    return open_ports
+
+
 def _expand_hosts(cidr: str) -> list[str]:
     network = ipaddress.ip_network(cidr, strict=False)
     hosts = [str(ip) for ip in network.hosts()]
@@ -146,6 +184,7 @@ def scan_network(cidr: str) -> list[dict[str, Any]]:
 
     candidate_ips = sorted(responded | set(mac_by_ip.keys()), key=ipaddress.ip_address)
     hostnames = _resolve_hostnames(candidate_ips)
+    open_ports = _scan_ports(candidate_ips)
 
     return [
         {
@@ -153,6 +192,7 @@ def scan_network(cidr: str) -> list[dict[str, Any]]:
             "mac": mac_by_ip.get(ip),
             "hostname": hostnames.get(ip),
             "respondedToPing": ip in responded,
+            "openPorts": open_ports.get(ip, []),
         }
         for ip in candidate_ips
     ]

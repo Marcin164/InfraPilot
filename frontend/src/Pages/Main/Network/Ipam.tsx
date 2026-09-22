@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { faSitemap, faServer, faPlus, faTrash, faTriangleExclamation, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { faSitemap, faServer, faPlus, faTrash, faTriangleExclamation, faMagnifyingGlass, faPen, faCheck, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import CardHeader from "../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
@@ -11,6 +11,7 @@ import Input from "../../../Components/Inputs/Input";
 import SelectSecondary from "../../../Components/Inputs/SelectSecondary";
 import { getDevicesOptions } from "../../../Services/devices";
 import { getDhcpServers } from "../../../Services/dhcpServers";
+import { getLocations } from "../../../Services/locations";
 import { enqueueDeviceTask, listDeviceTasks, AgentTask, AgentTaskState } from "../../../Services/agentTasks";
 import {
   AllocationStatus,
@@ -20,10 +21,12 @@ import {
   createSubnet,
   deleteAllocation,
   deleteSubnet,
+  getAllWindowsAgents,
   getIpConflicts,
   getScanCandidates,
   getSubnetUtilization,
   getSubnets,
+  updateSubnet,
 } from "../../../Services/ipam";
 
 const STATUS_OPTIONS: { value: AllocationStatus; label: string }[] = [
@@ -61,11 +64,21 @@ const Ipam = () => {
   const [selectedSubnetId, setSelectedSubnetId] = useState<string | null>(null);
   const [addingSubnet, setAddingSubnet] = useState(false);
   const [addingAllocation, setAddingAllocation] = useState(false);
+  const [editingSubnet, setEditingSubnet] = useState(false);
+  const [subnetEditForm, setSubnetEditForm] = useState<Partial<CreateSubnetPayload>>({});
   const [activeScanTaskId, setActiveScanTaskId] = useState<string | null>(null);
 
   const subnetsQuery = useQuery({ queryKey: ["subnets"], queryFn: getSubnets });
   const conflictsQuery = useQuery({ queryKey: ["ip-conflicts"], queryFn: getIpConflicts });
   const dhcpServersQuery = useQuery({ queryKey: ["dhcp-servers"], queryFn: getDhcpServers });
+  const locationsQuery = useQuery({ queryKey: ["locations"], queryFn: getLocations });
+  const locationOptions = useMemo(
+    () => [
+      { value: "", label: t("ipam.subnet.noLocation") },
+      ...(locationsQuery.data ?? []).map((l) => ({ value: l.id, label: l.name })),
+    ],
+    [locationsQuery.data, t],
+  );
 
   const utilizationQuery = useQuery({
     queryKey: ["subnet-utilization", selectedSubnetId],
@@ -88,18 +101,42 @@ const Ipam = () => {
     queryFn: () => getScanCandidates(selectedSubnetId!),
     enabled: !!selectedSubnetId,
   });
-  const scanDeviceOptions = useMemo(() => {
-    const candidates = scanCandidatesQuery.data ?? [];
-    const source = candidates.length > 0 ? candidates : devicesQuery.data ?? [];
-    return source.map((d: any) => ({
-      value: d.id,
-      label: d.assetName || `${d.manufacturer ?? ""} ${d.model ?? ""} (${d.serialNumber ?? d.serialnumber ?? ""})`,
-    }));
-  }, [scanCandidatesQuery.data, devicesQuery.data]);
-  const scanDevice = scanDeviceOptions[0] ?? null;
+  const toDeviceOption = (d: any) => ({
+    value: d.id,
+    label: d.assetName || `${d.manufacturer ?? ""} ${d.model ?? ""} (${d.serialNumber ?? d.serialnumber ?? ""})`,
+  });
+  const confirmedScanOptions = useMemo(
+    () => (scanCandidatesQuery.data ?? []).map(toDeviceOption),
+    [scanCandidatesQuery.data],
+  );
+
+  // getScanCandidates() couldn't confirm a match for this subnet (no
+  // location set, no agent's own IP in range) -- rather than blocking
+  // the scan outright, let the admin manually pick from every enrolled
+  // Windows agent. Deliberately NOT the full device list: a plain device
+  // with no agent at all would silently get picked as "the scanner", and
+  // the resulting task would just sit queued forever, unclaimed.
+  const allAgentsQuery = useQuery({
+    queryKey: ["scan-agents"],
+    queryFn: getAllWindowsAgents,
+    enabled: !!selectedSubnetId && scanCandidatesQuery.isSuccess && confirmedScanOptions.length === 0,
+  });
+  const fallbackScanOptions = useMemo(
+    () => (allAgentsQuery.data ?? []).map(toDeviceOption),
+    [allAgentsQuery.data],
+  );
+
+  const isManualScanFallback = confirmedScanOptions.length === 0 && fallbackScanOptions.length > 0;
+  const scanDeviceOptions = confirmedScanOptions.length > 0 ? confirmedScanOptions : fallbackScanOptions;
+  const [manualScanDeviceId, setManualScanDeviceId] = useState<string | null>(null);
+  const scanDevice = isManualScanFallback
+    ? (scanDeviceOptions.find((o) => o.value === manualScanDeviceId) ?? scanDeviceOptions[0] ?? null)
+    : (scanDeviceOptions[0] ?? null);
 
   useEffect(() => {
     setActiveScanTaskId(null);
+    setEditingSubnet(false);
+    setManualScanDeviceId(null);
   }, [selectedSubnetId]);
 
   const scanSubnetMutation = useMutation({
@@ -152,6 +189,19 @@ const Ipam = () => {
       setSubnetForm({ name: "", cidr: "" });
     },
     onError: (err: any) => toast.error(err?.response?.data?.message ?? t("ipam.subnet.createFailed")),
+  });
+
+  const updateSubnetMutation = useMutation({
+    mutationFn: () => updateSubnet(selectedSubnetId!, subnetEditForm),
+    onSuccess: () => {
+      toast.success(t("ipam.subnet.updated"));
+      queryClient.invalidateQueries({ queryKey: ["subnets"] });
+      queryClient.invalidateQueries({ queryKey: ["subnet-utilization", selectedSubnetId] });
+      queryClient.invalidateQueries({ queryKey: ["scan-candidates", selectedSubnetId] });
+      invalidateReports();
+      setEditingSubnet(false);
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? t("ipam.subnet.updateFailed")),
   });
 
   const deleteSubnetMutation = useMutation({
@@ -336,6 +386,22 @@ const Ipam = () => {
               <div className="flex justify-between items-start">
                 <CardHeader text={utilization.subnet.name} />
                 <div className="flex items-center gap-2">
+                  {!editingSubnet && (
+                    <ButtonPrimary
+                      icon={faPen}
+                      text={t("common.edit")}
+                      onClick={() => {
+                        setSubnetEditForm({
+                          name: utilization.subnet.name,
+                          cidr: utilization.subnet.cidr,
+                          vlan: utilization.subnet.vlan ?? "",
+                          gateway: utilization.subnet.gateway ?? "",
+                          locationId: utilization.subnet.locationId ?? "",
+                        });
+                        setEditingSubnet(true);
+                      }}
+                    />
+                  )}
                   <ButtonPrimary
                     icon={faPlus}
                     text={t("ipam.allocation.add")}
@@ -343,6 +409,72 @@ const Ipam = () => {
                   />
                 </div>
               </div>
+
+              {editingSubnet && (
+                <div className="mt-3 border border-[#F0F0F0] rounded-[10px] p-3">
+                  <Input
+                    label={t("ipam.subnet.name")}
+                    value={subnetEditForm.name ?? ""}
+                    handleChange={(v: string) => setSubnetEditForm({ ...subnetEditForm, name: v })}
+                  />
+                  <Input
+                    label={t("ipam.subnet.cidr")}
+                    value={subnetEditForm.cidr ?? ""}
+                    handleChange={(v: string) => setSubnetEditForm({ ...subnetEditForm, cidr: v })}
+                    errors={
+                      subnetEditForm.cidr && !isValidCidr(subnetEditForm.cidr)
+                        ? t("ipam.subnet.cidrInvalid")
+                        : undefined
+                    }
+                  />
+                  <Input
+                    label={t("ipam.subnet.vlan")}
+                    value={subnetEditForm.vlan ?? ""}
+                    handleChange={(v: string) => setSubnetEditForm({ ...subnetEditForm, vlan: v })}
+                  />
+                  <Input
+                    label={t("ipam.subnet.gateway")}
+                    value={subnetEditForm.gateway ?? ""}
+                    handleChange={(v: string) => setSubnetEditForm({ ...subnetEditForm, gateway: v })}
+                  />
+                  <div className="mt-2">
+                    <SelectSecondary
+                      label={t("ipam.subnet.location")}
+                      options={locationOptions}
+                      value={locationOptions.find((o) => o.value === (subnetEditForm.locationId ?? ""))}
+                      onSelect={(opt: any) =>
+                        setSubnetEditForm({ ...subnetEditForm, locationId: opt?.value || null })
+                      }
+                    />
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <ButtonPrimary
+                      icon={faCheck}
+                      text={updateSubnetMutation.isPending ? t("common.saving") : t("common.save")}
+                      onClick={() => updateSubnetMutation.mutate()}
+                      disabled={
+                        !subnetEditForm.name ||
+                        !isValidCidr(subnetEditForm.cidr ?? "") ||
+                        updateSubnetMutation.isPending
+                      }
+                    />
+                    <ButtonPrimary
+                      icon={faXmark}
+                      text={t("common.cancel")}
+                      onClick={() => setEditingSubnet(false)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {!editingSubnet && (
+                <div className="mt-1 text-[12px] text-[#9a9a9a]">
+                  {t("ipam.subnet.location")}:{" "}
+                  {locationOptions.find((o) => o.value === (utilization.subnet.locationId ?? ""))?.label ??
+                    t("ipam.subnet.noLocation")}
+                </div>
+              )}
+
               <div className="mt-2 text-[13px] text-[#3C3C3C]">
                 {t("ipam.utilization", {
                   used: utilization.used,
@@ -360,6 +492,17 @@ const Ipam = () => {
               </div>
 
               <div className="mt-3 border border-[#F0F0F0] rounded-[10px] p-3">
+                {isManualScanFallback && (
+                  <div className="mb-2 max-w-[280px]">
+                    <SelectSecondary
+                      label={t("ipam.scan.manualPickLabel")}
+                      options={scanDeviceOptions}
+                      value={scanDeviceOptions.find((o) => o.value === scanDevice?.value)}
+                      onSelect={(opt: any) => setManualScanDeviceId(opt?.value ?? null)}
+                    />
+                    <p className="text-[11px] text-[#9a9a9a] mt-1">{t("ipam.scan.manualPickHint")}</p>
+                  </div>
+                )}
                 <div className="flex flex-wrap items-center gap-2">
                   <ButtonPrimary
                     icon={faMagnifyingGlass}
@@ -371,13 +514,13 @@ const Ipam = () => {
                     onClick={() => scanSubnetMutation.mutate(utilization.subnet.cidr)}
                     disabled={scanSubnetMutation.isPending || !scanDevice}
                   />
-                  {scanDevice ? (
+                  {scanDevice && !isManualScanFallback ? (
                     <span className="text-[12px] text-[#9a9a9a]">
                       {t("ipam.scan.willUse", { device: scanDevice.label })}
                     </span>
-                  ) : (
+                  ) : !scanDevice ? (
                     <span className="text-[12px] text-[#9a9a9a]">{t("ipam.scan.noAgents")}</span>
-                  )}
+                  ) : null}
                 </div>
 
                 {activeScanTask && (

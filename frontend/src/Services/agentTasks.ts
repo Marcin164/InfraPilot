@@ -61,3 +61,28 @@ export const cancelDeviceTask = async (taskId: string): Promise<AgentTask> => {
   const { data } = await api.post(`/devices/tasks/${taskId}/cancel`);
   return data;
 };
+
+export type RecentAgentTask = {
+  id: string;
+  deviceId: string;
+  deviceName: string;
+  type: AgentTaskType;
+  payload: Record<string, any> | null;
+  state: AgentTaskState;
+  result: Record<string, any> | null;
+  lastError: string | null;
+  completedAt: string | null;
+  createdAt: string;
+};
+
+// Cross-device activity feed -- not scoped to one device, so it also
+// picks up tasks the scheduled NetworkScanWorker enqueued, not just ones
+// triggered from a page. Used by the Topbar's ScanActivityIndicator so
+// scan status survives navigating away from the IPAM page.
+export const listRecentAgentTasks = async (
+  type: AgentTaskType,
+  limit = 20,
+): Promise<RecentAgentTask[]> => {
+  const { data } = await api.get(`/devices/tasks/recent`, { params: { type, limit } });
+  return data;
+};

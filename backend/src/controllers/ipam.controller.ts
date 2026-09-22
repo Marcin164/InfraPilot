@@ -47,6 +47,15 @@ export class IpamController {
     return this.ipamService.findScanCandidates(id);
   }
 
+  // Fallback list for the "Scan this subnet" picker when scan-candidates
+  // can't confirm a match for this particular subnet -- every enrolled
+  // Windows agent, so the admin can still pick one manually instead of
+  // being blocked outright.
+  @Get('scan-agents')
+  getAllWindowsAgents() {
+    return this.ipamService.findAllWindowsAgents();
+  }
+
   @RequiresPermission('devices.connection.manage')
   @Post('subnets')
   async createSubnet(@Body() dto: CreateSubnetDto) {

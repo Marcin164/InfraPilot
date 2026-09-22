@@ -2025,6 +2025,10 @@
   "ipam.subnet.gateway": "Brama",
   "ipam.subnet.created": "Podsieć utworzona",
   "ipam.subnet.createFailed": "Nie udało się utworzyć podsieci",
+  "ipam.subnet.updated": "Podsieć zaktualizowana",
+  "ipam.subnet.updateFailed": "Nie udało się zaktualizować podsieci",
+  "ipam.subnet.location": "Lokalizacja",
+  "ipam.subnet.noLocation": "— brak —",
   "ipam.selectSubnet": "Wybierz podsieć, aby zobaczyć przypisania.",
   "ipam.utilization": "{{used}} zajętych / {{free}} wolnych z {{total}} adresów",
   "ipam.allocation.add": "Zarezerwuj IP",
@@ -2043,9 +2047,17 @@
   "ipam.scan.queued": "Skan zakolejkowany — wyniki pojawią się po jego zakończeniu",
   "ipam.scan.failed": "Nie udało się zakolejkować skanu",
   "ipam.scan.noDevice": "Wybierz urządzenie, które ma wykonać skan",
-  "ipam.scan.noAgents": "Brak agenta Windows w lokalizacji tej podsieci",
+  "ipam.scan.noAgents": "Brak zarejestrowanego agenta Windows w systemie",
+  "ipam.scan.manualPickLabel": "Wybierz agenta ręcznie",
+  "ipam.scan.manualPickHint": "Nie udało się automatycznie dopasować agenta do tej podsieci (brak lokalizacji lub adresu IP w zakresie) — wybierz ręcznie spośród wszystkich zarejestrowanych agentów Windows.",
   "ipam.scan.discoveredBadge": "wykryte skanem",
   "ipam.scan.hostsFound": "znaleziono urządzeń: {{count}}",
+
+  "topbar.scanActivity.title": "Skany sieci",
+  "topbar.scanActivity.none": "Brak ostatniej aktywności skanowania.",
+  "topbar.scanActivity.hostsFound": "znaleziono: {{count}}",
+  "topbar.scanActivity.completedToast": "Skan sieci ({{device}}) zakończony — znaleziono {{count}} urządzeń",
+  "topbar.scanActivity.failedToast": "Skan sieci ({{device}}) nie powiódł się: {{error}}",
 
   "notif.event.ip_conflict_detected": "Wykryto konflikt IP"
 }

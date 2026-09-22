@@ -84,6 +84,36 @@ export class AgentTaskService {
   }
 
   /**
+   * Cross-device listing for a global "activity" view (e.g. a Topbar scan
+   * indicator that survives page navigation) -- unlike listForDevice(),
+   * not scoped to one device, so it also picks up tasks the scheduled
+   * NetworkScanWorker enqueued, not just ones a user triggered from a
+   * page. Returns a deliberately lean projection: never the raw `device`
+   * relation, which would otherwise leak apiSecretHash and other
+   * internal Devices columns to whatever calls this.
+   */
+  async listRecentByType(type: AgentTaskType, limit = 20) {
+    const tasks = await this.repo.find({
+      where: { type },
+      relations: ['device'],
+      order: { createdAt: 'DESC' },
+      take: Math.min(limit, 100),
+    });
+    return tasks.map((t) => ({
+      id: t.id,
+      deviceId: t.deviceId,
+      deviceName: t.device?.assetName || t.device?.id || t.deviceId,
+      type: t.type,
+      payload: t.payload,
+      state: t.state,
+      result: t.result,
+      lastError: t.lastError,
+      completedAt: t.completedAt,
+      createdAt: t.createdAt,
+    }));
+  }
+
+  /**
    * Agent pulls queued tasks for itself. Takes a short lease so that a
    * lost agent (crash mid-task) doesn't block retries forever. Uses
    * SELECT ... FOR UPDATE SKIP LOCKED inside a transaction so concurrent

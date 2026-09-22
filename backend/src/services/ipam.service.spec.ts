@@ -135,26 +135,62 @@ describe('IpamService', () => {
   // ─────────────────────────────────────────
 
   describe('findScanCandidates', () => {
-    it('returns an empty list when the subnet has no location', async () => {
-      subnets.findOneBy.mockResolvedValue({ id: 'subnet-1', locationId: null });
-
-      const result = await service.findScanCandidates('subnet-1');
-      expect(result).toEqual([]);
-      expect(devices.find).not.toHaveBeenCalled();
-    });
-
-    it('queries devices scoped to the subnet location and windows platform', async () => {
-      subnets.findOneBy.mockResolvedValue({ id: 'subnet-1', locationId: 'loc-1' });
-      devices.find.mockResolvedValue([{ id: 'device-1' }]);
+    it('prefers an agent whose own NIC IP falls inside the subnet CIDR, even with no matching location', async () => {
+      subnets.findOneBy.mockResolvedValue({ id: 'subnet-1', cidr: '192.168.1.0/24', locationId: null });
+      devices.find.mockResolvedValue([
+        { id: 'device-in-range', locationId: null, network: { nic_config: [{ IPv4Address: '192.168.1.50' }] } },
+        { id: 'device-out-of-range', locationId: null, network: { nic_config: [{ IPv4Address: '10.0.0.5' }] } },
+      ]);
 
       const result = await service.findScanCandidates('subnet-1');
 
       expect(devices.find).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ platform: 'windows', locationId: 'loc-1' }),
+          where: expect.objectContaining({ platform: 'windows' }),
         }),
       );
-      expect(result).toEqual([{ id: 'device-1' }]);
+      expect(result).toEqual([
+        { id: 'device-in-range', locationId: null, network: { nic_config: [{ IPv4Address: '192.168.1.50' }] } },
+      ]);
+    });
+
+    it('falls back to a location match when no agent IP is inside the subnet', async () => {
+      subnets.findOneBy.mockResolvedValue({ id: 'subnet-1', cidr: '192.168.1.0/24', locationId: 'loc-1' });
+      devices.find.mockResolvedValue([
+        { id: 'device-right-location', locationId: 'loc-1', network: null },
+        { id: 'device-wrong-location', locationId: 'loc-2', network: null },
+      ]);
+
+      const result = await service.findScanCandidates('subnet-1');
+
+      expect(result).toEqual([{ id: 'device-right-location', locationId: 'loc-1', network: null }]);
+    });
+
+    it('returns an empty list when neither an IP match nor a location match exists', async () => {
+      subnets.findOneBy.mockResolvedValue({ id: 'subnet-1', cidr: '192.168.1.0/24', locationId: null });
+      devices.find.mockResolvedValue([{ id: 'device-elsewhere', locationId: null, network: null }]);
+
+      const result = await service.findScanCandidates('subnet-1');
+      expect(result).toEqual([]);
+    });
+  });
+
+  // ─────────────────────────────────────────
+  // findAllWindowsAgents
+  // ─────────────────────────────────────────
+
+  describe('findAllWindowsAgents', () => {
+    it('returns every enrolled windows agent, unfiltered by subnet', async () => {
+      devices.find.mockResolvedValue([{ id: 'agent-1' }, { id: 'agent-2' }]);
+
+      const result = await service.findAllWindowsAgents();
+
+      expect(devices.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ platform: 'windows' }),
+        }),
+      );
+      expect(result).toEqual([{ id: 'agent-1' }, { id: 'agent-2' }]);
     });
   });
 });

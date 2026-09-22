@@ -30,6 +30,7 @@ import { Res } from '@nestjs/common';
 import { DevicesService } from 'src/services/devices.service';
 import { DeviceTagsService } from 'src/services/deviceTags.service';
 import { AgentTaskService } from 'src/services/agentTask.service';
+import type { AgentTaskType } from 'src/entities/agentTask.entity';
 import { DeviceReportService } from 'src/services/deviceReport.service';
 import { HandoverFormService } from 'src/services/handoverForm.service';
 import { RemoteAssistService } from 'src/services/remoteAssist.service';
@@ -65,6 +66,7 @@ import { DeviceEnrollmentTokenService } from 'src/services/deviceEnrollmentToken
 import { LINUX_PACKAGE_SIGNING_PUBLIC_KEY } from 'src/config/packageSigningKey';
 import { IpamService } from 'src/services/ipam.service';
 import { cidrRange } from 'src/helpers/cidr';
+import { DeviceDiscoveryService } from 'src/services/deviceDiscovery.service';
 
 /** /22 = 1024 addresses -- generous for a site subnet, bounded enough to
  * finish comfortably inside a single agent task lease. */
@@ -85,6 +87,7 @@ export class DevicesController {
     private readonly agentBootstrapService: AgentBootstrapService,
     private readonly enrollmentTokenService: DeviceEnrollmentTokenService,
     private readonly ipamService: IpamService,
+    private readonly deviceDiscoveryService: DeviceDiscoveryService,
   ) {}
 
   @UseGuards(AuthGuard)
@@ -954,6 +957,15 @@ export class DevicesController {
     return this.agentTasks.listForDevice(deviceId, { state });
   }
 
+  // Cross-device activity feed (e.g. a Topbar "scan activity" indicator
+  // that survives page navigation) -- not scoped to a single device.
+  @UseGuards(AuthGuard)
+  @RequiresPermission('devices.taskSchedule.manage', 'devices.view')
+  @Get('/tasks/recent')
+  listRecentTasks(@Query('type') type: AgentTaskType, @Query('limit') limit?: string) {
+    return this.agentTasks.listRecentByType(type, limit ? Number(limit) : undefined);
+  }
+
   @UseGuards(AuthGuard)
   @RequiresPermission('devices.taskSchedule.manage')
   @Post('/:deviceId/tasks')
@@ -1035,6 +1047,10 @@ export class DevicesController {
         subnetId: task.payload?.subnetId ?? null,
         hosts: body.result.hosts,
       });
+      await this.deviceDiscoveryService.ingestScanResults(
+        body.result.hosts,
+        task.payload?.subnetId ?? null,
+      );
     }
     return task;
   }
