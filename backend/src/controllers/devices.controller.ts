@@ -67,6 +67,7 @@ import { LINUX_PACKAGE_SIGNING_PUBLIC_KEY } from 'src/config/packageSigningKey';
 import { IpamService } from 'src/services/ipam.service';
 import { cidrRange } from 'src/helpers/cidr';
 import { DeviceDiscoveryService } from 'src/services/deviceDiscovery.service';
+import { NetworkScanSettingsService } from 'src/services/networkScanSettings.service';
 
 /** /22 = 1024 addresses -- generous for a site subnet, bounded enough to
  * finish comfortably inside a single agent task lease. */
@@ -88,6 +89,7 @@ export class DevicesController {
     private readonly enrollmentTokenService: DeviceEnrollmentTokenService,
     private readonly ipamService: IpamService,
     private readonly deviceDiscoveryService: DeviceDiscoveryService,
+    private readonly networkScanSettings: NetworkScanSettingsService,
   ) {}
 
   @UseGuards(AuthGuard)
@@ -399,6 +401,25 @@ export class DevicesController {
   async rotateAgentToken() {
     const newToken = await this.agentTokenService.rotateToken();
     return { success: true, token: newToken };
+  }
+
+  // Settings > Network scanning -- whether a network_scan result with no
+  // matching existing device gets auto-created as a new Devices row.
+  // Deliberately two path segments, not one -- a single segment here
+  // would collide with the GET /:deviceId route below (any one-segment
+  // path matches that wildcard, and it's registered first).
+  @UseGuards(AuthGuard)
+  @RequiresPermission('devices.agentConfig.manage')
+  @Get('/network-scan/settings')
+  getNetworkScanSettings() {
+    return this.networkScanSettings.getConfig();
+  }
+
+  @UseGuards(AuthGuard)
+  @RequiresPermission('devices.agentConfig.manage')
+  @Post('/network-scan/settings')
+  saveNetworkScanSettings(@Body() body: { autoCreateDevices?: boolean }) {
+    return this.networkScanSettings.saveConfig(body);
   }
 
   // ---- Per-device enrollment tokens (Settings > Agent > "Nowy token") ----

@@ -47,6 +47,7 @@ import NotificationPreferences from "./Pages/Main/Settings/Details/NotificationP
 import Workflows from "./Pages/Main/Settings/Details/Workflows";
 import Categories from "./Pages/Main/Settings/Details/Categories";
 import WindowsAgent from "./Pages/Main/Settings/Details/WindowsAgent";
+import NetworkScanSettings from "./Pages/Main/Settings/Details/NetworkScanSettings";
 import SmtpSettings from "./Pages/Main/Settings/Details/Smtp";
 import M365Settings from "./Pages/Main/Settings/Details/M365Settings";
 import LicenseSyncSettings from "./Pages/Main/Settings/Details/LicenseSyncSettings";
@@ -205,6 +206,10 @@ function App() {
                     element={<TicketTemplates />}
                   />
                   <Route path="agent" element={<WindowsAgent />} />
+                  <Route
+                    path="network-scan"
+                    element={<NetworkScanSettings />}
+                  />
                   <Route path="locations" element={<Locations />} />
                   <Route path="smtp" element={<SmtpSettings />} />
                   <Route path="m365" element={<M365Settings />} />

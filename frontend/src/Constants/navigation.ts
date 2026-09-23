@@ -23,6 +23,7 @@ import {
   faKey,
   faLayerGroup,
   faLocationDot,
+  faMagnifyingGlass,
   faNetworkWired,
   faPaste,
   faPlay,
@@ -260,6 +261,7 @@ export const settingsNavbarItems = [
   { to: "compliance-rules", label: "settings.tab.complianceRules", icon: faShieldHalved, requires: "devices.complianceRules.manage" },
   { to: "ticket-templates", label: "settings.tab.ticketTemplates", icon: faPaste, requires: "helpdesk.ticketTemplates.manage" },
   { to: "agent", label: "settings.tab.windowsAgent", icon: faWindowMaximize, requires: "devices.agentConfig.manage" },
+  { to: "network-scan", label: "settings.tab.networkScan", icon: faMagnifyingGlass, requires: "devices.agentConfig.manage" },
   { to: "locations", label: "settings.tab.locations", icon: faBuilding, requires: "admin.locations.config" },
   { to: "smtp", label: "settings.tab.smtp", icon: faEnvelope, requires: "admin.smtp.config" },
 ];

@@ -27,6 +27,7 @@ export const NOTIFICATION_EVENTS = [
   'device_down',
   'config_backup_failed',
   'ip_conflict_detected',
+  'device_auto_discovered',
 ] as const;
 
 export type NotificationEvent = (typeof NOTIFICATION_EVENTS)[number];
@@ -49,6 +50,7 @@ export const OPS_ROUTED_EVENTS: NotificationEvent[] = [
   'device_down',
   'config_backup_failed',
   'ip_conflict_detected',
+  'device_auto_discovered',
 ];
 
 /**

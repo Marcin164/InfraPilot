@@ -16,6 +16,7 @@ import { Subnet } from 'src/entities/subnet.entity';
 import { DhcpServer } from 'src/entities/dhcpServer.entity';
 import { DevicesService } from 'src/services/devices.service';
 import { DeviceDiscoveryService } from 'src/services/deviceDiscovery.service';
+import { NetworkScanSettingsService } from 'src/services/networkScanSettings.service';
 import { SoftwareInventoryService } from 'src/services/softwareInventory.service';
 import { DeviceTagsService } from 'src/services/deviceTags.service';
 import { AgentTaskService } from 'src/services/agentTask.service';
@@ -87,6 +88,7 @@ import { TicketDeviceLifecycleListener } from 'src/listeners/ticketDeviceLifecyc
     SoftwareInventoryService,
     DeviceTagsService,
     DeviceDiscoveryService,
+    NetworkScanSettingsService,
     AgentTaskService,
     DeviceScanService,
     DeviceReportService,

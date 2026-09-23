@@ -758,6 +758,13 @@
   "settings.tab.complianceRules": "Reguły zgodności",
   "settings.tab.ticketTemplates": "Szablony zgłoszeń",
   "settings.tab.windowsAgent": "Agent (Windows/macOS/Linux)",
+  "settings.tab.networkScan": "Skanowanie sieci",
+  "settings.networkScan.intro": "Ustawienia dotyczące tego, co dzieje się z urządzeniami wykrytymi przez skanowanie sieci (network_scan).",
+  "settings.networkScan.autoCreateDevices": "Automatycznie dodawaj wykryte urządzenia do bazy Devices",
+  "settings.networkScan.autoCreateDevicesHint": "Gdy włączone, nierozpoznany host znaleziony podczas skanu od razu staje się urządzeniem w głównej bazie (z najlepszym zgadniętym typem i tagiem „auto-discovered”). Gdy wyłączone, taki host nadal pojawia się w IPAM, ale nie tworzy wpisu w Devices — dodanie go zostaje ręczną decyzją.",
+  "settings.networkScan.saved": "Ustawienia zapisane",
+  "settings.networkScan.saveFailed": "Nie udało się zapisać ustawień",
+  "settings.networkScan.loadFailed": "Nie udało się wczytać ustawień",
   "settings.tab.locations": "Lokalizacje",
   "settings.tab.smtp": "Poczta (SMTP)",
   "settings.tab.m365": "Microsoft 365",
@@ -2059,5 +2066,6 @@
   "topbar.scanActivity.completedToast": "Skan sieci ({{device}}) zakończony — znaleziono {{count}} urządzeń",
   "topbar.scanActivity.failedToast": "Skan sieci ({{device}}) nie powiódł się: {{error}}",
 
-  "notif.event.ip_conflict_detected": "Wykryto konflikt IP"
+  "notif.event.ip_conflict_detected": "Wykryto konflikt IP",
+  "notif.event.device_auto_discovered": "Auto-wykryte urządzenie dodane"
 }

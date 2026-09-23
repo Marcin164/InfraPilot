@@ -16,7 +16,8 @@ export type NotificationEvent =
   | "warranty_expiring"
   | "device_down"
   | "config_backup_failed"
-  | "ip_conflict_detected";
+  | "ip_conflict_detected"
+  | "device_auto_discovered";
 
 export type NotificationChannel = "inapp" | "email";
 
@@ -32,6 +33,7 @@ export const OPS_ROUTED_EVENTS: NotificationEvent[] = [
   "device_down",
   "config_backup_failed",
   "ip_conflict_detected",
+  "device_auto_discovered",
 ];
 
 export type PreferenceRow = {
@@ -82,4 +84,5 @@ export const EVENT_LABELS: Record<NotificationEvent, string> = {
   device_down: "Device unreachable",
   config_backup_failed: "Config backup failed",
   ip_conflict_detected: "IP conflict detected",
+  device_auto_discovered: "Auto-discovered device added",
 };

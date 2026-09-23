@@ -760,6 +760,13 @@
   "settings.tab.complianceRules": "Compliance rules",
   "settings.tab.ticketTemplates": "Ticket templates",
   "settings.tab.windowsAgent": "Agent (Windows/macOS/Linux)",
+  "settings.tab.networkScan": "Network scanning",
+  "settings.networkScan.intro": "Settings for what happens to devices discovered by network scanning (network_scan).",
+  "settings.networkScan.autoCreateDevices": "Automatically add discovered devices to the Devices list",
+  "settings.networkScan.autoCreateDevicesHint": "When on, an unrecognized host found during a scan immediately becomes a device in the main inventory (with a best-guess type and an \"auto-discovered\" tag). When off, such a host still shows up in IPAM, but doesn't create a Devices row -- adding it stays a manual decision.",
+  "settings.networkScan.saved": "Settings saved",
+  "settings.networkScan.saveFailed": "Could not save settings",
+  "settings.networkScan.loadFailed": "Could not load settings",
   "settings.tab.locations": "Locations",
   "settings.tab.smtp": "Mail (SMTP)",
   "settings.tab.m365": "Microsoft 365",
@@ -1892,5 +1899,6 @@
   "topbar.scanActivity.completedToast": "Network scan ({{device}}) finished — {{count}} host(s) found",
   "topbar.scanActivity.failedToast": "Network scan ({{device}}) failed: {{error}}",
 
-  "notif.event.ip_conflict_detected": "IP conflict detected"
+  "notif.event.ip_conflict_detected": "IP conflict detected",
+  "notif.event.device_auto_discovered": "Auto-discovered device added"
 }

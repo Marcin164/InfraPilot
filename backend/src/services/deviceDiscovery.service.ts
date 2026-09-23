@@ -8,6 +8,8 @@ import {
 } from 'src/entities/ipAllocation.entity';
 import { Subnet } from 'src/entities/subnet.entity';
 import { DeviceTagsService } from 'src/services/deviceTags.service';
+import { NetworkScanSettingsService } from 'src/services/networkScanSettings.service';
+import { NotificationDispatcherService } from 'src/services/notificationDispatcher.service';
 import { uuidv4 } from 'src/helpers/uuidv4';
 import { classifyDiscoveredHost } from 'src/helpers/classifyDevice';
 
@@ -39,15 +41,21 @@ export class DeviceDiscoveryService {
     @InjectRepository(Subnet)
     private readonly subnets: Repository<Subnet>,
     private readonly deviceTags: DeviceTagsService,
+    private readonly networkScanSettings: NetworkScanSettingsService,
+    private readonly notificationDispatcher: NotificationDispatcherService,
   ) {}
 
   /**
    * Turns network_scan results into real Devices rows -- matching an
    * already-known device by MAC when possible (so an enrolled agent's
-   * own subnet never gets a duplicate entry for itself), otherwise
-   * creating a new, best-effort-classified row tagged "auto-discovered"
-   * so it's easy to bulk-review later. See classifyDevice.ts for how
-   * group/subgroup is guessed -- it's a guess, not a confirmed identity.
+   * own subnet never gets a duplicate entry for itself; this always
+   * happens regardless of the setting below), otherwise creating a new,
+   * best-effort-classified row tagged "auto-discovered" so it's easy to
+   * bulk-review later -- unless an admin has turned that off in Settings
+   * > Network scanning, in which case the host is just left unlinked
+   * (still visible in IPAM, same as before this feature existed). See
+   * classifyDevice.ts for how group/subgroup is guessed -- it's a guess,
+   * not a confirmed identity.
    */
   async ingestScanResults(
     hosts: DiscoveredHost[],
@@ -56,16 +64,29 @@ export class DeviceDiscoveryService {
     const locationId = subnetId
       ? ((await this.subnets.findOneBy({ id: subnetId }))?.locationId ?? null)
       : null;
-    const autoDiscoveredTagId = await this.findOrCreateAutoDiscoveredTag();
+    const { autoCreateDevices } = await this.networkScanSettings.getConfig();
+    const autoDiscoveredTagId = autoCreateDevices
+      ? await this.findOrCreateAutoDiscoveredTag()
+      : null;
+
+    const created: Array<{ id: string; assetName: string }> = [];
 
     for (const host of hosts) {
       if (!host.mac) continue; // nothing to key an identity on
 
       try {
         const existing = await this.findByMac(host.mac);
-        const deviceId = existing
-          ? existing.id
-          : await this.createDevice(host, locationId, autoDiscoveredTagId);
+        let deviceId: string | null = existing?.id ?? null;
+        if (!deviceId && autoCreateDevices && autoDiscoveredTagId) {
+          deviceId = await this.createDevice(
+            host,
+            locationId,
+            autoDiscoveredTagId,
+          );
+          created.push({ id: deviceId, assetName: host.hostname || host.ip });
+        }
+        if (!deviceId) continue; // nothing changed for this host
+
         await this.allocations.update(
           { ip: host.ip, source: IpAllocationSource.SCAN },
           { deviceId },
@@ -75,6 +96,28 @@ export class DeviceDiscoveryService {
           `Failed to ingest scan host ${host.ip}: ${(err as Error).message}`,
         );
       }
+    }
+
+    if (created.length > 0) {
+      await this.notifyNewDevices(created);
+    }
+  }
+
+  /** One notification per scan, not per device -- a scan that finds a
+   * dozen new hosts at once shouldn't spam a dozen separate alerts. */
+  private async notifyNewDevices(
+    created: Array<{ assetName: string }>,
+  ): Promise<void> {
+    try {
+      await this.notificationDispatcher.dispatchOpsAlert({
+        event: 'device_auto_discovered',
+        title: `${created.length} new device(s) discovered`,
+        body: `Network scan created: ${created.map((d) => d.assetName).join(', ')}.`,
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Failed to dispatch device_auto_discovered alert: ${(err as Error).message}`,
+      );
     }
   }
 

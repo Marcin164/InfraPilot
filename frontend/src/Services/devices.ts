@@ -363,3 +363,19 @@ export const revokeEnrollmentToken = async (id: string): Promise<{ ok: boolean }
   const { data } = await api.delete(`/devices/agent/enrollment-tokens/${id}`);
   return data;
 };
+
+export type NetworkScanSettings = {
+  autoCreateDevices: boolean;
+};
+
+export const getNetworkScanSettings = async (): Promise<NetworkScanSettings> => {
+  const { data } = await api.get("/devices/network-scan/settings");
+  return data;
+};
+
+export const saveNetworkScanSettings = async (
+  payload: Partial<NetworkScanSettings>,
+): Promise<NetworkScanSettings> => {
+  const { data } = await api.post("/devices/network-scan/settings", payload);
+  return data;
+};
