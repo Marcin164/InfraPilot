@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -30,7 +31,6 @@ import { Res } from '@nestjs/common';
 import { DevicesService } from 'src/services/devices.service';
 import { DeviceTagsService } from 'src/services/deviceTags.service';
 import { AgentTaskService } from 'src/services/agentTask.service';
-import type { AgentTaskType } from 'src/entities/agentTask.entity';
 import { DeviceReportService } from 'src/services/deviceReport.service';
 import { HandoverFormService } from 'src/services/handoverForm.service';
 import { RemoteAssistService } from 'src/services/remoteAssist.service';
@@ -68,6 +68,7 @@ import { IpamService } from 'src/services/ipam.service';
 import { cidrRange } from 'src/helpers/cidr';
 import { DeviceDiscoveryService } from 'src/services/deviceDiscovery.service';
 import { NetworkScanSettingsService } from 'src/services/networkScanSettings.service';
+import { NotificationDispatcherService } from 'src/services/notificationDispatcher.service';
 
 /** /22 = 1024 addresses -- generous for a site subnet, bounded enough to
  * finish comfortably inside a single agent task lease. */
@@ -75,6 +76,8 @@ const MAX_NETWORK_SCAN_ADDRESSES = 1024;
 
 @Controller('devices')
 export class DevicesController {
+  private readonly logger = new Logger(DevicesController.name);
+
   constructor(
     private readonly devicesService: DevicesService,
     private readonly tagsService: DeviceTagsService,
@@ -90,6 +93,7 @@ export class DevicesController {
     private readonly ipamService: IpamService,
     private readonly deviceDiscoveryService: DeviceDiscoveryService,
     private readonly networkScanSettings: NetworkScanSettingsService,
+    private readonly notificationDispatcher: NotificationDispatcherService,
   ) {}
 
   @UseGuards(AuthGuard)
@@ -978,15 +982,6 @@ export class DevicesController {
     return this.agentTasks.listForDevice(deviceId, { state });
   }
 
-  // Cross-device activity feed (e.g. a Topbar "scan activity" indicator
-  // that survives page navigation) -- not scoped to a single device.
-  @UseGuards(AuthGuard)
-  @RequiresPermission('devices.taskSchedule.manage', 'devices.view')
-  @Get('/tasks/recent')
-  listRecentTasks(@Query('type') type: AgentTaskType, @Query('limit') limit?: string) {
-    return this.agentTasks.listRecentByType(type, limit ? Number(limit) : undefined);
-  }
-
   @UseGuards(AuthGuard)
   @RequiresPermission('devices.taskSchedule.manage')
   @Post('/:deviceId/tasks')
@@ -1072,14 +1067,53 @@ export class DevicesController {
         body.result.hosts,
         task.payload?.subnetId ?? null,
       );
+      await this.notifyScanOutcome({
+        cidr: task.payload?.cidr,
+        ok: true,
+        detail: `Found ${body.result.hosts.length} host(s).`,
+      });
     }
     return task;
+  }
+
+  /** Settings > Notifications, event "network_scan_completed" -- replaces
+   * the old Topbar scan-activity indicator with a real notification so
+   * scan outcome is visible through the same channel as every other ops
+   * alert, without a dedicated always-mounted UI widget. Swallows its own
+   * errors so a notification hiccup never breaks the agent's actual
+   * task-completion/failure response. */
+  private async notifyScanOutcome(input: {
+    cidr?: string | null;
+    ok: boolean;
+    detail: string;
+  }): Promise<void> {
+    try {
+      const range = input.cidr ?? 'unknown range';
+      await this.notificationDispatcher.dispatchOpsAlert({
+        event: 'network_scan_completed',
+        title: input.ok ? `Network scan completed: ${range}` : `Network scan failed: ${range}`,
+        body: input.detail,
+      });
+    } catch (err) {
+      this.logger.warn(`Failed to dispatch network_scan_completed alert: ${(err as Error).message}`);
+    }
   }
 
   @UseGuards(AgentGuard)
   @Post('/agent/tasks/:id/fail')
   async failTask(@Param('id') id: string, @Body() body: FailTaskDto) {
-    return this.agentTasks.fail(id, body.leaseToken, body.error ?? 'unknown');
+    const task = await this.agentTasks.fail(id, body.leaseToken, body.error ?? 'unknown');
+    // Only the FINAL failure (retries exhausted, state === 'failed') is
+    // worth an alert -- fail() re-queues for up to 3 attempts first
+    // (state stays 'queued'), and that's routine, not something to notify about.
+    if (task.type === 'network_scan' && task.state === 'failed') {
+      await this.notifyScanOutcome({
+        cidr: task.payload?.cidr,
+        ok: false,
+        detail: task.lastError ?? 'Unknown error',
+      });
+    }
+    return task;
   }
 
   @UseGuards(AuthGuard)

@@ -306,7 +306,7 @@ const Ipam = () => {
         />
       </div>
 
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
         <div className="bg-white shadow-xl rounded-[10px] p-4">
           <div className="flex justify-between items-start">
             <CardHeader text={t("ipam.subnets")} />

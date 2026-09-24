@@ -47,6 +47,7 @@ import { ComplianceModule } from './compliance.module';
 import { NotificationModule } from './notification.module';
 import { IpamModule } from './ipam.module';
 import { FormsModule } from './forms.module';
+import { NetworkConnectionsModule } from './networkConnections.module';
 import { Users } from 'src/entities/users.entity';
 import { AdminSettings } from 'src/entities/adminSettings.entity';
 import { AgentTokenService } from 'src/services/agent-token.service';
@@ -81,6 +82,7 @@ import { TicketDeviceLifecycleListener } from 'src/listeners/ticketDeviceLifecyc
     NotificationModule,
     IpamModule,
     FormsModule,
+    NetworkConnectionsModule,
   ],
   controllers: [DevicesController, NetworkDeviceBackupController, DhcpServersController],
   providers: [

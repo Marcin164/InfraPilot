@@ -1893,12 +1893,7 @@
   "ipam.scan.discoveredBadge": "discovered by scan",
   "ipam.scan.hostsFound": "{{count}} host(s) found",
 
-  "topbar.scanActivity.title": "Network scans",
-  "topbar.scanActivity.none": "No recent scan activity.",
-  "topbar.scanActivity.hostsFound": "{{count}} found",
-  "topbar.scanActivity.completedToast": "Network scan ({{device}}) finished — {{count}} host(s) found",
-  "topbar.scanActivity.failedToast": "Network scan ({{device}}) failed: {{error}}",
-
   "notif.event.ip_conflict_detected": "IP conflict detected",
-  "notif.event.device_auto_discovered": "Auto-discovered device added"
+  "notif.event.device_auto_discovered": "Auto-discovered device added",
+  "notif.event.network_scan_completed": "Network scan completed"
 }

@@ -2060,12 +2060,7 @@
   "ipam.scan.discoveredBadge": "wykryte skanem",
   "ipam.scan.hostsFound": "znaleziono urządzeń: {{count}}",
 
-  "topbar.scanActivity.title": "Skany sieci",
-  "topbar.scanActivity.none": "Brak ostatniej aktywności skanowania.",
-  "topbar.scanActivity.hostsFound": "znaleziono: {{count}}",
-  "topbar.scanActivity.completedToast": "Skan sieci ({{device}}) zakończony — znaleziono {{count}} urządzeń",
-  "topbar.scanActivity.failedToast": "Skan sieci ({{device}}) nie powiódł się: {{error}}",
-
   "notif.event.ip_conflict_detected": "Wykryto konflikt IP",
-  "notif.event.device_auto_discovered": "Auto-wykryte urządzenie dodane"
+  "notif.event.device_auto_discovered": "Auto-wykryte urządzenie dodane",
+  "notif.event.network_scan_completed": "Skan sieci zakończony"
 }

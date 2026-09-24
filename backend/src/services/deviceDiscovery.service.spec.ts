@@ -5,6 +5,7 @@ import { DeviceDiscoveryService } from './deviceDiscovery.service';
 import { DeviceTagsService } from './deviceTags.service';
 import { NetworkScanSettingsService } from './networkScanSettings.service';
 import { NotificationDispatcherService } from './notificationDispatcher.service';
+import { NetworkConnectionsService } from './networkConnections.service';
 import { Devices } from 'src/entities/devices.entity';
 import {
   IpAllocation,
@@ -20,6 +21,7 @@ describe('DeviceDiscoveryService', () => {
   let deviceTags: jest.Mocked<any>;
   let networkScanSettings: jest.Mocked<any>;
   let notificationDispatcher: jest.Mocked<any>;
+  let networkConnections: jest.Mocked<any>;
   let qb: jest.Mocked<any>;
 
   beforeEach(async () => {
@@ -31,9 +33,11 @@ describe('DeviceDiscoveryService', () => {
       createQueryBuilder: jest.fn().mockReturnValue(qb),
       create: jest.fn().mockImplementation((dto: any) => dto),
       save: jest.fn(async (d: any) => d),
+      find: jest.fn().mockResolvedValue([]),
     };
     allocationsRepo = {
       update: jest.fn().mockResolvedValue({ affected: 1 }),
+      find: jest.fn().mockResolvedValue([]),
     };
     subnetsRepo = {
       findOneBy: jest.fn().mockResolvedValue(null),
@@ -48,6 +52,10 @@ describe('DeviceDiscoveryService', () => {
     };
     notificationDispatcher = {
       dispatchOpsAlert: jest.fn().mockResolvedValue(undefined),
+    };
+    networkConnections = {
+      existsBetween: jest.fn().mockResolvedValue(false),
+      create: jest.fn().mockResolvedValue({}),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -65,6 +73,7 @@ describe('DeviceDiscoveryService', () => {
           provide: NotificationDispatcherService,
           useValue: notificationDispatcher,
         },
+        { provide: NetworkConnectionsService, useValue: networkConnections },
       ],
     }).compile();
 
@@ -297,6 +306,136 @@ describe('DeviceDiscoveryService', () => {
         service.ingestScanResults(
           [{ ip: '10.0.0.5', mac: '00:1B:D4:11:22:33' }],
           null,
+        ),
+      ).resolves.not.toThrow();
+    });
+  });
+
+  // ─────────────────────────────────────────
+  // Topology auto-linking
+  // ─────────────────────────────────────────
+
+  describe('topology auto-linking', () => {
+    it('links every other resolved device to the subnet gateway device when it resolves to a known device', async () => {
+      subnetsRepo.findOneBy.mockResolvedValue({
+        id: 'subnet-1',
+        locationId: null,
+        gateway: '10.0.0.1',
+      });
+      qb.getOne
+        .mockResolvedValueOnce({ id: 'device-gw' })
+        .mockResolvedValueOnce({ id: 'device-host' });
+      allocationsRepo.find.mockResolvedValue([
+        { ip: '10.0.0.1', deviceId: 'device-gw' },
+      ]);
+
+      await service.ingestScanResults(
+        [
+          { ip: '10.0.0.1', mac: 'AA:AA:AA:AA:AA:01' },
+          { ip: '10.0.0.5', mac: 'AA:AA:AA:AA:AA:02' },
+        ],
+        'subnet-1',
+      );
+
+      expect(networkConnections.existsBetween).toHaveBeenCalledWith(
+        'device-gw',
+        'device-host',
+      );
+      expect(networkConnections.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sourceDeviceId: 'device-gw',
+          targetDeviceId: 'device-host',
+          linkType: 'other',
+        }),
+        'system:network-scan',
+      );
+    });
+
+    it('falls back to a discovered network-gear device as the hub when the gateway does not resolve to a known device', async () => {
+      subnetsRepo.findOneBy.mockResolvedValue({
+        id: 'subnet-1',
+        locationId: null,
+        gateway: null,
+      });
+      qb.getOne
+        .mockResolvedValueOnce({ id: 'device-switch' })
+        .mockResolvedValueOnce({ id: 'device-pc' });
+      devicesRepo.find.mockResolvedValue([
+        { id: 'device-switch', group: 'Network', subgroup: 'Switch' },
+      ]);
+
+      await service.ingestScanResults(
+        [
+          { ip: '10.0.0.2', mac: 'AA:AA:AA:AA:AA:03' },
+          { ip: '10.0.0.6', mac: 'AA:AA:AA:AA:AA:04' },
+        ],
+        'subnet-1',
+      );
+
+      expect(networkConnections.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sourceDeviceId: 'device-switch',
+          targetDeviceId: 'device-pc',
+        }),
+        'system:network-scan',
+      );
+    });
+
+    it('does not attempt any auto-linking when fewer than two devices were resolved', async () => {
+      qb.getOne.mockResolvedValue({ id: 'device-existing' });
+
+      await service.ingestScanResults(
+        [{ ip: '10.0.0.5', mac: '00:1B:D4:11:22:33' }],
+        null,
+      );
+
+      expect(networkConnections.existsBetween).not.toHaveBeenCalled();
+      expect(networkConnections.create).not.toHaveBeenCalled();
+    });
+
+    it('does not create a duplicate link when the two devices are already connected', async () => {
+      subnetsRepo.findOneBy.mockResolvedValue({
+        id: 'subnet-1',
+        locationId: null,
+        gateway: '10.0.0.1',
+      });
+      qb.getOne
+        .mockResolvedValueOnce({ id: 'device-gw' })
+        .mockResolvedValueOnce({ id: 'device-host' });
+      allocationsRepo.find.mockResolvedValue([
+        { ip: '10.0.0.1', deviceId: 'device-gw' },
+      ]);
+      networkConnections.existsBetween.mockResolvedValue(true);
+
+      await service.ingestScanResults(
+        [
+          { ip: '10.0.0.1', mac: 'AA:AA:AA:AA:AA:05' },
+          { ip: '10.0.0.5', mac: 'AA:AA:AA:AA:AA:06' },
+        ],
+        'subnet-1',
+      );
+
+      expect(networkConnections.create).not.toHaveBeenCalled();
+    });
+
+    it('does not let an auto-link lookup failure throw out of ingestScanResults', async () => {
+      subnetsRepo.findOneBy.mockResolvedValue({
+        id: 'subnet-1',
+        locationId: null,
+        gateway: '10.0.0.1',
+      });
+      qb.getOne
+        .mockResolvedValueOnce({ id: 'device-gw' })
+        .mockResolvedValueOnce({ id: 'device-host' });
+      allocationsRepo.find.mockRejectedValue(new Error('db down'));
+
+      await expect(
+        service.ingestScanResults(
+          [
+            { ip: '10.0.0.1', mac: 'AA:AA:AA:AA:AA:07' },
+            { ip: '10.0.0.5', mac: 'AA:AA:AA:AA:AA:08' },
+          ],
+          'subnet-1',
         ),
       ).resolves.not.toThrow();
     });

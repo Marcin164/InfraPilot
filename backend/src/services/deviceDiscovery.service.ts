@@ -1,17 +1,27 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Devices } from 'src/entities/devices.entity';
 import {
   IpAllocation,
   IpAllocationSource,
 } from 'src/entities/ipAllocation.entity';
 import { Subnet } from 'src/entities/subnet.entity';
+import { NetworkLinkType } from 'src/entities/networkConnection.entity';
 import { DeviceTagsService } from 'src/services/deviceTags.service';
 import { NetworkScanSettingsService } from 'src/services/networkScanSettings.service';
 import { NotificationDispatcherService } from 'src/services/notificationDispatcher.service';
+import { NetworkConnectionsService } from 'src/services/networkConnections.service';
 import { uuidv4 } from 'src/helpers/uuidv4';
 import { classifyDiscoveredHost } from 'src/helpers/classifyDevice';
+
+const AUTO_LINK_NOTE =
+  'Auto-linked by network scan (same subnet, via gateway/network-gear heuristic) -- inferred from discovery, not a confirmed physical connection. Edit or delete as needed.';
+
+/** Hub-candidate preference when no subnet gateway resolves to a known
+ * device -- routers/switches are the most plausible anchor point for
+ * everything else found on the same subnet. */
+const HUB_SUBGROUP_PRIORITY = ['Router', 'Switch', 'Firewall', 'AP'];
 
 const AUTO_DISCOVERED_TAG = {
   key: 'auto-discovered',
@@ -43,6 +53,7 @@ export class DeviceDiscoveryService {
     private readonly deviceTags: DeviceTagsService,
     private readonly networkScanSettings: NetworkScanSettingsService,
     private readonly notificationDispatcher: NotificationDispatcherService,
+    private readonly networkConnections: NetworkConnectionsService,
   ) {}
 
   /**
@@ -61,15 +72,17 @@ export class DeviceDiscoveryService {
     hosts: DiscoveredHost[],
     subnetId: string | null,
   ): Promise<void> {
-    const locationId = subnetId
-      ? ((await this.subnets.findOneBy({ id: subnetId }))?.locationId ?? null)
+    const subnet = subnetId
+      ? await this.subnets.findOneBy({ id: subnetId })
       : null;
+    const locationId = subnet?.locationId ?? null;
     const { autoCreateDevices } = await this.networkScanSettings.getConfig();
     const autoDiscoveredTagId = autoCreateDevices
       ? await this.findOrCreateAutoDiscoveredTag()
       : null;
 
     const created: Array<{ id: string; assetName: string }> = [];
+    const resolvedDeviceIds = new Set<string>();
 
     for (const host of hosts) {
       if (!host.mac) continue; // nothing to key an identity on
@@ -87,6 +100,7 @@ export class DeviceDiscoveryService {
         }
         if (!deviceId) continue; // nothing changed for this host
 
+        resolvedDeviceIds.add(deviceId);
         await this.allocations.update(
           { ip: host.ip, source: IpAllocationSource.SCAN },
           { deviceId },
@@ -101,6 +115,90 @@ export class DeviceDiscoveryService {
     if (created.length > 0) {
       await this.notifyNewDevices(created);
     }
+
+    if (resolvedDeviceIds.size > 1) {
+      await this.autoLinkDiscoveredDevices(
+        subnetId,
+        subnet?.gateway ?? null,
+        Array.from(resolvedDeviceIds),
+      );
+    }
+  }
+
+  /**
+   * Best-effort topology wiring: every device this scan resolved on a
+   * subnet gets connected to a single "hub" (the subnet's gateway device
+   * if known, otherwise the first router/switch/firewall/AP found in this
+   * same batch) so scanned equipment shows up on the Topology page without
+   * an admin having to cable it in by hand. This is a guess from ARP/ping
+   * data only -- there's no LLDP/SNMP telling us the *real* physical
+   * wiring -- so links are tagged distinctly (linkType "other" + a note,
+   * createdBy "system:network-scan") and are safe to edit/delete. Skips
+   * silently if no hub can be identified (nothing reliable to anchor to).
+   */
+  private async autoLinkDiscoveredDevices(
+    subnetId: string | null,
+    gateway: string | null,
+    deviceIds: string[],
+  ): Promise<void> {
+    try {
+      const hubId = await this.resolveHubDevice(subnetId, gateway, deviceIds);
+      if (!hubId) return;
+
+      for (const deviceId of deviceIds) {
+        if (deviceId === hubId) continue;
+        try {
+          if (await this.networkConnections.existsBetween(hubId, deviceId)) {
+            continue; // already documented, manually or from a prior scan
+          }
+          await this.networkConnections.create(
+            {
+              sourceDeviceId: hubId,
+              targetDeviceId: deviceId,
+              linkType: NetworkLinkType.OTHER,
+              notes: AUTO_LINK_NOTE,
+            },
+            'system:network-scan',
+          );
+        } catch (err) {
+          if (err instanceof BadRequestException) continue; // lost a race, already linked
+          this.logger.warn(
+            `Failed to auto-link device ${deviceId} to hub ${hubId}: ${(err as Error).message}`,
+          );
+        }
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Failed to auto-link scanned devices for subnet ${subnetId ?? 'unknown'}: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  private async resolveHubDevice(
+    subnetId: string | null,
+    gateway: string | null,
+    deviceIds: string[],
+  ): Promise<string | null> {
+    if (subnetId && gateway) {
+      const gatewayAllocations = await this.allocations.find({
+        where: { subnetId, ip: gateway },
+      });
+      const gatewayDeviceId = gatewayAllocations.find((a) => a.deviceId)
+        ?.deviceId;
+      if (gatewayDeviceId) return gatewayDeviceId;
+    }
+
+    const networkGear = await this.devices.find({
+      where: { id: In(deviceIds), group: 'Network' },
+    });
+    if (networkGear.length === 0) return null;
+
+    const rank = (subgroup: string | null) => {
+      const idx = HUB_SUBGROUP_PRIORITY.indexOf(subgroup ?? '');
+      return idx === -1 ? HUB_SUBGROUP_PRIORITY.length : idx;
+    };
+    networkGear.sort((a, b) => rank(a.subgroup) - rank(b.subgroup));
+    return networkGear[0].id;
   }
 
   /** One notification per scan, not per device -- a scan that finds a

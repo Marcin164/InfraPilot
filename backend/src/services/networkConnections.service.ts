@@ -58,6 +58,20 @@ export class NetworkConnectionsService {
       .getMany();
   }
 
+  /** Regardless of direction or port -- used to avoid laying a redundant
+   * edge over one that already documents these two devices as connected
+   * (manual or auto-linked). */
+  async existsBetween(deviceIdA: string, deviceIdB: string): Promise<boolean> {
+    const count = await this.repo
+      .createQueryBuilder('c')
+      .where(
+        '(c.sourceDeviceId = :a AND c.targetDeviceId = :b) OR (c.sourceDeviceId = :b AND c.targetDeviceId = :a)',
+        { a: deviceIdA, b: deviceIdB },
+      )
+      .getCount();
+    return count > 0;
+  }
+
   async getTopology(): Promise<{ nodes: Partial<Devices>[]; edges: NetworkConnection[] }> {
     const edges = await this.repo.find();
     const deviceIds = new Set<string>();
