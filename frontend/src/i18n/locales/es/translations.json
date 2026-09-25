@@ -71,6 +71,7 @@
 
   "dashboard.add": "Añadir panel",
   "dashboard.name": "Nombre del panel",
+  "dashboard.rename": "Renombrar panel",
 
   "dashboard.widget.agentScoreboard": "Mi tablero de tickets",
   "dashboard.widget.agentScoreboard.subtitle": "Métricas del agente en vivo",

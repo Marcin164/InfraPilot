@@ -14,6 +14,8 @@ import {
   DeviceTag,
 } from "../../../../Services/deviceTags";
 import { enqueueBulkTasks, AgentTaskType } from "../../../../Services/agentTasks";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const LIFECYCLES = [
   "active",
@@ -42,6 +44,10 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [lifecycle, setLifecycle] = useState("active");
   const [taskType, setTaskType] = useState<AgentTaskType>("scan_now");
+  const permissionsQuery = usePermissions();
+  const canTag = hasPermission("devices.tags.manage", permissionsQuery.data);
+  const canLifecycle = hasPermission("devices.lifecycle.edit", permissionsQuery.data);
+  const canTask = hasPermission("devices.taskSchedule.manage", permissionsQuery.data);
 
   const tagsQuery = useQuery({
     queryKey: ["device-tags"],
@@ -93,6 +99,7 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
   });
 
   if (selectedIds.length === 0) return null;
+  if (!canTag && !canLifecycle && !canTask) return null;
 
   return (
     <div className="sticky top-0 z-[60] bg-white text-[#3C3C3C] rounded-[10px] shadow-lg border border-[#E0E0E0] px-4 py-2 mb-3 flex flex-wrap items-center gap-3">
@@ -108,23 +115,29 @@ const MassActionBar = ({ selectedIds, onCleared }: Props) => {
       </button>
 
       <div className="flex gap-2 ml-auto items-center">
-        <ButtonPrimary
-          icon={faTag}
-          text={t("device.massAction.tags")}
-          onClick={() => setMode(mode === "tag" ? null : "tag")}
-        />
-        <ButtonPrimary
-          icon={faBoxArchive}
-          text={t("device.massAction.lifecycle")}
-          onClick={() =>
-            setMode(mode === "lifecycle" ? null : "lifecycle")
-          }
-        />
-        <ButtonPrimary
-          icon={faPlay}
-          text={t("device.massAction.runTask")}
-          onClick={() => setMode(mode === "task" ? null : "task")}
-        />
+        {canTag && (
+          <ButtonPrimary
+            icon={faTag}
+            text={t("device.massAction.tags")}
+            onClick={() => setMode(mode === "tag" ? null : "tag")}
+          />
+        )}
+        {canLifecycle && (
+          <ButtonPrimary
+            icon={faBoxArchive}
+            text={t("device.massAction.lifecycle")}
+            onClick={() =>
+              setMode(mode === "lifecycle" ? null : "lifecycle")
+            }
+          />
+        )}
+        {canTask && (
+          <ButtonPrimary
+            icon={faPlay}
+            text={t("device.massAction.runTask")}
+            onClick={() => setMode(mode === "task" ? null : "task")}
+          />
+        )}
       </div>
 
       {mode === "tag" && (

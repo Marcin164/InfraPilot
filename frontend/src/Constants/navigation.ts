@@ -103,16 +103,19 @@ export const navbarItems: NavbarItem[] = [
     to: "/admin/users",
     label: "nav.users",
     icon: faUsers,
+    requires: "users.view",
   },
   {
     to: "/admin/devices",
     label: "nav.devices",
     icon: faComputer,
+    requires: "devices.view",
   },
   {
     to: "/admin/map",
     label: "nav.map",
     icon: faGlobe,
+    requires: "devices.view",
   },
   {
     to: "/admin/shifts",
@@ -123,16 +126,19 @@ export const navbarItems: NavbarItem[] = [
     to: "/admin/topology",
     label: "nav.topology",
     icon: faNetworkWired,
+    requires: "devices.topology.view",
   },
   {
     to: "/admin/ipam",
     label: "nav.ipam",
     icon: faSitemap,
+    requires: "ipam.view",
   },
   {
     to: "/admin/dhcp-servers",
     label: "nav.dhcpServers",
     icon: faServer,
+    requires: "dhcp.view",
   },
   {
     to: "/admin/licenses",
@@ -150,22 +156,41 @@ export const navbarItems: NavbarItem[] = [
     to: "/admin/helpdesk",
     label: "nav.helpdesk",
     icon: faRobot,
+    requires: "helpdesk.tickets.access",
   },
   {
     to: "/admin/knowledge",
     label: "nav.knowledge",
     icon: faBookAtlas,
+    requires: ["knowledge.view", "knowledge.manage"],
   },
   {
     to: "/admin/reports/users",
     label: "nav.reports",
     icon: faChartBar,
+    // Union of every category's own requirement below (reportsNavbarItems)
+    // -- shows if the user could see at least one report tab.
+    requires: [
+      "users.view",
+      "devices.view",
+      "helpdesk.tickets.access",
+      "devices.complianceRules.manage",
+      "audit.fullAccess",
+      "licenses.view",
+      "procurement.view",
+      "ipam.view",
+      "dhcp.view",
+      "devices.topology.view",
+      "knowledge.view",
+      "knowledge.manage",
+    ],
   },
   {
     to: "/admin/history",
     label: "nav.history",
     icon: faHistory,
-    requires: "helpdesk.approver",
+    // Matches history.controller.ts's feed/feed-export gate exactly.
+    requires: ["audit.fullAccess", "helpdesk.approver", "dpo.fullAccess"],
   },
   {
     to: "/admin/audit",
@@ -177,7 +202,10 @@ export const navbarItems: NavbarItem[] = [
     to: "/admin/privacy",
     label: "nav.privacy",
     icon: faUser,
-    requires: "dpo.fullAccess",
+    // dpo.viewUserAsDpo now covers the read-only view (see
+    // privacy.controller.ts); export/erase inside the page still require
+    // dpo.fullAccess specifically.
+    requires: ["dpo.viewUserAsDpo", "dpo.fullAccess"],
   },
   {
     to: "/admin/settings/personal",
@@ -223,27 +251,33 @@ export const userPortalExtraItems: NavbarItem[] = [
 //                            meaningful for an endpoint laptop
 // See DeviceNavbar.tsx for the filtering and Details.tsx for the
 // scope-aware default-tab redirect.
+// `requires` mirrors each tab's actual backend gate (see devices.controller.ts
+// / networkConnections.controller.ts / networkDeviceBackup.controller.ts /
+// compliance.controller.ts / cve.controller.ts / maintenance.controller.ts) --
+// most tabs just need devices.view (the same permission that gates the
+// device list/detail this navbar hangs off of); backup and connections have
+// their own dedicated permissions since they're not plain device fields.
 export const deviceNavbarItems = [
-  { to: "overview", label: "device.tab.overview", icon: faCircleInfo, scope: "other" as const },
-  { to: "system", label: "device.tab.system", icon: faAddressBook, scope: "computers" as const },
-  { to: "hardware", label: "device.tab.hardware", icon: faHardDrive, scope: "computers" as const },
-  { to: "software", label: "device.tab.software", icon: faCode, scope: "computers" as const },
-  { to: "network", label: "device.tab.network", icon: faNetworkWired, scope: "computers" as const },
-  { to: "security", label: "device.tab.security", icon: faShield, scope: "computers" as const },
-  { to: "events", label: "device.tab.events", icon: faCalendar, scope: "computers" as const },
-  { to: "users", label: "device.tab.users", icon: faUsers, scope: "computers" as const },
-  { to: "peripherals", label: "device.tab.peripherals", icon: faComputerMouse, scope: "computers" as const },
-  { to: "history", label: "device.tab.history", icon: faUserTag, scope: "all" as const },
-  { to: "connections", label: "device.tab.connections", icon: faNetworkWired, scope: "computersOrNetwork" as const },
-  { to: "backup", label: "device.tab.backup", icon: faDatabase, scope: "network" as const },
-  { to: "compliance", label: "device.tab.compliance", icon: faShieldHalved, scope: "computers" as const },
-  { to: "cves", label: "device.tab.cves", icon: faBug, scope: "computers" as const },
-  { to: "location", label: "device.tab.location", icon: faLocationDot, scope: "all" as const },
-  { to: "lifecycle", label: "device.tab.lifecycle", icon: faBoxArchive, scope: "all" as const },
-  { to: "tasks", label: "device.tab.tasks", icon: faPlay, scope: "computers" as const },
-  { to: "scans", label: "device.tab.scans", icon: faClockRotateLeft, scope: "computers" as const },
-  { to: "label", label: "device.tab.label", icon: faQrcode, scope: "all" as const },
-  { to: "maintenance", label: "device.tab.maintenance", icon: faWrench, scope: "all" as const },
+  { to: "overview", label: "device.tab.overview", icon: faCircleInfo, scope: "other" as const, requires: "devices.view" },
+  { to: "system", label: "device.tab.system", icon: faAddressBook, scope: "computers" as const, requires: "devices.view" },
+  { to: "hardware", label: "device.tab.hardware", icon: faHardDrive, scope: "computers" as const, requires: "devices.view" },
+  { to: "software", label: "device.tab.software", icon: faCode, scope: "computers" as const, requires: "devices.view" },
+  { to: "network", label: "device.tab.network", icon: faNetworkWired, scope: "computers" as const, requires: "devices.view" },
+  { to: "security", label: "device.tab.security", icon: faShield, scope: "computers" as const, requires: "devices.view" },
+  { to: "events", label: "device.tab.events", icon: faCalendar, scope: "computers" as const, requires: "devices.view" },
+  { to: "users", label: "device.tab.users", icon: faUsers, scope: "computers" as const, requires: "devices.view" },
+  { to: "peripherals", label: "device.tab.peripherals", icon: faComputerMouse, scope: "computers" as const, requires: "devices.view" },
+  { to: "history", label: "device.tab.history", icon: faUserTag, scope: "all" as const, requires: "devices.view" },
+  { to: "connections", label: "device.tab.connections", icon: faNetworkWired, scope: "computersOrNetwork" as const, requires: "devices.topology.view" },
+  { to: "backup", label: "device.tab.backup", icon: faDatabase, scope: "network" as const, requires: "devices.networkBackup.manage" },
+  { to: "compliance", label: "device.tab.compliance", icon: faShieldHalved, scope: "computers" as const, requires: "devices.view" },
+  { to: "cves", label: "device.tab.cves", icon: faBug, scope: "computers" as const, requires: "devices.view" },
+  { to: "location", label: "device.tab.location", icon: faLocationDot, scope: "all" as const, requires: "devices.view" },
+  { to: "lifecycle", label: "device.tab.lifecycle", icon: faBoxArchive, scope: "all" as const, requires: "devices.view" },
+  { to: "tasks", label: "device.tab.tasks", icon: faPlay, scope: "computers" as const, requires: ["devices.taskSchedule.manage", "devices.view"] },
+  { to: "scans", label: "device.tab.scans", icon: faClockRotateLeft, scope: "computers" as const, requires: "devices.view" },
+  { to: "label", label: "device.tab.label", icon: faQrcode, scope: "all" as const, requires: "devices.view" },
+  { to: "maintenance", label: "device.tab.maintenance", icon: faWrench, scope: "all" as const, requires: ["devices.maintenance.manage", "devices.view"] },
 ];
 
 export const settingsNavbarItems = [
@@ -251,10 +285,10 @@ export const settingsNavbarItems = [
   { to: "active-directory", label: "settings.tab.activeDirectory", icon: faNetworkWired, requires: "admin.activeDirectory.config" },
   { to: "m365", label: "settings.tab.m365", icon: faCloud, requires: "admin.o365.config" },
   { to: "licenses", label: "settings.tab.licenseSync", icon: faKey, requires: "licenses.integrations.manage" },
-  { to: "sla", label: "settings.tab.sla", icon: faCalendar },
-  { to: "workflows", label: "settings.tab.workflows", icon: faBolt },
-  { to: "categories", label: "settings.tab.categories", icon: faLayerGroup },
-  { to: "notifications", label: "settings.tab.notifications", icon: faBell },
+  { to: "sla", label: "settings.tab.sla", icon: faCalendar, requires: "helpdesk.sla.config" },
+  { to: "workflows", label: "settings.tab.workflows", icon: faBolt, requires: ["helpdesk.workflow.config", "audit.fullAccess"] },
+  { to: "categories", label: "settings.tab.categories", icon: faLayerGroup, requires: ["helpdesk.workflow.config", "audit.fullAccess"] },
+  { to: "notifications", label: "settings.tab.notifications", icon: faBell, requires: STAFF_PERMISSIONS },
   { to: "admin", label: "settings.tab.admin", icon: faShield, requires: "admin.roleAssignment.manage" },
   { to: "retention", label: "settings.tab.retention", icon: faBoxArchive, requires: "dpo.retentionPolicy.config" },
   { to: "tags", label: "settings.tab.tags", icon: faTag, requires: "devices.tags.manage" },
@@ -268,14 +302,26 @@ export const settingsNavbarItems = [
 
 import type { ReportCategory } from "../Services/reports";
 
+// `requires` matches each tab's underlying category permission(s) (see
+// reportPageCategories below for which categories feed each tab).
 export const reportsNavbarItems = [
-  { to: "users", label: "reports.tab.users", icon: faUsers },
-  { to: "devices", label: "reports.tab.devices", icon: faComputerMouse },
-  { to: "tickets", label: "reports.tab.tickets", icon: faTicket },
-  { to: "security", label: "reports.tab.security", icon: faShield },
-  { to: "licenses", label: "reports.tab.licenses", icon: faKey },
-  { to: "network", label: "reports.tab.network", icon: faNetworkWired },
-  { to: "knowledge", label: "reports.tab.knowledge", icon: faBookAtlas },
+  { to: "users", label: "reports.tab.users", icon: faUsers, requires: "users.view" },
+  { to: "devices", label: "reports.tab.devices", icon: faComputerMouse, requires: "devices.view" },
+  { to: "tickets", label: "reports.tab.tickets", icon: faTicket, requires: "helpdesk.tickets.access" },
+  {
+    to: "security",
+    label: "reports.tab.security",
+    icon: faShield,
+    requires: ["devices.complianceRules.manage", "audit.fullAccess", "dpo.retentionPolicy.config"],
+  },
+  { to: "licenses", label: "reports.tab.licenses", icon: faKey, requires: ["licenses.view", "procurement.view"] },
+  {
+    to: "network",
+    label: "reports.tab.network",
+    icon: faNetworkWired,
+    requires: ["ipam.view", "dhcp.view", "devices.topology.view", "devices.view"],
+  },
+  { to: "knowledge", label: "reports.tab.knowledge", icon: faBookAtlas, requires: ["knowledge.view", "knowledge.manage"] },
 ];
 
 // Single source of truth mapping each Reports page route to the report

@@ -11,6 +11,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router";
+import { useAuthInfo } from "@propelauth/react";
 import { toast } from "react-toastify";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
@@ -22,12 +23,22 @@ import {
   getUserForms,
   type FormItem,
 } from "../../../../Services/forms";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const UserForms = () => {
   const { t } = useTranslation();
   const { id } = useParams();
   const queryClient = useQueryClient();
   const [isAddFormModalOpen, setIsAddFormModalOpen] = useState(false);
+  const permissionsQuery = usePermissions();
+  const authInfo: any = useAuthInfo();
+  // Mirrors the backend's assertSelfOrStaff: the profile's own owner can
+  // always manage their own forms, staff need users.equipment.manage for
+  // anyone else's.
+  const isSelf = authInfo?.user?.metadata?.id === id;
+  const canManage =
+    isSelf || hasPermission("users.equipment.manage", permissionsQuery.data);
 
   const { data: forms = [] } = useQuery<FormItem[]>({
     queryKey: ["forms", id],
@@ -72,12 +83,14 @@ const UserForms = () => {
     <div className="bg-white shadow-xl rounded-[10px] p-4">
       <div className="flex items-center justify-between gap-2">
         <CardHeader text={t("users.forms")} icon={faFile} />
-        <ButtonPrimary
-          icon={faPlus}
-          text={t("users.actions.addForm")}
-          onClick={() => setIsAddFormModalOpen(true)}
-          className="flex-shrink-0 text-[13px] px-3 py-1"
-        />
+        {canManage && (
+          <ButtonPrimary
+            icon={faPlus}
+            text={t("users.actions.addForm")}
+            onClick={() => setIsAddFormModalOpen(true)}
+            className="flex-shrink-0 text-[13px] px-3 py-1"
+          />
+        )}
       </div>
       {forms.length === 0 ? (
         <div className="mt-3 text-[13px] text-[#9a9a9a]">{t("users.forms.empty")}</div>
@@ -102,13 +115,15 @@ const UserForms = () => {
                 >
                   <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
                 </button>
-                <button
-                  onClick={() => deleteMutation.mutate(form.id)}
-                  className="text-[#F3606E] hover:text-[#d94055] text-[13px] opacity-0 group-hover:opacity-100 transition-opacity"
-                  title={t("users.forms.delete")}
-                >
-                  <FontAwesomeIcon icon={faTrash} />
-                </button>
+                {canManage && (
+                  <button
+                    onClick={() => deleteMutation.mutate(form.id)}
+                    className="text-[#F3606E] hover:text-[#d94055] text-[13px] opacity-0 group-hover:opacity-100 transition-opacity"
+                    title={t("users.forms.delete")}
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+                )}
               </div>
             </div>
           ))}

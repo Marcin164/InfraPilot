@@ -22,6 +22,8 @@ import {
   deleteTicketCategory,
   listWorkflows,
 } from "../../../../Services/ticketWorkflows";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const CUSTOM_FIELD_TYPES: CustomFieldType[] = [
   "text",
@@ -202,6 +204,11 @@ const CategoryModal = ({
 const Categories = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const permissionsQuery = usePermissions();
+  const canManage = hasPermission(
+    ["helpdesk.workflow.config", "audit.fullAccess"],
+    permissionsQuery.data,
+  );
   const [modalTarget, setModalTarget] = useState<CategoryModalTarget>(null);
 
   const categoriesQuery = useQuery({ queryKey: ["ticket-categories"], queryFn: listTicketCategories });
@@ -221,6 +228,8 @@ const Categories = () => {
 
   const categories = categoriesQuery.data ?? [];
   const workflows = workflowsQuery.data ?? [];
+
+  if (!canManage) return null;
 
   return (
     <div className="space-y-4 m-4">

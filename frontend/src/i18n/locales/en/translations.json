@@ -73,6 +73,7 @@
 
   "dashboard.add": "Add Dashboard",
   "dashboard.name": "Dashboard name",
+  "dashboard.rename": "Rename Dashboard",
 
   "dashboard.widget.agentScoreboard": "My ticket scoreboard",
   "dashboard.widget.agentScoreboard.subtitle": "Live agent metrics",

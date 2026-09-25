@@ -9,6 +9,8 @@ import { updateTicket } from "../../Services/tickets";
 import { useMutation } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
+import { usePermissions } from "../../Hooks/usePermissions";
+import { hasPermission } from "../../Constants/navigation";
 
 import type { ClosureCode, UpdateTicketData } from "../../Types";
 
@@ -20,6 +22,8 @@ type Props = {
 const ClosureNotesForm = ({ closureCode, closureNotes }: Props) => {
   const { t } = useTranslation();
   const params = useParams();
+  const permissionsQuery = usePermissions();
+  const canEdit = hasPermission("helpdesk.tickets.access", permissionsQuery.data);
   const trClosure = closureCodesOptions.map((o) => ({ ...o, label: t(o.label) }));
   const mutation = useMutation({
     mutationFn: async (values: UpdateTicketData) => {
@@ -44,6 +48,9 @@ const ClosureNotesForm = ({ closureCode, closureNotes }: Props) => {
   const handleSelect = (opt: any, field: any) => {
     field.handleChange(opt.value);
   };
+
+  if (!canEdit) return null;
+
   return (
     <form
       onSubmit={(e) => {

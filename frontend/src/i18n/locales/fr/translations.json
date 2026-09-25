@@ -71,6 +71,7 @@
 
   "dashboard.add": "Ajouter un tableau de bord",
   "dashboard.name": "Nom du tableau de bord",
+  "dashboard.rename": "Renommer le tableau de bord",
 
   "dashboard.widget.agentScoreboard": "Mon tableau de bord des tickets",
   "dashboard.widget.agentScoreboard.subtitle": "Indicateurs en temps réel de l'agent",

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -17,6 +17,8 @@ import {
 import PageMotion from "../../../Components/PageMotion/PageMotion";
 import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
 import { bulkImportDevices, bulkImportUsers } from "../../../Services/bulkImport";
+import { usePermissions } from "../../../Hooks/usePermissions";
+import { hasPermission } from "../../../Constants/navigation";
 
 type EntityType = "devices" | "users";
 
@@ -64,12 +66,27 @@ function downloadTemplate(entity: EntityType) {
 const Import = () => {
   const { t } = useTranslation();
   const fileRef = useRef<HTMLInputElement>(null);
+  const permissionsQuery = usePermissions();
+  const canImportDevices = hasPermission("devices.add", permissionsQuery.data);
+  const canImportUsers = hasPermission("users.add", permissionsQuery.data);
+  const importableEntities = (["devices", "users"] as EntityType[]).filter(
+    (e) => (e === "devices" ? canImportDevices : canImportUsers),
+  );
   const [entity, setEntity] = useState<EntityType>("devices");
   const [rows, setRows] = useState<Record<string, string>[]>([]);
   const [fileName, setFileName] = useState("");
   const [result, setResult] = useState<{ created: number; skipped: number; errors: string[] } | null>(null);
 
   const columns = entity === "devices" ? DEVICE_COLUMNS : USER_COLUMNS;
+
+  // If the current entity isn't importable for this user (e.g. defaulted
+  // to "devices" but they only hold users.add), snap to the first one they
+  // actually can import.
+  useEffect(() => {
+    if (!importableEntities.includes(entity) && importableEntities.length > 0) {
+      setEntity(importableEntities[0]);
+    }
+  }, [importableEntities, entity]);
 
   const handleFile = async (file: File) => {
     try {
@@ -98,6 +115,8 @@ const Import = () => {
       toast.error(err?.response?.data?.message ?? t("import.failed")),
   });
 
+  if (importableEntities.length === 0) return null;
+
   return (
     <PageMotion>
       <div className="w-full p-4 max-w-4xl">
@@ -108,7 +127,7 @@ const Import = () => {
             {t("import.title")}
           </div>
           <div className="flex gap-3 flex-wrap">
-            {(["devices", "users"] as EntityType[]).map((e) => (
+            {importableEntities.map((e) => (
               <button
                 key={e}
                 onClick={() => { setEntity(e); setRows([]); setResult(null); setFileName(""); }}

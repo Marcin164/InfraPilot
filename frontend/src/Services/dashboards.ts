@@ -22,3 +22,8 @@ export const updateDashboardCards = async (
   const { data } = await api.patch(`/dashboards/${id}`, { cards });
   return data;
 };
+
+export const renameDashboard = async (id: string, name: string): Promise<Dashboard> => {
+  const { data } = await api.patch(`/dashboards/${id}/name`, { name });
+  return data;
+};

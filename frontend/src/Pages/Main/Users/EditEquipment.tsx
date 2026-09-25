@@ -3,12 +3,15 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getDevicesByOwner } from "../../../Services/devices";
 import { useParams } from "react-router";
+import { useAuthInfo } from "@propelauth/react";
 import EquipmentItem from "../../../Components/Lists/EquipmentItem";
 import EditEquipmentForm from "../../../Components/Forms/EditEquipmentForm";
 import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
 import AssignDeviceForm from "../../../Components/Forms/AssignDeviceForm";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
+import { usePermissions } from "../../../Hooks/usePermissions";
+import { hasPermission } from "../../../Constants/navigation";
 
 type Props = {};
 
@@ -17,11 +20,19 @@ const EditEquipment = (props: Props) => {
   const params: any = useParams();
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
   const [addDeviceMode, setAddDeviceMode] = useState<any>(false);
+  const permissionsQuery = usePermissions();
+  const authInfo: any = useAuthInfo();
+  // Mirrors the backend's assertSelfOrStaff for this exact feature.
+  const isSelf = authInfo?.user?.metadata?.id === params.id;
+  const canManage =
+    isSelf || hasPermission("users.equipment.manage", permissionsQuery.data);
   const userDevices = useQuery({
     queryKey: ["userDevice"],
     queryFn: () => getDevicesByOwner(params.id),
+    enabled: canManage,
   });
 
+  if (!canManage) return null;
   if (!userDevices.data) return null;
 
   const mainDevices = userDevices.data.filter(

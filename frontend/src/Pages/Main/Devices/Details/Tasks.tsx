@@ -18,6 +18,8 @@ import {
   enqueueDeviceTask,
   cancelDeviceTask,
 } from "../../../../Services/agentTasks";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 // Keep in sync with what windowsApp/agent/main.py's process_tasks()
 // actually implements. There used to be a "custom" option here, but the
@@ -57,6 +59,8 @@ const Tasks = () => {
 
   const [type, setType] = useState<AgentTaskType>("scan_now");
   const [cidr, setCidr] = useState("");
+  const permissionsQuery = usePermissions();
+  const canManageTasks = hasPermission("devices.taskSchedule.manage", permissionsQuery.data);
 
   const TASK_TYPES = TASK_TYPE_VALUES.map((value) => ({
     value,
@@ -104,45 +108,47 @@ const Tasks = () => {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white shadow-xl rounded-[10px] p-4">
-        <CardHeader text={tr("device.section.tasksEnqueue")} icon={faPlay} />
-        <p className="text-[12px] text-[#7a7a7a] mt-2">
-          {tr("device.tasks.help")}
-        </p>
+      {canManageTasks && (
+        <div className="bg-white shadow-xl rounded-[10px] p-4">
+          <CardHeader text={tr("device.section.tasksEnqueue")} icon={faPlay} />
+          <p className="text-[12px] text-[#7a7a7a] mt-2">
+            {tr("device.tasks.help")}
+          </p>
 
-        <div className="mt-3 max-w-[280px]">
-          <SelectSecondary
-            label={tr("device.tasks.typeLabel")}
-            options={TASK_TYPES}
-            value={TASK_TYPES.find((t) => t.value === type)}
-            onSelect={(opt: any) =>
-              opt?.value && setType(opt.value as AgentTaskType)
-            }
-          />
-        </div>
-        {type === "network_scan" && (
           <div className="mt-3 max-w-[280px]">
-            <Input
-              label={tr("device.tasks.cidrLabel")}
-              placeholder="192.168.1.0/24"
-              value={cidr}
-              handleChange={(v: string) => setCidr(v)}
+            <SelectSecondary
+              label={tr("device.tasks.typeLabel")}
+              options={TASK_TYPES}
+              value={TASK_TYPES.find((t) => t.value === type)}
+              onSelect={(opt: any) =>
+                opt?.value && setType(opt.value as AgentTaskType)
+              }
             />
           </div>
-        )}
-        <div className="mt-3">
-          <ButtonPrimary
-            icon={faPlay}
-            text={enqueueMutation.isPending ? tr("device.tasks.queuing") : tr("device.tasks.queueBtn")}
-            onClick={() => enqueueMutation.mutate()}
-            disabled={
-              enqueueMutation.isPending ||
-              !deviceId ||
-              (type === "network_scan" && !cidr.trim())
-            }
-          />
+          {type === "network_scan" && (
+            <div className="mt-3 max-w-[280px]">
+              <Input
+                label={tr("device.tasks.cidrLabel")}
+                placeholder="192.168.1.0/24"
+                value={cidr}
+                handleChange={(v: string) => setCidr(v)}
+              />
+            </div>
+          )}
+          <div className="mt-3">
+            <ButtonPrimary
+              icon={faPlay}
+              text={enqueueMutation.isPending ? tr("device.tasks.queuing") : tr("device.tasks.queueBtn")}
+              onClick={() => enqueueMutation.mutate()}
+              disabled={
+                enqueueMutation.isPending ||
+                !deviceId ||
+                (type === "network_scan" && !cidr.trim())
+              }
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="bg-white shadow-xl rounded-[10px] p-4">
         <div className="flex items-center justify-between">
@@ -161,7 +167,9 @@ const Tasks = () => {
               <TaskRow
                 key={t.id}
                 task={t}
-                onCancel={() => cancelMutation.mutate(t.id)}
+                onCancel={
+                  canManageTasks ? () => cancelMutation.mutate(t.id) : null
+                }
               />
             ))}
           </div>

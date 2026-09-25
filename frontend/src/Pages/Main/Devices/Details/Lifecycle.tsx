@@ -19,6 +19,8 @@ import {
   DeviceLifecyclePatch,
   updateDeviceLifecycle,
 } from "../../../../Services/devices";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const LIFECYCLE_STATES = [
   { value: "procurement", label: "Procurement", color: "#8A8A8A" },
@@ -106,6 +108,8 @@ const Lifecycle = () => {
     }
   };
 
+  const permissionsQuery = usePermissions();
+  const canEdit = hasPermission("devices.lifecycle.edit", permissionsQuery.data);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<DeviceLifecyclePatch>({});
 
@@ -167,11 +171,13 @@ const Lifecycle = () => {
       <div className="flex justify-between items-start">
         <CardHeader text={t("device.lifecycle.title")} icon={faBoxArchive} />
         {!editing ? (
-          <ButtonPrimary
-            icon={faPen}
-            text={t("common.edit")}
-            onClick={() => setEditing(true)}
-          />
+          canEdit && (
+            <ButtonPrimary
+              icon={faPen}
+              text={t("common.edit")}
+              onClick={() => setEditing(true)}
+            />
+          )
         ) : (
           <div className="flex gap-2">
             <ButtonPrimary

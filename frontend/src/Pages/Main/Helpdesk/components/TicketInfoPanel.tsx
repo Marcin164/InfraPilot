@@ -6,6 +6,8 @@ import { faClock, faDesktop, faUser, faXmark } from "@fortawesome/free-solid-svg
 import { Link } from "react-router";
 import moment from "moment";
 import UpdateTicketForm from "../../../../Components/Forms/UpdateTicketForm";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 interface TicketInfoPanelProps {
   ticket: {
@@ -27,6 +29,8 @@ interface TicketInfoPanelProps {
 
 const TicketInfoPanel = ({ ticket, isOpen = false, onClose, users }: TicketInfoPanelProps) => {
   const { t } = useTranslation();
+  const permissionsQuery = usePermissions();
+  const canEditTicket = hasPermission("helpdesk.tickets.access", permissionsQuery.data);
   return (
     <div className={`fixed top-0 left-0 h-screen z-40 w-[85vw] max-w-[420px] bg-white overflow-y-auto p-4 transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"} lg:static lg:translate-x-0 lg:shadow-xl lg:rounded-[10px] lg:w-[340px] xl:w-[400px] lg:flex-shrink-0 lg:ml-4 lg:my-4 lg:h-[calc(100vh-90px)]`}>
       <button
@@ -98,7 +102,7 @@ const TicketInfoPanel = ({ ticket, isOpen = false, onClose, users }: TicketInfoP
         </span>
       </div>
 
-      <UpdateTicketForm {...ticket} users={users}/>
+      {canEditTicket && <UpdateTicketForm {...ticket} users={users}/>}
     </div>
   );
 };

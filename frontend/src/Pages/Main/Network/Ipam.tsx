@@ -28,6 +28,8 @@ import {
   getSubnets,
   updateSubnet,
 } from "../../../Services/ipam";
+import { usePermissions } from "../../../Hooks/usePermissions";
+import { hasPermission } from "../../../Constants/navigation";
 
 const STATUS_OPTIONS: { value: AllocationStatus; label: string }[] = [
   { value: "reserved", label: "Reserved" },
@@ -61,6 +63,10 @@ const Ipam = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const permissionsQuery = usePermissions();
+  const canManageIpam = hasPermission("ipam.manage", permissionsQuery.data);
+  const canScan = hasPermission("devices.taskSchedule.manage", permissionsQuery.data);
+  const canManageDhcp = hasPermission(["dhcp.view", "dhcp.manage"], permissionsQuery.data);
   const [selectedSubnetId, setSelectedSubnetId] = useState<string | null>(null);
   const [addingSubnet, setAddingSubnet] = useState(false);
   const [addingAllocation, setAddingAllocation] = useState(false);
@@ -300,20 +306,24 @@ const Ipam = () => {
             </span>
           )}
         </div>
-        <ButtonPrimary
-          text={dhcpSources.length === 0 ? t("ipam.dhcp.setup") : t("ipam.dhcp.manage")}
-          onClick={() => navigate("/admin/dhcp-servers")}
-        />
+        {canManageDhcp && (
+          <ButtonPrimary
+            text={dhcpSources.length === 0 ? t("ipam.dhcp.setup") : t("ipam.dhcp.manage")}
+            onClick={() => navigate("/admin/dhcp-servers")}
+          />
+        )}
       </div>
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
         <div className="bg-white shadow-xl rounded-[10px] p-4">
           <div className="flex justify-between items-start">
             <CardHeader text={t("ipam.subnets")} />
-            <ButtonPrimary icon={faPlus} onClick={() => setAddingSubnet(!addingSubnet)} />
+            {canManageIpam && (
+              <ButtonPrimary icon={faPlus} onClick={() => setAddingSubnet(!addingSubnet)} />
+            )}
           </div>
 
-          {addingSubnet && (
+          {addingSubnet && canManageIpam && (
             <div className="mt-3 border border-[#F0F0F0] rounded-[10px] p-3">
               <Input
                 label={t("ipam.subnet.name")}
@@ -365,14 +375,16 @@ const Ipam = () => {
                     {s.cidr} {s.vlan && `· VLAN ${s.vlan}`}
                   </div>
                 </div>
-                <ButtonPrimary
-                  icon={faTrash}
-                  color="red"
-                  onClick={(e: any) => {
-                    e.stopPropagation();
-                    deleteSubnetMutation.mutate(s.id);
-                  }}
-                />
+                {canManageIpam && (
+                  <ButtonPrimary
+                    icon={faTrash}
+                    color="red"
+                    onClick={(e: any) => {
+                      e.stopPropagation();
+                      deleteSubnetMutation.mutate(s.id);
+                    }}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -386,7 +398,7 @@ const Ipam = () => {
               <div className="flex justify-between items-start">
                 <CardHeader text={utilization.subnet.name} />
                 <div className="flex items-center gap-2">
-                  {!editingSubnet && (
+                  {!editingSubnet && canManageIpam && (
                     <ButtonPrimary
                       icon={faPen}
                       text={t("common.edit")}
@@ -402,15 +414,17 @@ const Ipam = () => {
                       }}
                     />
                   )}
-                  <ButtonPrimary
-                    icon={faPlus}
-                    text={t("ipam.allocation.add")}
-                    onClick={() => setAddingAllocation(!addingAllocation)}
-                  />
+                  {canManageIpam && (
+                    <ButtonPrimary
+                      icon={faPlus}
+                      text={t("ipam.allocation.add")}
+                      onClick={() => setAddingAllocation(!addingAllocation)}
+                    />
+                  )}
                 </div>
               </div>
 
-              {editingSubnet && (
+              {editingSubnet && canManageIpam && (
                 <div className="mt-3 border border-[#F0F0F0] rounded-[10px] p-3">
                   <Input
                     label={t("ipam.subnet.name")}
@@ -491,59 +505,61 @@ const Ipam = () => {
                 />
               </div>
 
-              <div className="mt-3 border border-[#F0F0F0] rounded-[10px] p-3">
-                {isManualScanFallback && (
-                  <div className="mb-2 max-w-[280px]">
-                    <SelectSecondary
-                      label={t("ipam.scan.manualPickLabel")}
-                      options={scanDeviceOptions}
-                      value={scanDeviceOptions.find((o) => o.value === scanDevice?.value)}
-                      onSelect={(opt: any) => setManualScanDeviceId(opt?.value ?? null)}
+              {canScan && (
+                <div className="mt-3 border border-[#F0F0F0] rounded-[10px] p-3">
+                  {isManualScanFallback && (
+                    <div className="mb-2 max-w-[280px]">
+                      <SelectSecondary
+                        label={t("ipam.scan.manualPickLabel")}
+                        options={scanDeviceOptions}
+                        value={scanDeviceOptions.find((o) => o.value === scanDevice?.value)}
+                        onSelect={(opt: any) => setManualScanDeviceId(opt?.value ?? null)}
+                      />
+                      <p className="text-[11px] text-[#9a9a9a] mt-1">{t("ipam.scan.manualPickHint")}</p>
+                    </div>
+                  )}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ButtonPrimary
+                      icon={faMagnifyingGlass}
+                      text={
+                        scanSubnetMutation.isPending
+                          ? t("ipam.scan.queuing")
+                          : t("ipam.scan.scanSubnet")
+                      }
+                      onClick={() => scanSubnetMutation.mutate(utilization.subnet.cidr)}
+                      disabled={scanSubnetMutation.isPending || !scanDevice}
                     />
-                    <p className="text-[11px] text-[#9a9a9a] mt-1">{t("ipam.scan.manualPickHint")}</p>
-                  </div>
-                )}
-                <div className="flex flex-wrap items-center gap-2">
-                  <ButtonPrimary
-                    icon={faMagnifyingGlass}
-                    text={
-                      scanSubnetMutation.isPending
-                        ? t("ipam.scan.queuing")
-                        : t("ipam.scan.scanSubnet")
-                    }
-                    onClick={() => scanSubnetMutation.mutate(utilization.subnet.cidr)}
-                    disabled={scanSubnetMutation.isPending || !scanDevice}
-                  />
-                  {scanDevice && !isManualScanFallback ? (
-                    <span className="text-[12px] text-[#9a9a9a]">
-                      {t("ipam.scan.willUse", { device: scanDevice.label })}
-                    </span>
-                  ) : !scanDevice ? (
-                    <span className="text-[12px] text-[#9a9a9a]">{t("ipam.scan.noAgents")}</span>
-                  ) : null}
-                </div>
-
-                {activeScanTask && (
-                  <div className="mt-2 flex items-center gap-2 text-[12px]">
-                    <span
-                      className="inline-block w-[70px] text-center rounded-full px-2 py-0.5 text-[11px] font-bold text-white"
-                      style={{ backgroundColor: SCAN_STATE_COLOR[activeScanTask.state] }}
-                    >
-                      {activeScanTask.state}
-                    </span>
-                    {activeScanTask.state === "completed" && (
-                      <span className="text-[#3C3C3C]">
-                        {t("ipam.scan.hostsFound", { count: activeScanTask.result?.hosts?.length ?? 0 })}
+                    {scanDevice && !isManualScanFallback ? (
+                      <span className="text-[12px] text-[#9a9a9a]">
+                        {t("ipam.scan.willUse", { device: scanDevice.label })}
                       </span>
-                    )}
-                    {activeScanTask.state === "failed" && (
-                      <span className="text-[#F3606E]">{activeScanTask.lastError}</span>
-                    )}
+                    ) : !scanDevice ? (
+                      <span className="text-[12px] text-[#9a9a9a]">{t("ipam.scan.noAgents")}</span>
+                    ) : null}
                   </div>
-                )}
-              </div>
 
-              {addingAllocation && (
+                  {activeScanTask && (
+                    <div className="mt-2 flex items-center gap-2 text-[12px]">
+                      <span
+                        className="inline-block w-[70px] text-center rounded-full px-2 py-0.5 text-[11px] font-bold text-white"
+                        style={{ backgroundColor: SCAN_STATE_COLOR[activeScanTask.state] }}
+                      >
+                        {activeScanTask.state}
+                      </span>
+                      {activeScanTask.state === "completed" && (
+                        <span className="text-[#3C3C3C]">
+                          {t("ipam.scan.hostsFound", { count: activeScanTask.result?.hosts?.length ?? 0 })}
+                        </span>
+                      )}
+                      {activeScanTask.state === "failed" && (
+                        <span className="text-[#F3606E]">{activeScanTask.lastError}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {addingAllocation && canManageIpam && (
                 <div className="mt-3 border border-[#F0F0F0] rounded-[10px] p-3">
                   <Input
                     label={t("ipam.allocation.ip")}
@@ -597,7 +613,7 @@ const Ipam = () => {
                           <span className="text-[11px] text-[#9a9a9a] ml-2">({e.source})</span>
                         )}
                       </div>
-                      {e.id && (
+                      {e.id && canManageIpam && (
                         <ButtonPrimary
                           icon={faTrash}
                           color="red"

@@ -71,6 +71,7 @@
 
   "dashboard.add": "Aggiungi dashboard",
   "dashboard.name": "Nome dashboard",
+  "dashboard.rename": "Rinomina dashboard",
 
   "dashboard.widget.agentScoreboard": "Il mio pannello ticket",
   "dashboard.widget.agentScoreboard.subtitle": "Metriche dell'agente in tempo reale",

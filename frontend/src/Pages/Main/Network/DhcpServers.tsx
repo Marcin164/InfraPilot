@@ -18,6 +18,8 @@ import {
   runDhcpServerSync,
   updateDhcpServer,
 } from "../../../Services/dhcpServers";
+import { usePermissions } from "../../../Hooks/usePermissions";
+import { hasPermission } from "../../../Constants/navigation";
 
 const EMPTY_FORM: CreateDhcpServerPayload = {
   name: "",
@@ -30,6 +32,8 @@ const EMPTY_FORM: CreateDhcpServerPayload = {
 const DhcpServers = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const permissionsQuery = usePermissions();
+  const canManage = hasPermission("dhcp.manage", permissionsQuery.data);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CreateDhcpServerPayload>(EMPTY_FORM);
@@ -115,15 +119,17 @@ const DhcpServers = () => {
     <div className="w-full p-4">
       <div className="flex justify-between items-start">
         <CardHeader text={t("nav.dhcpServers")} icon={faServer} />
-        <ButtonPrimary
-          icon={faPlus}
-          text={t("dhcpServers.add")}
-          onClick={() => (adding ? resetForm() : setAdding(true))}
-        />
+        {canManage && (
+          <ButtonPrimary
+            icon={faPlus}
+            text={t("dhcpServers.add")}
+            onClick={() => (adding ? resetForm() : setAdding(true))}
+          />
+        )}
       </div>
       <div className="mt-1 text-[13px] text-[#9a9a9a]">{t("dhcpServers.hint")}</div>
 
-      {adding && (
+      {adding && canManage && (
         <div className="mt-4 bg-white shadow-xl rounded-[10px] p-4 max-w-[700px]">
           <CardHeader text={editingId ? t("dhcpServers.editSource") : t("dhcpServers.newSource")} />
           <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-x-6">
@@ -225,16 +231,21 @@ const DhcpServers = () => {
                   <Checkbox
                     id={`enabled-${s.id}`}
                     checked={s.enabled}
+                    disabled={!canManage}
                     handleChange={() => toggleEnabledMutation.mutate(s)}
                   />
-                  <ButtonPrimary
-                    icon={faPlay}
-                    color="green"
-                    onClick={() => runSyncMutation.mutate(s.id)}
-                    disabled={runSyncMutation.isPending}
-                  />
-                  <ButtonPrimary icon={faPen} onClick={() => startEdit(s)} />
-                  <ButtonPrimary icon={faTrash} color="red" onClick={() => deleteMutation.mutate(s.id)} />
+                  {canManage && (
+                    <>
+                      <ButtonPrimary
+                        icon={faPlay}
+                        color="green"
+                        onClick={() => runSyncMutation.mutate(s.id)}
+                        disabled={runSyncMutation.isPending}
+                      />
+                      <ButtonPrimary icon={faPen} onClick={() => startEdit(s)} />
+                      <ButtonPrimary icon={faTrash} color="red" onClick={() => deleteMutation.mutate(s.id)} />
+                    </>
+                  )}
                 </div>
               </div>
             ))}

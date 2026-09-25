@@ -9,6 +9,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
 import { linkTicket } from "../../../../Services/tickets";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 type Props = {
   ticket: any;
@@ -17,6 +19,8 @@ type Props = {
 const LinkTicketPanel = ({ ticket }: Props) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const permissionsQuery = usePermissions();
+  const canLink = hasPermission("helpdesk.tickets.access", permissionsQuery.data);
   const [draft, setDraft] = useState("");
 
   const mutation = useMutation({
@@ -54,14 +58,16 @@ const LinkTicketPanel = ({ ticket }: Props) => {
           >
             #{ticket.parent.number}
           </Link>{" "}
-          <button
-            type="button"
-            onClick={() => mutation.mutate(null)}
-            disabled={mutation.isPending}
-            className="text-[11px] text-[#F3606E] hover:underline cursor-pointer ml-2"
-          >
-            <FontAwesomeIcon icon={faLinkSlash} /> unlink
-          </button>
+          {canLink && (
+            <button
+              type="button"
+              onClick={() => mutation.mutate(null)}
+              disabled={mutation.isPending}
+              className="text-[11px] text-[#F3606E] hover:underline cursor-pointer ml-2"
+            >
+              <FontAwesomeIcon icon={faLinkSlash} /> unlink
+            </button>
+          )}
         </div>
       )}
 
@@ -82,7 +88,7 @@ const LinkTicketPanel = ({ ticket }: Props) => {
         </div>
       )}
 
-      {!ticket.parent && (
+      {!ticket.parent && canLink && (
         <div className="flex gap-2 items-end">
           <Input
             className="flex-1 pt-0"

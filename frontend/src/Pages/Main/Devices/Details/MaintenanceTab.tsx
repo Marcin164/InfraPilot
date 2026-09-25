@@ -19,6 +19,8 @@ import {
   MaintenanceType,
   CreateMaintenanceDto,
 } from "../../../../Services/maintenance";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const TYPE_COLORS: Record<MaintenanceType, string> = {
   scheduled: "#2B9AE9",
@@ -52,6 +54,8 @@ const MaintenanceTab = () => {
   const deviceQuery: any = useOutletContext();
   const deviceId = deviceQuery?.data?.id ?? "";
   const queryClient = useQueryClient();
+  const permissionsQuery = usePermissions();
+  const canManage = hasPermission("devices.maintenance.manage", permissionsQuery.data);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -199,7 +203,7 @@ const MaintenanceTab = () => {
           <FontAwesomeIcon icon={faWrench} className="text-[#2B9AE9]" />
           {t("maintenance.title")}
         </div>
-        {!isFormOpen && (
+        {!isFormOpen && canManage && (
           <ButtonPrimary
             icon={faPlus}
             text={t("maintenance.add")}
@@ -252,20 +256,22 @@ const MaintenanceTab = () => {
                   <div className="text-[11px] text-[#9a9a9a] mt-0.5">{r.notes}</div>
                 )}
               </div>
-              <div className="flex gap-1 shrink-0">
-                <button
-                  onClick={() => startEdit(r)}
-                  className="p-1.5 rounded-[6px] text-[#9a9a9a] hover:text-[#2B9AE9] hover:bg-[#EBF5FB] transition-colors"
-                >
-                  <FontAwesomeIcon icon={faPen} className="text-[11px]" />
-                </button>
-                <button
-                  onClick={() => askConfirm(() => deleteMut.mutate(r.id), t("maintenance.confirmDelete"))}
-                  className="p-1.5 rounded-[6px] text-[#9a9a9a] hover:text-[#F3606E] hover:bg-[#FEF0F0] transition-colors"
-                >
-                  <FontAwesomeIcon icon={faTrash} className="text-[11px]" />
-                </button>
-              </div>
+              {canManage && (
+                <div className="flex gap-1 shrink-0">
+                  <button
+                    onClick={() => startEdit(r)}
+                    className="p-1.5 rounded-[6px] text-[#9a9a9a] hover:text-[#2B9AE9] hover:bg-[#EBF5FB] transition-colors"
+                  >
+                    <FontAwesomeIcon icon={faPen} className="text-[11px]" />
+                  </button>
+                  <button
+                    onClick={() => askConfirm(() => deleteMut.mutate(r.id), t("maintenance.confirmDelete"))}
+                    className="p-1.5 rounded-[6px] text-[#9a9a9a] hover:text-[#F3606E] hover:bg-[#FEF0F0] transition-colors"
+                  >
+                    <FontAwesomeIcon icon={faTrash} className="text-[11px]" />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

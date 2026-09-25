@@ -29,6 +29,8 @@ import CategorySelect from "../components/CategorySelect";
 import RichTextEditor from "../../../../Components/RichTextEditor";
 import ConfirmationModal from "../../../../Components/Modals/ConfirmationModal";
 import "../../../../Components/RichTextEditor/styles.css";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const statusColor: Record<string, string> = {
   draft: "bg-[#F1C40F] text-[#3C3C3C]",
@@ -58,6 +60,8 @@ const ArticlePage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { setParsers } = useParser();
+  const permissionsQuery = usePermissions();
+  const canManage = hasPermission("knowledge.manage", permissionsQuery.data);
 
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
@@ -180,7 +184,7 @@ const ArticlePage = () => {
         </Link>
 
         <div className="flex items-center gap-2">
-          {!editing && (
+          {!editing && canManage && (
             <ButtonPrimary
               color="white"
               icon={faPen}
@@ -188,7 +192,7 @@ const ArticlePage = () => {
               onClick={startEditing}
             />
           )}
-          {editing && (
+          {editing && canManage && (
             <>
               <ButtonPrimary
                 color="blue"
@@ -205,11 +209,13 @@ const ArticlePage = () => {
               />
             </>
           )}
-          <ButtonPrimary
-            color="red"
-            icon={faTrash}
-            onClick={() => setIsDeleteModalOpen(true)}
-          />
+          {canManage && (
+            <ButtonPrimary
+              color="red"
+              icon={faTrash}
+              onClick={() => setIsDeleteModalOpen(true)}
+            />
+          )}
         </div>
       </div>
 

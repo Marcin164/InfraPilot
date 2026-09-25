@@ -44,6 +44,8 @@ import PageMotion from "../../../Components/PageMotion/PageMotion";
 import { DashboardDataProvider } from "./DashboardDataContext";
 import ConfirmationModal from "../../../Components/Modals/ConfirmationModal";
 import { useAuthInfo } from "@propelauth/react";
+import { usePermissions } from "../../../Hooks/usePermissions";
+import { hasPermission } from "../../../Constants/navigation";
 
 const ReactGridLayout = WidthProvider(RGL);
 
@@ -83,6 +85,8 @@ const componentMap: any = {
 const Index = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthInfo();
+  const permissionsQuery = usePermissions();
+  const canEdit = hasPermission("dashboards.edit", permissionsQuery.data);
   const dashboardsQuery = useQuery({
     queryKey: ["dashboards"],
     queryFn: () => getDashboards(),
@@ -123,7 +127,8 @@ const Index = () => {
       !autoCreatedRef.current &&
       dashboardsQuery.isSuccess &&
       dashboardsQuery.data.length === 0 &&
-      user?.userId
+      user?.userId &&
+      canEdit
     ) {
       autoCreatedRef.current = true;
       createDashboard({ name: "main", userId: user.userId }).then((newDashboard) => {
@@ -131,7 +136,7 @@ const Index = () => {
         setCurrentDashboard(newDashboard);
       });
     }
-  }, [dashboardsQuery.isSuccess, dashboardsQuery.data?.length, user?.userId]);
+  }, [dashboardsQuery.isSuccess, dashboardsQuery.data?.length, user?.userId, canEdit]);
 
   useEffect(() => {
     if (
@@ -252,21 +257,23 @@ const Index = () => {
         currentDashboard={currentDashboard}
         onWidgetDragStart={handleWidgetDragStart}
         onDeleteDashboard={handleDeleteDashboard}
+        onDashboardRenamed={setCurrentDashboard}
       />
       <div className="h-[calc(100vh-160px)] overflow-y-auto p-2 relative">
         <ReactGridLayout
           layout={layout}
           cols={12}
           rowHeight={50}
-          isDroppable
+          isDroppable={canEdit}
           droppingItem={draggingItem}
-          onDrop={onDrop}
-          onDragStop={syncLayoutItem}
-          onResizeStop={syncLayoutItem}
+          onDrop={canEdit ? onDrop : undefined}
+          onDragStop={canEdit ? syncLayoutItem : undefined}
+          onResizeStop={canEdit ? syncLayoutItem : undefined}
           compactType={null}
           preventCollision
           isBounded
-          isResizable
+          isDraggable={canEdit}
+          isResizable={canEdit}
           className="bg-[#E6E6E6] rounded-[10px] min-h-[calc(100vh-180px)]"
         >
           {layout.map((card) => {
@@ -278,13 +285,15 @@ const Index = () => {
                 key={card.i}
                 className="relative bg-white rounded-[10px] shadow group overflow-hidden"
               >
-                <button
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onClick={() => removeWidget(card.i)}
-                  className="absolute top-2 right-2 z-[90] hidden group-hover:flex bg-red-500 text-white rounded-full w-6 h-6 items-center justify-center text-sm cursor-pointer"
-                >
-                  <FontAwesomeIcon icon={faXmark} />
-                </button>
+                {canEdit && (
+                  <button
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={() => removeWidget(card.i)}
+                    className="absolute top-2 right-2 z-[90] hidden group-hover:flex bg-red-500 text-white rounded-full w-6 h-6 items-center justify-center text-sm cursor-pointer"
+                  >
+                    <FontAwesomeIcon icon={faXmark} />
+                  </button>
+                )}
                 <Component />
               </div>
             );

@@ -15,6 +15,8 @@ import TicketContentPanel from "./components/TicketContentPanel";
 import TicketSidePanel from "./components/TicketSidePanel";
 import { useViewportFillHeight } from "../../../Hooks/useViewportFillHeight";
 import { getUsers } from "../../../Services/users";
+import { usePermissions } from "../../../Hooks/usePermissions";
+import { hasPermission, STAFF_PERMISSIONS } from "../../../Constants/navigation";
 
 const convertApprovalsToComments = (approvals: Approval[], requesterName?: string) => {
   return approvals.map((approval) => ({
@@ -47,6 +49,12 @@ const Details = () => {
   const params = useParams();
   const { setParsers } = useParser();
   const { user }: any = useAuthInfo();
+  const permissionsQuery = usePermissions();
+  // Mirrors the backend's isStaffUser() -- worknotes are staff-only there
+  // too (resolveCommentType silently downgrades a non-staff attempt to
+  // Public), this just keeps the UI from offering a toggle that wouldn't
+  // do what it says for a plain requester.
+  const isStaff = hasPermission(STAFF_PERMISSIONS, permissionsQuery.data);
   const myId = user?.metadata?.id ?? user?.userId ?? "";
   const myLabel =
     [user?.metadata?.firstName, user?.metadata?.lastName]
@@ -162,7 +170,7 @@ const Details = () => {
         }
         onInfoToggle={openInfo}
         onSideToggle={openSide}
-        allowWorknote
+        allowWorknote={isStaff}
       />
 
       <TicketSidePanel

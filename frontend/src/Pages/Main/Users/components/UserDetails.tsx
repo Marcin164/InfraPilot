@@ -26,6 +26,10 @@ const UserDetails = ({ data }: Props) => {
   const permissionsQuery = usePermissions();
 
   const canViewAsDpo = hasPermission("dpo.viewUserAsDpo", permissionsQuery.data);
+  // AuthLinkPanel manages PropelAuth identity linking (link-auth/
+  // provision-auth) -- that's users.provision, not a DPO concern. It was
+  // previously (incorrectly) shown only alongside the DPO button.
+  const canProvisionAuth = hasPermission("users.provision", permissionsQuery.data);
 
   const initials =
     `${data.name?.[0] ?? ""}${data.surname?.[0] ?? ""}`.toUpperCase() || "?";
@@ -99,7 +103,7 @@ const UserDetails = ({ data }: Props) => {
         {data.company && <Parameter name={t("user.company")} value={data.company} />}
       </div>
 
-      {canViewAsDpo && (
+      {canProvisionAuth && (
         <AuthLinkPanel user={data} />
       )}
     </div>

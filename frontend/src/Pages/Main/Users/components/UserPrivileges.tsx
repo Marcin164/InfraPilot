@@ -5,6 +5,8 @@ import { faUniversalAccess, faPen } from "@fortawesome/free-solid-svg-icons";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import { getCustomRoles, getCustomRoleAssignments } from "../../../../Services/customRoles";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 type Props = {
   userId: string;
@@ -13,6 +15,11 @@ type Props = {
 const UserPrivileges = ({ userId }: Props) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const permissionsQuery = usePermissions();
+  const canManageRoles = hasPermission(
+    "admin.roleAssignment.manage",
+    permissionsQuery.data,
+  );
 
   const rolesQuery = useQuery({
     queryKey: ["custom-roles"],
@@ -49,13 +56,15 @@ const UserPrivileges = ({ userId }: Props) => {
           </div>
         )}
       </div>
-      <div className="py-2">
-        <ButtonPrimary
-          icon={faPen}
-          text={t("users.privileges.manage")}
-          onClick={() => navigate("/admin/settings/admin")}
-        />
-      </div>
+      {canManageRoles && (
+        <div className="py-2">
+          <ButtonPrimary
+            icon={faPen}
+            text={t("users.privileges.manage")}
+            onClick={() => navigate("/admin/settings/admin")}
+          />
+        </div>
+      )}
     </div>
   );
 };

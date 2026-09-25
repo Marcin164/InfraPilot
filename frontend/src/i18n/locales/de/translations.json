@@ -71,6 +71,7 @@
 
   "dashboard.add": "Dashboard hinzufügen",
   "dashboard.name": "Dashboard-Name",
+  "dashboard.rename": "Dashboard umbenennen",
 
   "dashboard.widget.agentScoreboard": "Meine Ticket-Kennzahlen",
   "dashboard.widget.agentScoreboard.subtitle": "Live-Kennzahlen des Agenten",

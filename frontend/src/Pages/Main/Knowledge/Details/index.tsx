@@ -18,11 +18,15 @@ import AddArticleModal from "../components/AddArticleModal";
 import ArticleCard from "../components/ArticleCard";
 import PageMotion from "../../../../Components/PageMotion/PageMotion";
 import { motion } from "framer-motion";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const KnowledgeDetails = () => {
   const { t } = useTranslation();
   const { id: spaceId } = useParams<{ id: string }>();
   const { setParsers } = useParser();
+  const permissionsQuery = usePermissions();
+  const canManage = hasPermission("knowledge.manage", permissionsQuery.data);
 
   const [searchValue, setSearchValue] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -102,13 +106,15 @@ const KnowledgeDetails = () => {
           onChange={(e: any) => setSearchValue(e.target.value)}
           className="w-auto flex-1 min-w-[180px] max-w-[400px]"
         />
-        <ButtonPrimary
-          color="white"
-          icon={faPlus}
-          text={t("btn.add.article")}
-          onClick={() => setIsAddModalOpen(true)}
-          className="ml-auto"
-        />
+        {canManage && (
+          <ButtonPrimary
+            color="white"
+            icon={faPlus}
+            text={t("btn.add.article")}
+            onClick={() => setIsAddModalOpen(true)}
+            className="ml-auto"
+          />
+        )}
       </div>
 
       {categories.length > 0 && (

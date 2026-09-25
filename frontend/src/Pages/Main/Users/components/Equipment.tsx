@@ -8,6 +8,8 @@ import EquipmentItem from "../../../../Components/Lists/EquipmentItem";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Dropdown from "../../../../Components/Dropdowns/Components/Dropdown";
 import { downloadUserHandoverForm } from "../../../../Services/devices";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 type Props = { devices: any };
 
@@ -16,6 +18,15 @@ const Equipment = ({ devices }: Props) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const permissionsQuery = usePermissions();
+  const canManageEquipment = hasPermission(
+    "users.equipment.manage",
+    permissionsQuery.data,
+  );
+  const canDownloadHandover = hasPermission(
+    ["users.equipment.manage", "devices.view"],
+    permissionsQuery.data,
+  );
 
   const handoverMutation = useMutation({
     mutationFn: () =>
@@ -63,27 +74,33 @@ const Equipment = ({ devices }: Props) => {
     <div className="bg-white shadow-xl rounded-[10px] p-4">
       <div className="flex items-center justify-between gap-2">
         <CardHeader text={t("users.equipment")} icon={faComputer} />
-        <Dropdown>
-          <ButtonPrimary
-            color="white"
-            icon={faPen}
-            text={t("users.actions.editEquipment")}
-            className="h-[34px] text-[16px] w-full my-1 text-left shadow-none"
-            onClick={() => navigate(`/admin/users/${id}/equipmentedit`)}
-          />
-          <ButtonPrimary
-            color="white"
-            icon={faFileWord}
-            text={
-              handoverMutation.isPending
-                ? t("users.equipment.handoverGenerating")
-                : t("users.equipment.handover")
-            }
-            className="h-[34px] text-[16px] w-full my-1 text-left shadow-none"
-            onClick={() => handoverMutation.mutate()}
-            disabled={handoverMutation.isPending || !hasEquipment}
-          />
-        </Dropdown>
+        {(canManageEquipment || canDownloadHandover) && (
+          <Dropdown>
+            {canManageEquipment && (
+              <ButtonPrimary
+                color="white"
+                icon={faPen}
+                text={t("users.actions.editEquipment")}
+                className="h-[34px] text-[16px] w-full my-1 text-left shadow-none"
+                onClick={() => navigate(`/admin/users/${id}/equipmentedit`)}
+              />
+            )}
+            {canDownloadHandover && (
+              <ButtonPrimary
+                color="white"
+                icon={faFileWord}
+                text={
+                  handoverMutation.isPending
+                    ? t("users.equipment.handoverGenerating")
+                    : t("users.equipment.handover")
+                }
+                className="h-[34px] text-[16px] w-full my-1 text-left shadow-none"
+                onClick={() => handoverMutation.mutate()}
+                disabled={handoverMutation.isPending || !hasEquipment}
+              />
+            )}
+          </Dropdown>
+        )}
       </div>
       <Section label={t("users.equipment.computersOwned")} items={mainDevices} />
       <Section label={t("users.equipment.peripherals")} items={peripherals} />

@@ -18,6 +18,8 @@ import TableSettings from "../../../Components/TableSettings";
 import { getUserSettings } from "../../../Services/settings";
 import MassActionBar from "./components/MassActionBar";
 import { useViewportFillHeight } from "../../../Hooks/useViewportFillHeight";
+import { usePermissions } from "../../../Hooks/usePermissions";
+import { hasPermission } from "../../../Constants/navigation";
 
 type DeviceFilters = {
   group?: string[];
@@ -42,6 +44,8 @@ const Index = () => {
   const params = useParams();
   const { t } = useTranslation();
   const fillHeight = useViewportFillHeight();
+  const permissionsQuery = usePermissions();
+  const canAddDevice = hasPermission("devices.add", permissionsQuery.data);
 
   const [filters, setFilters] = useState<DeviceFilters>(INITIAL_FILTERS);
   const [isOpen, setIsOpen] = useState(false);
@@ -136,14 +140,18 @@ const Index = () => {
               checkboxes={deviceCheckboxes}
               settingsKey="devicesTableColumnOrder"
             />
-            <ButtonPrimary
-              color="white"
-              icon={faPlus}
-              text={t("btn.add.device")}
-              onClick={toggleModal}
-            />
+            {canAddDevice && (
+              <ButtonPrimary
+                color="white"
+                icon={faPlus}
+                text={t("btn.add.device")}
+                onClick={toggleModal}
+              />
+            )}
           </div>
-          <AddDeviceModal isModalOpen={addEQModal} onCloseModal={toggleModal} />
+          {canAddDevice && (
+            <AddDeviceModal isModalOpen={addEQModal} onCloseModal={toggleModal} />
+          )}
         </div>
         <FilterPresetsBar
           presets={presets.presets}

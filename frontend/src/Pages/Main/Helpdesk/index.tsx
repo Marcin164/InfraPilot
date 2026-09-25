@@ -18,6 +18,8 @@ import PageMotion from "../../../Components/PageMotion/PageMotion";
 import FilterPresetsBar from "../../../Components/Filter/FilterPresetsBar";
 import CreateTicketModal from "./components/CreateTicketModal";
 import { useViewportFillHeight } from "../../../Hooks/useViewportFillHeight";
+import { usePermissions } from "../../../Hooks/usePermissions";
+import { hasPermission } from "../../../Constants/navigation";
 
 type TicketFilters = {
   type?: string[];
@@ -35,6 +37,8 @@ const Index = () => {
   const myId = authInfo?.user?.metadata?.id ?? authInfo?.user?.userId ?? null;
   const queryClient = useQueryClient();
   const fillHeight = useViewportFillHeight();
+  const permissionsQuery = usePermissions();
+  const canAccessQueue = hasPermission("helpdesk.tickets.access", permissionsQuery.data);
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(30);
@@ -53,6 +57,7 @@ const Index = () => {
   const dynamicFiltersQuery = useQuery({
     queryKey: ["ticketsFilters"],
     queryFn: () => getTicketsFilters(),
+    enabled: canAccessQueue,
   });
 
   const filterOptions = {
@@ -87,6 +92,7 @@ const Index = () => {
     queryKey: ["helpdesk", filters, debouncedSearch, page, limit],
     queryFn: () => getTickets(queryString),
     placeholderData: (prev) => prev,
+    enabled: canAccessQueue,
   });
 
   useEffect(() => {
@@ -118,6 +124,8 @@ const Index = () => {
     { name: "sla", label: t("helpdesk.column.sla") },
     { name: "approvers", label: t("helpdesk.column.approvers") },
   ];
+
+  if (!canAccessQueue) return null;
 
   return (
     <PageMotion>

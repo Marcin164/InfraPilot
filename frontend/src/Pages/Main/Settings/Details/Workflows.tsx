@@ -39,6 +39,8 @@ import {
 import { getUsers, findApprovers } from "../../../../Services/users";
 import { getAssignmentGroups } from "../../../../Services/assignmentGroups";
 import type { User } from "../../../../Types";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const TRIGGER_OPTIONS: { value: TicketWorkflow["trigger"]; labelKey: string }[] = [
   { value: "on_create", labelKey: "settings.workflow.editor.triggerCreate" },
@@ -119,6 +121,11 @@ const newStep = (type: WorkflowStepType, order: number): WorkflowStep => ({
 const Workflows = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const permissionsQuery = usePermissions();
+  const canManage = hasPermission(
+    ["helpdesk.workflow.config", "audit.fullAccess"],
+    permissionsQuery.data,
+  );
   const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
   const askConfirm = (onConfirm: () => void, message?: string) => setConfirmState({ open: true, onConfirm, message });
 
@@ -174,6 +181,8 @@ const Workflows = () => {
       updatedAt: new Date().toISOString(),
     });
   };
+
+  if (!canManage) return null;
 
   return (
     <div className="m-4 grid grid-cols-1 lg:grid-cols-3 gap-4">

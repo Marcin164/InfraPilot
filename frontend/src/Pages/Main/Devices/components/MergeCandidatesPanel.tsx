@@ -19,6 +19,8 @@ import {
   mergeDevicesApi,
   MergeCandidate,
 } from "../../../../Services/devices";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 type Props = {
   device: any;
@@ -28,6 +30,8 @@ const MergeCandidatesPanel = ({ device }: Props) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const permissionsQuery = usePermissions();
+  const canMerge = hasPermission("devices.lifecycle.edit", permissionsQuery.data);
   const [manualSource, setManualSource] = useState("");
   const [showManual, setShowManual] = useState(false);
   const [confirmState, setConfirmState] = useState<{ open: boolean; onConfirm: () => void; message?: string }>({ open: false, onConfirm: () => {} });
@@ -64,6 +68,8 @@ const MergeCandidatesPanel = ({ device }: Props) => {
       `${t("device.merge.confirmTitle", { label })}\n\n${t("device.merge.confirmBody", { label })}`,
     );
   };
+
+  if (!canMerge) return null;
 
   if (device?.mergedIntoId) {
     return (

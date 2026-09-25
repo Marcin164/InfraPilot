@@ -17,6 +17,8 @@ import {
   deleteConnection,
   getConnectionsForDevice,
 } from "../../../../Services/networkConnections";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const LINK_TYPE_OPTIONS: { value: NetworkLinkType; label: string }[] = [
   { value: "ethernet", label: "Ethernet" },
@@ -31,6 +33,8 @@ const Connections = () => {
   const data = device?.data;
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState(false);
+  const permissionsQuery = usePermissions();
+  const canEdit = hasPermission("devices.topology.edit", permissionsQuery.data);
 
   const connectionsQuery = useQuery({
     queryKey: ["network-connections", data?.id],
@@ -103,7 +107,7 @@ const Connections = () => {
       <div className="bg-white shadow-xl rounded-[10px] p-4">
         <div className="flex justify-between items-start">
           <CardHeader text={t("device.tab.connections")} icon={faNetworkWired} />
-          {!adding && (
+          {!adding && canEdit && (
             <ButtonPrimary
               icon={faPlus}
               text={t("network.connection.add")}
@@ -135,12 +139,14 @@ const Connections = () => {
                       {c.vlan && <span> · VLAN {c.vlan}</span>}
                     </div>
                   </div>
-                  <ButtonPrimary
-                    icon={faTrash}
-                    color="red"
-                    onClick={() => deleteMutation.mutate(c.id)}
-                    disabled={deleteMutation.isPending}
-                  />
+                  {canEdit && (
+                    <ButtonPrimary
+                      icon={faTrash}
+                      color="red"
+                      onClick={() => deleteMutation.mutate(c.id)}
+                      disabled={deleteMutation.isPending}
+                    />
+                  )}
                 </div>
               );
             })}

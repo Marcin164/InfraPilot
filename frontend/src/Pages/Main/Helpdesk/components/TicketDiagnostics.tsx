@@ -16,6 +16,8 @@ import {
   AgentTaskType,
 } from "../../../../Services/agentTasks";
 import { analyzeLogs, type LogAnalysisResult } from "../../../../Services/ai";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const TASK_TYPE_VALUES: AgentTaskType[] = [
   "scan_now",
@@ -37,6 +39,8 @@ type Props = { ticketId: string; deviceId: string | null | undefined };
 const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const permissionsQuery = usePermissions();
+  const canDiagnose = hasPermission("helpdesk.tickets.access", permissionsQuery.data);
   const [type, setType] = useState<AgentTaskType>("scan_now");
 
   const TASK_TYPES = TASK_TYPE_VALUES.map((v) => ({
@@ -62,7 +66,7 @@ const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
   const tasksQuery = useQuery({
     queryKey: ["ticket-diagnostics", deviceId, ticketId],
     queryFn: () => listDeviceTasks(deviceId!),
-    enabled: Boolean(deviceId),
+    enabled: Boolean(deviceId) && canDiagnose,
     refetchInterval: 10000,
   });
 
@@ -90,7 +94,7 @@ const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
       }),
   });
 
-  if (!deviceId) return null;
+  if (!deviceId || !canDiagnose) return null;
 
   const relevantTasks = (tasksQuery.data ?? []).filter(
     (t: AgentTask) => t.payload?.ticketId === ticketId,

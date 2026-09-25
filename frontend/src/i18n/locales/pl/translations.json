@@ -71,6 +71,7 @@
 
   "dashboard.add": "Dodaj panel",
   "dashboard.name": "Nazwa panelu",
+  "dashboard.rename": "Zmień nazwę panelu",
 
   "dashboard.widget.agentScoreboard": "Moja tablica zgłoszeń",
   "dashboard.widget.agentScoreboard.subtitle": "Metryki agenta na żywo",

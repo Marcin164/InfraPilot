@@ -24,6 +24,8 @@ import {
 import { complianceForDevice } from "../../../../Services/compliance";
 import { cvesForDevice } from "../../../../Services/cve";
 import { tagsForDevice } from "../../../../Services/deviceTags";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const LIFECYCLE_COLOR: Record<string, string> = {
   procurement: "#8A8A8A",
@@ -55,6 +57,8 @@ type Props = {
  */
 const DeviceContextPanel = ({ deviceId, ticketId }: Props) => {
   const { t } = useTranslation();
+  const permissionsQuery = usePermissions();
+  const canRemoteAssist = hasPermission("devices.connection.manage", permissionsQuery.data);
 
   const lifecycleLabel = (state: string): string => {
     switch (state) {
@@ -83,6 +87,7 @@ const DeviceContextPanel = ({ deviceId, ticketId }: Props) => {
     queryKey: ["remote-session-status"],
     queryFn: remoteSessionStatus,
     staleTime: 5 * 60 * 1000,
+    enabled: canRemoteAssist,
   });
 
   const remoteMutation = useMutation({
@@ -305,7 +310,7 @@ const DeviceContextPanel = ({ deviceId, ticketId }: Props) => {
         </Link>
       )}
 
-      {remoteConfigured && (
+      {remoteConfigured && canRemoteAssist && (
         <button
           type="button"
           onClick={() => remoteMutation.mutate()}

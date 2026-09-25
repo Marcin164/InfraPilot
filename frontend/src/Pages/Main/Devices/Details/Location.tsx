@@ -10,6 +10,8 @@ import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import PlanPinPicker from "../../../../Components/Inputs/PlanPinPicker";
 import { getLocations, findAncestorFloor } from "../../../../Services/locations";
 import { DeviceDetailsPatch, updateDeviceDetails } from "../../../../Services/devices";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const DeviceLocation = () => {
   const { t } = useTranslation();
@@ -22,6 +24,8 @@ const DeviceLocation = () => {
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<DeviceDetailsPatch>({});
+  const permissionsQuery = usePermissions();
+  const canEdit = hasPermission("devices.lifecycle.edit", permissionsQuery.data);
 
   const resetDraft = () =>
     setDraft({
@@ -64,7 +68,9 @@ const DeviceLocation = () => {
       <div className="flex justify-between items-start">
         <CardHeader text={t("device.location.title")} icon={faLocationDot} />
         {!editing ? (
-          <ButtonPrimary icon={faPen} text={t("common.edit")} onClick={startEditing} />
+          canEdit && (
+            <ButtonPrimary icon={faPen} text={t("common.edit")} onClick={startEditing} />
+          )
         ) : (
           <div className="flex gap-2">
             <ButtonPrimary

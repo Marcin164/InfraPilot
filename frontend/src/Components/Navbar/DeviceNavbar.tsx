@@ -1,14 +1,17 @@
 import { useTranslation } from "react-i18next";
 import NavbarLink from "./NavbarLink";
-import { deviceNavbarItems } from "../../Constants/navigation";
+import { deviceNavbarItems, canSeeItem } from "../../Constants/navigation";
+import { usePermissions } from "../../Hooks/usePermissions";
 
 type Props = { group?: string | null };
 
 const DeviceNavbar = ({ group }: Props) => {
   const { t } = useTranslation();
+  const permissionsQuery = usePermissions();
   const isComputer = group === "Computers";
   const isNetwork = group === "Network";
   const items = deviceNavbarItems.filter((item) => {
+    if (!canSeeItem(item, permissionsQuery.data)) return false;
     if (item.scope === "all") return true;
     if (item.scope === "computers") return isComputer;
     if (item.scope === "computersOrNetwork") return isComputer || isNetwork;

@@ -16,11 +16,15 @@ import HistoryFeedItem from "../../History/components/HistoryFeedItem";
 import CardHeader from "../../../../Components/Headers/CardHeader";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import type { HistoryEntry } from "../../../../Types";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const History = () => {
   const { id: deviceId } = useParams<{ id: string }>();
   const device: any = useOutletContext();
   const { t } = useTranslation();
+  const permissionsQuery = usePermissions();
+  const canAssign = hasPermission("devices.assignment.manage", permissionsQuery.data);
 
   const [isAssignUserModalOpen, setIsAssignUserModalOpen] = useState(false);
 
@@ -49,11 +53,13 @@ const History = () => {
       <div className="bg-white shadow-xl rounded-[10px] p-4">
         <div className="flex flex-wrap justify-between items-center gap-2">
           <CardHeader text={t("device.tab.history")} icon={faUserTag} />
-          <ButtonPrimary
-            icon={faArrowsRotate}
-            text={t("device.history.assign")}
-            onClick={() => setIsAssignUserModalOpen(true)}
-          />
+          {canAssign && (
+            <ButtonPrimary
+              icon={faArrowsRotate}
+              text={t("device.history.assign")}
+              onClick={() => setIsAssignUserModalOpen(true)}
+            />
+          )}
         </div>
         <div className="mt-3">
           {assignedUserId ? (

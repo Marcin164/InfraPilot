@@ -6,6 +6,8 @@ import { faPen, faUsers } from '@fortawesome/free-solid-svg-icons'
 import { useTranslation } from 'react-i18next'
 import { getAssignmentGroups } from '../../../../Services/assignmentGroups'
 import ButtonPrimary from '../../../../Components/Buttons/ButtonPrimary'
+import { usePermissions } from '../../../../Hooks/usePermissions'
+import { hasPermission } from '../../../../Constants/navigation'
 
 type Props = {}
 
@@ -13,6 +15,10 @@ const AssignmentsGroups = (props: Props) => {
     const { t } = useTranslation();
     const params: any = useParams();
     const navigate  = useNavigate()
+    const permissionsQuery = usePermissions();
+    // Matches the target page's own gate (Settings > Admin) -- this button
+    // is only useful if clicking it actually gets you somewhere.
+    const canManage = hasPermission("admin.roleAssignment.manage", permissionsQuery.data);
 
     const userAssignmentGroupsQuery = useQuery({
         queryKey: ["userAssignmentGroups", params.id],
@@ -46,9 +52,11 @@ const AssignmentsGroups = (props: Props) => {
                 </div>
             )}
         </div>
+        {canManage && (
         <div className="py-2">
         <ButtonPrimary icon={faPen} text={t('btn.edit.asssignments')} onClick={() => navigate('/admin/settings/admin')}/>
         </div>
+        )}
     </div>
   )
 }

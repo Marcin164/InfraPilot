@@ -18,6 +18,8 @@ import {
   evaluateDevice,
   ComplianceResult,
 } from "../../../../Services/compliance";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const SEVERITY_COLOR: Record<string, string> = {
   CRITICAL: "#C0392B",
@@ -31,6 +33,8 @@ const Compliance = () => {
   const device: any = useOutletContext();
   const deviceId = device?.data?.id;
   const queryClient = useQueryClient();
+  const permissionsQuery = usePermissions();
+  const canReevaluate = hasPermission("devices.complianceRules.manage", permissionsQuery.data);
 
   const resultsQuery = useQuery({
     queryKey: ["compliance-device", deviceId],
@@ -60,12 +64,14 @@ const Compliance = () => {
     <div className="bg-white shadow-xl rounded-[10px] p-4">
       <div className="flex items-start justify-between">
         <CardHeader text={t("device.section.compliance")} icon={faShield} />
-        <ButtonPrimary
-          icon={faRotate}
-          text={reeval.isPending ? t("device.compliance.evaluating") : t("device.compliance.reEvaluate")}
-          onClick={() => reeval.mutate()}
-          disabled={reeval.isPending}
-        />
+        {canReevaluate && (
+          <ButtonPrimary
+            icon={faRotate}
+            text={reeval.isPending ? t("device.compliance.evaluating") : t("device.compliance.reEvaluate")}
+            onClick={() => reeval.mutate()}
+            disabled={reeval.isPending}
+          />
+        )}
       </div>
 
       <div className="mt-4 flex items-center gap-4">

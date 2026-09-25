@@ -25,6 +25,8 @@ import {
   runBackupNow,
   setSshCredential,
 } from "../../../../Services/networkDeviceBackup";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 const Backup = () => {
   const { t } = useTranslation();
@@ -33,19 +35,21 @@ const Backup = () => {
   const data = device?.data;
   const deviceId = data?.id;
   const queryClient = useQueryClient();
+  const permissionsQuery = usePermissions();
+  const canManage = hasPermission("devices.networkBackup.manage", permissionsQuery.data);
   const [viewing, setViewing] = useState<ConfigBackup | null>(null);
   const [compare, setCompare] = useState(false);
 
   const credentialQuery = useQuery({
     queryKey: ["ssh-credential", deviceId],
     queryFn: () => getSshCredential(deviceId),
-    enabled: !!deviceId,
+    enabled: !!deviceId && canManage,
   });
 
   const backupsQuery = useQuery({
     queryKey: ["config-backups", deviceId],
     queryFn: () => listBackups(deviceId),
-    enabled: !!deviceId,
+    enabled: !!deviceId && canManage,
   });
 
   const [form, setForm] = useState<SetCredentialPayload>({
@@ -97,6 +101,7 @@ const Backup = () => {
     onSuccess: (full: ConfigBackup) => setViewing(full),
   });
 
+  if (!canManage) return null;
   if (!data) return <NoData />;
 
   const backups = backupsQuery.data ?? [];

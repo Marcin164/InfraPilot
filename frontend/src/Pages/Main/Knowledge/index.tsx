@@ -10,12 +10,16 @@ import AddSpaceModal from "../../../Components/Modals/AddSpaceModal";
 import { getSpaces } from "../../../Services/knowledge";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
 import { useViewportFillHeight } from "../../../Hooks/useViewportFillHeight";
+import { usePermissions } from "../../../Hooks/usePermissions";
+import { hasPermission } from "../../../Constants/navigation";
 
 type Props = {};
 
 const index = (props: Props) => {
   const { t } = useTranslation();
   const fillHeight = useViewportFillHeight();
+  const permissionsQuery = usePermissions();
+  const canManage = hasPermission("knowledge.manage", permissionsQuery.data);
   const [searchValue, setSearchValue] = useState("");
   const [isAddSpaceModalOpen, setIsAddSpaceModalOpen] = useState(false);
   const debouncedSearch = useDebounce(searchValue, 500);
@@ -50,13 +54,15 @@ const index = (props: Props) => {
           onChange={handleSearchChange}
           className="w-auto flex-1 min-w-[180px] max-w-[400px]"
         />
-        <ButtonPrimary
-          color="white"
-          icon={faPlus}
-          text={t("btn.add.space")}
-          onClick={() => setIsAddSpaceModalOpen(true)}
-          className="ml-auto"
-        />
+        {canManage && (
+          <ButtonPrimary
+            color="white"
+            icon={faPlus}
+            text={t("btn.add.space")}
+            onClick={() => setIsAddSpaceModalOpen(true)}
+            className="ml-auto"
+          />
+        )}
       </div>
       <div className="min-h-0 flex-1">
         <SpacesTable data={filteredSpaces} isLoading={isLoading} fillHeight />

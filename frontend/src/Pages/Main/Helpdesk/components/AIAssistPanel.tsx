@@ -7,6 +7,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { ticketAssist, type TicketAssistResult } from "../../../../Services/ai";
 import { updateTicket } from "../../../../Services/tickets";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 type Props = {
   ticket: any;
@@ -15,6 +17,8 @@ type Props = {
 const AIAssistPanel = ({ ticket }: Props) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const permissionsQuery = usePermissions();
+  const canAssist = hasPermission("helpdesk.tickets.access", permissionsQuery.data);
   const [result, setResult] = useState<TicketAssistResult | null>(null);
 
   const assistMutation = useMutation({
@@ -37,6 +41,8 @@ const AIAssistPanel = ({ ticket }: Props) => {
     },
     onError: () => toast.error(t("ai.applyError")),
   });
+
+  if (!canAssist) return null;
 
   return (
     <div className="mt-4 rounded-[8px] border border-[#D6EAF8] bg-[#EBF5FB] p-3">

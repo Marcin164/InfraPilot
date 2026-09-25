@@ -16,6 +16,8 @@ import { useDebounce } from "../../../Hooks/useDebounce";
 import { useFilterPresets } from "../../../Hooks/useFilterPresets";
 import FilterPresetsBar from "../../../Components/Filter/FilterPresetsBar";
 import { useViewportFillHeight } from "../../../Hooks/useViewportFillHeight";
+import { usePermissions } from "../../../Hooks/usePermissions";
+import { hasPermission } from "../../../Constants/navigation";
 
 export type FilterKey =
   | "department"
@@ -45,6 +47,8 @@ const INITIAL_FILTERS: FilterOptions = {
 const UsersPage = () => {
   const { t } = useTranslation();
   const fillHeight = useViewportFillHeight();
+  const permissionsQuery = usePermissions();
+  const canAddUser = hasPermission("users.add", permissionsQuery.data);
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>(INITIAL_FILTERS);
   const [searchValue, setSearchValue] = useState("");
@@ -130,18 +134,22 @@ const UsersPage = () => {
               checkboxes={checkboxes}
               settingsKey="usersTableColumnOrder"
             />
-            <ButtonPrimary
-              color="white"
-              icon={faPlus}
-              text={t("btn.add.user")}
-              onClick={() => setIsAddUserModalOpen(true)}
-              className="h-[34px]"
-            />
+            {canAddUser && (
+              <ButtonPrimary
+                color="white"
+                icon={faPlus}
+                text={t("btn.add.user")}
+                onClick={() => setIsAddUserModalOpen(true)}
+                className="h-[34px]"
+              />
+            )}
           </div>
-          <AddUserModal
-            isModalOpen={isAddUserModalOpen}
-            onCloseModal={() => setIsAddUserModalOpen(false)}
-          />
+          {canAddUser && (
+            <AddUserModal
+              isModalOpen={isAddUserModalOpen}
+              onCloseModal={() => setIsAddUserModalOpen(false)}
+            />
+          )}
         </div>
         <FilterPresetsBar
           presets={presets.presets}

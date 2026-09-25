@@ -16,6 +16,8 @@ import {
   DeviceDetailsPatch,
   updateDeviceDetails,
 } from "../../../../Services/devices";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 // Same value->label mapping as Lifecycle.tsx's local stateLabel() --
 // duplicated rather than imported since that one isn't exported and this
@@ -60,6 +62,8 @@ const Overview = () => {
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<DeviceDetailsPatch>({});
+  const permissionsQuery = usePermissions();
+  const canEdit = hasPermission("devices.lifecycle.edit", permissionsQuery.data);
 
   useEffect(() => {
     if (!data) return;
@@ -101,11 +105,13 @@ const Overview = () => {
         <div className="flex justify-between items-start">
           <CardHeader text={t("device.tab.overview")} icon={faCircleInfo} />
           {!editing ? (
-            <ButtonPrimary
-              icon={faPen}
-              text={t("common.edit")}
-              onClick={() => setEditing(true)}
-            />
+            canEdit && (
+              <ButtonPrimary
+                icon={faPen}
+                text={t("common.edit")}
+                onClick={() => setEditing(true)}
+              />
+            )
           ) : (
             <div className="flex gap-2">
               <ButtonPrimary

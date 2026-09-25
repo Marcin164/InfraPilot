@@ -11,6 +11,8 @@ import moment from "moment";
 import { twMerge } from "tailwind-merge";
 
 import type { Approval, User } from "../../../../Types";
+import { usePermissions } from "../../../../Hooks/usePermissions";
+import { hasPermission } from "../../../../Constants/navigation";
 
 type Props = {
   requesterId: string;
@@ -21,6 +23,8 @@ const Approvals = ({ requesterId, approvals }: Props) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const params = useParams();
+  const permissionsQuery = usePermissions();
+  const canSendApproval = hasPermission("helpdesk.tickets.access", permissionsQuery.data);
   const [approverId, setApproverId] = useState<string | null>(null);
 
   const mutation = useMutation({
@@ -83,17 +87,21 @@ const Approvals = ({ requesterId, approvals }: Props) => {
 
   return (
     <div>
-      <SelectSecondary
-        label={t("helpdesk.approver")}
-        onSelect={handleApproverSelect}
-        options={createApproversOptions() ?? []}
-      />
-      <ButtonPrimary
-        text={hasPending ? t("helpdesk.approvalPending") : t("helpdesk.sendApproval")}
-        className="mt-4"
-        onClick={addApproval}
-        disabled={hasPending || !approverId || mutation.isPending}
-      />
+      {canSendApproval && (
+        <>
+          <SelectSecondary
+            label={t("helpdesk.approver")}
+            onSelect={handleApproverSelect}
+            options={createApproversOptions() ?? []}
+          />
+          <ButtonPrimary
+            text={hasPending ? t("helpdesk.approvalPending") : t("helpdesk.sendApproval")}
+            className="mt-4"
+            onClick={addApproval}
+            disabled={hasPending || !approverId || mutation.isPending}
+          />
+        </>
+      )}
       <div className="mt-4">
         {approvals.map((approval) => (
           <div className="mt-2">
