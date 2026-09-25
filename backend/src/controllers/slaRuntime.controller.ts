@@ -13,6 +13,7 @@ export class SlaRuntimeController {
   ) {}
 
   // 🔥 GŁÓWNY ENDPOINT DLA FRONTENDU
+  @RequiresPermission('helpdesk.tickets.access')
   @Get('ticket/:ticketId')
   async getRuntime(@Param('ticketId') ticketId: string) {
     return await this.runtime.getForTicket(ticketId);

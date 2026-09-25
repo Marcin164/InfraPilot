@@ -28,11 +28,13 @@ export class PurchaseOrderController {
     private readonly auditService: AuditService,
   ) {}
 
+  @RequiresPermission('procurement.view')
   @Get()
   findAll(@Query() query: any) {
     return this.poService.findAll(query);
   }
 
+  @RequiresPermission('procurement.view')
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.poService.findOne(id);

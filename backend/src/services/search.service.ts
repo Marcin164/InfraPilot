@@ -20,6 +20,21 @@ export type SearchResultItem = {
 
 const LIMIT = 8;
 
+/** Which view permission gates each search category. */
+const CATEGORY_PERMISSION: Record<
+  'users' | 'devices' | 'tickets' | 'histories' | 'applications' | 'knowledge' | 'licenses' | 'procurement',
+  string
+> = {
+  users: 'users.view',
+  devices: 'devices.view',
+  tickets: 'helpdesk.tickets.access',
+  histories: 'devices.view',
+  applications: 'devices.view',
+  knowledge: 'knowledge.view',
+  licenses: 'licenses.view',
+  procurement: 'procurement.view',
+};
+
 @Injectable()
 export class SearchService {
   constructor(
@@ -56,7 +71,19 @@ export class SearchService {
       .getMany();
   }
 
-  async searchAll(q: string): Promise<{
+  /**
+   * `granted` is the caller's effective permission set (see
+   * CustomRolesService.getUserPermissions()) -- each category only runs
+   * its query, and only appears in the result, when the caller holds the
+   * matching CATEGORY_PERMISSION. Search spans users/devices/tickets/
+   * licenses/etc, each gated differently elsewhere in the app; without
+   * this, any authenticated user could read every module's data through
+   * the search bar regardless of their actual role.
+   */
+  async searchAll(
+    q: string,
+    granted: ReadonlySet<string> = new Set(),
+  ): Promise<{
     users: SearchResultItem[];
     devices: SearchResultItem[];
     tickets: SearchResultItem[];
@@ -80,6 +107,8 @@ export class SearchService {
       };
     }
     const like = `%${term}%`;
+    const can = (category: keyof typeof CATEGORY_PERMISSION) =>
+      granted.has(CATEGORY_PERMISSION[category]);
 
     const [
       users,
@@ -92,76 +121,92 @@ export class SearchService {
       licenses,
       purchaseOrders,
     ] = await Promise.all([
-      this.usersRepo.find({
-        where: [
-          { name: ILike(like) },
-          { surname: ILike(like) },
-          { email: ILike(like) },
-          { username: ILike(like) },
-        ],
-        take: LIMIT,
-      }),
-      this.devicesRepo.find({
-        where: [
-          { assetName: ILike(like) },
-          { serialNumber: ILike(like) },
-          { model: ILike(like) },
-          { manufacturer: ILike(like) },
-          { location: ILike(like) },
-        ],
-        take: LIMIT,
-      }),
-      this.searchJsonbContents(term),
-      this.ticketsRepo.find({
-        where: [
-          { description: ILike(like) },
-          { category: ILike(like) },
-          ...(/^\d+$/.test(term) ? [{ number: parseInt(term, 10) }] : []),
-        ],
-        take: LIMIT,
-        order: { createdAt: 'DESC' },
-      }),
-      this.historiesRepo.find({
-        where: [
-          { details: ILike(like) },
-          { justification: ILike(like) },
-          { ticket: ILike(like) },
-        ],
-        take: LIMIT,
-      }),
-      this.applicationsRepo
-        .createQueryBuilder('a')
-        .where('a.nameKey ILIKE :like', { like: `%${term.toLowerCase()}%` })
-        .orWhere('a.publisherKey ILIKE :like', {
-          like: `%${term.toLowerCase()}%`,
-        })
-        .limit(LIMIT)
-        .getMany(),
-      this.knowledgeRepo.find({
-        where: [
-          { title: ILike(like) },
-          { content: ILike(like) },
-          { category: ILike(like) },
-        ],
-        take: LIMIT,
-        order: { views: 'DESC' },
-      }),
-      this.licenseRepo.find({
-        where: [
-          { name: ILike(like) },
-          { publisher: ILike(like) },
-          { vendor: ILike(like) },
-        ],
-        take: LIMIT,
-      }),
-      this.procurementRepo.find({
-        where: [
-          { title: ILike(like) },
-          { supplier: ILike(like) },
-        ],
-        take: LIMIT,
-        order: { createdAt: 'DESC' },
-      }),
+      can('users')
+        ? this.usersRepo.find({
+            where: [
+              { name: ILike(like) },
+              { surname: ILike(like) },
+              { email: ILike(like) },
+              { username: ILike(like) },
+            ],
+            take: LIMIT,
+          })
+        : Promise.resolve([]),
+      can('devices')
+        ? this.devicesRepo.find({
+            where: [
+              { assetName: ILike(like) },
+              { serialNumber: ILike(like) },
+              { model: ILike(like) },
+              { manufacturer: ILike(like) },
+              { location: ILike(like) },
+            ],
+            take: LIMIT,
+          })
+        : Promise.resolve([]),
+      can('devices') ? this.searchJsonbContents(term) : Promise.resolve([]),
+      can('tickets')
+        ? this.ticketsRepo.find({
+            where: [
+              { description: ILike(like) },
+              { category: ILike(like) },
+              ...(/^\d+$/.test(term) ? [{ number: parseInt(term, 10) }] : []),
+            ],
+            take: LIMIT,
+            order: { createdAt: 'DESC' },
+          })
+        : Promise.resolve([]),
+      can('histories')
+        ? this.historiesRepo.find({
+            where: [
+              { details: ILike(like) },
+              { justification: ILike(like) },
+              { ticket: ILike(like) },
+            ],
+            take: LIMIT,
+          })
+        : Promise.resolve([]),
+      can('applications')
+        ? this.applicationsRepo
+            .createQueryBuilder('a')
+            .where('a.nameKey ILIKE :like', { like: `%${term.toLowerCase()}%` })
+            .orWhere('a.publisherKey ILIKE :like', {
+              like: `%${term.toLowerCase()}%`,
+            })
+            .limit(LIMIT)
+            .getMany()
+        : Promise.resolve([]),
+      can('knowledge')
+        ? this.knowledgeRepo.find({
+            where: [
+              { title: ILike(like) },
+              { content: ILike(like) },
+              { category: ILike(like) },
+            ],
+            take: LIMIT,
+            order: { views: 'DESC' },
+          })
+        : Promise.resolve([]),
+      can('licenses')
+        ? this.licenseRepo.find({
+            where: [
+              { name: ILike(like) },
+              { publisher: ILike(like) },
+              { vendor: ILike(like) },
+            ],
+            take: LIMIT,
+          })
+        : Promise.resolve([]),
+      can('procurement')
+        ? this.procurementRepo.find({
+            where: [
+              { title: ILike(like) },
+              { supplier: ILike(like) },
+            ],
+            take: LIMIT,
+            order: { createdAt: 'DESC' },
+          })
+        : Promise.resolve([]),
     ]);
 
     // Merge structured + jsonb hits, dedup by id, cap at LIMIT.

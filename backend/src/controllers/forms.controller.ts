@@ -15,6 +15,7 @@ import {
 import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from 'src/guards/authGuard.guard';
+import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { FormsService } from 'src/services/forms.service';
 import { CustomRolesService } from 'src/services/customRoles.service';
 
@@ -42,6 +43,10 @@ export class FormsController {
     throw new ForbiddenException('You may only manage your own documents');
   }
 
+  // Every other handler below scopes to "self or staff" per-resource; this
+  // one has no owner filter at all (returns every user's equipment forms),
+  // so it needs the staff permission unconditionally.
+  @RequiresPermission('users.equipment.manage')
   @Get()
   async findAll(): Promise<any> {
     return this.formsService.findAll();

@@ -36,4 +36,11 @@ export class DashboardsService {
     if (!updated) throw new NotFoundException('Dashboard not found');
     return updated;
   }
+
+  async renameDashboard(id: string, name: string): Promise<Dashboards> {
+    const existing = await this.dashboardsRepository.findOneBy({ id });
+    if (!existing) throw new NotFoundException('Dashboard not found');
+    existing.name = name;
+    return this.dashboardsRepository.save(existing);
+  }
 }

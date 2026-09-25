@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Logger,
   Param,
@@ -69,6 +70,7 @@ import { cidrRange } from 'src/helpers/cidr';
 import { DeviceDiscoveryService } from 'src/services/deviceDiscovery.service';
 import { NetworkScanSettingsService } from 'src/services/networkScanSettings.service';
 import { NotificationDispatcherService } from 'src/services/notificationDispatcher.service';
+import { CustomRolesService } from 'src/services/customRoles.service';
 
 /** /22 = 1024 addresses -- generous for a site subnet, bounded enough to
  * finish comfortably inside a single agent task lease. */
@@ -94,7 +96,24 @@ export class DevicesController {
     private readonly deviceDiscoveryService: DeviceDiscoveryService,
     private readonly networkScanSettings: NetworkScanSettingsService,
     private readonly notificationDispatcher: NotificationDispatcherService,
+    private readonly customRolesService: CustomRolesService,
   ) {}
+
+  // A regular (end-user portal) user may only look up their own assigned
+  // devices; staff with devices.view can look up anyone's (e.g. composing a
+  // ticket on a requester's behalf). Mirrors forms.controller.ts's
+  // assertSelfOrStaff.
+  private async assertSelfOrDevicesView(req: any, targetUserId: string) {
+    const callerId: string | undefined = req?.user?.properties?.metadata?.id;
+    if (callerId && callerId === targetUserId) return;
+
+    if (callerId) {
+      const granted = await this.customRolesService.getUserPermissions(callerId);
+      if (granted.has('devices.view')) return;
+    }
+
+    throw new ForbiddenException('You may only view your own devices');
+  }
 
   @UseGuards(AuthGuard)
   @RequiresPermission('devices.add')
@@ -124,6 +143,10 @@ export class DevicesController {
     return this.devicesService.assignDeviceToUser(body.deviceId, body.userId);
   }
 
+  // Thin cross-cutting picker (id/model/manufacturer/serial only, no
+  // location/IP/tags) used by Licenses, DHCP servers, IPAM and device
+  // connections forms that don't all imply devices.view -- left open like
+  // users.controller.ts's findApprovers/findHelpdesk, on purpose.
   @UseGuards(AuthGuard)
   @Get('/options')
   async findDevicesWithSerial(): Promise<any> {
@@ -131,18 +154,21 @@ export class DevicesController {
   }
 
   @UseGuards(AuthGuard)
+  @RequiresPermission('devices.view')
   @Get()
   async findAll(@Req() req: Request): Promise<any> {
     return this.devicesService.findAll();
   }
 
   @UseGuards(AuthGuard)
+  @RequiresPermission('devices.view')
   @Get('/table')
   async findDevicesTable(@Query() query: any): Promise<any> {
     return this.devicesService.findDevicesTable(query);
   }
 
   @UseGuards(AuthGuard)
+  @RequiresPermission('devices.view')
   @Get('/filters')
   async getFilters() {
     return this.devicesService.getFilterOptions();
@@ -173,18 +199,28 @@ export class DevicesController {
   }
 
   @UseGuards(AuthGuard)
+  @RequiresPermission('devices.view')
   @Get('/:deviceId')
   async findDevice(@Param('deviceId') deviceId: string): Promise<any> {
     return this.devicesService.findDevice(deviceId);
   }
 
+  // Self-or-staff, not a plain @RequiresPermission: the end-user portal
+  // (Pages/User/Account, Pages/User/Tickets/New) calls this with the
+  // caller's own id to list their own equipment, with no devices.view at
+  // all -- only staff looking up someone else's devices needs the permission.
   @UseGuards(AuthGuard)
   @Get('/user/:userId')
-  async findUserDevices(@Param('userId') userId: string): Promise<any> {
+  async findUserDevices(
+    @Param('userId') userId: string,
+    @Req() req: any,
+  ): Promise<any> {
+    await this.assertSelfOrDevicesView(req, userId);
     return this.devicesService.findUserDevices(userId);
   }
 
   @UseGuards(AuthGuard)
+  @RequiresPermission('devices.view')
   @Get('/application/:id')
   async findDevicesWithApllication(@Param('id') id: string): Promise<any> {
     return this.devicesService.findDevicesWithApplication(id);
@@ -892,6 +928,7 @@ export class DevicesController {
   }
 
   @UseGuards(AuthGuard)
+  @RequiresPermission('devices.view')
   @Get('/:deviceId/tags')
   tagsForDevice(@Param('deviceId') deviceId: string) {
     return this.tagsService.tagsForDevice(deviceId);

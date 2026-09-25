@@ -951,4 +951,80 @@ describe('TicketsService', () => {
       expect(result).toEqual(tickets);
     });
   });
+
+  // ─────────────────────────────────────────
+  // assertCanViewTicket
+  // ─────────────────────────────────────────
+
+  describe('assertCanViewTicket', () => {
+    let customRolesService: { getUserPermissions: jest.Mock };
+
+    beforeEach(() => {
+      customRolesService = (service as any).customRolesService;
+    });
+
+    it('allows a staff user regardless of ticket ownership', async () => {
+      customRolesService.getUserPermissions.mockResolvedValue(
+        new Set(['helpdesk.tickets.access']),
+      );
+      const ticket = mockTicket();
+      ticketsRepo.findOne.mockResolvedValue({ ...ticket, affectedUsers: [] });
+
+      await expect(
+        service.assertCanViewTicket(ticket.id!, 'someone-else'),
+      ).resolves.not.toThrow();
+      // Staff check short-circuits before any ticket lookup is needed.
+      expect(ticketsRepo.findOne).not.toHaveBeenCalled();
+    });
+
+    it('allows the ticket requester', async () => {
+      const ticket = mockTicket();
+      ticketsRepo.findOne.mockResolvedValue({ ...ticket, affectedUsers: [] });
+
+      await expect(
+        service.assertCanViewTicket(ticket.id!, ticket.requesterId),
+      ).resolves.not.toThrow();
+    });
+
+    it('allows a user listed as an affected user', async () => {
+      const ticket = mockTicket();
+      ticketsRepo.findOne.mockResolvedValue({
+        ...ticket,
+        affectedUsers: [{ id: 'affected-user-1' }],
+      });
+
+      await expect(
+        service.assertCanViewTicket(ticket.id!, 'affected-user-1'),
+      ).resolves.not.toThrow();
+    });
+
+    it('rejects a plain user with no relation to the ticket', async () => {
+      const ticket = mockTicket();
+      ticketsRepo.findOne.mockResolvedValue({
+        ...ticket,
+        affectedUsers: [{ id: 'affected-user-1' }],
+      });
+
+      await expect(
+        service.assertCanViewTicket(ticket.id!, 'some-random-user'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('rejects when there is no caller id at all', async () => {
+      const ticket = mockTicket();
+      ticketsRepo.findOne.mockResolvedValue({ ...ticket, affectedUsers: [] });
+
+      await expect(
+        service.assertCanViewTicket(ticket.id!, undefined),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws NotFoundException when the ticket does not exist', async () => {
+      ticketsRepo.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.assertCanViewTicket('ghost-ticket', 'some-user'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
 });

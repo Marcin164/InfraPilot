@@ -22,6 +22,7 @@ import {
 export class CalendarController {
   constructor(private readonly calendarService: CalendarService) {}
 
+  @RequiresPermission('helpdesk.sla.config')
   @Get()
   getAll() {
     return this.calendarService.getAll();

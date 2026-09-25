@@ -7,11 +7,13 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { CustomRolesService } from 'src/services/customRoles.service';
+import { AuditService } from 'src/services/audit.service';
 import {
   PERMISSION_GROUPS,
   PERMISSION_IMPLIES,
@@ -24,7 +26,14 @@ import {
 @UseGuards(AuthGuard)
 @Controller('custom-roles')
 export class CustomRolesController {
-  constructor(private readonly customRolesService: CustomRolesService) {}
+  constructor(
+    private readonly customRolesService: CustomRolesService,
+    private readonly auditService: AuditService,
+  ) {}
+
+  private actorFrom(req: any): string | null {
+    return req?.user?.properties?.metadata?.id ?? req?.user?.id ?? null;
+  }
 
   @Get('catalog')
   getCatalog() {
@@ -52,31 +61,73 @@ export class CustomRolesController {
 
   @RequiresPermission('admin.roleAssignment.manage')
   @Post()
-  create(@Body() dto: CreateCustomRoleDto) {
-    return this.customRolesService.createRole(dto);
+  async create(@Body() dto: CreateCustomRoleDto, @Req() req: any) {
+    const role = await this.customRolesService.createRole(dto);
+    await this.auditService.log('CustomRole', role.id, 'created', {
+      actor: this.actorFrom(req),
+      name: role.name,
+      grantsAllPermissions: role.grantsAllPermissions,
+      permissions: role.permissions,
+    });
+    return role;
   }
 
   @RequiresPermission('admin.roleAssignment.manage')
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateCustomRoleDto) {
-    return this.customRolesService.updateRole(id, dto);
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateCustomRoleDto,
+    @Req() req: any,
+  ) {
+    const role = await this.customRolesService.updateRole(id, dto);
+    await this.auditService.log('CustomRole', role.id, 'updated', {
+      actor: this.actorFrom(req),
+      name: role.name,
+      grantsAllPermissions: role.grantsAllPermissions,
+      permissions: role.permissions,
+    });
+    return role;
   }
 
   @RequiresPermission('admin.roleAssignment.manage')
   @Delete(':id')
-  delete(@Param('id') id: string) {
-    return this.customRolesService.deleteRole(id);
+  async delete(@Param('id') id: string, @Req() req: any) {
+    const role = await this.customRolesService.getRole(id);
+    const result = await this.customRolesService.deleteRole(id);
+    await this.auditService.log('CustomRole', id, 'deleted', {
+      actor: this.actorFrom(req),
+      name: role.name,
+    });
+    return result;
   }
 
   @RequiresPermission('admin.roleAssignment.manage')
   @Post(':id/users/:userId')
-  assign(@Param('id') id: string, @Param('userId') userId: string) {
-    return this.customRolesService.assignRole(id, userId);
+  async assign(
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+    @Req() req: any,
+  ) {
+    const result = await this.customRolesService.assignRole(id, userId);
+    await this.auditService.log('CustomRole', id, 'user_assigned', {
+      actor: this.actorFrom(req),
+      userId,
+    });
+    return result;
   }
 
   @RequiresPermission('admin.roleAssignment.manage')
   @Delete(':id/users/:userId')
-  unassign(@Param('id') id: string, @Param('userId') userId: string) {
-    return this.customRolesService.unassignRole(id, userId);
+  async unassign(
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+    @Req() req: any,
+  ) {
+    const result = await this.customRolesService.unassignRole(id, userId);
+    await this.auditService.log('CustomRole', id, 'user_unassigned', {
+      actor: this.actorFrom(req),
+      userId,
+    });
+    return result;
   }
 }

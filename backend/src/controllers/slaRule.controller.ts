@@ -23,6 +23,7 @@ import {
 export class SlaRuleController {
   constructor(private readonly service: SlaRuleService) {}
 
+  @RequiresPermission('helpdesk.sla.config')
   @Get()
   getAll() {
     return this.service.getAll();

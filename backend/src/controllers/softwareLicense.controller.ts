@@ -28,11 +28,13 @@ export class SoftwareLicenseController {
     private readonly auditService: AuditService,
   ) {}
 
+  @RequiresPermission('licenses.view')
   @Get()
   async findAll() {
     return this.licenseService.findAll();
   }
 
+  @RequiresPermission('licenses.view')
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.licenseService.findOne(id);
@@ -66,6 +68,7 @@ export class SoftwareLicenseController {
     return { ok: true };
   }
 
+  @RequiresPermission('licenses.view')
   @Get(':id/assignments')
   async getAssignments(@Param('id') id: string) {
     return this.licenseService.getAssignments(id);

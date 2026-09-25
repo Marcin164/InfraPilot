@@ -30,6 +30,11 @@ export class LocationController {
     private readonly auditService: AuditService,
   ) {}
 
+  // Plain name/hierarchy directory data -- used as a cross-cutting picker
+  // in equipment forms, ticket updates, the device location tab, the asset
+  // map and the IPAM subnet form, none of which imply
+  // admin.locations.config. Left open on purpose, same reasoning as
+  // devices.controller.ts's /options endpoint.
   @Get()
   findAll() {
     return this.locationService.findAll();
@@ -74,11 +79,19 @@ export class LocationController {
     return loc;
   }
 
+  // Device/user counts at this location -- used by the asset Map's building
+  // popup (needs devices.view, the same permission the Map itself implies),
+  // and by the Locations admin page (admin.locations.config). Unlike
+  // findAll/findTree/findOne above, this is aggregate data, not a plain
+  // picker, but it still shouldn't require the *admin* location permission
+  // just to view a building's device count from the map.
+  @RequiresPermission('devices.view', 'admin.locations.config')
   @Get(':id/summary')
   getSummary(@Param('id') id: string) {
     return this.locationService.getSummary(id);
   }
 
+  @RequiresPermission('admin.locations.config')
   @Get(':id/plan')
   async downloadPlan(@Param('id') id: string, @Res() res: Response) {
     const { location, stream } = await this.locationService.getPlanStream(id);

@@ -29,6 +29,13 @@ export class PrivacyController {
     private readonly auditService: AuditService,
   ) {}
 
+  // Read-only DPO visibility -- dpo.viewUserAsDpo alone is enough (widens
+  // the class-level dpo.fullAccess default for just these two GET routes;
+  // export/erase below stay on dpo.fullAccess only). Previously
+  // dpo.viewUserAsDpo did nothing on its own: the frontend showed a "View
+  // as DPO" button for it, but every backend route demanded fullAccess, so
+  // it 403'd the moment you clicked through.
+  @RequiresPermission('dpo.viewUserAsDpo', 'dpo.fullAccess')
   @Get('user/:id')
   async getUserPersonalData(@Param('id') id: string, @Req() req: any) {
     const actor = actorOf(req);
@@ -41,6 +48,7 @@ export class PrivacyController {
     return data;
   }
 
+  @RequiresPermission('dpo.viewUserAsDpo', 'dpo.fullAccess')
   @Get('access-log')
   async listAccessLog(
     @Query('targetUserId') targetUserId?: string,

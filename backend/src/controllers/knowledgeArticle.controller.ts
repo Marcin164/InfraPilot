@@ -23,11 +23,13 @@ import {
 export class KnowledgeArticleController {
   constructor(private readonly service: KnowledgeArticleService) {}
 
+  @RequiresPermission('knowledge.view', 'knowledge.manage')
   @Get('search')
   async search(@Query('q') query: string) {
     return this.service.search(query || '');
   }
 
+  @RequiresPermission('knowledge.view', 'knowledge.manage')
   @Get('space/:spaceId')
   async findBySpace(
     @Param('spaceId') spaceId: string,
@@ -36,11 +38,13 @@ export class KnowledgeArticleController {
     return this.service.findBySpace(spaceId, category || undefined);
   }
 
+  @RequiresPermission('knowledge.view', 'knowledge.manage')
   @Get('space/:spaceId/categories')
   async listCategories(@Param('spaceId') spaceId: string) {
     return this.service.listCategoriesBySpace(spaceId);
   }
 
+  @RequiresPermission('knowledge.view', 'knowledge.manage')
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.service.findOne(id);

@@ -21,6 +21,7 @@ import {
 export class SlaDefinitionController {
   constructor(private readonly service: SlaDefinitionService) {}
 
+  @RequiresPermission('helpdesk.sla.config')
   @Get()
   getAll() {
     return this.service.getAll();

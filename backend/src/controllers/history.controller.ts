@@ -24,6 +24,10 @@ import { CreateHistoryDto } from 'src/dto/history.dto';
 export class HistoriesController {
   constructor(private readonly historiesService: HistoriesService) {}
 
+  // Same audience as feed/feed-export below -- an unscoped dump of every
+  // history entry company-wide is exactly the kind of thing those two are
+  // already gated against, just without the filtering.
+  @RequiresPermission('audit.fullAccess', 'helpdesk.approver', 'dpo.fullAccess')
   @Get()
   async findAll(@Req() req: Request): Promise<any> {
     return this.historiesService.findAll();
@@ -53,11 +57,13 @@ export class HistoriesController {
     return this.historiesService.createHistory(body);
   }
 
+  @RequiresPermission('devices.view')
   @Get('device/:deviceId')
   async findDeviceHistory(@Param('deviceId') deviceId: string): Promise<any> {
     return this.historiesService.findDeviceHistory(deviceId);
   }
 
+  @RequiresPermission('users.view')
   @Get('user/:userId')
   async findUserHistory(@Param('userId') userId: string): Promise<any> {
     return this.historiesService.findUserHistory(userId);

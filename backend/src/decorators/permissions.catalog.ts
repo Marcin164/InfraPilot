@@ -31,7 +31,14 @@ const DEVICES_PERMISSIONS = [
   { code: 'devices.add', label: 'Add devices' },
   { code: 'devices.secret.generate', label: 'Generate secret' },
   { code: 'devices.assignment.manage', label: 'Assignment' },
-  { code: 'devices.connection.manage', label: 'Connection' },
+  // Named narrowly on purpose -- this used to also gate IPAM/DHCP and
+  // network device backups by convenience reuse, which meant every
+  // helpdesk Agent (who legitimately needs remote-assist) also got
+  // accidental write access to subnets/DHCP servers and network gear SSH
+  // credentials/config backups. Those now have their own codes (see
+  // ipam.*, devices.networkBackup.manage below) -- keep this one scoped to
+  // remote-assist only, don't reuse it for anything else.
+  { code: 'devices.connection.manage', label: 'Remote assist (connection)' },
   { code: 'devices.lifecycle.edit', label: 'Lifecycle edit' },
   { code: 'devices.taskSchedule.manage', label: 'Task schedule' },
   { code: 'devices.maintenance.manage', label: 'Maintenance and service' },
@@ -44,6 +51,30 @@ const DEVICES_PERMISSIONS = [
     label: 'Managing compliance rules',
   },
   { code: 'devices.agentConfig.manage', label: 'Agent config' },
+  {
+    code: 'devices.networkBackup.manage',
+    label: 'Network device SSH credentials & config backups',
+  },
+] as const;
+
+const IPAM_PERMISSIONS = [
+  { code: 'ipam.view', label: 'View subnets, IP allocations & conflicts' },
+  {
+    code: 'ipam.manage',
+    label: 'Create/edit/delete subnets & IP allocations',
+  },
+] as const;
+
+// Separate from IPAM on purpose: configuring a DHCP lease-sync integration
+// (choosing a driver, pointing it at a device) is a more specialized
+// network-infra task than documenting subnets/allocations -- a org may
+// want someone to do one without the other.
+const DHCP_PERMISSIONS = [
+  { code: 'dhcp.view', label: 'View DHCP servers & sync status' },
+  {
+    code: 'dhcp.manage',
+    label: 'Add/edit/delete DHCP servers & run lease sync',
+  },
 ] as const;
 
 const SHIFTS_PERMISSIONS = [
@@ -115,6 +146,8 @@ export const PERMISSION_GROUPS = [
   },
   { key: 'users', label: 'Users', permissions: USERS_PERMISSIONS },
   { key: 'devices', label: 'Devices', permissions: DEVICES_PERMISSIONS },
+  { key: 'ipam', label: 'IPAM', permissions: IPAM_PERMISSIONS },
+  { key: 'dhcp', label: 'DHCP', permissions: DHCP_PERMISSIONS },
   { key: 'shifts', label: 'Shift', permissions: SHIFTS_PERMISSIONS },
   { key: 'licenses', label: 'Licenses', permissions: LICENSES_PERMISSIONS },
   {
@@ -140,6 +173,8 @@ export const ALL_PERMISSION_CODES: PermissionCode[] = [
   ...codesOf(DASHBOARDS_PERMISSIONS),
   ...codesOf(USERS_PERMISSIONS),
   ...codesOf(DEVICES_PERMISSIONS),
+  ...codesOf(IPAM_PERMISSIONS),
+  ...codesOf(DHCP_PERMISSIONS),
   ...codesOf(SHIFTS_PERMISSIONS),
   ...codesOf(LICENSES_PERMISSIONS),
   ...codesOf(PROCUREMENT_PERMISSIONS),
@@ -158,6 +193,8 @@ export const PERMISSION_IMPLIES: Partial<
   'audit.fullAccess': [
     ...codesOf(USERS_PERMISSIONS),
     ...codesOf(DEVICES_PERMISSIONS),
+    ...codesOf(IPAM_PERMISSIONS),
+    ...codesOf(DHCP_PERMISSIONS),
     ...codesOf(LICENSES_PERMISSIONS),
     ...codesOf(PROCUREMENT_PERMISSIONS),
     ...codesOf(HELPDESK_PERMISSIONS),

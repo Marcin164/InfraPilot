@@ -16,7 +16,7 @@ import {
 } from 'src/services/networkDeviceBackup.service';
 
 @UseGuards(AuthGuard)
-@RequiresPermission('devices.connection.manage')
+@RequiresPermission('devices.networkBackup.manage')
 @Controller('devices')
 export class NetworkDeviceBackupController {
   constructor(private readonly backupService: NetworkDeviceBackupService) {}

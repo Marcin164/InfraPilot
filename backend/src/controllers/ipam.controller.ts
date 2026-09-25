@@ -27,21 +27,25 @@ export class IpamController {
     private readonly auditService: AuditService,
   ) {}
 
+  @RequiresPermission('ipam.view')
   @Get('subnets')
   findAllSubnets() {
     return this.ipamService.findAllSubnets();
   }
 
+  @RequiresPermission('ipam.view')
   @Get('subnets/:id')
   findSubnet(@Param('id') id: string) {
     return this.ipamService.findSubnet(id);
   }
 
+  @RequiresPermission('ipam.view')
   @Get('subnets/:id/utilization')
   getUtilization(@Param('id') id: string) {
     return this.ipamService.getSubnetUtilization(id);
   }
 
+  @RequiresPermission('ipam.view')
   @Get('subnets/:id/scan-candidates')
   getScanCandidates(@Param('id') id: string) {
     return this.ipamService.findScanCandidates(id);
@@ -51,12 +55,13 @@ export class IpamController {
   // can't confirm a match for this particular subnet -- every enrolled
   // Windows agent, so the admin can still pick one manually instead of
   // being blocked outright.
+  @RequiresPermission('ipam.view')
   @Get('scan-agents')
   getAllWindowsAgents() {
     return this.ipamService.findAllWindowsAgents();
   }
 
-  @RequiresPermission('devices.connection.manage')
+  @RequiresPermission('ipam.manage')
   @Post('subnets')
   async createSubnet(@Body() dto: CreateSubnetDto) {
     const subnet = await this.ipamService.createSubnet(dto);
@@ -67,7 +72,7 @@ export class IpamController {
     return subnet;
   }
 
-  @RequiresPermission('devices.connection.manage')
+  @RequiresPermission('ipam.manage')
   @Patch('subnets/:id')
   async updateSubnet(@Param('id') id: string, @Body() dto: UpdateSubnetDto) {
     const subnet = await this.ipamService.updateSubnet(id, dto);
@@ -75,7 +80,7 @@ export class IpamController {
     return subnet;
   }
 
-  @RequiresPermission('devices.connection.manage')
+  @RequiresPermission('ipam.manage')
   @Delete('subnets/:id')
   async removeSubnet(@Param('id') id: string) {
     await this.ipamService.removeSubnet(id);
@@ -83,12 +88,13 @@ export class IpamController {
     return { ok: true };
   }
 
+  @RequiresPermission('ipam.view')
   @Get('allocations')
   listAllocations(@Query('subnetId') subnetId?: string) {
     return this.ipamService.listAllocations(subnetId);
   }
 
-  @RequiresPermission('devices.connection.manage')
+  @RequiresPermission('ipam.manage')
   @Post('allocations')
   async createAllocation(@Body() dto: CreateAllocationDto) {
     const allocation = await this.ipamService.createAllocation(dto);
@@ -99,7 +105,7 @@ export class IpamController {
     return allocation;
   }
 
-  @RequiresPermission('devices.connection.manage')
+  @RequiresPermission('ipam.manage')
   @Delete('allocations/:id')
   async removeAllocation(@Param('id') id: string) {
     await this.ipamService.removeAllocation(id);
@@ -107,6 +113,7 @@ export class IpamController {
     return { ok: true };
   }
 
+  @RequiresPermission('ipam.view')
   @Get('conflicts')
   getConflicts() {
     return this.ipamService.getConflicts();

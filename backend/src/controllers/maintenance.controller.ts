@@ -25,16 +25,22 @@ export class MaintenanceController {
     private readonly auditService: AuditService,
   ) {}
 
+  // Same OR pattern as devices.controller.ts's listTags(): a general
+  // devices.view is enough to read the maintenance tab, the dedicated
+  // permission is only required to write to it.
+  @RequiresPermission('devices.maintenance.manage', 'devices.view')
   @Get('device/:deviceId')
   findByDevice(@Param('deviceId') deviceId: string) {
     return this.maintenanceService.findByDevice(deviceId);
   }
 
+  @RequiresPermission('devices.maintenance.manage', 'devices.view')
   @Get('upcoming')
   findUpcoming() {
     return this.maintenanceService.findUpcoming(30);
   }
 
+  @RequiresPermission('devices.maintenance.manage', 'devices.view')
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.maintenanceService.findOne(id);

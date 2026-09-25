@@ -1006,13 +1006,43 @@ export class TicketsService {
     return withAuthor;
   }
 
-  async getAttachmentStream(commentId: string) {
+  /**
+   * A ticket has no @RequiresPermission of its own -- unlike most
+   * resources, "can view this ticket" is a data-dependent check (the
+   * requester, an affected user, or staff), not a static role. Throws
+   * rather than returning a boolean so every call site fails closed by
+   * construction instead of forgetting to check the return value.
+   */
+  async assertCanViewTicket(
+    ticketId: string,
+    userId: string | undefined,
+  ): Promise<void> {
+    if (await isStaffUser(userId ? { id: userId } : null, this.customRolesService)) {
+      return;
+    }
+
+    const ticket = await this.ticketsRepository.findOne({
+      where: { id: ticketId },
+      relations: ['affectedUsers'],
+    });
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    const isRequester = !!userId && ticket.requesterId === userId;
+    const isAffected =
+      !!userId && (ticket.affectedUsers ?? []).some((u) => u.id === userId);
+    if (isRequester || isAffected) return;
+
+    throw new ForbiddenException('You may only view your own tickets');
+  }
+
+  async getAttachmentStream(commentId: string, userId: string | undefined) {
     const comment = await this.ticketsCommentsRepository.findOne({
       where: { id: commentId },
     });
     if (!comment || !comment.attachmentPath) {
       throw new NotFoundException('Attachment not found');
     }
+    await this.assertCanViewTicket(comment.ticketId, userId);
     if (!fs.existsSync(comment.attachmentPath)) {
       throw new NotFoundException('File not found on disk');
     }

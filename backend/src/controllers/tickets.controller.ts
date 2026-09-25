@@ -33,11 +33,16 @@ import { TicketsService } from 'src/services/tickets.service';
 export class TicketsController {
   constructor(private readonly ticketsService: TicketsService) {}
 
+  // The full ticket queue (any requester, filterable) is a staff view --
+  // /mine below is the self-scoped equivalent every plain user actually
+  // needs.
+  @RequiresPermission('helpdesk.tickets.access')
   @Get()
   async getTickets(@Query() query: GetTicketsQueryDto) {
     return this.ticketsService.getTickets(query);
   }
 
+  @RequiresPermission('helpdesk.tickets.access')
   @Get('/filters')
   async getFilters() {
     return this.ticketsService.getFilterOptions();
@@ -81,8 +86,18 @@ export class TicketsController {
     );
   }
 
+  // Gated on access to the anchor ticket, not a static permission --
+  // otherwise any authenticated user could fish arbitrary tickets'
+  // descriptions/categories by probing ids here even without rights to the
+  // ticket itself.
   @Get('/:id/similar')
-  async getSimilar(@Param('id') id: string, @Query('limit') limit?: string) {
+  async getSimilar(
+    @Param('id') id: string,
+    @Query('limit') limit?: string,
+    @Req() req?: any,
+  ) {
+    const userId = req?.user?.properties?.metadata?.id;
+    await this.ticketsService.assertCanViewTicket(id, userId);
     return this.ticketsService.getSimilarResolvedTickets(
       id,
       limit ? Number(limit) : 5,
@@ -112,9 +127,12 @@ export class TicketsController {
     return this.ticketsService.linkTicket(id, body.parentTicketId, userId);
   }
 
+  // Self-or-staff, data-dependent (requester/affected-user/staff), not a
+  // static permission -- see TicketsService.assertCanViewTicket().
   @Get(':id')
   async getTicket(@Param('id') id: string, @Req() req: any) {
     const userId = req?.user?.properties?.metadata?.id;
+    await this.ticketsService.assertCanViewTicket(id, userId);
     return this.ticketsService.getTicketById(id, userId);
   }
 
@@ -167,9 +185,13 @@ export class TicketsController {
   async downloadAttachment(
     @Param('commentId') commentId: string,
     @Res() res: Response,
+    @Req() req: any,
   ) {
-    const { comment, stream } =
-      await this.ticketsService.getAttachmentStream(commentId);
+    const userId = req?.user?.properties?.metadata?.id;
+    const { comment, stream } = await this.ticketsService.getAttachmentStream(
+      commentId,
+      userId,
+    );
     res.setHeader(
       'Content-Type',
       comment.attachmentMimetype || 'application/octet-stream',

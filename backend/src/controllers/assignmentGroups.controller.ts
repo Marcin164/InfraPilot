@@ -25,16 +25,21 @@ export class AssignmentGroupsController {
     private readonly assignmentGroupsService: AssignmentGroupsService,
   ) {}
 
+  // Needed by any ticket-handling agent to route a ticket to a group
+  // (UpdateTicketForm), not just by whoever manages the groups themselves.
+  @RequiresPermission('helpdesk.assignmentGroups.manage', 'helpdesk.tickets.access')
   @Get()
   async findAll() {
     return this.assignmentGroupsService.findAll();
   }
 
+  @RequiresPermission('helpdesk.assignmentGroups.manage', 'helpdesk.tickets.access')
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.assignmentGroupsService.findOne(id);
   }
 
+  @RequiresPermission('helpdesk.assignmentGroups.manage', 'helpdesk.tickets.access')
   @Get(':id/members')
   async findMembers(@Param('id') id: string) {
     return this.assignmentGroupsService.findMembers(id);

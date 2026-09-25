@@ -142,14 +142,6 @@ describe('RBAC coverage on mutation endpoints', () => {
     ],
     'forms.controller.ts': ['create', 'delete'],
     'settings.controller.ts': ['updateUserSettings'],
-    'slaRuntime.controller.ts': ['pause', 'resume'],
-    // Pre-existing gap (predates the RBAC migration): any authenticated user
-    // can hit these today (@UseGuards(AuthGuard), no role check at all) --
-    // used while composing a ticket, so restricting to staff-only
-    // permissions would be a real behavior change, not a like-for-like
-    // @RequiresPermission translation. Allow-listed to preserve current
-    // behavior; revisit if AI-assist should actually be staff-only.
-    'ai.controller.ts': ['ticketAssist', 'analyzeLogs'],
     // enrollAgent uses EnrollmentGuard (fleet HMAC bootstrap token) instead of @Roles
     'devices.controller.ts': ['enrollAgent'],
     // create/update/remove gate on ShiftsService.assertCanManage — the target

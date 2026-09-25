@@ -21,11 +21,13 @@ import {
 export class SlaEscalationConfigController {
   constructor(private readonly service: EscalationConfigService) {}
 
+  @RequiresPermission('helpdesk.sla.config')
   @Get()
   async getAll() {
     return this.service.getAll();
   }
 
+  @RequiresPermission('helpdesk.sla.config')
   @Get('definitions')
   async getEscalationsGroupedBySla() {
     return this.service.getEscalationsGroupedBySla();

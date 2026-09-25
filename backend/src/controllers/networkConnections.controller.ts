@@ -25,11 +25,13 @@ export class NetworkConnectionsController {
     private readonly auditService: AuditService,
   ) {}
 
+  @RequiresPermission('devices.topology.view')
   @Get()
   findAll(@Query('deviceId') deviceId?: string) {
     return this.connectionsService.findAll(deviceId);
   }
 
+  @RequiresPermission('devices.topology.view')
   @Get('topology')
   getTopology() {
     return this.connectionsService.getTopology();

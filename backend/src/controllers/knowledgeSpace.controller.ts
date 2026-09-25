@@ -22,11 +22,13 @@ import {
 export class KnowledgeSpaceController {
   constructor(private readonly service: KnowledgeSpaceService) {}
 
+  @RequiresPermission('knowledge.view', 'knowledge.manage')
   @Get()
   async findAll() {
     return this.service.findAll();
   }
 
+  @RequiresPermission('knowledge.view', 'knowledge.manage')
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.service.findOne(id);

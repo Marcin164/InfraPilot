@@ -18,3 +18,7 @@ export class UpdateDashboardCardsDto {
   @IsArray()
   cards: Record<string, any>[];
 }
+
+export class RenameDashboardDto {
+  @IsNotEmpty() @IsString() name: string;
+}

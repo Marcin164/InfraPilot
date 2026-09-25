@@ -16,6 +16,7 @@ import { DashboardsService } from 'src/services/dashboards.service';
 import {
   CreateDashboardDto,
   UpdateDashboardCardsDto,
+  RenameDashboardDto,
 } from 'src/dto/dashboards.dto';
 
 @UseGuards(AuthGuard)
@@ -44,5 +45,11 @@ export class DashboardsController {
   @Patch(':id')
   updateCards(@Param('id') id: string, @Body() body: UpdateDashboardCardsDto) {
     return this.dashboardsService.updateCards(id, body.cards);
+  }
+
+  @RequiresPermission('dashboards.edit')
+  @Patch(':id/name')
+  rename(@Param('id') id: string, @Body() body: RenameDashboardDto) {
+    return this.dashboardsService.renameDashboard(id, body.name);
   }
 }
