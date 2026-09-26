@@ -5,10 +5,12 @@ import { ComplianceRule } from 'src/entities/complianceRule.entity';
 import { ComplianceResult } from 'src/entities/complianceResult.entity';
 import { ComplianceService } from 'src/services/compliance.service';
 import { ComplianceController } from 'src/controllers/compliance.controller';
+import { NotificationModule } from './notification.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Devices, ComplianceRule, ComplianceResult]),
+    NotificationModule,
   ],
   controllers: [ComplianceController],
   providers: [ComplianceService],

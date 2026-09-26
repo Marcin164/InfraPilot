@@ -142,6 +142,13 @@ describe('RBAC coverage on mutation endpoints', () => {
     ],
     'forms.controller.ts': ['create', 'delete'],
     'settings.controller.ts': ['updateUserSettings'],
+    // ticketAssist helps a requester word their OWN draft ticket before it
+    // even exists (end-user portal's New.tsx) -- same "any authenticated
+    // user" trust level as tickets.controller.ts's createTicket above, since
+    // there's no ticket yet for a ticket-scoped permission to apply to.
+    // analyze-logs stays @RequiresPermission('helpdesk.tickets.access') --
+    // only Helpdesk's diagnostics panel ever calls it.
+    'ai.controller.ts': ['ticketAssist'],
     // enrollAgent uses EnrollmentGuard (fleet HMAC bootstrap token) instead of @Roles
     'devices.controller.ts': ['enrollAgent'],
     // create/update/remove gate on ShiftsService.assertCanManage — the target

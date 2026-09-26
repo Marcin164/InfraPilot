@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -14,6 +15,7 @@ import { AuthGuard } from 'src/guards/authGuard.guard';
 import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { CustomRolesService } from 'src/services/customRoles.service';
 import { AuditService } from 'src/services/audit.service';
+import { NotificationDispatcherService } from 'src/services/notificationDispatcher.service';
 import {
   PERMISSION_GROUPS,
   PERMISSION_IMPLIES,
@@ -26,9 +28,12 @@ import {
 @UseGuards(AuthGuard)
 @Controller('custom-roles')
 export class CustomRolesController {
+  private readonly logger = new Logger(CustomRolesController.name);
+
   constructor(
     private readonly customRolesService: CustomRolesService,
     private readonly auditService: AuditService,
+    private readonly dispatcher: NotificationDispatcherService,
   ) {}
 
   private actorFrom(req: any): string | null {
@@ -113,7 +118,22 @@ export class CustomRolesController {
       actor: this.actorFrom(req),
       userId,
     });
+    await this.notifyRoleGranted(id, userId);
     return result;
+  }
+
+  private async notifyRoleGranted(roleId: string, userId: string): Promise<void> {
+    try {
+      const role = await this.customRolesService.getRole(roleId);
+      if (!role.grantsAllPermissions) return;
+      await this.dispatcher.dispatchOpsAlert({
+        event: 'role_granted',
+        title: `Admin role granted: ${role.name}`,
+        body: `User ${userId} was granted the "${role.name}" role, which has full admin permissions.`,
+      });
+    } catch (err) {
+      this.logger.warn(`Failed to dispatch role_granted alert for role ${roleId}: ${(err as Error).message}`);
+    }
   }
 
   @RequiresPermission('admin.roleAssignment.manage')

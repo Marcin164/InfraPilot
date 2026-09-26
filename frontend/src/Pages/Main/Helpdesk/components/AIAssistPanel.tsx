@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { faRobot, faCheck, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-import { ticketAssist, type TicketAssistResult } from "../../../../Services/ai";
+import { ticketAssist, getAiSettings, type TicketAssistResult } from "../../../../Services/ai";
 import { updateTicket } from "../../../../Services/tickets";
 import { usePermissions } from "../../../../Hooks/usePermissions";
 import { hasPermission } from "../../../../Constants/navigation";
@@ -19,6 +19,13 @@ const AIAssistPanel = ({ ticket }: Props) => {
   const queryClient = useQueryClient();
   const permissionsQuery = usePermissions();
   const canAssist = hasPermission("helpdesk.tickets.access", permissionsQuery.data);
+  const aiSettingsQuery = useQuery({
+    queryKey: ["ai-settings"],
+    queryFn: getAiSettings,
+    enabled: canAssist,
+  });
+  const surfaceEnabled =
+    aiSettingsQuery.data?.enabledSurfaces.includes("adminTicketAssist") ?? true;
   const [result, setResult] = useState<TicketAssistResult | null>(null);
 
   const assistMutation = useMutation({
@@ -27,6 +34,7 @@ const AIAssistPanel = ({ ticket }: Props) => {
         description: ticket.description ?? "",
         category: ticket.category,
         deviceInfo: ticket.device?.assetName ?? ticket.device?.serialNumber,
+        surface: "adminTicketAssist",
       }),
     onSuccess: (data) => setResult(data),
     onError: () => toast.error(t("ai.error")),
@@ -42,7 +50,7 @@ const AIAssistPanel = ({ ticket }: Props) => {
     onError: () => toast.error(t("ai.applyError")),
   });
 
-  if (!canAssist) return null;
+  if (!canAssist || !surfaceEnabled) return null;
 
   return (
     <div className="mt-4 rounded-[8px] border border-[#D6EAF8] bg-[#EBF5FB] p-3">

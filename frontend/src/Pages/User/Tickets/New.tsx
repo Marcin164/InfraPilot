@@ -11,6 +11,8 @@ import {
   faComputerMouse,
   faLaptop,
   faPaperclip,
+  faRobot,
+  faSpinner,
   faWrench,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
@@ -24,6 +26,7 @@ import {
   type CustomFieldValueMap,
 } from "../../../Services/tickets";
 import { getDevicesByOwner } from "../../../Services/devices";
+import { ticketAssist, getAiSettings, type TicketAssistResult } from "../../../Services/ai";
 import type { Device, TicketType } from "../../../Types";
 import PageMotion from "../../../Components/PageMotion/PageMotion";
 import ButtonPrimary from "../../../Components/Buttons/ButtonPrimary";
@@ -137,6 +140,155 @@ const DeviceTile = ({
   </button>
 );
 
+// Same AI-assist idea as Helpdesk's AIAssistPanel.tsx, adapted for a ticket
+// that doesn't exist yet: "Apply" fills the draft form fields locally
+// instead of PATCHing a saved ticket (there's nothing to PATCH until the
+// requester submits).
+const TicketAssistHelper = ({
+  description,
+  category,
+  deviceInfo,
+  onApplyTitle,
+  onApplyDescription,
+}: {
+  description: string;
+  category?: string;
+  deviceInfo?: string;
+  onApplyTitle: (title: string) => void;
+  onApplyDescription: (description: string) => void;
+}) => {
+  const { t } = useTranslation();
+  const [result, setResult] = useState<TicketAssistResult | null>(null);
+  const canAssist = description.trim().length > 5;
+
+  const aiSettingsQuery = useQuery({
+    queryKey: ["ai-settings"],
+    queryFn: getAiSettings,
+  });
+  const surfaceEnabled =
+    aiSettingsQuery.data?.enabledSurfaces.includes("userTicketAssist") ?? true;
+
+  const assistMutation = useMutation({
+    mutationFn: () =>
+      ticketAssist({
+        description,
+        category,
+        deviceInfo,
+        surface: "userTicketAssist",
+      }),
+    onSuccess: (data) => setResult(data),
+    onError: () => toast.error(t("ai.error")),
+  });
+
+  if (!surfaceEnabled) return null;
+
+  return (
+    <div className="mt-3 rounded-[8px] border border-[#D6EAF8] bg-[#EBF5FB] p-3">
+      <div className="mb-2 flex items-center gap-2">
+        <FontAwesomeIcon icon={faRobot} className="text-[#2B9AE9]" />
+        <span className="text-[13px] font-bold text-[#3C3C3C]">
+          {t("ai.title")}
+        </span>
+        {!result && (
+          <button
+            type="button"
+            onClick={() => assistMutation.mutate()}
+            disabled={assistMutation.isPending || !canAssist}
+            className="ml-auto flex items-center gap-1 rounded bg-[#2B9AE9] px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-[#1a7fc1] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {assistMutation.isPending && (
+              <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+            )}
+            {assistMutation.isPending ? t("ai.analyzing") : t("ai.analyze")}
+          </button>
+        )}
+        {result && (
+          <button
+            type="button"
+            onClick={() => {
+              setResult(null);
+              assistMutation.mutate();
+            }}
+            disabled={assistMutation.isPending}
+            className="ml-auto flex items-center gap-1 rounded bg-[#7F8C8D] px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-[#5D6D7E] disabled:opacity-50"
+          >
+            {assistMutation.isPending && (
+              <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+            )}
+            {t("ai.reanalyze")}
+          </button>
+        )}
+      </div>
+
+      {!result && !canAssist && (
+        <p className="text-[11px] text-[#8A8A8A]">
+          Add a few more words above to get AI help with your title and
+          description.
+        </p>
+      )}
+
+      {result && (
+        <div className="space-y-3">
+          {result.title && (
+            <div className="rounded-[6px] border border-[#D6EAF8] bg-white p-2">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase text-[#9a9a9a]">
+                  {t("ai.suggestedTitle")}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onApplyTitle(result.title)}
+                  className="flex items-center gap-1 rounded bg-[#27AE60] px-1.5 py-0.5 text-[10px] font-semibold text-white hover:bg-[#1E8449]"
+                >
+                  <FontAwesomeIcon icon={faCheck} />
+                  {t("ai.apply")}
+                </button>
+              </div>
+              <p className="text-[12px] text-[#3C3C3C]">{result.title}</p>
+            </div>
+          )}
+
+          {result.improvedDescription && (
+            <div className="rounded-[6px] border border-[#D6EAF8] bg-white p-2">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase text-[#9a9a9a]">
+                  {t("ai.improvedDescription")}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onApplyDescription(result.improvedDescription)}
+                  className="flex items-center gap-1 rounded bg-[#27AE60] px-1.5 py-0.5 text-[10px] font-semibold text-white hover:bg-[#1E8449]"
+                >
+                  <FontAwesomeIcon icon={faCheck} />
+                  {t("ai.apply")}
+                </button>
+              </div>
+              <p className="whitespace-pre-line text-[12px] text-[#535353]">
+                {result.improvedDescription}
+              </p>
+            </div>
+          )}
+
+          {result.solutions && result.solutions.length > 0 && (
+            <div className="rounded-[6px] border border-[#D6EAF8] bg-white p-2">
+              <span className="mb-1 block text-[10px] font-bold uppercase text-[#9a9a9a]">
+                {t("ai.solutions")}
+              </span>
+              <ol className="list-inside list-decimal space-y-1">
+                {result.solutions.map((s, i) => (
+                  <li key={i} className="text-[12px] text-[#535353]">
+                    {s}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const NewTicket = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -146,6 +298,7 @@ const NewTicket = () => {
   const [step, setStep] = useState<Step>("type");
   const [type, setType] = useState<TicketType | null>(null);
   const [category, setCategory] = useState<string>("");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [deviceId, setDeviceId] = useState<string>("");
   const [files, setFiles] = useState<File[]>([]);
@@ -178,6 +331,11 @@ const NewTicket = () => {
   const devices: Device[] = useMemo(
     () => (devicesQuery.data ?? []).filter((d) => d.userId === currentUserId),
     [devicesQuery.data, currentUserId],
+  );
+
+  const selectedDevice = useMemo(
+    () => devices.find((d) => d.id === deviceId),
+    [devices, deviceId],
   );
 
   const handleFilePick = () => {
@@ -216,6 +374,7 @@ const NewTicket = () => {
       }
       const ticket = await createTicket({
         type: type!,
+        title: title.trim() || undefined,
         description: description.trim(),
         requesterId: currentUserId,
         category: category || undefined,
@@ -465,6 +624,14 @@ const NewTicket = () => {
               )}
             </div>
 
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Short summary (optional — AI can suggest one below)"
+              className="mb-3 w-full rounded-[10px] border border-[#E0E0E0] p-3 text-[14px] outline-none focus:border-[#2B9AE9]"
+            />
+
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -477,6 +644,14 @@ const NewTicket = () => {
                 Please add a few more words.
               </div>
             )}
+
+            <TicketAssistHelper
+              description={description}
+              category={category || undefined}
+              deviceInfo={selectedDevice?.assetName ?? selectedDevice?.serialNumber}
+              onApplyTitle={setTitle}
+              onApplyDescription={setDescription}
+            />
 
             {/* Attachments */}
             <div className="pt-4">

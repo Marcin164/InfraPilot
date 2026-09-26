@@ -51,6 +51,7 @@ import NetworkScanSettings from "./Pages/Main/Settings/Details/NetworkScanSettin
 import SmtpSettings from "./Pages/Main/Settings/Details/Smtp";
 import M365Settings from "./Pages/Main/Settings/Details/M365Settings";
 import LicenseSyncSettings from "./Pages/Main/Settings/Details/LicenseSyncSettings";
+import AiSettings from "./Pages/Main/Settings/Details/AiSettings";
 import UsersReports from "./Pages/Main/Reports/Details/UsersReports";
 import DevicesReports from "./Pages/Main/Reports/Details/DevicesReports";
 import TicketsReports from "./Pages/Main/Reports/Details/TicketsReports";
@@ -214,6 +215,7 @@ function App() {
                   <Route path="smtp" element={<SmtpSettings />} />
                   <Route path="m365" element={<M365Settings />} />
                   <Route path="licenses" element={<LicenseSyncSettings />} />
+                  <Route path="ai" element={<AiSettings />} />
                 </Route>
               </Route>
               <Route path="*" element={<Navigate to="/admin/dashboards" replace />} />

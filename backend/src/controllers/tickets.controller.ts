@@ -27,11 +27,15 @@ import { Tickets } from 'src/entities/tickets.entity';
 import { AuthGuard } from 'src/guards/authGuard.guard';
 import { RequiresPermission } from 'src/decorators/requiresPermission.decorator';
 import { TicketsService } from 'src/services/tickets.service';
+import { TicketClosureSummaryService } from 'src/services/ticketClosureSummary.service';
 
 @UseGuards(AuthGuard)
 @Controller('tickets')
 export class TicketsController {
-  constructor(private readonly ticketsService: TicketsService) {}
+  constructor(
+    private readonly ticketsService: TicketsService,
+    private readonly closureSummaryService: TicketClosureSummaryService,
+  ) {}
 
   // The full ticket queue (any requester, filterable) is a staff view --
   // /mine below is the self-scoped equivalent every plain user actually
@@ -145,6 +149,16 @@ export class TicketsController {
   ) {
     const userId = req?.user?.properties?.metadata?.id;
     return this.ticketsService.updateTicket(id, dto, userId);
+  }
+
+  // On-demand "Document solution" button (Helpdesk closure form, next to
+  // closure code) -- see TicketClosureSummaryService for why this is a
+  // manual action rather than automatic on every ticket close.
+  @RequiresPermission('helpdesk.tickets.access')
+  @Post(':id/document-solution')
+  async documentSolution(@Param('id') id: string, @Req() req: any) {
+    const userId = req?.user?.properties?.metadata?.id;
+    return this.closureSummaryService.documentSolution(id, userId);
   }
 
   @Post()

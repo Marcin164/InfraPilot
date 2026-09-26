@@ -11,6 +11,6 @@ import { KnowledgeArticleController } from 'src/controllers/knowledgeArticle.con
   imports: [TypeOrmModule.forFeature([KnowledgeSpace, KnowledgeArticle])],
   controllers: [KnowledgeSpaceController, KnowledgeArticleController],
   providers: [KnowledgeSpaceService, KnowledgeArticleService],
-  exports: [KnowledgeArticleService],
+  exports: [KnowledgeArticleService, KnowledgeSpaceService],
 })
 export class KnowledgeModule {}

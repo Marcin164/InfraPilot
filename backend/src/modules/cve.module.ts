@@ -6,15 +6,18 @@ import { CveMatch } from 'src/entities/cveMatch.entity';
 import { CveService } from 'src/services/cve.service';
 import { CveController } from 'src/controllers/cve.controller';
 import { CveWorker } from 'src/workers/cve.worker';
+import { CveCriticalListener } from 'src/listeners/cveCritical.listener';
 import { AuditModule } from './audit.module';
+import { NotificationModule } from './notification.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Applications, DevicesApplications, CveMatch]),
     AuditModule,
+    NotificationModule,
   ],
   controllers: [CveController],
-  providers: [CveService, CveWorker],
+  providers: [CveService, CveWorker, CveCriticalListener],
   exports: [CveService],
 })
 export class CveModule {}

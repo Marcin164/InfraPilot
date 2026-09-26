@@ -1,5 +1,5 @@
 import api from "../lib/api";
-import type { Ticket, UpdateTicketData, Comment, Approval, ApprovalDecision, MyApproval, TicketType, TicketPriority, TicketImpact, TicketUrgency } from "../Types";
+import type { Ticket, UpdateTicketData, Comment, Approval, ApprovalDecision, MyApproval, TicketType, TicketPriority, TicketImpact, TicketUrgency, KnowledgeArticle } from "../Types";
 import type { CustomFieldDef } from "./ticketWorkflows";
 
 export const getTickets = async (query: string): Promise<{ data: Ticket[]; total: number }> => {
@@ -54,6 +54,7 @@ export const updateTicketCategories = async (
 
 export type CreateTicketPayload = {
   type: TicketType;
+  title?: string;
   description: string;
   requesterId: string;
   category?: string;
@@ -90,6 +91,15 @@ export const getTicket = async (id: string): Promise<Ticket> => {
 export const updateTicket = async (id: string, data: UpdateTicketData): Promise<Ticket> => {
   const { data: result } = await api.patch(`/tickets/${id}`, data);
   return result;
+};
+
+// On-demand AI knowledge-base draft from this ticket's resolution --
+// "Document solution" button in the closure form. Manual by design: an
+// earlier version ran automatically on every ticket close and produced too
+// much near-duplicate noise when several tickets shared the same root cause.
+export const documentSolution = async (id: string): Promise<KnowledgeArticle> => {
+  const { data } = await api.post(`/tickets/${id}/document-solution`);
+  return data;
 };
 
 export const getTicketsByRequester = async (

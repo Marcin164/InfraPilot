@@ -15,7 +15,7 @@ import {
   AgentTask,
   AgentTaskType,
 } from "../../../../Services/agentTasks";
-import { analyzeLogs, type LogAnalysisResult } from "../../../../Services/ai";
+import { analyzeLogs, getAiSettings, type LogAnalysisResult } from "../../../../Services/ai";
 import { usePermissions } from "../../../../Hooks/usePermissions";
 import { hasPermission } from "../../../../Constants/navigation";
 
@@ -41,6 +41,13 @@ const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
   const queryClient = useQueryClient();
   const permissionsQuery = usePermissions();
   const canDiagnose = hasPermission("helpdesk.tickets.access", permissionsQuery.data);
+  const aiSettingsQuery = useQuery({
+    queryKey: ["ai-settings"],
+    queryFn: getAiSettings,
+    enabled: canDiagnose,
+  });
+  const logAnalysisEnabled =
+    aiSettingsQuery.data?.enabledSurfaces.includes("logAnalysis") ?? true;
   const [type, setType] = useState<AgentTaskType>("scan_now");
 
   const TASK_TYPES = TASK_TYPE_VALUES.map((v) => ({
@@ -174,7 +181,7 @@ const TicketDiagnostics = ({ ticketId, deviceId }: Props) => {
                     >
                       {expanded[task.id] ? t("helpdesk.diag.hide") : t("helpdesk.diag.show")}
                     </button>
-                    {task.type === "collect_event_log" && (
+                    {task.type === "collect_event_log" && logAnalysisEnabled && (
                       <button
                         type="button"
                         onClick={() => handleAnalyzeLogs(task)}

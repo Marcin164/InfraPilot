@@ -8,7 +8,6 @@ export type NotificationEvent =
   | "ticket_sla_breach"
   | "ticket_auto_followup"
   | "cve_critical"
-  | "scan_completed"
   | "compliance_failing"
   | "workflow_step_failed"
   | "license_expiring"
@@ -17,7 +16,11 @@ export type NotificationEvent =
   | "device_down"
   | "config_backup_failed"
   | "ip_conflict_detected"
-  | "device_auto_discovered";
+  | "device_auto_discovered"
+  | "network_scan_completed"
+  | "dhcp_sync_failed"
+  | "agent_stale"
+  | "role_granted";
 
 export type NotificationChannel = "inapp" | "email";
 
@@ -25,6 +28,7 @@ export type NotificationChannel = "inapp" | "email";
 // (admin-only) in the "Ops alert settings" card instead of the per-user
 // matrix. Keep in sync with backend OPS_ROUTED_EVENTS.
 export const OPS_ROUTED_EVENTS: NotificationEvent[] = [
+  "cve_critical",
   "compliance_failing",
   "workflow_step_failed",
   "license_expiring",
@@ -34,6 +38,10 @@ export const OPS_ROUTED_EVENTS: NotificationEvent[] = [
   "config_backup_failed",
   "ip_conflict_detected",
   "device_auto_discovered",
+  "network_scan_completed",
+  "dhcp_sync_failed",
+  "agent_stale",
+  "role_granted",
 ];
 
 export type PreferenceRow = {
@@ -75,7 +83,6 @@ export const EVENT_LABELS: Record<NotificationEvent, string> = {
   ticket_sla_breach: "SLA breach",
   ticket_auto_followup: "Auto follow-up sent",
   cve_critical: "Critical CVE detected",
-  scan_completed: "Device scan completed",
   compliance_failing: "Compliance check failing",
   workflow_step_failed: "Workflow step failed",
   license_expiring: "License expiring soon",
@@ -85,4 +92,8 @@ export const EVENT_LABELS: Record<NotificationEvent, string> = {
   config_backup_failed: "Config backup failed",
   ip_conflict_detected: "IP conflict detected",
   device_auto_discovered: "Auto-discovered device added",
+  network_scan_completed: "Network scan completed",
+  dhcp_sync_failed: "DHCP lease sync failed",
+  agent_stale: "Agent hasn't reported in",
+  role_granted: "Admin role granted",
 };

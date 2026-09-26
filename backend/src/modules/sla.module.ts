@@ -17,6 +17,7 @@ import { SlaRule } from 'src/entities/slaRule.entity';
 
 import { Tickets } from 'src/entities/tickets.entity';
 import { AuditModule } from './audit.module';
+import { NotificationModule } from './notification.module';
 import { BusinessTimeService } from 'src/services/businessTime.service';
 import { CalendarService } from 'src/services/calendar.service';
 import { EscalationActionService } from 'src/services/escalationAction.service';
@@ -53,6 +54,7 @@ import { SlaBreachWorker } from 'src/workers/slaBreach.worker';
       Tickets,
     ]),
     AuditModule,
+    NotificationModule,
   ],
   controllers: [
     // Runtime / monitoring

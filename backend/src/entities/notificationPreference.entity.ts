@@ -18,7 +18,6 @@ export const NOTIFICATION_EVENTS = [
   'ticket_sla_breach',
   'ticket_auto_followup',
   'cve_critical',
-  'scan_completed',
   'compliance_failing',
   'workflow_step_failed',
   'license_expiring',
@@ -29,6 +28,9 @@ export const NOTIFICATION_EVENTS = [
   'ip_conflict_detected',
   'device_auto_discovered',
   'network_scan_completed',
+  'dhcp_sync_failed',
+  'agent_stale',
+  'role_granted',
 ] as const;
 
 export type NotificationEvent = (typeof NOTIFICATION_EVENTS)[number];
@@ -43,6 +45,7 @@ export type NotificationChannel = 'inapp' | 'email';
  * NotificationDispatcherService.dispatchOpsAlert).
  */
 export const OPS_ROUTED_EVENTS: NotificationEvent[] = [
+  'cve_critical',
   'compliance_failing',
   'workflow_step_failed',
   'license_expiring',
@@ -53,6 +56,9 @@ export const OPS_ROUTED_EVENTS: NotificationEvent[] = [
   'ip_conflict_detected',
   'device_auto_discovered',
   'network_scan_completed',
+  'dhcp_sync_failed',
+  'agent_stale',
+  'role_granted',
 ];
 
 /**

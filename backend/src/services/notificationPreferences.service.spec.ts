@@ -61,7 +61,7 @@ describe('NotificationPreferencesService', () => {
 
     it('returns false by default for email on an event not in the email default set', async () => {
       repo.findOne.mockResolvedValue(null);
-      const result = await service.isEnabled('user-1', 'scan_completed', 'email');
+      const result = await service.isEnabled('user-1', 'device_down', 'email');
       expect(result).toBe(false);
     });
   });
@@ -100,13 +100,20 @@ describe('NotificationPreferencesService', () => {
     });
 
     it('falls back to defaults when no preference row exists', async () => {
+      // Every per-user event today is a ticket event, and all of them are in
+      // the email default set -- so this exercises the "default applies"
+      // path via its only real case (true), not a false one. isEnabled's own
+      // "returns false by default for email on an event not in the email
+      // default set" test covers the false branch directly, using an
+      // ops-routed event (which never appears in listForUser's per-user
+      // matrix at all -- see "excludes ops-routed events entirely" above).
       repo.find.mockResolvedValue([]);
 
       const result = await service.listForUser('user-1');
       const emailRow = result.find(
-        (r) => r.event === 'scan_completed' && r.channel === 'email',
+        (r) => r.event === 'ticket_mention' && r.channel === 'email',
       );
-      expect(emailRow?.enabled).toBe(false);
+      expect(emailRow?.enabled).toBe(true);
     });
   });
 

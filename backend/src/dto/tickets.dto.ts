@@ -179,6 +179,13 @@ export class CreateTicketDto {
   @IsEnum(TicketType)
   type: TicketType;
 
+  // Optional: the end-user portal's "New ticket" form lets the requester
+  // adopt an AI-suggested title (see ai/ticket-assist) before submitting.
+  // Agents can still set/change it later via UpdateTicketDto.
+  @IsOptional()
+  @IsString()
+  title?: string;
+
   @IsString()
   description: string;
 

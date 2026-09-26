@@ -12,6 +12,7 @@ jest.mock('src/helpers/propelAuthClient', () => ({
 import { CustomRolesController } from './customRoles.controller';
 import { CustomRolesService } from 'src/services/customRoles.service';
 import { AuditService } from 'src/services/audit.service';
+import { NotificationDispatcherService } from 'src/services/notificationDispatcher.service';
 import { CustomRole } from 'src/entities/customRole.entity';
 
 const makeRole = (overrides: Partial<CustomRole> = {}): CustomRole =>
@@ -33,18 +34,22 @@ describe('CustomRolesController', () => {
   let controller: CustomRolesController;
   let customRolesService: jest.Mocked<any>;
   let auditService: jest.Mocked<any>;
+  let dispatcher: jest.Mocked<any>;
 
   beforeEach(async () => {
     customRolesService = {
       createRole: jest.fn(),
       updateRole: jest.fn(),
       deleteRole: jest.fn(),
-      getRole: jest.fn(),
+      getRole: jest.fn().mockResolvedValue(makeRole()),
       assignRole: jest.fn(),
       unassignRole: jest.fn(),
     };
     auditService = {
       log: jest.fn().mockResolvedValue(undefined),
+    };
+    dispatcher = {
+      dispatchOpsAlert: jest.fn().mockResolvedValue(undefined),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -52,6 +57,7 @@ describe('CustomRolesController', () => {
       providers: [
         { provide: CustomRolesService, useValue: customRolesService },
         { provide: AuditService, useValue: auditService },
+        { provide: NotificationDispatcherService, useValue: dispatcher },
       ],
     }).compile();
 
@@ -109,6 +115,38 @@ describe('CustomRolesController', () => {
       actor: 'actor-4',
       userId: 'user-9',
     });
+  });
+
+  it('dispatches a role_granted ops alert when the assigned role grants all permissions', async () => {
+    customRolesService.assignRole.mockResolvedValue({ success: true });
+    customRolesService.getRole.mockResolvedValue(makeRole({ name: 'Super Admin', grantsAllPermissions: true }));
+
+    await controller.assign('role-1', 'user-9', makeReq('actor-4'));
+
+    expect(dispatcher.dispatchOpsAlert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'role_granted',
+        title: expect.stringContaining('Super Admin'),
+        body: expect.stringContaining('user-9'),
+      }),
+    );
+  });
+
+  it('does not dispatch role_granted for a role that does not grant all permissions', async () => {
+    customRolesService.assignRole.mockResolvedValue({ success: true });
+    customRolesService.getRole.mockResolvedValue(makeRole({ grantsAllPermissions: false }));
+
+    await controller.assign('role-1', 'user-9', makeReq('actor-4'));
+
+    expect(dispatcher.dispatchOpsAlert).not.toHaveBeenCalled();
+  });
+
+  it('does not let a role_granted dispatch failure break the assignment', async () => {
+    customRolesService.assignRole.mockResolvedValue({ success: true });
+    customRolesService.getRole.mockResolvedValue(makeRole({ grantsAllPermissions: true }));
+    dispatcher.dispatchOpsAlert.mockRejectedValue(new Error('smtp down'));
+
+    await expect(controller.assign('role-1', 'user-9', makeReq('actor-4'))).resolves.toEqual({ success: true });
   });
 
   it('audits unassigning a role from a user', async () => {

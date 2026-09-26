@@ -1,0 +1,141 @@
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Tickets } from 'src/entities/tickets.entity';
+import { TicketsComments } from 'src/entities/ticketsComments.entity';
+import {
+  ArticleStatus,
+  KnowledgeArticle,
+} from 'src/entities/knowledgeArticle.entity';
+import { AiService } from './ai.service';
+import { AiSettingsService } from './aiSettings.service';
+import { KnowledgeArticleService } from './knowledgeArticle.service';
+import { KnowledgeSpaceService } from './knowledgeSpace.service';
+import { AuditService } from './audit.service';
+import { uuidv4 } from 'src/helpers/uuidv4';
+
+const DEFAULT_SPACE_NAME = 'AI Generated';
+
+/**
+ * MBA-66, on-demand ("Document solution" button in the Helpdesk closure
+ * form). Originally ran automatically on every ticket close via a
+ * TICKET_STATE_CHANGED listener -- switched to manual after feedback that
+ * auto-generating one article per ticket produced too much near-duplicate
+ * noise once several tickets shared the same root cause. Still gated by the
+ * same Settings > AI "Knowledge base summary on ticket close" toggle: that
+ * now means "is this button allowed to do anything" rather than "run
+ * automatically".
+ *
+ * Unlike the old listener, this is a direct user-triggered action with a
+ * real response -- errors are NOT swallowed here, they propagate as normal
+ * HTTP errors so the button's click handler can show a real toast instead of
+ * failing silently in the background.
+ */
+@Injectable()
+export class TicketClosureSummaryService {
+  constructor(
+    @InjectRepository(Tickets)
+    private readonly tickets: Repository<Tickets>,
+    @InjectRepository(TicketsComments)
+    private readonly comments: Repository<TicketsComments>,
+    private readonly ai: AiService,
+    private readonly aiSettings: AiSettingsService,
+    private readonly knowledgeArticles: KnowledgeArticleService,
+    private readonly knowledgeSpaces: KnowledgeSpaceService,
+    private readonly audit: AuditService,
+  ) {}
+
+  async documentSolution(
+    ticketId: string,
+    actorId?: string,
+  ): Promise<KnowledgeArticle> {
+    if (!(await this.aiSettings.isSurfaceEnabled('ticketClosureSummary'))) {
+      throw new ForbiddenException(
+        'Documenting a solution to the knowledge base has been disabled by an administrator',
+      );
+    }
+
+    const ticket = await this.tickets.findOneBy({ id: ticketId });
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    const spaceId = await this.resolveSpaceId();
+
+    const ticketComments = await this.comments.find({
+      where: { ticketId: ticket.id },
+      order: { createdAt: 'ASC' },
+    });
+
+    const summary = await this.ai.summarizeTicketClosure(
+      {
+        description: ticket.description,
+        category: ticket.category,
+        closureCode: ticket.closureCode,
+        closureNotes: ticket.closureNotes,
+      },
+      ticketComments.map((c) => ({
+        content: c.content ?? '',
+        type: c.type,
+      })),
+    );
+
+    const article = await this.knowledgeArticles.create({
+      title: summary.title,
+      content: summary.content,
+      spaceId,
+      status: ArticleStatus.DRAFT,
+      category: ticket.category || undefined,
+      tags: ['ai-generated'],
+      ticketId: ticket.id,
+    } as any);
+
+    // Leave a visible trace on the ticket -- the article is a draft, so
+    // someone still needs to review/publish it.
+    const note = this.comments.create({
+      id: uuidv4(),
+      ticketId: ticket.id,
+      authorId: actorId ?? null,
+      content: `AI drafted a knowledge base article from this ticket's resolution: "${article.title}". Review and publish it from the Knowledge Base before it's visible to others.`,
+      type: 'Worknote',
+    } as any);
+    await this.comments.save(note);
+
+    await this.audit.log(
+      'KnowledgeArticle',
+      article.id,
+      'ai_drafted_from_ticket',
+      { ticketId: ticket.id, ticketNumber: ticket.number, actorId },
+    );
+
+    return article;
+  }
+
+  /**
+   * Uses the admin-configured space if set (Settings > AI); otherwise
+   * creates (once) or reuses a dedicated "AI Generated" space, and writes
+   * its id back into settings so this works with zero setup and Settings >
+   * AI shows which space is actually in use after the first run.
+   */
+  private async resolveSpaceId(): Promise<string> {
+    const config = await this.aiSettings.getConfig();
+    if (config.knowledgeSpaceId) return config.knowledgeSpaceId;
+
+    const spaces = await this.knowledgeSpaces.findAll();
+    const existing = spaces.find((s) => s.name === DEFAULT_SPACE_NAME);
+    const spaceId = existing
+      ? existing.id
+      : (
+          await this.knowledgeSpaces.create({
+            name: DEFAULT_SPACE_NAME,
+            description:
+              'Draft articles auto-generated by AI from resolved tickets.',
+          })
+        ).id;
+
+    await this.aiSettings.saveConfig({ knowledgeSpaceId: spaceId });
+    return spaceId;
+  }
+}

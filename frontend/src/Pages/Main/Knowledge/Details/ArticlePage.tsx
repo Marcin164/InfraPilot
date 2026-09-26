@@ -17,12 +17,14 @@ import DOMPurify from "dompurify";
 import {
   getArticle,
   getSpace,
+  getSpaces,
   updateArticle,
   deleteArticle,
   getCategoriesBySpace,
 } from "../../../../Services/knowledge";
 import ButtonPrimary from "../../../../Components/Buttons/ButtonPrimary";
 import Input from "../../../../Components/Inputs/Input";
+import SelectSecondary from "../../../../Components/Inputs/SelectSecondary";
 import { useParser } from "../../../../Hooks/useParser";
 import type { ArticleStatus } from "../../../../Types";
 import CategorySelect from "../components/CategorySelect";
@@ -69,7 +71,14 @@ const ArticlePage = () => {
   const [editCategory, setEditCategory] = useState("");
   const [editStatus, setEditStatus] = useState<ArticleStatus>("draft");
   const [editTags, setEditTags] = useState("");
+  const [editSpaceId, setEditSpaceId] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const spacesQuery = useQuery({
+    queryKey: ["knowledge-spaces"],
+    queryFn: getSpaces,
+    enabled: canManage,
+  });
 
   const spaceQuery = useQuery({
     queryKey: ["knowledge-space", spaceId],
@@ -109,6 +118,7 @@ const ArticlePage = () => {
     setEditCategory(article.category ?? "");
     setEditStatus(article.status);
     setEditTags((article.tags ?? []).join(", "));
+    setEditSpaceId(article.spaceId);
     setEditing(true);
   };
 
@@ -125,8 +135,10 @@ const ArticlePage = () => {
           .split(",")
           .map((t) => t.trim())
           .filter(Boolean),
+        spaceId: editSpaceId,
       }),
     onSuccess: () => {
+      const moved = editSpaceId !== spaceId;
       queryClient.invalidateQueries({
         queryKey: ["knowledge-article", articleId],
       });
@@ -134,10 +146,20 @@ const ArticlePage = () => {
         queryKey: ["knowledge-articles", spaceId],
       });
       queryClient.invalidateQueries({
+        queryKey: ["knowledge-articles", editSpaceId],
+      });
+      queryClient.invalidateQueries({
         queryKey: ["knowledge-categories", spaceId],
       });
-      toast.success(t("toast.success.articleSaved"));
+      toast.success(
+        moved ? t("toast.success.articleMoved") : t("toast.success.articleSaved"),
+      );
       setEditing(false);
+      if (moved) {
+        navigate(`/admin/knowledge/${editSpaceId}/${articleId}`, {
+          replace: true,
+        });
+      }
     },
     onError: () => {
       toast.error(t("toast.error.articleSave"));
@@ -325,6 +347,27 @@ const ArticlePage = () => {
               value={editTags}
               onChange={(e: any) => setEditTags(e.target.value)}
             />
+          </div>
+
+          <div className="pt-2">
+            <label className="font-bold text-[#3C3C3C]">{t("knowledge.moveSpace")}</label>
+            <div className="mt-[6px] max-w-[320px]">
+              <SelectSecondary
+                options={(spacesQuery.data ?? []).map((s) => ({
+                  value: s.id,
+                  label: s.name,
+                }))}
+                value={
+                  (spacesQuery.data ?? [])
+                    .map((s) => ({ value: s.id, label: s.name }))
+                    .find((o) => o.value === editSpaceId) ?? null
+                }
+                onSelect={(opt: any) => opt?.value && setEditSpaceId(opt.value)}
+              />
+            </div>
+            <p className="mt-1 text-[12px] text-[#9a9a9a]">
+              {t("knowledge.moveSpaceHint")}
+            </p>
           </div>
 
           <div className="pt-2">

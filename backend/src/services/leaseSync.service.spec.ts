@@ -126,6 +126,27 @@ describe('LeaseSyncService.runSync', () => {
     await expect(service.runSync('missing')).rejects.toThrow('DHCP server not found');
   });
 
+  it('dispatches a dhcp_sync_failed ops alert naming the source when the driver fails', async () => {
+    driver.fetchLeases.mockRejectedValue(new Error('ssh timeout'));
+
+    await expect(service.runSync('src-1')).rejects.toThrow();
+
+    expect(dispatcher.dispatchOpsAlert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'dhcp_sync_failed',
+        title: expect.stringContaining('Core MikroTik'),
+        body: expect.stringContaining('ssh timeout'),
+      }),
+    );
+  });
+
+  it('still rethrows the original error when the dhcp_sync_failed dispatch itself fails', async () => {
+    driver.fetchLeases.mockRejectedValue(new Error('ssh timeout'));
+    dispatcher.dispatchOpsAlert.mockRejectedValue(new Error('smtp down'));
+
+    await expect(service.runSync('src-1')).rejects.toThrow('Lease sync failed: ssh timeout');
+  });
+
   it('only notifies about conflicts not already known from the last sync', async () => {
     ipamService.getConflicts.mockResolvedValue([
       { ip: '10.0.0.1', owners: [{ key: 'a', label: 'A' }, { key: 'b', label: 'B' }] },

@@ -136,6 +136,7 @@ const ADMIN_PERMISSIONS = [
   { code: 'admin.roleAssignment.manage', label: 'Role assignment' },
   { code: 'admin.smtp.config', label: 'Mail (SMTP) config' },
   { code: 'admin.locations.config', label: 'Locations config' },
+  { code: 'admin.ai.config', label: 'AI config (model & where it appears)' },
 ] as const;
 
 export const PERMISSION_GROUPS = [

@@ -22,8 +22,14 @@ import * as path from 'path';
 import { TicketCategory } from 'src/entities/ticketCategory.entity';
 import type { CustomFieldType } from 'src/entities/ticketCategory.entity';
 import { TicketType } from 'src/entities/tickets.entity';
-import { TicketWorkflow, WorkflowStep } from 'src/entities/ticketWorkflow.entity';
-import type { WorkflowStepType, WorkflowTrigger } from 'src/entities/ticketWorkflow.entity';
+import {
+  TicketWorkflow,
+  WorkflowStep,
+} from 'src/entities/ticketWorkflow.entity';
+import type {
+  WorkflowStepType,
+  WorkflowTrigger,
+} from 'src/entities/ticketWorkflow.entity';
 import { Tickets } from 'src/entities/tickets.entity';
 import { TicketActivity } from 'src/entities/ticketActivity.entity';
 import { TicketsApprovals } from 'src/entities/ticketsApprovals.entity';
@@ -33,7 +39,11 @@ import { AuditService } from './audit.service';
 import { NotificationDispatcherService } from './notificationDispatcher.service';
 import { uuidv4 } from 'src/helpers/uuidv4';
 
-const STEP_ATTACHMENT_DIR = path.resolve(process.cwd(), 'uploads', 'workflow-attachments');
+const STEP_ATTACHMENT_DIR = path.resolve(
+  process.cwd(),
+  'uploads',
+  'workflow-attachments',
+);
 
 // Kept in sync with TicketsService's ALLOWED_ATTACHMENT_MIME -- not imported
 // from there to avoid a circular module dependency (TicketsService already
@@ -54,10 +64,12 @@ const ALLOWED_STEP_ATTACHMENT_MIME = new Set([
 ]);
 
 export class CustomFieldDto {
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   id: string;
 
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   label: string;
 
   @IsIn(['text', 'textarea', 'number', 'select', 'checkbox', 'date'])
@@ -66,30 +78,39 @@ export class CustomFieldDto {
   @IsBoolean()
   required: boolean;
 
-  @IsOptional() @IsArray() @IsString({ each: true })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
   options?: string[];
 }
 
 export class UpsertCategoryDto {
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   id?: string;
 
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   name: string;
 
-  @IsOptional() @IsIn(Object.values(TicketType))
+  @IsOptional()
+  @IsIn(Object.values(TicketType))
   ticketType?: TicketType;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   description?: string | null;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   color?: string;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   enabled?: boolean;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   workflowId?: string | null;
 
   @IsOptional()
@@ -100,16 +121,26 @@ export class UpsertCategoryDto {
 }
 
 export class WorkflowStepDto {
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   id?: string;
 
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   order?: number;
 
-  @IsIn(['request_approval', 'notify', 'set_field', 'assign_to', 'create_comment', 'add_attachment'])
+  @IsIn([
+    'request_approval',
+    'notify',
+    'set_field',
+    'assign_to',
+    'create_comment',
+    'add_attachment',
+  ])
   type: WorkflowStepType;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   label?: string;
 
   @IsOptional()
@@ -117,20 +148,30 @@ export class WorkflowStepDto {
 }
 
 export class UpsertWorkflowDto {
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   id?: string;
 
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   name: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @IsOptional()
-  @IsIn(['on_create', 'on_state_change', 'on_assign', 'on_priority_change', 'on_close'])
+  @IsIn([
+    'on_create',
+    'on_state_change',
+    'on_assign',
+    'on_priority_change',
+    'on_close',
+  ])
   trigger?: WorkflowTrigger;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   enabled?: boolean;
 
   @IsArray()
@@ -203,17 +244,21 @@ export class TicketWorkflowService {
       ticketType: 'Incident' | 'Service' | null;
       color: string;
     }[] = [
-      { name: 'Hardware issue',        ticketType: 'Incident', color: '#FF6B35' },
-      { name: 'Software issue',        ticketType: 'Incident', color: '#2B9AE9' },
-      { name: 'Network issue',         ticketType: 'Incident', color: '#30A712' },
-      { name: 'Account / Access',      ticketType: 'Incident', color: '#9B59B6' },
-      { name: 'Security incident',     ticketType: 'Incident', color: '#F3606E' },
-      { name: 'New equipment',         ticketType: 'Service',  color: '#1ABC9C' },
-      { name: 'Software installation', ticketType: 'Service',  color: '#3498DB' },
-      { name: 'Account request',       ticketType: 'Service',  color: '#8E44AD' },
-      { name: 'Access request',        ticketType: 'Service',  color: '#E67E22' },
-      { name: 'General question',      ticketType: 'Service',  color: '#2ECC71' },
-      { name: 'Other',                 ticketType: null,       color: '#9a9a9a' },
+      { name: 'Hardware issue', ticketType: 'Incident', color: '#FF6B35' },
+      { name: 'Software issue', ticketType: 'Incident', color: '#2B9AE9' },
+      { name: 'Network issue', ticketType: 'Incident', color: '#30A712' },
+      { name: 'Account / Access', ticketType: 'Incident', color: '#9B59B6' },
+      { name: 'Security incident', ticketType: 'Incident', color: '#F3606E' },
+      { name: 'New equipment', ticketType: 'Service', color: '#1ABC9C' },
+      {
+        name: 'Software installation',
+        ticketType: 'Service',
+        color: '#3498DB',
+      },
+      { name: 'Account request', ticketType: 'Service', color: '#8E44AD' },
+      { name: 'Access request', ticketType: 'Service', color: '#E67E22' },
+      { name: 'General question', ticketType: 'Service', color: '#2ECC71' },
+      { name: 'Other', ticketType: null, color: '#9a9a9a' },
     ];
 
     let inserted = 0;
@@ -359,7 +404,9 @@ export class TicketWorkflowService {
     );
     if (alreadyResolved) return;
 
-    const workflow = await this.workflows.findOneBy({ id: approval.workflowId });
+    const workflow = await this.workflows.findOneBy({
+      id: approval.workflowId,
+    });
     if (!workflow) return;
 
     await this.audit.log('TicketWorkflow', workflow.id, 'approval_decided', {
@@ -382,7 +429,9 @@ export class TicketWorkflowService {
     const ordered = [...(workflow.steps ?? [])].sort(
       (a, b) => a.order - b.order,
     );
-    const stepIndex = ordered.findIndex((s) => s.id === approval.workflowStepId);
+    const stepIndex = ordered.findIndex(
+      (s) => s.id === approval.workflowStepId,
+    );
     const remaining = stepIndex >= 0 ? ordered.slice(stepIndex + 1) : [];
 
     const paused = await this.runSteps(ticket, workflow, remaining);
@@ -424,9 +473,29 @@ export class TicketWorkflowService {
           stepType: step.type,
           error: (err as Error).message,
         });
+        await this.notifyStepFailed(ticket, workflow, step, err as Error);
       }
     }
     return false;
+  }
+
+  private async notifyStepFailed(
+    ticket: Tickets,
+    workflow: TicketWorkflow,
+    step: WorkflowStep,
+    err: Error,
+  ): Promise<void> {
+    try {
+      await this.dispatcher.dispatchOpsAlert({
+        event: 'workflow_step_failed',
+        title: `Workflow "${workflow.name}" step failed on ticket #${ticket.number}`,
+        body: `Step "${step.label ?? step.type}" (${step.type}) failed: ${err.message}`,
+      });
+    } catch (dispatchErr) {
+      this.logger.warn(
+        `Failed to dispatch workflow_step_failed alert for workflow ${workflow.id}, step ${step.id}: ${(dispatchErr as Error).message}`,
+      );
+    }
   }
 
   /**
@@ -466,7 +535,7 @@ export class TicketWorkflowService {
               ticketId: ticket.id,
               authorId: null,
               content:
-                "This ticket requires approval from your manager, but no manager is on file for your account. Please contact an administrator to get this ticket approved.",
+                'This ticket requires approval from your manager, but no manager is on file for your account. Please contact an administrator to get this ticket approved.',
               type: 'Public',
             } as any);
             await this.comments.save(note);
@@ -662,7 +731,9 @@ export class TicketWorkflowService {
    * manager hasn't been synced into InfraPilot as a user yet -- e.g. M365-only
    * tenants without AD sync never populate `manager` at all.
    */
-  private async resolveRequesterManagerId(ticket: Tickets): Promise<string | null> {
+  private async resolveRequesterManagerId(
+    ticket: Tickets,
+  ): Promise<string | null> {
     if (!ticket.requesterId) return null;
     const requester = await this.users.findOneBy({ id: ticket.requesterId });
     if (!requester?.manager) return null;

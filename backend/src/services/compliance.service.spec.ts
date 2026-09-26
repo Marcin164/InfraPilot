@@ -4,6 +4,7 @@ import { ComplianceService, BUILTIN_RULES } from './compliance.service';
 import { ComplianceRule } from 'src/entities/complianceRule.entity';
 import { ComplianceResult } from 'src/entities/complianceResult.entity';
 import { Devices } from 'src/entities/devices.entity';
+import { NotificationDispatcherService } from 'src/services/notificationDispatcher.service';
 
 const makeRule = (overrides: any = {}) => ({
   key: 'bitlocker-enabled',
@@ -24,6 +25,7 @@ describe('ComplianceService', () => {
   let rulesRepo: jest.Mocked<any>;
   let resultsRepo: jest.Mocked<any>;
   let devicesRepo: jest.Mocked<any>;
+  let dispatcher: jest.Mocked<any>;
 
   beforeEach(async () => {
     const summaryQb: any = {
@@ -54,6 +56,7 @@ describe('ComplianceService', () => {
       count: jest.fn().mockResolvedValue(0),
       findOneBy: jest.fn().mockResolvedValue(null),
     };
+    dispatcher = { dispatchOpsAlert: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -61,6 +64,7 @@ describe('ComplianceService', () => {
         { provide: getRepositoryToken(ComplianceRule), useValue: rulesRepo },
         { provide: getRepositoryToken(ComplianceResult), useValue: resultsRepo },
         { provide: getRepositoryToken(Devices), useValue: devicesRepo },
+        { provide: NotificationDispatcherService, useValue: dispatcher },
       ],
     }).compile();
 
@@ -307,6 +311,85 @@ describe('ComplianceService', () => {
       resultsRepo.findOne.mockResolvedValue({ id: 'r-1', passed: false });
       await service.evaluateDevice('dev-1');
       expect(resultsRepo.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('evaluateDevice - compliance_failing notification', () => {
+    it('dispatches an ops alert on a HIGH-severity pass->fail transition', async () => {
+      devicesRepo.findOneBy.mockResolvedValue(makeDevice({ security: { bitlocker: { enabled: false } } }));
+      rulesRepo.findBy.mockResolvedValue([makeRule({ severity: 'HIGH' })]);
+      resultsRepo.findOne.mockResolvedValue({ id: 'r-1', passed: true, severity: 'HIGH' });
+
+      await service.evaluateDevice('dev-1');
+
+      expect(dispatcher.dispatchOpsAlert).toHaveBeenCalledWith(
+        expect.objectContaining({ event: 'compliance_failing' }),
+      );
+    });
+
+    it('dispatches an ops alert on a CRITICAL-severity pass->fail transition', async () => {
+      devicesRepo.findOneBy.mockResolvedValue(makeDevice({ security: { bitlocker: { enabled: false } } }));
+      rulesRepo.findBy.mockResolvedValue([makeRule({ severity: 'CRITICAL' })]);
+      resultsRepo.findOne.mockResolvedValue({ id: 'r-1', passed: true, severity: 'CRITICAL' });
+
+      await service.evaluateDevice('dev-1');
+
+      expect(dispatcher.dispatchOpsAlert).toHaveBeenCalledWith(
+        expect.objectContaining({ event: 'compliance_failing' }),
+      );
+    });
+
+    it('does not dispatch for a LOW/MEDIUM-severity pass->fail transition', async () => {
+      devicesRepo.findOneBy.mockResolvedValue(makeDevice({ security: { bitlocker: { enabled: false } } }));
+      rulesRepo.findBy.mockResolvedValue([makeRule({ severity: 'MEDIUM' })]);
+      resultsRepo.findOne.mockResolvedValue({ id: 'r-1', passed: true, severity: 'MEDIUM' });
+
+      await service.evaluateDevice('dev-1');
+
+      expect(dispatcher.dispatchOpsAlert).not.toHaveBeenCalled();
+    });
+
+    it('does not dispatch when the rule was already failing (no transition)', async () => {
+      devicesRepo.findOneBy.mockResolvedValue(makeDevice({ security: { bitlocker: { enabled: false } } }));
+      rulesRepo.findBy.mockResolvedValue([makeRule({ severity: 'HIGH' })]);
+      resultsRepo.findOne.mockResolvedValue({ id: 'r-1', passed: false, severity: 'HIGH' });
+
+      await service.evaluateDevice('dev-1');
+
+      expect(dispatcher.dispatchOpsAlert).not.toHaveBeenCalled();
+    });
+
+    it('does not dispatch when the rule still passes', async () => {
+      devicesRepo.findOneBy.mockResolvedValue(makeDevice());
+      rulesRepo.findBy.mockResolvedValue([makeRule({ severity: 'HIGH' })]);
+      resultsRepo.findOne.mockResolvedValue({ id: 'r-1', passed: true, severity: 'HIGH' });
+
+      await service.evaluateDevice('dev-1');
+
+      expect(dispatcher.dispatchOpsAlert).not.toHaveBeenCalled();
+    });
+
+    it('dispatches on a first-ever evaluation with no prior row that fails a HIGH/CRITICAL rule (no baseline = assume it was fine before)', async () => {
+      devicesRepo.findOneBy.mockResolvedValue(makeDevice({ security: { bitlocker: { enabled: false } } }));
+      rulesRepo.findBy.mockResolvedValue([makeRule({ severity: 'CRITICAL' })]);
+      resultsRepo.findOne.mockResolvedValue(null);
+
+      await service.evaluateDevice('dev-1');
+
+      expect(dispatcher.dispatchOpsAlert).toHaveBeenCalledWith(
+        expect.objectContaining({ event: 'compliance_failing' }),
+      );
+    });
+
+    it('a dispatch failure does not break evaluateDevice or its return value', async () => {
+      devicesRepo.findOneBy.mockResolvedValue(makeDevice({ security: { bitlocker: { enabled: false } } }));
+      rulesRepo.findBy.mockResolvedValue([makeRule({ severity: 'HIGH' })]);
+      resultsRepo.findOne.mockResolvedValue({ id: 'r-1', passed: true, severity: 'HIGH' });
+      dispatcher.dispatchOpsAlert.mockRejectedValue(new Error('smtp down'));
+
+      const results = await service.evaluateDevice('dev-1');
+
+      expect(results[0].passed).toBe(false);
     });
   });
 

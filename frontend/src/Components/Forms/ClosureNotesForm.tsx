@@ -1,14 +1,17 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import SelectSecondary from "../Inputs/SelectSecondary";
 import { useForm } from "@tanstack/react-form";
 import Input from "../Inputs/Input";
 import { closureCodesOptions } from "../../Constants/options";
 import { toast } from "react-toastify";
-import { updateTicket } from "../../Services/tickets";
-import { useMutation } from "@tanstack/react-query";
+import { updateTicket, documentSolution } from "../../Services/tickets";
+import { getAiSettings } from "../../Services/ai";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import ButtonPrimary from "../Buttons/ButtonPrimary";
+import { faBook } from "@fortawesome/free-solid-svg-icons";
 import { usePermissions } from "../../Hooks/usePermissions";
 import { hasPermission } from "../../Constants/navigation";
 
@@ -33,6 +36,35 @@ const ClosureNotesForm = ({ closureCode, closureNotes }: Props) => {
     onSuccess: () => {
       toast.success(t("toast.success.ticketUpdated"));
     },
+  });
+
+  const aiSettingsQuery = useQuery({
+    queryKey: ["ai-settings"],
+    queryFn: getAiSettings,
+    enabled: canEdit,
+  });
+  const canDocumentSolution =
+    aiSettingsQuery.data?.enabledSurfaces.includes("ticketClosureSummary") ?? true;
+
+  const documentSolutionMutation = useMutation({
+    mutationFn: () => documentSolution(params.id!),
+    onSuccess: (article) => {
+      toast.success(
+        <span>
+          {t("helpdesk.solutionDocumented")}{" "}
+          <Link
+            to={`/admin/knowledge/${article.spaceId}/${article.id}`}
+            className="underline"
+          >
+            {t("helpdesk.solutionDocumentedLink")}
+          </Link>
+        </span>,
+      );
+    },
+    onError: (err: any) =>
+      toast.error(
+        err?.response?.data?.message ?? t("helpdesk.solutionDocumentFailed"),
+      ),
   });
 
   const form = useForm({
@@ -81,6 +113,27 @@ const ClosureNotesForm = ({ closureCode, closureNotes }: Props) => {
         )}
       />
       <ButtonPrimary type="submit" text={t("common.save")} className="mt-4 mb-2" />
+
+      {canDocumentSolution && (
+        <>
+          <ButtonPrimary
+            type="button"
+            color="white"
+            icon={faBook}
+            text={
+              documentSolutionMutation.isPending
+                ? t("helpdesk.documentingSolution")
+                : t("helpdesk.documentSolution")
+            }
+            className="mb-2"
+            disabled={documentSolutionMutation.isPending}
+            onClick={() => documentSolutionMutation.mutate()}
+          />
+          <p className="text-[11px] text-[#9a9a9a] -mt-1 mb-2">
+            {t("helpdesk.documentSolutionHint")}
+          </p>
+        </>
+      )}
     </form>
   );
 };

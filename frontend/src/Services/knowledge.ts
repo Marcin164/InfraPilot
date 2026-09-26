@@ -80,7 +80,7 @@ export const createArticle = async (
 export const updateArticle = async (
   id: string,
   dto: Partial<
-    Pick<KnowledgeArticle, "title" | "content" | "status" | "category" | "tags">
+    Pick<KnowledgeArticle, "title" | "content" | "status" | "category" | "tags" | "spaceId">
   >
 ): Promise<KnowledgeArticle> => {
   const { data } = await api.patch(`/knowledge/articles/${id}`, dto);

@@ -20,10 +20,13 @@ import { SlaModule } from './sla.module';
 import { AuditModule } from './audit.module';
 import { NotificationModule } from './notification.module';
 import { MailModule } from './mail.module';
+import { AiModule } from './ai.module';
+import { KnowledgeModule } from './knowledge.module';
 import { TicketTemplateService } from 'src/services/ticketTemplate.service';
 import { TicketTemplateController } from 'src/controllers/ticketTemplate.controller';
 import { TicketAutoTagService } from 'src/services/ticketAutoTag.service';
 import { TicketFollowupWorker } from 'src/workers/ticketFollowup.worker';
+import { TicketClosureSummaryService } from 'src/services/ticketClosureSummary.service';
 import { Logger, OnModuleInit } from '@nestjs/common';
 
 @Module({
@@ -45,6 +48,8 @@ import { Logger, OnModuleInit } from '@nestjs/common';
     AuditModule,
     NotificationModule,
     MailModule,
+    AiModule,
+    KnowledgeModule,
   ],
   controllers: [
     TicketsController,
@@ -58,6 +63,7 @@ import { Logger, OnModuleInit } from '@nestjs/common';
     TicketAutoTagService,
     TicketWorkflowService,
     TicketFollowupWorker,
+    TicketClosureSummaryService,
   ],
   exports: [TicketsGateway],
 })

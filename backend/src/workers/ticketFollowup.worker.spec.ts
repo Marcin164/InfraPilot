@@ -4,6 +4,7 @@ import { TicketFollowupWorker } from './ticketFollowup.worker';
 import { Tickets, TicketState } from 'src/entities/tickets.entity';
 import { TicketsComments } from 'src/entities/ticketsComments.entity';
 import { AuditService } from 'src/services/audit.service';
+import { NotificationDispatcherService } from 'src/services/notificationDispatcher.service';
 
 const REMIND_HOURS = 48;
 const AUTOCLOSE_HOURS = 168;
@@ -11,7 +12,9 @@ const AUTOCLOSE_HOURS = 168;
 const awaitingTicket = (overrides: Partial<Tickets> = {}): Tickets =>
   ({
     id: 'ticket-1',
+    number: 42,
     state: TicketState.AWAITING_USER,
+    requesterId: 'requester-1',
     updatedAt: new Date(Date.now() - (REMIND_HOURS + 1) * 3600 * 1000),
     ...overrides,
   } as Tickets);
@@ -21,6 +24,7 @@ describe('TicketFollowupWorker', () => {
   let tickets: jest.Mocked<any>;
   let comments: jest.Mocked<any>;
   let audit: jest.Mocked<AuditService>;
+  let dispatcher: jest.Mocked<any>;
 
   beforeEach(async () => {
     const commentInstance = {
@@ -41,6 +45,7 @@ describe('TicketFollowupWorker', () => {
     };
 
     audit = { log: jest.fn().mockResolvedValue(undefined) } as any;
+    dispatcher = { dispatch: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -48,6 +53,7 @@ describe('TicketFollowupWorker', () => {
         { provide: getRepositoryToken(Tickets), useValue: tickets },
         { provide: getRepositoryToken(TicketsComments), useValue: comments },
         { provide: AuditService, useValue: audit },
+        { provide: NotificationDispatcherService, useValue: dispatcher },
       ],
     }).compile();
 
@@ -130,5 +136,57 @@ describe('TicketFollowupWorker', () => {
 
     const saved = tickets.save.mock.calls[0][0];
     expect(saved.closedAt).toBeInstanceOf(Date);
+  });
+
+  describe('ticket_auto_followup notification', () => {
+    it('notifies the requester when a reminder is sent', async () => {
+      const staleTicket = awaitingTicket();
+      tickets.find.mockResolvedValue([staleTicket]);
+
+      await worker.run();
+
+      expect(dispatcher.dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recipientIds: ['requester-1'],
+          event: 'ticket_auto_followup',
+          entityType: 'Ticket',
+          entityId: 'ticket-1',
+        }),
+      );
+    });
+
+    it('notifies the requester when a ticket is auto-closed', async () => {
+      const oldTicket = awaitingTicket({
+        updatedAt: new Date(Date.now() - (AUTOCLOSE_HOURS + 1) * 3600 * 1000),
+      });
+      tickets.find.mockResolvedValue([oldTicket]);
+
+      await worker.run();
+
+      expect(dispatcher.dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recipientIds: ['requester-1'],
+          event: 'ticket_auto_followup',
+        }),
+      );
+    });
+
+    it('does not dispatch when the ticket has no requester', async () => {
+      const staleTicket = awaitingTicket({ requesterId: null as any });
+      tickets.find.mockResolvedValue([staleTicket]);
+
+      await worker.run();
+
+      expect(dispatcher.dispatch).not.toHaveBeenCalled();
+    });
+
+    it('does not let a dispatch failure stop the sweep', async () => {
+      const staleTicket = awaitingTicket();
+      tickets.find.mockResolvedValue([staleTicket]);
+      dispatcher.dispatch.mockRejectedValue(new Error('mail down'));
+
+      await expect(worker.run()).resolves.not.toThrow();
+      expect(comments.save).toHaveBeenCalled();
+    });
   });
 });

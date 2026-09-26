@@ -75,22 +75,40 @@ describe('TicketWorkflowService', () => {
     commentsRepo = {
       create: jest.fn().mockImplementation((dto: any) => dto),
       save: jest.fn().mockResolvedValue(undefined),
+      find: jest.fn().mockResolvedValue([]),
     };
     usersRepo = {
       findOneBy: jest.fn().mockResolvedValue(null),
     };
     audit = { log: jest.fn().mockResolvedValue(undefined) };
-    dispatcher = { dispatch: jest.fn().mockResolvedValue(undefined) };
-
+    dispatcher = {
+      dispatch: jest.fn().mockResolvedValue(undefined),
+      dispatchOpsAlert: jest.fn().mockResolvedValue(undefined),
+    };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TicketWorkflowService,
-        { provide: getRepositoryToken(TicketWorkflow), useValue: workflowsRepo },
-        { provide: getRepositoryToken(TicketCategory), useValue: categoriesRepo },
+        {
+          provide: getRepositoryToken(TicketWorkflow),
+          useValue: workflowsRepo,
+        },
+        {
+          provide: getRepositoryToken(TicketCategory),
+          useValue: categoriesRepo,
+        },
         { provide: getRepositoryToken(Tickets), useValue: ticketsRepo },
-        { provide: getRepositoryToken(TicketActivity), useValue: activitiesRepo },
-        { provide: getRepositoryToken(TicketsApprovals), useValue: approvalsRepo },
-        { provide: getRepositoryToken(TicketsComments), useValue: commentsRepo },
+        {
+          provide: getRepositoryToken(TicketActivity),
+          useValue: activitiesRepo,
+        },
+        {
+          provide: getRepositoryToken(TicketsApprovals),
+          useValue: approvalsRepo,
+        },
+        {
+          provide: getRepositoryToken(TicketsComments),
+          useValue: commentsRepo,
+        },
         { provide: getRepositoryToken(Users), useValue: usersRepo },
         { provide: AuditService, useValue: audit },
         { provide: NotificationDispatcherService, useValue: dispatcher },
@@ -113,7 +131,9 @@ describe('TicketWorkflowService', () => {
 
   describe('upsertCategory', () => {
     it('throws BadRequestException when name is empty', async () => {
-      await expect(service.upsertCategory({ name: '  ' })).rejects.toThrow(BadRequestException);
+      await expect(service.upsertCategory({ name: '  ' })).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('updates existing category found by id', async () => {
@@ -143,7 +163,9 @@ describe('TicketWorkflowService', () => {
 
   describe('getWorkflow', () => {
     it('throws NotFoundException when workflow not found', async () => {
-      await expect(service.getWorkflow('ghost')).rejects.toThrow(NotFoundException);
+      await expect(service.getWorkflow('ghost')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('returns workflow when found', async () => {
@@ -165,7 +187,10 @@ describe('TicketWorkflowService', () => {
     it('updates existing workflow', async () => {
       const existing: any = makeWorkflow();
       workflowsRepo.findOneBy.mockResolvedValue(existing);
-      await service.upsertWorkflow({ id: 'wf-1', name: 'Updated', steps: [] }, 'actor-1');
+      await service.upsertWorkflow(
+        { id: 'wf-1', name: 'Updated', steps: [] },
+        'actor-1',
+      );
       expect(existing.name).toBe('Updated');
       expect(workflowsRepo.save).toHaveBeenCalled();
     });
@@ -174,13 +199,16 @@ describe('TicketWorkflowService', () => {
       workflowsRepo.findOneBy.mockResolvedValue(null);
       workflowsRepo.create.mockImplementation((dto: any) => dto);
       workflowsRepo.save.mockImplementation(async (w: any) => w);
-      const result = await service.upsertWorkflow({
-        name: 'Flow',
-        steps: [
-          { order: 2, type: 'notify', label: 'B', config: {} },
-          { order: 1, type: 'set_field', label: 'A', config: {} },
-        ],
-      }, 'actor-1');
+      const result = await service.upsertWorkflow(
+        {
+          name: 'Flow',
+          steps: [
+            { order: 2, type: 'notify', label: 'B', config: {} },
+            { order: 1, type: 'set_field', label: 'A', config: {} },
+          ],
+        },
+        'actor-1',
+      );
       expect(result.steps[0].order).toBe(1);
     });
   });
@@ -201,7 +229,9 @@ describe('TicketWorkflowService', () => {
 
     it('does nothing when workflow is disabled', async () => {
       categoriesRepo.findOneBy.mockResolvedValue({ workflowId: 'wf-1' });
-      workflowsRepo.findOneBy.mockResolvedValue(makeWorkflow({ enabled: false }));
+      workflowsRepo.findOneBy.mockResolvedValue(
+        makeWorkflow({ enabled: false }),
+      );
       await service.runOnCreate(makeTicket());
       expect(audit.log).not.toHaveBeenCalled();
     });
@@ -210,52 +240,120 @@ describe('TicketWorkflowService', () => {
       categoriesRepo.findOneBy.mockResolvedValue({ workflowId: 'wf-1' });
       workflowsRepo.findOneBy.mockResolvedValue(makeWorkflow({ steps: [] }));
       await service.runOnCreate(makeTicket());
-      expect(audit.log).toHaveBeenCalledWith('TicketWorkflow', 'wf-1', 'started', expect.any(Object));
-      expect(audit.log).toHaveBeenCalledWith('TicketWorkflow', 'wf-1', 'finished', expect.any(Object));
+      expect(audit.log).toHaveBeenCalledWith(
+        'TicketWorkflow',
+        'wf-1',
+        'started',
+        expect.any(Object),
+      );
+      expect(audit.log).toHaveBeenCalledWith(
+        'TicketWorkflow',
+        'wf-1',
+        'finished',
+        expect.any(Object),
+      );
     });
 
     it('handles set_field step', async () => {
       categoriesRepo.findOneBy.mockResolvedValue({ workflowId: 'wf-1' });
-      workflowsRepo.findOneBy.mockResolvedValue(makeWorkflow({
-        steps: [{ id: 's-1', order: 0, type: 'set_field', label: 'Set Priority', config: { field: 'priority', value: 'High' } }],
-      }));
+      workflowsRepo.findOneBy.mockResolvedValue(
+        makeWorkflow({
+          steps: [
+            {
+              id: 's-1',
+              order: 0,
+              type: 'set_field',
+              label: 'Set Priority',
+              config: { field: 'priority', value: 'High' },
+            },
+          ],
+        }),
+      );
       await service.runOnCreate(makeTicket());
-      expect(ticketsRepo.update).toHaveBeenCalledWith({ id: 'ticket-1' }, { priority: 'High' });
+      expect(ticketsRepo.update).toHaveBeenCalledWith(
+        { id: 'ticket-1' },
+        { priority: 'High' },
+      );
     });
 
     it('handles assign_to step and dispatches notification', async () => {
       categoriesRepo.findOneBy.mockResolvedValue({ workflowId: 'wf-1' });
-      workflowsRepo.findOneBy.mockResolvedValue(makeWorkflow({
-        steps: [{ id: 's-1', order: 0, type: 'assign_to', label: 'Assign', config: { userId: 'agent-1' } }],
-      }));
+      workflowsRepo.findOneBy.mockResolvedValue(
+        makeWorkflow({
+          steps: [
+            {
+              id: 's-1',
+              order: 0,
+              type: 'assign_to',
+              label: 'Assign',
+              config: { userId: 'agent-1' },
+            },
+          ],
+        }),
+      );
       await service.runOnCreate(makeTicket());
-      expect(ticketsRepo.update).toHaveBeenCalledWith({ id: 'ticket-1' }, { assignee: 'agent-1' });
+      expect(ticketsRepo.update).toHaveBeenCalledWith(
+        { id: 'ticket-1' },
+        { assignee: 'agent-1' },
+      );
       expect(dispatcher.dispatch).toHaveBeenCalled();
     });
 
     it('handles notify step with requester recipientType', async () => {
       categoriesRepo.findOneBy.mockResolvedValue({ workflowId: 'wf-1' });
-      workflowsRepo.findOneBy.mockResolvedValue(makeWorkflow({
-        steps: [{ id: 's-1', order: 0, type: 'notify', label: 'Notify', config: { recipientType: 'requester', event: 'ticket_created' } }],
-      }));
+      workflowsRepo.findOneBy.mockResolvedValue(
+        makeWorkflow({
+          steps: [
+            {
+              id: 's-1',
+              order: 0,
+              type: 'notify',
+              label: 'Notify',
+              config: { recipientType: 'requester', event: 'ticket_created' },
+            },
+          ],
+        }),
+      );
       await service.runOnCreate(makeTicket({ requesterId: 'req-1' }));
-      expect(dispatcher.dispatch).toHaveBeenCalledWith(expect.objectContaining({ recipientIds: ['req-1'] }));
+      expect(dispatcher.dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({ recipientIds: ['req-1'] }),
+      );
     });
 
     it('handles create_comment step', async () => {
       categoriesRepo.findOneBy.mockResolvedValue({ workflowId: 'wf-1' });
-      workflowsRepo.findOneBy.mockResolvedValue(makeWorkflow({
-        steps: [{ id: 's-1', order: 0, type: 'create_comment', label: 'Comment', config: { content: 'Auto note' } }],
-      }));
+      workflowsRepo.findOneBy.mockResolvedValue(
+        makeWorkflow({
+          steps: [
+            {
+              id: 's-1',
+              order: 0,
+              type: 'create_comment',
+              label: 'Comment',
+              config: { content: 'Auto note' },
+            },
+          ],
+        }),
+      );
       await service.runOnCreate(makeTicket());
       expect(commentsRepo.save).toHaveBeenCalled();
     });
 
     it('handles request_approval step and creates approvals', async () => {
       categoriesRepo.findOneBy.mockResolvedValue({ workflowId: 'wf-1' });
-      workflowsRepo.findOneBy.mockResolvedValue(makeWorkflow({
-        steps: [{ id: 's-1', order: 0, type: 'request_approval', label: 'Approve', config: { approverIds: ['mgr-1'] } }],
-      }));
+      workflowsRepo.findOneBy.mockResolvedValue(
+        makeWorkflow({
+          steps: [
+            {
+              id: 's-1',
+              order: 0,
+              type: 'request_approval',
+              label: 'Approve',
+              config: { approverIds: ['mgr-1'] },
+            },
+          ],
+        }),
+      );
       await service.runOnCreate(makeTicket());
       expect(approvalsRepo.save).toHaveBeenCalled();
       expect(dispatcher.dispatch).toHaveBeenCalled();
@@ -263,16 +361,97 @@ describe('TicketWorkflowService', () => {
 
     it('logs step_failed but continues when step throws', async () => {
       categoriesRepo.findOneBy.mockResolvedValue({ workflowId: 'wf-1' });
-      workflowsRepo.findOneBy.mockResolvedValue(makeWorkflow({
-        steps: [
-          { id: 's-1', order: 0, type: 'set_field', label: 'Bad', config: { field: 'forbidden', value: 'X' } },
-          { id: 's-2', order: 1, type: 'set_field', label: 'Good', config: { field: 'priority', value: 'Low' } },
-        ],
-      }));
+      workflowsRepo.findOneBy.mockResolvedValue(
+        makeWorkflow({
+          steps: [
+            {
+              id: 's-1',
+              order: 0,
+              type: 'set_field',
+              label: 'Bad',
+              config: { field: 'forbidden', value: 'X' },
+            },
+            {
+              id: 's-2',
+              order: 1,
+              type: 'set_field',
+              label: 'Good',
+              config: { field: 'priority', value: 'Low' },
+            },
+          ],
+        }),
+      );
       await service.runOnCreate(makeTicket());
-      expect(audit.log).toHaveBeenCalledWith('TicketWorkflow', 'wf-1', 'step_failed', expect.any(Object));
+      expect(audit.log).toHaveBeenCalledWith(
+        'TicketWorkflow',
+        'wf-1',
+        'step_failed',
+        expect.any(Object),
+      );
       // Second step still ran
-      expect(ticketsRepo.update).toHaveBeenCalledWith({ id: 'ticket-1' }, { priority: 'Low' });
+      expect(ticketsRepo.update).toHaveBeenCalledWith(
+        { id: 'ticket-1' },
+        { priority: 'Low' },
+      );
+    });
+
+    it('dispatches a workflow_step_failed ops alert naming the workflow, ticket and failed step', async () => {
+      categoriesRepo.findOneBy.mockResolvedValue({ workflowId: 'wf-1' });
+      workflowsRepo.findOneBy.mockResolvedValue(
+        makeWorkflow({
+          name: 'Net Workflow',
+          steps: [
+            {
+              id: 's-1',
+              order: 0,
+              type: 'set_field',
+              label: 'Bad',
+              config: { field: 'forbidden', value: 'X' },
+            },
+          ],
+        }),
+      );
+
+      await service.runOnCreate(makeTicket({ number: 42 }));
+
+      expect(dispatcher.dispatchOpsAlert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: 'workflow_step_failed',
+          title: expect.stringContaining('Net Workflow'),
+        }),
+      );
+    });
+
+    it('does not let a workflow_step_failed dispatch failure stop the remaining steps', async () => {
+      categoriesRepo.findOneBy.mockResolvedValue({ workflowId: 'wf-1' });
+      dispatcher.dispatchOpsAlert.mockRejectedValue(new Error('smtp down'));
+      workflowsRepo.findOneBy.mockResolvedValue(
+        makeWorkflow({
+          steps: [
+            {
+              id: 's-1',
+              order: 0,
+              type: 'set_field',
+              label: 'Bad',
+              config: { field: 'forbidden', value: 'X' },
+            },
+            {
+              id: 's-2',
+              order: 1,
+              type: 'set_field',
+              label: 'Good',
+              config: { field: 'priority', value: 'Low' },
+            },
+          ],
+        }),
+      );
+
+      await service.runOnCreate(makeTicket());
+
+      expect(ticketsRepo.update).toHaveBeenCalledWith(
+        { id: 'ticket-1' },
+        { priority: 'Low' },
+      );
     });
   });
 });

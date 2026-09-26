@@ -10,6 +10,13 @@ import type {
 } from 'src/entities/complianceRule.entity';
 import { ComplianceResult } from 'src/entities/complianceResult.entity';
 import { uuidv4 } from 'src/helpers/uuidv4';
+import { NotificationDispatcherService } from 'src/services/notificationDispatcher.service';
+
+/** Only newly-failing HIGH/CRITICAL rules are worth an ops alert -- LOW/
+ * MEDIUM regressions are visible on the Compliance tab/dashboard without
+ * paging anyone, and re-notifying on every scan for an already-known
+ * failure would just be noise. */
+const ALERTABLE_SEVERITIES = new Set<ComplianceSeverity>(['HIGH', 'CRITICAL']);
 
 // All fields optional: this DTO backs a single upsert endpoint (PUT
 // rules/:key) that both creates and patches a rule, and the service already
@@ -214,6 +221,7 @@ export class ComplianceService {
     private readonly resultsRepo: Repository<ComplianceResult>,
     @InjectRepository(Devices)
     private readonly devicesRepo: Repository<Devices>,
+    private readonly dispatcher: NotificationDispatcherService,
   ) {}
 
   /**
@@ -310,6 +318,7 @@ export class ComplianceService {
       let row = await this.resultsRepo.findOne({
         where: { deviceId, ruleKey: rule.key },
       });
+      const wasPassing = row?.passed ?? true; // no prior row = nothing to regress from
       if (!row) {
         row = new ComplianceResult();
         row.id = uuidv4();
@@ -323,9 +332,34 @@ export class ComplianceService {
       row.evaluatedAt = now;
       await this.resultsRepo.save(row);
       out.push(row);
+
+      if (wasPassing && !passed && ALERTABLE_SEVERITIES.has(rule.severity as ComplianceSeverity)) {
+        await this.notifyNewFailure(device, rule);
+      }
     }
 
     return out;
+  }
+
+  /** Only fires on a pass->fail transition for HIGH/CRITICAL rules -- see
+   * ALERTABLE_SEVERITIES. Swallows its own errors so a notification hiccup
+   * never breaks the scan/evaluate pipeline that calls this. */
+  private async notifyNewFailure(
+    device: Devices,
+    rule: ComplianceRule,
+  ): Promise<void> {
+    try {
+      const name = device.assetName || device.model || device.id;
+      await this.dispatcher.dispatchOpsAlert({
+        event: 'compliance_failing',
+        title: `${name} now fails "${rule.name}" (${rule.severity})`,
+        body: `Device ${name} started failing the compliance rule "${rule.name}".`,
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Failed to dispatch compliance_failing alert for device ${device.id}, rule ${rule.key}: ${(err as Error).message}`,
+      );
+    }
   }
 
   async resultsForDevice(deviceId: string) {

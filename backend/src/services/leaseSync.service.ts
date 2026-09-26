@@ -98,7 +98,20 @@ export class LeaseSyncService {
         deviceId: source.deviceId,
         error: message,
       });
+      await this.notifySyncFailed(source, message);
       throw new BadRequestException(`Lease sync failed: ${message}`);
+    }
+  }
+
+  private async notifySyncFailed(source: DhcpServer, message: string): Promise<void> {
+    try {
+      await this.dispatcher.dispatchOpsAlert({
+        event: 'dhcp_sync_failed',
+        title: `DHCP lease sync failed: ${source.name}`,
+        body: `Lease sync for DHCP server "${source.name}" failed: ${message}`,
+      });
+    } catch (err) {
+      this.logger.warn(`Failed to dispatch dhcp_sync_failed alert for source ${source.id}: ${(err as Error).message}`);
     }
   }
 

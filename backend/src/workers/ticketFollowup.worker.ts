@@ -5,6 +5,7 @@ import { LessThan, Repository } from 'typeorm';
 import { Tickets, TicketState } from 'src/entities/tickets.entity';
 import { TicketsComments } from 'src/entities/ticketsComments.entity';
 import { AuditService } from 'src/services/audit.service';
+import { NotificationDispatcherService } from 'src/services/notificationDispatcher.service';
 import { uuidv4 } from 'src/helpers/uuidv4';
 
 const REMIND_HOURS = Number(process.env.TICKET_AWAIT_REMIND_HOURS) || 48;
@@ -21,6 +22,7 @@ export class TicketFollowupWorker {
     @InjectRepository(TicketsComments)
     private readonly comments: Repository<TicketsComments>,
     private readonly audit: AuditService,
+    private readonly dispatcher: NotificationDispatcherService,
   ) {}
 
   /**
@@ -58,6 +60,10 @@ export class TicketFollowupWorker {
             reason: 'no user response',
             hours: AUTOCLOSE_HOURS,
           });
+          await this.notify(t, {
+            title: `Ticket #${t.number} closed automatically`,
+            body: `No response in ${AUTOCLOSE_HOURS / 24} days, so this ticket was closed automatically. Reply on it if it still needs attention.`,
+          });
           closed += 1;
           continue;
         }
@@ -83,6 +89,12 @@ export class TicketFollowupWorker {
         await this.audit.log('Ticket', t.id, 'auto_followup_sent', {
           stage: 'reminder',
         });
+        await this.notify(t, {
+          title: `Ticket #${t.number} needs your response`,
+          body: `This ticket is awaiting your response. It'll be closed automatically in ${
+            (AUTOCLOSE_HOURS - REMIND_HOURS) / 24
+          } more days if we don't hear back.`,
+        });
         reminded += 1;
       }
 
@@ -93,6 +105,28 @@ export class TicketFollowupWorker {
       }
     } catch (err) {
       this.logger.warn(`Followup sweep failed: ${(err as Error).message}`);
+    }
+  }
+
+  private async notify(
+    t: Tickets,
+    msg: { title: string; body: string },
+  ): Promise<void> {
+    if (!t.requesterId) return;
+    try {
+      await this.dispatcher.dispatch({
+        recipientIds: [t.requesterId],
+        event: 'ticket_auto_followup',
+        title: msg.title,
+        body: msg.body,
+        url: `/admin/helpdesk/${t.id}`,
+        entityType: 'Ticket',
+        entityId: t.id,
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Failed to dispatch ticket_auto_followup for ticket ${t.id}: ${(err as Error).message}`,
+      );
     }
   }
 }
